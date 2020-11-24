@@ -1,0 +1,86 @@
+//-----------------------------------------------------------------------------
+//  █▀▀ █▀▄▀█ █▀ ▀▄▀
+//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
+//-----------------------------------------------------------------------------
+#pragma once
+
+//-----------------------------------------------------------------------------
+// DEFAULT MSX PALETTE
+//-----------------------------------------------------------------------------
+
+// Color index
+#define COLOR_TRANSPARENT	0
+#define COLOR_BLACK			1
+#define COLOR_MEDIUM_GREEN	2
+#define COLOR_LIGHT_GREEN	3
+#define COLOR_DARK_BLUE		4
+#define COLOR_LIGHT_BLUE	5
+#define COLOR_DARK_RED		6
+#define COLOR_CYAN			7
+#define COLOR_MEDIUM_RED	8
+#define COLOR_LIGHT_RED		9
+#define COLOR_DARK_YELLOW	10
+#define COLOR_LIGHT_YELLOW	11
+#define COLOR_DARK_GREEN	12
+#define COLOR_MAGENTA		13
+#define COLOR_GRAY			14
+#define COLOR_WHITE			15
+
+//-----------------------------------------------------------------------------
+// 8-BITS RGB COLORS
+//-----------------------------------------------------------------------------
+
+// Helper macros
+#define RGB8(r,g,b) (((g) << 5) + ((r) << 2) + (b))
+
+// Some colors
+#define COLOR8_KHAKI		RGB8(5,6,0)
+#define COLOR8_DARKKAKHI	RGB8(3,4,0)
+#define COLOR8_SKIN			RGB8(6,5,2)
+#define COLOR8_DARKSKIN		RGB8(4,3,1)
+#define COLOR8_PINK			RGB8(7,0,2)
+#define COLOR8_DARKPINK		RGB8(5,0,1)
+#define COLOR8_SAND			RGB8(6,6,2)
+#define COLOR8_LIGHTMAUVE	RGB8(5,5,3)
+#define COLOR8_GRAY			RGB8(5,5,2)
+#define COLOR8_DARKGRAY		RGB8(3,3,1)
+#define COLOR8_BROWN		RGB8(4,2,0)
+#define COLOR8_DARKBROWN	RGB8(2,1,0)
+#define COLOR8_YELLOW		RGB8(6,6,1)
+#define COLOR8_DARKYELLOW	RGB8(4,4,0)
+#define COLOR8_GREEN		RGB8(0,5,0)
+#define COLOR8_DARKGREEN	RGB8(0,3,0)
+#define COLOR8_WHITE		RGB8(7,7,3)
+#define COLOR8_LIGHTGRAY	RGB8(6,6,3)
+#define COLOR8_CYAN			RGB8(6,7,3)
+#define COLOR8_LIGHTBLUE	RGB8(5,6,3)
+#define COLOR8_BLUE			RGB8(2,4,3)
+#define COLOR8_DARKBLUE		RGB8(1,2,3)
+#define COLOR8_NAVYBLUE		RGB8(0,0,2)
+#define COLOR8_DARKNAVYBLUE	RGB8(0,0,1)
+#define COLOR8_MAUVE		RGB8(6,3,2)
+#define COLOR8_DARKMAUVE	RGB8(4,2,1)
+#define COLOR8_ORANGE		RGB8(7,4,0)
+#define COLOR8_DARKORANGE	RGB8(6,2,0)
+#define COLOR8_RED			RGB8(7,1,0)
+#define COLOR8_DARKRED		RGB8(5,1,0)
+#define COLOR8_BLACK		RGB8(0,0,0)
+#define COLOR8_LIME			RGB8(3,7,0)
+#define COLOR8_DARKLIME		RGB8(2,5,0)
+
+// Default palette colors
+#define COLOR8_DEFAULT1		RGB8(0,0,0)		
+#define COLOR8_DEFAULT2		RGB8(1,6,0)		
+#define COLOR8_DEFAULT3		RGB8(3,7,1)		
+#define COLOR8_DEFAULT4		RGB8(1,1,3)		
+#define COLOR8_DEFAULT5		RGB8(2,3,3)		
+#define COLOR8_DEFAULT6		RGB8(5,1,0)		
+#define COLOR8_DEFAULT7		RGB8(2,6,3)		
+#define COLOR8_DEFAULT8		RGB8(7,1,0)		
+#define COLOR8_DEFAULT9		RGB8(7,3,1)		
+#define COLOR8_DEFAULT10	RGB8(6,6,0)		
+#define COLOR8_DEFAULT11	RGB8(6,6,2)		
+#define COLOR8_DEFAULT12	RGB8(1,4,0)
+#define COLOR8_DEFAULT13	RGB8(6,2,2)
+#define COLOR8_DEFAULT14	RGB8(5,5,2)
+#define COLOR8_DEFAULT15	RGB8(7,7,3)
