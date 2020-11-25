@@ -264,7 +264,7 @@ const u8 __at(M_MAXUPD) g_MAXUPD[3];
 const u8 __at(M_MINUPD) g_MINUPD[3];
 
 #define M_ATRBYT	0xF3F2	// Attribute byte (for graphical routines it’s used to read the color)
-const u8 __at(M_ATRBYT) g_ATRBYT;
+u8 __at(M_ATRBYT) g_ATRBYT;
 
 //-----------------------------------------------------------------------------
 // MML
@@ -855,10 +855,10 @@ const u8 __at(M_GXPOS) g_GXPOS;
 const u8 __at(M_GYPOS) g_GYPOS;
 
 #define M_GRPACX	0xFCB7	// 1	X Graphics Accumulator.
-const u8 __at(M_GRPACX) g_GRPACX;
+u8 __at(M_GRPACX) g_GRPACX;
 
 #define M_GRPACY	0xFCB9	// 1	Y Graphics Accumulator.
-const u8 __at(M_GRPACY) g_GRPACY;
+u8 __at(M_GRPACY) g_GRPACY;
 
 #define M_DRWFLG	0xFCBB	// 1	Used by the instruction DRAW (DrawFlag).
 // Bit 7 = Draw Line 0 = No / 1 = Yes (,N)
@@ -888,11 +888,11 @@ const u8 __at(M_EXPTBL) g_EXPTBL[4];
 // SLTTBL+1 = Value for slot 1
 // SLTTBL+2 = Value for slot 2
 // SLTTBL+3 = Value for slot 3
- // Format:
-  // Bits 1-0 = Extended slot on page 0000h~3FFFh
-  // Bits 3-2 = Extended slot on page 4000h~7FFFh
-  // Bits 5-4 = Extended slot on page 8000h~BFFFh
-  // Bits 7-6 = Extended slot on page C000h~FFFFh
+//  Format:
+//   Bits 1-0 = Extended slot on page 0000h~3FFFh
+//   Bits 3-2 = Extended slot on page 4000h~7FFFh
+//   Bits 5-4 = Extended slot on page 8000h~BFFFh
+//   Bits 7-6 = Extended slot on page C000h~FFFFh
 const u8 __at(M_SLTTBL) g_SLTTBL[4];
 
 #define M_SLTATR	0xFCC9	// 64	Slot attributes given during MSX boot process.

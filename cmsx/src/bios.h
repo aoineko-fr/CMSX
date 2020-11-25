@@ -23,6 +23,19 @@
 #include "sys_func.h"
 #include "sys_port.h"
 
+
+//─────────────────────────────────────────────────────────────────────────────
+// Helper inline functions
+
+// Direct call a routine at a given address (generate ASM code: "call XXXX")
+inline void Call(u16 addr) { ((void(*)(void))(addr))(); }
+
+// Enable interruption
+inline void EnableInterrupt() { __asm__("ei"); }
+
+// Disable interruption
+inline void DisableInterrupt() { __asm__("di"); }
+
 //─────────────────────────────────────────────────────────────────────────────
 // Defines
 
@@ -79,14 +92,15 @@
 // Files
 #define FILE(str) "\"" str "\""
 
-//─────────────────────────────────────────────────────────────────────────────
-// Helper inline functions
+// Logical operation
 
-// Direct call a routine at a given address (generate ASM code: "call XXXX")
-inline void Call(u16 addr) { ((void(*)(void))(addr))(); }
-
-// Enable interruption
-inline void EnableInterrupt() { __asm__("ei"); }
-
-// Disable interruption
-inline void DisableInterrupt() { __asm__("di"); }
+#define LOG_OP_IMP		0x00 // 0000 | DC=SC
+#define LOG_OP_AND		0x01 // 0001 | DC=SC&DC
+#define LOG_OP_OR		0x02 // 0010 | DC=SC|DC
+#define LOG_OP_XOR		0x03 // 0011 | DC=SC^DC
+#define LOG_OP_NOT		0x04 // 0100 | DC=!SC
+#define LOG_OP_TIMP		0x08 // 1000 | DC = (SC==0) ? DC : SC
+#define LOG_OP_TAND		0x09 // 1001 | DC = (SC==0) ? DC : SC&DC
+#define LOG_OP_TOR		0x0A // 1010 | DC = (SC==0) ? DC : SC|DC
+#define LOG_OP_TXOR		0x0B // 1011 | DC = (SC==0) ? DC : SC^DC
+#define LOG_OP_TNOT		0x0C // 1100 | DC = (SC==0) ? DC : !SC

@@ -159,7 +159,7 @@ u8 Bios_GetSpriteSize();
 
 // GRPPRT	#008D	Displays a character on the graphic screen
 void Bios_GraphicPrint(u8 chr) __FASTCALL;
-void Bios_GraphicPrintEx(u8 chr, u16 x, u8 y, u8 op);
+void Bios_GraphicPrintEx(u8 chr, u16 x, u8 y, u8 color, u8 op);
 
 #endif // USE_BIOS_VDP
 

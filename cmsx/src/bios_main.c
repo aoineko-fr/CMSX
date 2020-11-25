@@ -821,10 +821,11 @@ void Bios_GraphicPrint(u8 chr) __FASTCALL
 //            CLOC (#F92A) = In SCREEN 2 to 4 and 10 to 12, address where is the graphical cursor in VRAM. In SCREEN 5 to 8, the current abscissa of the graphical cursor
 //            CMASK (#F92C) = In SCREEN 2 to 4 and 10 to 12, mask to apply. In SCREEN 5 to 8, current ordinate of the graphical cursor
 //            LOGOPR (#FB02) = Logical operation code (for graphic modes of SCREEN 5 to 12)
-void Bios_GraphicPrintEx(u8 chr, u16 x, u8 y, u8 op)
+void Bios_GraphicPrintEx(u8 chr, u16 x, u8 y, u8 color, u8 op)
 {
-	g_CLOC = x;
-	g_CMASK = y;
+	g_GRPACX = x;
+	g_GRPACY = y;
+	g_ATRBYT = color;
 	g_LOGOPR = op;
 	Bios_GraphicPrint(chr);
 }
