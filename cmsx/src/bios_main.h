@@ -158,8 +158,8 @@ u16 Bios_GetAttributeTableAddress(u8 id) __FASTCALL;
 u8 Bios_GetSpriteSize();
 
 // GRPPRT	#008D	Displays a character on the graphic screen
-void Bios_GraphicPrint(u8 chr) __FASTCALL;
-void Bios_GraphicPrintEx(u8 chr, u16 x, u8 y, u8 color, u8 op);
+void Bios_GraphPrintChar(u8 chr) __FASTCALL;
+void Bios_GraphPrintCharEx(u8 chr, u16 x, u8 y, u8 color, u8 op);
 
 #endif // USE_BIOS_VDP
 
@@ -192,6 +192,8 @@ inline void Bios_PlayPSG();
 u8 Bios_GetCharacter();
 
 // CHPUT	#00A2	Displays one character
+void Bios_TextPrintChar(u8 chr) __FASTCALL;
+
 // LPTOUT	#00A5	Sends one character to printer
 // LPTSTT	#00A8	Tests printer status
 // CNVCHR	#00AB	Tests for the graphic header and transforms the code

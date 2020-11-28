@@ -70,8 +70,11 @@ __sfr __at(P_VDP_REGS) g_PortVDPReg; // Port to access the ports control registe
 // PSG
 
 #define P_PSG_REGS 0xA0   // PSG register write port
+__sfr __at(P_PSG_REGS) g_PortPSGReg;
 #define P_PSG_DATA 0xA1   // PSG value write port
+__sfr __at(P_PSG_DATA) g_PortPSGData;
 #define P_PSG_STAT 0xA2   // PSG value read port
+__sfr __at(P_PSG_STAT) g_PortPSGStat;
 
 //-----------------------------------------------------------------------------
 // RTC

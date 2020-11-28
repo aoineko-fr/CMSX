@@ -18,10 +18,10 @@
 // H_xxxx	Hooks
 // P_xxxx	Ports
 // I_xxxx	Interrupts
-#include "sys_var.h"
-#include "sys_hook.h"
-#include "sys_func.h"
-#include "sys_port.h"
+#include "bios_var.h"
+#include "bios_hook.h"
+#include "bios_func.h"
+#include "ports.h"
 
 
 //─────────────────────────────────────────────────────────────────────────────

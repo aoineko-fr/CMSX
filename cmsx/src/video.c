@@ -5,7 +5,7 @@
 #include "core.h"
 #include "video.h"
 #include "bios.h"
-#include "sys_port.h"
+#include "ports.h"
 
 VDP __at(0xC000) vdp;
 

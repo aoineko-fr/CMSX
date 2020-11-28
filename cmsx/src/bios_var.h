@@ -194,10 +194,10 @@ u16 __at(M_MLTPAT) g_MLTPAT;
 const u8 __at(M_CLIKSW) g_CLIKSW;
 
 #define M_CSRY	0xF3DC	// 1	Current row-position of the cursor
-const u8 __at(M_CSRY) g_CSRY;
+u8 __at(M_CSRY) g_CSRY;
 
 #define M_CSRX	0xF3DD	// 1	Current column-position of the cursor
-const u8 __at(M_CSRX) g_CSRX;
+u8 __at(M_CSRX) g_CSRX;
 
 #define M_CNSDFG	0xF3DE	// 1	=0 when function keys are not displayed
 // =1 when function keys are displayed
@@ -435,15 +435,17 @@ const u16 __at(M_ASPCT2) g_ASPCT2;
 //-----------------------------------------------------------------------------
 // Display
 
-#define M_FNKSTR	0xF87F	// 160	Texts for function keys.
-#define M_CGPNT	0xF91F	// 2	Location of the character font used to initialise screen.
+#define M_FNKSTR	0xF87F	// 160	Texts for function keys (16 bytes each).
+c8 __at(M_FNKSTR) g_FNKSTR[10][16];
+
+#define M_CGPNT		0xF91F	// 2	Location of the character font used to initialise screen.
 #define M_NAMBAS	0xF922	// 2	Current pattern name table address.
 #define M_CGPBAS	0xF924	// 2	Current pattern generator table address.
 #define M_PATBAS	0xF926	// 2	Current sprite generator table address.
 #define M_ATRBAS	0xF928	// 2	Current sprite attribute table address.
-#define M_CLOC	0xF92A	// 2	Cursor location.
+#define M_CLOC		0xF92A	// 2	Cursor location.
 u16 __at(M_CLOC) g_CLOC;
-#define M_CMASK	0xF92C	// 1	Graphic cursor mask (SCREEN 2 to 4) or ordinate (SCREEN 5 to 12).
+#define M_CMASK		0xF92C	// 1	Graphic cursor mask (SCREEN 2 to 4) or ordinate (SCREEN 5 to 12).
 u8 __at(M_CMASK) g_CMASK;
 #define M_MINDEL	0xF92D	// 2	Work area used by instruction LINE of Basic.
 #define M_MAXDEL	0xF92F	// 2	End of the work area used by instruction LINE of Basic.
@@ -733,7 +735,7 @@ const u8 __at(M_OLDKEY) g_OLDKEY[11];
 // NEWKEY+9  = 4      3      2      1      0      /      +      *
 // NEWKEY+10 = .      ,      -      9      8      7      6      5
 // See here for other keyboard layouts.
-const u8 __at(M_OLDKEY) g_OLDKEY[11];
+const u8 __at(M_NEWKEY) g_NEWKEY[11];
 
 #define M_KEYBUF	0xFBF0	// 40	Key code buffer.
 const u8 __at(M_KEYBUF) g_KEYBUF[40];

@@ -528,7 +528,7 @@ void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length)
 // Remark   : Colors palette is not initialized by this routine, call the routine CHGMDP (001B5h in Sub-ROM) if you need to initialize the palette
 void Bios_ChangeMode(u8 screen) __FASTCALL
 {
-	screen;
+	//g_OLDSCR = g_SCRMOD;
 	// FastCall
 	//	ld		l, screen
 	__asm
@@ -541,6 +541,7 @@ void Bios_ChangeMode(u8 screen) __FASTCALL
 		call	R_CALSLT
 #endif
 	__endasm;
+	//g_SCRMOD = screen;
 }
 
 //-----------------------------------------------------------------------------
@@ -801,7 +802,7 @@ u8 Bios_GetSpriteSize()
 // Address  : #008D
 // Function : Displays a character on the graphic screen
 // Input    : A  - ASCII value of the character to print
-void Bios_GraphicPrint(u8 chr) __FASTCALL
+void Bios_GraphPrintChar(u8 chr) __FASTCALL
 {
 	chr;
 	// FastCall
@@ -821,13 +822,13 @@ void Bios_GraphicPrint(u8 chr) __FASTCALL
 //            CLOC (#F92A) = In SCREEN 2 to 4 and 10 to 12, address where is the graphical cursor in VRAM. In SCREEN 5 to 8, the current abscissa of the graphical cursor
 //            CMASK (#F92C) = In SCREEN 2 to 4 and 10 to 12, mask to apply. In SCREEN 5 to 8, current ordinate of the graphical cursor
 //            LOGOPR (#FB02) = Logical operation code (for graphic modes of SCREEN 5 to 12)
-void Bios_GraphicPrintEx(u8 chr, u16 x, u8 y, u8 color, u8 op)
+void Bios_GraphPrintCharEx(u8 chr, u16 x, u8 y, u8 color, u8 op)
 {
 	g_GRPACX = x;
 	g_GRPACY = y;
 	g_ATRBYT = color;
 	g_LOGOPR = op;
-	Bios_GraphicPrint(chr);
+	Bios_GraphPrintChar(chr);
 }
 
 #endif // USE_BIOS_VDP
@@ -956,8 +957,27 @@ u8 Bios_GetCharacter()
 //-----------------------------------------------------------------------------
 // CHPUT
 // Address  : #00A2
-// Function : Displays one character
+// Function : Displays a character in text mode
 // Input    : A  - ASCII code of character to display
+void Bios_TextPrintChar(u8 chr) __FASTCALL
+{
+	chr;
+	// FastCall
+	//	ld		l, chr
+	__asm
+		di
+		ld		a, l
+#if (CALL_MAINROM == CALL_DIRECT)
+		call	R_CHPUT
+#else // (CALL_MAINROM == CALL_INTERSLOT)
+		ld		ix, #R_CHPUT
+		ld		iy, (M_EXPTBL-1)
+		call	R_CALSLT
+#endif
+		ei
+	__endasm;	
+}
+
 
 //-----------------------------------------------------------------------------
 // LPTOUT

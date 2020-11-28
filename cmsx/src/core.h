@@ -28,6 +28,7 @@ typedef char c8;            // 8 bits character
 
 // Functions
 typedef void (*callback)(void);
+#define null 0
 
 //-----------------------------------------------------------------------------
 // Helper macros
