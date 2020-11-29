@@ -9,9 +9,10 @@
 #include "color.h"
 #include "bios_main.h"
 #include "video.h"
-#include "font.h"
+#include "print.h"
 #include "mutex.h"
 #include "msxi/msxi_unpack.h"
+#include "joystick.h"
 
 //-----------------------------------------------------------------------------
 // D E F I N E S
@@ -46,55 +47,58 @@ u8 vdp_status;
 
 u8 g_Mutex;
 
-
-void VBlankHook() __naked
-{	
-	__asm
-		di
-		// push	af
-		// push	bc
-		// push	de
-		// push	hl
-		// push	ix
-		// push	iy
-	__endasm;
-		
-	// // DisableInterrupt();
-	
-	// if(timer < 255)
-		// timer++;
-	// else
-		// timer = 0;
-
-	// if(MutexGate(0))
-	// {
-		// MutexLock(0);
-		// Bios_Beep();
-		// Bios_ChangeColor(COLOR_GRAY, COLOR_DARK_GREEN, timer & 0x0F);
-		// Bios_GraphicPrint(timer & 0xEF);
-		// MutexRelease(0);
-	// }
-
-	// vdp_status = g_PortVDPStat;
-	// // EnableInterrupt();
-	__asm
-		// pop		iy
-		// pop		ix
-		// pop		hl
-		// pop		de
-		// pop		bc
-		// pop		af
-		ei
-		reti
-	__endasm;
-}
-
 void PrintString(c8* str)
 {
 	i8 i = 0;
 	while(str[i] != 0)
-		Bios_GraphicPrint(str[i++]);
+		Bios_GraphPrintChar(str[i++]);
 }
+
+JSM_ALLOC_DATA()
+
+void JoystickEvent(const JSM_Event* event)
+{
+	if(event->InputId == JSM_INPUT_BUTTON_A)
+	{
+		SetPrintPos(8, 8);
+		PrintChar((event->EventId == JSM_EVENT_CLICK) ? 'O' : 'X');
+	}
+	else if(event->InputId == JSM_INPUT_BUTTON_B)
+	{
+		SetPrintPos(16, 8);
+		PrintChar((event->EventId == JSM_EVENT_CLICK) ? 'O' : 'X');
+	}
+}
+
+/*void JoystickEvent(u8 id, u8 event, u8 value)
+{	
+	if(id == 0) // player 1
+	{
+		if(event == JSM_EVENT_TRIGGER_A)
+		{
+			SetPrintPos(8, 8);
+			PrintChar((value == JSM_TRIGGER_PRESSED) ? 'O' : 'X');
+		}
+		else if(event == JSM_EVENT_TRIGGER_B)
+		{
+			SetPrintPos(16, 8);
+			PrintChar((value == JSM_TRIGGER_PRESSED) ? 'O' : 'X');
+		}
+	}
+	else // player 2
+	{
+		if(event == JSM_EVENT_TRIGGER_A)
+		{
+			SetPrintPos(8, 16);
+			PrintChar((value == JSM_TRIGGER_PRESSED) ? 'O' : 'X');
+		}
+		else if(event == JSM_EVENT_TRIGGER_B)
+		{
+			SetPrintPos(16, 16);                                       
+			PrintChar((value == JSM_TRIGGER_PRESSED) ? 'O' : 'X');
+		}
+	}
+}*/
 
 //-----------------------------------------------------------------------------
 /** Main loop */
@@ -110,30 +114,63 @@ void MainLoop()
 	//Bios_FillVRAM(0, 128 * 214, (COLOR_DARK_GREEN << 4) | COLOR_DARK_GREEN);
 
 	//PrintString("-=[ GoS ]=-");
-	DrawText("ACE 0-0 SUB", 1, 1, COLOR_BLACK, COLOR_DARK_GREEN, SCREEN_5);
-	DrawText("ACE 0-0 SUB", 0, 0, COLOR_WHITE, COLOR_DARK_GREEN, SCREEN_5);
+	//DrawText("ACE 0-0 SUB", 1, 1, COLOR_BLACK, COLOR_DARK_GREEN, SCREEN_5);
+	//DrawText("ACE 0-0 SUB", 0, 0, COLOR_WHITE, COLOR_DARK_GREEN, SCREEN_5);
 	
 	Bios_TransfertRAMtoVRAM((u16)g_PlayerSprite_palette, 0x7680 + 2, 15*2);	
 
 	MSXi_UnpackToVRAM((u16)g_PlayerSprite, 0, 32, 16, 16, 11, 8, COMPRESS_CropLine16, SCREEN_5);
 
+
 	// Bios_InitPSG();
 	// SetHookCallback(H_TIMI, VBlankHook);
 
 	u8 count = 32;
+	
+	JSM_Initialize();
+	JSM_RegisterEvent(0, JSM_INPUT_BUTTON_A, JSM_EVENT_CLICK, 0, JoystickEvent);
+	JSM_RegisterEvent(0, JSM_INPUT_BUTTON_A, JSM_EVENT_RELEASE, 0, JoystickEvent);
+	JSM_RegisterEvent(0, JSM_INPUT_BUTTON_B, JSM_EVENT_CLICK, 0, JoystickEvent);
+	JSM_RegisterEvent(0, JSM_INPUT_BUTTON_B, JSM_EVENT_RELEASE, 0, JoystickEvent);
 
+	//JSM_RegisterEventOld(0, JSM_EVENT_ALL, JoystickEvent);
+	//JSM_RegisterEventOld(1, JSM_EVENT_ALL, JoystickEvent);
+
+	PrintInit(COLOR_LIGHT_YELLOW);
+	SetPrintPos(8, 8);
+	PrintChar('X');
+	SetPrintPos(16, 8);
+	PrintChar('X');		
+	SetPrintPos(8, 16);
+	PrintChar('X');
+	SetPrintPos(16, 16);                                       
+	PrintChar('X');
+	
+	
+	
 	while(1)
 	{
-		Bios_ChangeColor(COLOR_WHITE, COLOR_BLACK, count & 0x0F);
+		JSM_Update();
 
-		DrawText("ACE", count, 200, COLOR_DARK_GREEN, COLOR_DARK_GREEN, SCREEN_5);
+		/*SetPrintPos(32, 8);
+		PrintHex8(JSM_GetTimer(0, JSM_INPUT_BUTTON_A));
+		PrintChar(' ');
+		PrintText(JSM_GetLastEventText(0));
+		SetPrintPos(32, 16);
+		PrintHex8(JSM_GetTimer(1, JSM_INPUT_BUTTON_A));
+		PrintChar(' ');
+		PrintText(JSM_GetLastEventText(1));*/
+	
+
+
+		//DrawText("ACE", count, 200, COLOR_DARK_GREEN, COLOR_DARK_GREEN, SCREEN_5);
 		count++;
 		if(count > 128)
 		{
 			count = 32;
 			//Bios_Beep();
 		}
-		DrawText("ACE", count, 200, COLOR_WHITE, COLOR_DARK_GREEN, SCREEN_5);
+		//DrawText("ACE", count, 200, COLOR_WHITE, COLOR_DARK_GREEN, SCREEN_5);
 
 		// switch((count++ >> 2) & 0x03)
 		// {
@@ -171,6 +208,8 @@ void MainLoop()
 		
 		
 		// Bios_ChangeColor(COLOR_WHITE, COLOR_BLACK, COLOR_BLACK);
+		
+		//Bios_ChangeColor(COLOR_WHITE, COLOR_BLACK, count & 0x0F);
 		VDP_WaitRetrace();
 	}
 }

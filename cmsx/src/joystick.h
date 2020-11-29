@@ -52,8 +52,6 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger);
 //-----------------------------------------------------------------------------
 #if USE_JOYSTICK_MANAGER
 
-// Program must declare "JSM_ALLOC_DATA()" in global space to allocate needed data into RAM
-
 enum JSM_JOYSTICK
 {
 	JSM_JOYSTICK_1,
@@ -73,24 +71,26 @@ enum JSM_INPUT
 	JSM_INPUT_ANY,
 };
 
-enum JSM_STATE
-{
-	JSM_STATE_OFF = 0,
-	JSM_STATE_ON,
-	//---------------------------------
-	JSM_STATE_MAX,
-};
+#define JSM_STATE_OFF			0x00
+#define JSM_STATE_PRESS			0x01
+#define JSM_STATE_ON			0x02
+#define JSM_STATE_RELEASE		0x03
+#define JSM_STATE_PRESSMASK		0x03
+
+#define JSM_STATE_HOLD			0x10
+#define JSM_STATE_HOLDING		0x20
+#define JSM_STATE_HOLDMASK		0x30
+
+#define JSM_STATE_DOUBLE		0x80
+
 
 enum JSM_EVENT
 {
 	JSM_EVENT_CLICK = 0,
-	JSM_EVENT_RELEASE,
 	JSM_EVENT_HOLD,
-	JSM_EVENT_HOLD_RELEASE,
 	JSM_EVENT_DOUBLE_CLICK,	
-	JSM_EVENT_DOUBLE_CLICK_RELEASE,	
 	JSM_EVENT_DOUBLE_CLICK_HOLD,
-	JSM_EVENT_DOUBLE_CLICK_HOLD_RELEASE,
+	JSM_EVENT_RELEASE,
 	//---------------------------------
 	JSM_EVENT_MAX,
 	JSM_EVENT_ANY,
@@ -99,22 +99,16 @@ enum JSM_EVENT
 
 #define JSM_EVENT_TAB_SIZE	16
 
+typedef void (*jsm_cb)(u8 joy, u8 in, u8 evt);
+typedef u8 (*jsm_check)(u8 joy, u8 in);
+
 typedef struct
 {
 	u8			JoyId;
 	u8			InputId;
 	u8			EventId;
-	u8			UserData;
-} JSM_Event;
-
-typedef void (*jsm_cb)(const JSM_Event* event);
-typedef u8 (*jsm_check)(u8 joy, u8 input);
-
-typedef struct
-{
-	JSM_Event	Event;
 	jsm_cb		Callback;
-} JSM_Entry;
+} JSM_Event;
 
 typedef struct
 {
@@ -122,9 +116,7 @@ typedef struct
 	u8			PreviousStatus;
 	u8			State[JSM_INPUT_MAX];
 	u8			Timer[JSM_INPUT_MAX];
-	u8			PrevState[JSM_INPUT_MAX];
-	u8			PrevTimer[JSM_INPUT_MAX];
-} JSM_System;	
+} JSM_Process;	
 
 typedef struct
 {
@@ -136,8 +128,8 @@ typedef struct
 
 typedef struct
 {
-	JSM_System	JoyData[2];
-	JSM_Entry	Events[JSM_EVENT_TAB_SIZE];
+	JSM_Process	Process[JSM_JOYSTICK_MAX];
+	JSM_Event	Events[JSM_EVENT_TAB_SIZE];
 	i8			EventsNum;
 	jsm_check	Checker[JSM_EVENT_MAX];
 	JSM_Config  Config;
@@ -152,7 +144,7 @@ void JSM_Initialize();
 void JSM_Update();
 
 // Register a callback to a given Joystick manager's event
-void JSM_RegisterEvent(u8 joy, u8 input, u8 event, u8 userdata, jsm_cb cb);
+bool JSM_RegisterEvent(u8 joy, u8 input, u8 event, jsm_cb cb);
 
 // Get current joystick status
 inline u8 JSM_GetStatus(u8 joy);

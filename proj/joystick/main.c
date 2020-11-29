@@ -29,34 +29,39 @@ void main()
 	MainLoop();
 }
 
-#define LOG_MAX 7
-const JSM_Event* g_EventLog[2][LOG_MAX];
-u8 g_EventNum[2];
+// Log
+u8 LogX, LogY;
 
-void JoystickEvent(const JSM_Event* event)
+void JoystickEvent(u8 joy, u8 in, u8 evt)
 {
-	if(g_EventNum[event->JoyId] > 0)
+	if(LogY >= 24)
 	{
-		for(i8 i = g_EventNum[event->JoyId]; i > 0 ; i--)
-			g_EventLog[event->JoyId][i] = g_EventLog[event->JoyId][i-1];
-	}
-	g_EventLog[event->JoyId][0] = event;
-	if(g_EventNum[event->JoyId] < LOG_MAX - 1)
-		g_EventNum[event->JoyId]++;
-	
-	for(i8 i = 0; i < g_EventNum[event->JoyId]; i++)
-	{
-		SetPrintPos(3 + (21 * event->JoyId), 18 + i);
-		PrintText("      ");
-		SetPrintPos(3 + (21 * event->JoyId), 18 + i);
-		switch(g_EventLog[event->JoyId][i]->InputId)
+		for(i8 i = 18; i < 24; i++) // clear
 		{
-		case JSM_INPUT_BUTTON_A: PrintText("A:"); break;
-		case JSM_INPUT_BUTTON_B: PrintText("B:"); break;
-		case JSM_INPUT_STICK:    PrintText("S:"); break;
-		};
-		PrintText(JSM_GetEventName(g_EventLog[event->JoyId][i]->EventId));
+			SetPrintPos(1, i);
+			PrintCharX(' ', 40);
+		}
+		LogX = 1;
+		LogY = 18;
 	}
+
+	SetPrintPos(LogX, LogY);
+	PrintChar('J');
+	PrintInt(joy);
+	PrintChar('.');
+	switch(in)
+	{
+	case JSM_INPUT_STICK:    PrintText("S"); break;
+	case JSM_INPUT_BUTTON_A: PrintText("A"); break;
+	case JSM_INPUT_BUTTON_B: PrintText("B"); break;
+	}
+	PrintChar(':');
+	PrintText(JSM_GetEventName(evt));
+	PrintChar(' ');
+	
+	LogX = g_CSRX;
+	LogY = g_CSRY;
+
 }
 
 
@@ -71,10 +76,14 @@ void MainLoop()
 	Bios_ChangeColor(COLOR_WHITE, COLOR_DARK_BLUE, COLOR_DARK_BLUE);
 	Bios_ClearScreen();
 
-	g_EventNum[0] = g_EventNum[1] = 0;
+	LogX = 1;
+	LogY = 18;
 
 	JSM_Initialize();
-	JSM_RegisterEvent(JSM_JOYSTICK_1, JSM_INPUT_ANY, JSM_EVENT_ANY, 0, JoystickEvent);
+	JSM_RegisterEvent(JSM_JOYSTICK_1, JSM_INPUT_ANY, JSM_EVENT_CLICK, JoystickEvent);
+	JSM_RegisterEvent(JSM_JOYSTICK_1, JSM_INPUT_ANY, JSM_EVENT_HOLD, JoystickEvent);
+	JSM_RegisterEvent(JSM_JOYSTICK_1, JSM_INPUT_ANY, JSM_EVENT_DOUBLE_CLICK, JoystickEvent);
+	JSM_RegisterEvent(JSM_JOYSTICK_1, JSM_INPUT_ANY, JSM_EVENT_DOUBLE_CLICK_HOLD, JoystickEvent);
 
 	PrintBox(1, 1, 40, 3);
 
@@ -88,6 +97,10 @@ void MainLoop()
 	PrintLineX(1, 13, 40);
 	SetPrintPos(3, 13);
 	PrintText(" JS Manager ");
+
+	// Events
+	SetPrintPos(1, 17);
+	PrintText("\x01\x47""Events log:");
 	
 	for(i8 joy = 0; joy < 2; joy++)
 	{
@@ -120,9 +133,6 @@ void MainLoop()
 		// Button B
 		SetPrintPos(1 + (21 * joy), 16);
 		PrintText("\x01\x47""Button B");
-		// Events
-		SetPrintPos(1 + (21 * joy), 17);
-		PrintText("\x01\x47""Events:");
 	}
 
 	u8 timer;
@@ -203,7 +213,13 @@ void MainLoop()
 			if(timer < 10) PrintChar(' ');
 			// Button A
 			SetPrintPos(12 + (21 * joy), 15);
-			PrintText(JSM_GetInputState(joy, JSM_INPUT_BUTTON_A) ? "ON " : "OFF");
+			switch(JSM_GetInputState(joy, JSM_INPUT_BUTTON_A) & JSM_STATE_PRESSMASK)
+			{
+			case JSM_STATE_OFF:     PrintText("OFF"); break;
+			case JSM_STATE_PRESS:   PrintText("PRE"); break;
+			case JSM_STATE_ON:      PrintText("ON "); break;
+			case JSM_STATE_RELEASE: PrintText("REL"); break;
+			}
 			SetPrintPos(16 + (21 * joy), 15);
 			timer = JSM_GetInputTimer(joy, JSM_INPUT_BUTTON_A);
 			PrintInt(timer);

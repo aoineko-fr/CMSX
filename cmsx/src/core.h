@@ -13,9 +13,9 @@
 
 //-----------------------------------------------------------------------------
 // Boolean
-typedef unsigned char BOOL; // 8 bits boolean
-#define TRUE  1
-#define FALSE 0
+typedef unsigned char bool; // 8 bits boolean
+#define true  0x01
+#define false 0x00
 
 // Integer
 typedef char i8;            // 8 bits signed integer

@@ -8,23 +8,7 @@
 #include "color.h"
 #include "bios_main.h"
 #include "keyboard.h"
-
-//-----------------------------------------------------------------------------
-// Helper function
-
-// Set print position
-void SetPrintPos(u8 x, u8 y)
-{
-	g_GRPACX = x;
-	g_GRPACY = y;
-}
-
-// Print a null terminated character string
-void PrintText(const c8* str)
-{
-	while(*str != 0)
-		Bios_GraphicPrint(*str++);	
-}
+#include "print.h"
 
 //-----------------------------------------------------------------------------
 // Program entry point
@@ -45,7 +29,7 @@ void main()
 		SetPrintPos(124, 102);
 		static const u8 chrAnim[] = { '|', '\\', '-', '/' };
 		u8 chr = count & 0x03;
-		Bios_GraphicPrint(chrAnim[chr]);
+		PrintChar(chrAnim[chr]);
 		
 		Bios_ChangeColor(COLOR_WHITE, COLOR_BLACK, count & 0x0F);
 		count++;
