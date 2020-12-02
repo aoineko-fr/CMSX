@@ -9,8 +9,10 @@
 // Target
 // - TARGET_BIN ...........	BASIC binary program
 // - TARGET_ROM16 ......... 16KB ROM in page 1
+// - TARGET_ROM16P0 ....... 16KB ROM in page 0
 // - TARGET_ROM16P2 ....... 16KB ROM in page 2
-// - TARGET_ROM32 ......... 32KB ROM in page 1&2
+// - TARGET_ROM32 ......... 32KB ROM in page 1-2
+// - TARGET_ROM32P0 ....... 32KB ROM in page 0-1
 // - TARGET_ROM48 ......... 48KB ROM in page 0-2
 // - TARGET_DOS ........... MSX-DOS program
 // - TARGET_DOSARG ........ MSX-DOS program (using command line arguments)
@@ -45,8 +47,10 @@
 #define USE_BIOS_VDP				1
 #define USE_BIOS_PSG				1
 
-// Joystick
-#define USE_JOYSTICK_MANAGER		1
+// Input module configuration
+#define USE_INPUT_JOYSTICK			1
+#define USE_INPUT_KEYBOARD			1
+#define USE_INPUT_MANAGER			1
 
 // MSXi compressor support
 #define USE_MSXi_COMP_NONE			0
