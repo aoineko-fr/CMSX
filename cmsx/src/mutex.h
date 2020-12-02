@@ -19,4 +19,4 @@ inline void MutexRelease(u8 mutex) { g_Mutex &= ~(1 << mutex); }
 inline void MutexWait(u8 mutex) { while((g_Mutex & (1 << mutex)) != 0); }
 
 // Gate for mutex (0-7)
-inline BOOL MutexGate(u8 mutex) { return ((g_Mutex & (1 << mutex)) == 0); }
+inline bool MutexGate(u8 mutex) { return ((g_Mutex & (1 << mutex)) == 0); }

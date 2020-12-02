@@ -71,7 +71,10 @@ echo └────────────────────────
 
 echo [94mMaking %ProjName% using SDCC...[0m
 
-set SDCCParam=-mz80 --no-std-crt0 --code-loc 0x%CodeAddr% --data-loc 0x%DataAddr% --vc --opt-code-speed %LibList% -o %OutDir%\
+if %Optim%==Speed (set LinkOpt=%LinkOpt% --opt-code-speed)
+if %Optim%==Size (set LinkOpt=%LinkOpt% --opt-code-size)
+
+set SDCCParam=-mz80 --no-std-crt0 --code-loc 0x%CodeAddr% --data-loc 0x%DataAddr% --vc %LinkOpt% %LibList% -o %OutDir%\
 echo SDCC %SDCCParam%
 %SDCC% %SDCCParam%
 if errorlevel 1 goto :Error

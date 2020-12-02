@@ -10,6 +10,10 @@
 .module	crt0
 
 .globl	_main
+.globl  l__INITIALIZER
+.globl  s__INITIALIZED
+.globl  s__INITIALIZER
+.globl  s__HEAP
 
 HIMEM = #0xFC4A
 PPI_A = #0xA8
@@ -34,9 +38,9 @@ PPI_A = #0xA8
 	.dw		0x0000
 
 init:
+	; Set stack address at the top of free memory
 	di
-
-	ld		sp, (HIMEM) ; Set stack address at the top of memory
+	ld		sp, (HIMEM)
 	
 	; Set Page 2 slot equal to Page 1 slot
 	in		a, (PPI_A)
@@ -49,14 +53,39 @@ init:
 	or		a, c
 	out		(PPI_A), a
 	
+	; Initialize globals
+    ld		bc, #l__INITIALIZER
+	ld		a, b
+	or		a, c
+	jp		z, start	
+	ld		de, #s__INITIALIZED
+	ld		hl, #s__INITIALIZER
+	ldir
+
+start:
+	; start main() function
 	ei
-	
-	call	_main ; start main() function
+	call	_main
 	rst		0
 	
 ;------------------------------------------------------------------------------
+.area	_CODE
+
+_g_HeapStartAddress::
+	.dw		s__HEAP
+
+;------------------------------------------------------------------------------
 ; Ordering of segments for the linker
 
-.area   _DATA
+;-- ROM --
+.area	_HOME
+.area	_CODE
+.area	_INITIALIZER 
 .area   _GSINIT
 .area   _GSFINAL
+;-- RAM --
+.area	_DATA
+.area	_INITIALIZED
+.area	_BSEG
+.area   _BSS
+.area   _HEAP

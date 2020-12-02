@@ -528,7 +528,7 @@ void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length)
 // Remark   : Colors palette is not initialized by this routine, call the routine CHGMDP (001B5h in Sub-ROM) if you need to initialize the palette
 void Bios_ChangeMode(u8 screen) __FASTCALL
 {
-	//g_OLDSCR = g_SCRMOD;
+	screen;
 	// FastCall
 	//	ld		l, screen
 	__asm
@@ -541,7 +541,6 @@ void Bios_ChangeMode(u8 screen) __FASTCALL
 		call	R_CALSLT
 #endif
 	__endasm;
-	//g_SCRMOD = screen;
 }
 
 //-----------------------------------------------------------------------------
@@ -965,7 +964,6 @@ void Bios_TextPrintChar(u8 chr) __FASTCALL
 	// FastCall
 	//	ld		l, chr
 	__asm
-		di
 		ld		a, l
 #if (CALL_MAINROM == CALL_DIRECT)
 		call	R_CHPUT
@@ -974,7 +972,6 @@ void Bios_TextPrintChar(u8 chr) __FASTCALL
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
 #endif
-		ei
 	__endasm;	
 }
 

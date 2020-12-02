@@ -16,6 +16,7 @@
 .globl  l__INITIALIZER
 .globl  s__INITIALIZED
 .globl  s__INITIALIZER
+.globl  s__HEAP
 
 HIMEM = #0xFC4A
 
@@ -30,21 +31,29 @@ HIMEM = #0xFC4A
 	.dw 	init	; Execution address
 
 init:
+	; Set stack address at the top of free memory
 	di
-	ld		sp, (HIMEM) ; Set stack address at the top of free memory
-	ei
+	ld		sp, (HIMEM)
 
 	; Initialize globals and jump to main()
     ld		bc, #l__INITIALIZER
 	ld		a, b
 	or		a, c
-	jp		z,_main
-	
+	jp		z, start	
 	ld		de, #s__INITIALIZED
 	ld		hl, #s__INITIALIZER
 	ldir
 
-	jp		_main ; start main() function
+start:
+	; start main() function
+	ei
+	jp		_main
+
+;------------------------------------------------------------------------------
+.area	_DATA
+
+_g_HeapStartAddress::
+	.dw		s__HEAP
 
 ;------------------------------------------------------------------------------
 ; Ordering of segments for the linker

@@ -7,7 +7,7 @@
 #include "bios.h"
 #include "ports.h"
 
-VDP __at(0xC000) vdp;
+VDP vdp;
 
 /** Initialize video library */
 void VideoInitialize()
