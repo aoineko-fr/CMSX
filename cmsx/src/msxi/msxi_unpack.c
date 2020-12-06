@@ -10,6 +10,7 @@
 #include "core.h"
 #include "bios.h"
 #include "bios_main.h"
+#include "vdp.h"
 #include "msxi/msxi_unpack.h"
 
 //-----------------------------------------------------------------------------
@@ -105,7 +106,11 @@ void MSXi_UnpackCropLine16ToVRAM(u16 src, u8 destX, u8 destY, u8 sizeX, u8 sizeY
 				if(len & 0x1)
 					len++;
 				len /= 2;
+#if (RENDER_MODE == RENDER_VDP)
+				VDP_WriteVRAM(ptr, ((destY + y + (j * sizeY)) * 128) + ((destX + (i * sizeX) + minX) >> 1), 0, len);
+#elif (RENDER_MODE == RENDER_BIOS)
 				Bios_TransfertRAMtoVRAM((u16)ptr, ((destY + y + (j * sizeY)) * 128) + ((destX + (i * sizeX) + minX) >> 1), len);
+#endif
 				ptr += len;
 			}
 		}

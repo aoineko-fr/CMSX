@@ -24,17 +24,7 @@
 #include "ports.h"
 
 
-//─────────────────────────────────────────────────────────────────────────────
-// Helper inline functions
 
-// Direct call a routine at a given address (generate ASM code: "call XXXX")
-inline void Call(u16 addr) { ((void(*)(void))(addr))(); }
-
-// Enable interruption
-inline void EnableInterrupt() { __asm__("ei"); }
-
-// Disable interruption
-inline void DisableInterrupt() { __asm__("di"); }
 
 //─────────────────────────────────────────────────────────────────────────────
 // Defines
