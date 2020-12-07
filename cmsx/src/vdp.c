@@ -530,6 +530,7 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL
 		out		(#P_VDP_ADDR), a
 		in		a, (#P_VDP_STAT)
 		ld		l, a				// return value
+		// Reset R#15 to default status register S#0
 		xor		a           		// ld a, 0
 		out		(#P_VDP_ADDR), a
 		ld		a, #VDP_REG(15)
@@ -731,18 +732,32 @@ void VDP_RegWriteBakFC(u16 reg_value) __FASTCALL
 
 //-----------------------------------------------------------------------------
 // Enable/disable horizontal interruption
-void VDP_InterruptHBlank(u8 enable) __FASTCALL
+void VDP_EnableHBlank(u8 enable) __FASTCALL
 {
 	u8 reg = g_VDP_REGSAV[0];
 	reg &= ~R00_IE1;
 	if(enable)
-		reg |= R00_IE1;	
+		reg |= R00_IE1;
 	VDP_RegWriteBak(0, reg);
 }
 
 //-----------------------------------------------------------------------------
+//
+void VDP_SetHBlankLine(u8 line) __FASTCALL
+{
+	VDP_RegWrite(19, line);
+}
+
+//-----------------------------------------------------------------------------
+// 
+void VDP_SetVerticalOffset(u8 offset) __FASTCALL
+{
+	VDP_RegWrite(23, offset);
+}
+
+//-----------------------------------------------------------------------------
 // Enable/disable vertical interruption
-void VDP_InterruptVBlank(u8 enable) __FASTCALL
+void VDP_EnableVBlank(u8 enable) __FASTCALL
 {
 	u8 reg = g_VDP_REGSAV[1];
 	reg &= ~R01_IE0;
@@ -811,6 +826,16 @@ void VDP_SetFrequency(u8 freq) __FASTCALL
 	if(freq)
 		reg |= R09_NT;
 	VDP_RegWriteBak(9, reg);
+}
+
+//-----------------------------------------------------------------------------
+// Set current VRAM page
+void VDP_SetPage(u8 page) __FASTCALL
+{
+	u8 reg = g_VDP_REGSAV[2];
+	reg &= 0x9F;
+	reg |= page << 5;
+	VDP_RegWriteBak(2, reg);
 }
 
 //-----------------------------------------------------------------------------

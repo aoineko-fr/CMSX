@@ -161,10 +161,16 @@ void VDP_FillVRAM(u8 value, u16 destAddr, u8 destPage, u16 count);
 void VDP_ReadVRAM(u16 srcAddr, u8 srcPage, u8* dest, u16 count);
 
 // Enable/disable horizontal interruption
-void VDP_InterruptHBlank(u8 enable) __FASTCALL;
+void VDP_EnableHBlank(u8 enable) __FASTCALL;
+
+//
+void VDP_SetHBlankLine(u8 line) __FASTCALL;
+
+// 
+void VDP_SetVerticalOffset(u8 offset) __FASTCALL;
 
 // Enable/disable vertical interruption
-void VDP_InterruptVBlank(u8 enable) __FASTCALL;
+void VDP_EnableVBlank(u8 enable) __FASTCALL;
 
 // Enable/disable screen display
 void VDP_EnableDisplay(u8 enable) __FASTCALL;
@@ -180,6 +186,9 @@ void VDP_SetGrayScale(u8 enable) __FASTCALL;
 
 // Change VDP frequency
 void VDP_SetFrequency(u8 freq) __FASTCALL;
+
+// Set current VRAM page
+void VDP_SetPage(u8 page) __FASTCALL;
 
 // Set text and border default color
 void VDP_SetColor(u8 color) __FASTCALL;
