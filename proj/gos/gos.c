@@ -3,17 +3,14 @@
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
 
-#pragma sdcc_hash +
-
 #include "core.h"
 #include "color.h"
-#include "print.h"
-#include "mutex.h"
 #include "input.h"
 #include "memory.h"
 #include "vdp.h"
-#include "bios_main.h"
 #include "msxi/msxi_unpack.h"
+#include "bios_hook.h"
+#include "ports.h"
 
 
 //-----------------------------------------------------------------------------
@@ -40,48 +37,130 @@ void main()
 
 #include "data/player.data.h"
 
-u8 timer;
+void HBlankHook()
+{
+	VDP_SetPage(1);
+	//VDP_SetColor(0x66);
+}
 
-u8 vdp_status;
+void InterruptHook()
+{
+	__asm
+		// Get S#1
+		ld		a, #1
+		out		(#P_VDP_ADDR), a
+		ld		a, #(0x80 + 15)
+		out		(#P_VDP_ADDR), a
+		in		a, (#P_VDP_STAT)
+		//  Call H-Blank if bit #0 of S#1 is set 
+		rrca
+		jp		nc, _no_hblank
+		call	_HBlankHook // call to C function HBlankHook() 
+		// Reset R#15 to S#0
+	_no_hblank:
+		xor		a           		
+		out		(#P_VDP_ADDR), a
+		ld		a, #(0x80 + 15)
+		out		(#P_VDP_ADDR),a
+	__endasm;
+}
 
-u8 g_Mutex;
+u8 g_VBlank = 0;
+u8 g_Frame = 0;
 
+void VBlankHook() __preserves_regs(a)
+{
+	g_VBlank = 1;
+}
+
+void WaitVBlank()
+{
+	while(g_VBlank == 0) {}
+	g_VBlank = 0;
+	g_Frame++;
+}
+
+u8 g_ScrollOffset = 0;
 
 //-----------------------------------------------------------------------------
 /** Main loop */
 void MainLoop()
 {
-	MutexInit();
-	
-	Bios_Beep();
-	
-	VDP_SetModeText1();
-	//Bios_ChangeMode(SCREEN_5);
-	//Bios_ChangeColor(COLOR_WHITE, COLOR_DARK_GREEN, COLOR_DARK_GREEN);
-	Bios_ClearScreen();
+	Bios_SetHookCallback(H_KEYI, InterruptHook);
+	Bios_SetHookCallback(H_TIMI, VBlankHook);
 
-	Bios_TransfertRAMtoVRAM(g_CGTABL, 0x0000, 256*8);
-	//Bios_FillVRAM(0x0800, 40*24, 'X');
+	VDP_SetScreen(VDP_MODE_SCREEN5);
+	VDP_SetColor(0xCC);
 	
-	//Bios_TransfertRAMtoVRAM((u16)g_PlayerSprite_palette, 0x7680 + 2, 15*2);	
+	VDP_FillVRAM(0x22, 0x0000, 0, 0x8000);
 
-	//MSXi_UnpackToVRAM((u16)g_PlayerSprite, 0, 32, 16, 16, 11, 8, COMPRESS_CropLine16, SCREEN_5);
-	
-	//IPM_Initialize(null);
+	VDP_HMMV(0, 0, 256, 1, 0xFF);
+	VDP_HMMV(0, 255, 256, 1, 0xFF);
+
+	VDP_FillVRAM(0x44, 0x8000, 0, 0x8000);
+	VDP_HMMV(0, 256, 256, 1, 0x66);
+	VDP_HMMV(0, 511, 256, 1, 0x66);
+
+	MSXi_UnpackToVRAM((u16)g_PlayerSprite, 0, 32, 16, 16, 11, 8, COMPRESS_CropLine16, 0);
+
+	IPM_Initialize(null);
 	//IPM_RegisterEvent(0, IPM_INPUT_BUTTON_A, IPM_EVENT_CLICK, 0, JoystickEvent);
 
-	//PrintInit(COLOR_LIGHT_YELLOW);
-		
 	u8 count = 0;
 	while(1)
 	{
+		//VDP_SetColor(0x00);
+		VDP_SetPage(0);
+
+		//VDP_SetColor(0x66);
 		//IPM_Update();
 
+		if(Keyboard_IsKeyPressed(KEY_DOWN))
+		{
+			if(g_ScrollOffset < 255)
+			{
+				g_ScrollOffset++;
+				if(g_ScrollOffset + 212 > 256)
+				{
+					VDP_EnableHBlank(true);
+					VDP_SetHBlankLine(253);
+				}
+			}
+		}
+		else if(Keyboard_IsKeyPressed(KEY_UP))
+		{
+			if(g_ScrollOffset > 0)
+			{
+				g_ScrollOffset--;
+				if(g_ScrollOffset + 212 <= 256)
+				{
+					VDP_EnableHBlank(true);
+					VDP_SetHBlankLine(253);
+				}	
+			}
+		}
+		VDP_SetVerticalOffset(g_ScrollOffset);
+		
 		count++;
-		SetPrintPos(8, 8);
-		static const u8 chrAnim[] = { '|', '\\', '-', '/' };
-		//PrintChar(chrAnim[count & 0x03]);
-		//Bios_TextPrintChar(chrAnim[count & 0x03]);
-		Bios_FillVRAM(0x0800, 40*24, chrAnim[count & 0x03]);
+
+		// VDP_YMMM(32 + (16 * ((count >> 3) & 0x07)), 0, 212-16, 16, VDP_ARG_DIY_DOWN + VDP_ARG_DIX_RIGHT);
+		
+		// static const u8 RunFrames[] = { 0, 1, 0, 2 };
+		
+		// VDP_HMMM((16 * RunFrames[(count >> 3) & 0x03]), 64, 64 + (count & 0x7F), 0, 16, 16);
+		// VDP_LMMM((16 * RunFrames[(count >> 3) & 0x03]), 64, 64 + (count & 0x7F), 16, 16, 16, VDP_OP_TIMP);
+
+		//VDP_FillVRAM(((count & 0x0F) << 4) | (count & 0x0F), 0x0000, 0, 128*1);
+		//VDP_HMMV(0, 0, 32, 32, ((count & 0x0F) << 4) | (count & 0x0F));
+		
+		// VDP_SetGrayScale(true);
+
+		//VDP_SetColor(0xCC);
+		// VDP_EnableDisplay(true);
+
+		//VDP_WaitVBlank();
+		WaitVBlank();
+
+		// VDP_EnableDisplay(false);
 	}
 }

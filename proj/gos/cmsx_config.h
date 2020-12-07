@@ -29,12 +29,12 @@
 // - MSX_2 ................ MSX 2
 // - MSX_2Plus ............ MSX 2+
 // - MSX_TurboR ........... MSX Turbo-R
-#define MSX_VERSION					MSX_TurboR
+#define MSX_VERSION					MSX_2
 
 // Render mode
+// - RENDER_VDP ........... Use direct access to VDP registers
 // - RENDER_BIOS .......... Use BIOS routines
-// - RENDER_VDP ........... Use direct VDP registers
-#define RENDER_MODE					RENDER_BIOS
+#define RENDER_MODE					RENDER_VDP
 
 // Default bios access
 // - CALL_DIRECT .......... Use direct access to Bios routines (ROM slot must be selected in corresponding page)
@@ -43,23 +43,35 @@
 #define CALL_SUBROM					CALL_INTERSLOT
 #define CALL_DISCROM				CALL_INTERSLOT
 
-// Include routines
-#define USE_BIOS_VDP				1
-#define USE_BIOS_PSG				1
+// VDP screen modes (additionnal limitations come from the selected MSX_VERSION)
+#define USE_VDP_MODE_T1				1	// MSX1		Screen 0 Width 40
+#define USE_VDP_MODE_MC				1	// MSX1		Screen 3
+#define USE_VDP_MODE_G1				1	// MSX1		Screen 1
+#define USE_VDP_MODE_G2				1	// MSX1		Screen 2
+#define USE_VDP_MODE_T2				1	// MSX2		Screen 0 Width 80
+#define USE_VDP_MODE_G3				1	// MSX2		Screen 4
+#define USE_VDP_MODE_G4				1	// MSX2		Screen 5
+#define USE_VDP_MODE_G5				1	// MSX2		Screen 6
+#define USE_VDP_MODE_G6				1	// MSX2		Screen 7
+#define USE_VDP_MODE_G7				1	// MSX2/2+	Screen 8, 10, 11 & 12
 
 // Input module configuration
 #define USE_INPUT_JOYSTICK			1
 #define USE_INPUT_KEYBOARD			1
 #define USE_INPUT_MANAGER			1
 
+// Include BIOS wrapper routines
+#define USE_BIOS_VDP				1
+#define USE_BIOS_PSG				1
+
 // MSXi compressor support
-#define USE_MSXi_COMP_NONE			0
+#define USE_MSXi_COMP_NONE			1
 #define USE_MSXi_COMP_CROP16		1
-#define USE_MSXi_COMP_CROP32		0
-#define USE_MSXi_COMP_CROP256		0
+#define USE_MSXi_COMP_CROP32		1
+#define USE_MSXi_COMP_CROP256		1
 #define USE_MSXi_COMP_CROPLINE16	1
-#define USE_MSXi_COMP_CROPLINE32	0
-#define USE_MSXi_COMP_CROPLINE256	0
+#define USE_MSXi_COMP_CROPLINE32	1
+#define USE_MSXi_COMP_CROPLINE256	1
 #define USE_MSXi_COMP_RLE0			1
-#define USE_MSXi_COMP_RLE4			0
-#define USE_MSXi_COMP_RLE8			0
+#define USE_MSXi_COMP_RLE4			1
+#define USE_MSXi_COMP_RLE8			1
