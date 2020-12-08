@@ -4,12 +4,153 @@
 //-----------------------------------------------------------------------------
 #include "core.h"
 #include "bios_main.h"
-#include "video.h"
+#include "vdp.h"
 #include "print.h"
 
-// #if (RENDER_MODE == RENDER_VDP)
-// extern VDP __at(0xC000) vdp;
+static struct PrintConfig g_PrintConfig;
+
+//-----------------------------------------------------------------------------
+//
+// INITIALIZATION
+//
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+/// Initialize print module
+bool Print_Initialize(u8 screen, const u8* font)
+{
+	Print_SetFont(font);
+
+	g_PrintConfig.Mode = PRINT_MODE_GRAPH;
+	g_PrintConfig.Page = 0;
+	g_PrintConfig.Bpp = 4;
+	g_PrintConfig.UnitX = 8;
+	g_PrintConfig.UnitY = 8;
+	g_PrintConfig.TextColor = 0xFF;
+	g_PrintConfig.BackgroundColor = 0;
+	
+	switch(screen)
+	{
+	case 0:
+	case 1:
+		g_PrintConfig.Mode = PRINT_MODE_TEXT;
+		g_PrintConfig.UnitX = 1;
+		g_PrintConfig.UnitY = 1;
+		break;
+	
+	case 6:
+		g_PrintConfig.Bpp = 1;
+		break;
+	
+	case 8:
+		g_PrintConfig.Bpp = 8;
+		break;
+	case 9:
+	case 10:
+	case 11:
+	case 12:
+		/// @todo Implement
+		return false;
+	}
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+/// Set the current font
+void Print_SetFont(const u8* font) __FASTCALL
+{
+	if(font == null) // Use Bios font (if any)
+	{
+		g_PrintConfig.FontSize  = 0x88;
+		g_PrintConfig.FontFirst = 0;
+		g_PrintConfig.FontLast  = 255;
+		g_PrintConfig.FontForms = (const u8*)g_CGTABL;
+	}
+	else
+	{
+		g_PrintConfig.FontSize  = *font++;
+		g_PrintConfig.FontFirst = *font++;
+		g_PrintConfig.FontLast  = *font++;
+		g_PrintConfig.FontForms = font;
+	}
+}
+
+//-----------------------------------------------------------------------------
+/// Set the draw color
+void Print_SetColor(u8 text, u8 background)
+{
+	g_PrintConfig.TextColor = text;
+	g_PrintConfig.BackgroundColor = background;
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// SYSTEM FUNCTION
+//
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+/// Draw a character in a 4-bits color mode
+void DrawChar4B(u8 character, u8 x, u8 y, u8 color, u8 bg)
+{
+	u8* font = (u8*)(g_CGTABL + 8 * character);
+	i8 i, j;
+	u8 of = x & 0x01; // offset
+		
+	u8 line[5];
+	for(j = 0; j < 8; j++) // lines
+	{
+		line[0] = line[1] = line[2] = line[3] = line[4] = (bg << 4) | bg;
+		for(i = 0; i < 8; i++) // columns
+		{
+			if(font[j] & (1 << (7 - i)))
+			{
+				if((i + of) & 0x01)
+				{
+					line[(i + of) >> 1] &= 0xF0;
+					line[(i + of) >> 1] |= color;
+				}
+				else
+				{
+					line[(i + of) >> 1] &= 0x0F;
+					line[(i + of) >> 1] |= color << 4;
+				}
+			}
+		}		
+// #if (RENDER_MODE == RENDER_BIOS)
+		// Bios_TransfertRAMtoVRAM((u16)line, ((y + j) * 128) + (x >> 1), 4 + of);
+// #elif (RENDER_MODE == RENDER_VDP)
+		// VDP_HMMC((x >> 1), y + j, 4 + of, 1, (u16)line);
 // #endif
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// DRAW FUNCTION
+//
+//-----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+//
+void Print_DrawText(u8 x, u8 y, const c8* string)
+{
+}
+
 
 static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 

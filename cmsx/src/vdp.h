@@ -19,8 +19,8 @@
 // STRUCTURES
 //-----------------------------------------------------------------------------
 
-/// 
-typedef struct tagVDP_Command
+/// Structure used to store register data for VDP command
+struct VDP_Command
 {
 	u16 SX;  // 32-33
 	u16 SY;  // 34-35
@@ -31,7 +31,7 @@ typedef struct tagVDP_Command
 	u8  CLR; // 44
 	u8  ARG; // 45
 	u8  CMD; // 46
-} VDP_Command;
+};
 
 //-----------------------------------------------------------------------------
 // EXTERNALS
@@ -39,7 +39,7 @@ typedef struct tagVDP_Command
 
 extern u8 g_VDP_REGSAV[28];
 extern u8 g_VDP_STASAV[10];
-extern VDP_Command g_VDP_Command;
+extern struct VDP_Command g_VDP_Command;
 
 //-----------------------------------------------------------------------------
 // DEFINES
@@ -64,7 +64,6 @@ enum VDP_MODE
 	VDP_MODE_GRAPHIC6,		// 10100	512 x 212; 16 colours are available for each dot
 	VDP_MODE_GRAPHIC7,		// 11100	256 x 212; 256 colours are available for each dot
 #endif
-
 	// BASIC screens
 	VDP_MODE_SCREEN0,		// VDP_MODE_TEXT1
 	VDP_MODE_SCREEN0_W40 = VDP_MODE_SCREEN0,
@@ -93,16 +92,16 @@ enum VDP_MODE
 // MSX 1 FUNCTIONS
 //-----------------------------------------------------------------------------
 
-//
+/// Set screen mode to Text 1
 void VDP_SetModeText1();
 
-//
+/// Set screen mode to Multi-color
 void VDP_SetModeMultiColor();
 
-//
+/// Set screen mode to Graphic 1
 void VDP_SetModeGraphic1();
 
-//
+/// Set screen mode to Graphic 2
 void VDP_SetModeGraphic2();
 
 //-----------------------------------------------------------------------------
@@ -111,22 +110,22 @@ void VDP_SetModeGraphic2();
 
 #if (MSX_VERSION >= MSX_2)
 
-//
+/// Set screen mode to Text 2
 void VDP_SetModeText2();
 
-//
+/// Set screen mode to Graphic 3
 void VDP_SetModeGraphic3();
 
-//
+/// Set screen mode to Graphic 4
 void VDP_SetModeGraphic4();
 
-//
+/// Set screen mode to Graphic 5
 void VDP_SetModeGraphic5();
 
-//
+/// Set screen mode to Graphic 6
 void VDP_SetModeGraphic6();
 
-//
+/// Set screen mode to Graphic 7
 void VDP_SetModeGraphic7();
 
 #endif
@@ -139,59 +138,70 @@ void VDP_SetModeGraphic7();
 // COMMON FUNCTIONS
 //-----------------------------------------------------------------------------
 
-//
+/// Set screen mode. @see VDP_MODE
 inline void VDP_SetScreen(const u8 mode);
 
-// Wait for VBlank flag trigger
+/// Wait for VBlank flag trigger
 void VDP_WaitVBlank();
 
-// Read default S#0 register
+/// Read default S#0 register
 u8 VDP_ReadDefaultStatus();
 
-// Read a given status register then reset status register to default (0)
+/// Read a given status register then reset status register to default (0)
 u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
-// Write data from RAM to VRAM
+/// Write data from RAM to VRAM
 void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count);
 
-// Fill VRAM area with a given value
+/// Fill VRAM area with a given value
 void VDP_FillVRAM(u8 value, u16 destAddr, u8 destPage, u16 count);
 
-//
+///
 void VDP_ReadVRAM(u16 srcAddr, u8 srcPage, u8* dest, u16 count);
 
-// Enable/disable horizontal interruption
+/// Enable/disable horizontal interruption
 void VDP_EnableHBlank(u8 enable) __FASTCALL;
 
-//
+///
 void VDP_SetHBlankLine(u8 line) __FASTCALL;
 
-// 
+///
 void VDP_SetVerticalOffset(u8 offset) __FASTCALL;
 
-// Enable/disable vertical interruption
+/// Enable/disable vertical interruption
 void VDP_EnableVBlank(u8 enable) __FASTCALL;
 
-// Enable/disable screen display
+/// Enable/disable screen display
 void VDP_EnableDisplay(u8 enable) __FASTCALL;
 
-// Set sprite parameters
+#define VDP_SPRITE_SIZE_8		0			///< Use 8x8 sprite size
+#define VDP_SPRITE_SIZE_16		R01_ST		///< Use 16x16 sprite size
+#define VDP_SPRITE_ENLARGE		R01_MAG		///> Double the size of the sprite (1 dot = 2 pixels)
+/// Set sprite parameters
 void VDP_SetSpriteFlag(u8 flag) __FASTCALL;
 
-// Enable/disable sprite
+/// Enable/disable sprite
 void VDP_EnableSprite(u8 flag) __FASTCALL;
 
-// Enable/disable grayscale
+/// Enable/disable grayscale
 void VDP_SetGrayScale(u8 enable) __FASTCALL;
 
-// Change VDP frequency
+#define VDP_FREQ_50HZ			R09_NT		///< Frequency at 50 Hz
+#define VDP_FREQ_60HZ			0			///< Frequency at 60 Hz
+/// Change VDP frequency
 void VDP_SetFrequency(u8 freq) __FASTCALL;
 
-// Set current VRAM page
+/// Set current VRAM page
 void VDP_SetPage(u8 page) __FASTCALL;
 
-// Set text and border default color
+/// Set text and border default color
 void VDP_SetColor(u8 color) __FASTCALL;
+
+/// Set a new palette [red|blue][0|green]
+void VDP_SetPalette(const u8* pal) __FASTCALL;
+
+/// Set palette entry color
+void VDP_SetPaletteColor(u8 index, u16 color);
 
 //-----------------------------------------------------------------------------
 // VDP REGISTERS
@@ -220,4 +230,4 @@ void VPD_SendCommand36();
 // INLINE FUNCTIONS
 //-----------------------------------------------------------------------------
 
-#include "vdp.inl"
+#include "vdp_cmd.h"

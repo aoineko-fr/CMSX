@@ -18,7 +18,7 @@
 
 u8 g_VDP_REGSAV[28];
 u8 g_VDP_STASAV[10];
-VDP_Command g_VDP_Command;
+struct VDP_Command g_VDP_Command;
 
 //-----------------------------------------------------------------------------
 // VDP Registers Flags
@@ -36,8 +36,9 @@ VDP_Command g_VDP_Command;
 //
 //-----------------------------------------------------------------------------
 
+#if USE_VDP_MODE_T1
 //-----------------------------------------------------------------------------
-//
+/// Data structure to initialize Text 1 screen mode
 static const u8 modeT1[] = 
 {
 	0x00, VDP_REG(0), // Text Mode, No External Video
@@ -49,6 +50,7 @@ static const u8 modeT1[] =
 	//    VDP_REG(6), // (not used)
 	0xF5, VDP_REG(7), // White Text on Light Blue Background
 };
+/// Initialize Text 1 screen mode. Use MSX 1 method without incremental register writing.
 void VDP_SetModeText1()
 {
 	// Backup vdp register @todo Can be optimized
@@ -61,9 +63,11 @@ void VDP_SetModeText1()
 		otir
 	__endasm;
 }
+#endif // USE_VDP_MODE_T1
 
+#if USE_VDP_MODE_MC
 //-----------------------------------------------------------------------------
-//
+/// Data structure to initialize Multi Color screen mode
 static const u8 modeMC[] = 
 {
 	0x00, VDP_REG(0), // Multicolor Mode, No External Video
@@ -75,6 +79,7 @@ static const u8 modeMC[] =
 	0x00, VDP_REG(6), // Address of Sprite Pattern Table in VRAM = 0000h
 	0x04, VDP_REG(7), // Backdrop Color = Dark Blue
 };
+/// Initialize Multi Color screen mode. Use MSX 1 method without incremental register writing.
 void VDP_SetModeMultiColor()
 {
 	// Backup vdp register @todo Can be optimized
@@ -87,9 +92,11 @@ void VDP_SetModeMultiColor()
 		otir
 	__endasm;
 }
+#endif // USE_VDP_MODE_MC
 
+#if USE_VDP_MODE_G1
 //-----------------------------------------------------------------------------
-//
+/// Data structure to initialize Graphic 1 screen mode
 static const u8 modeG1[] = 
 {
 	0x00, VDP_REG(0), // Graphics 1 Mode, No External Video
@@ -101,6 +108,7 @@ static const u8 modeG1[] =
 	0x00, VDP_REG(6), // Address of Sprite Pattern Table in VRAM = 0000h
 	0x01, VDP_REG(7), // Backdrop Color = Black
 };
+/// Initialize Graphic 1 screen mode. Use MSX 1 method without incremental register writing.
 void VDP_SetModeGraphic1()
 {
 	// Backup vdp register @todo Can be optimized
@@ -113,9 +121,11 @@ void VDP_SetModeGraphic1()
 		otir
 	__endasm;
 }
+#endif // USE_VDP_MODE_G1
 
+#if USE_VDP_MODE_G2
 //-----------------------------------------------------------------------------
-//
+/// Data structure to initialize Graphic 2 screen mode
 static const u8 modeG2[] = 
 {
 	0x02, VDP_REG(0), // Graphics 2 Mode, No External Video
@@ -127,6 +137,7 @@ static const u8 modeG2[] =
 	0x03, VDP_REG(6), // Address of Sprite Pattern Table in VRAM = 1800h
 	0x0F, VDP_REG(7), // Backdrop Color = White
 };
+/// Initialize Graphic 2 screen mode. Use MSX 1 method without incremental register writing.
 void VDP_SetModeGraphic2()
 {
 	// Backup vdp register @todo Can be optimized
@@ -139,6 +150,7 @@ void VDP_SetModeGraphic2()
 		otir
 	__endasm;
 }
+#endif // USE_VDP_MODE_G2
 
 //-----------------------------------------------------------------------------
 //
@@ -147,9 +159,14 @@ void VDP_SetModeGraphic2()
 //-----------------------------------------------------------------------------
 #if (MSX_VERSION >= MSX_2)
 
-void VDP_RegIncWrite(u16 src, u8 size, u8 reg)
+//-----------------------------------------------------------------------------
+/// Incremental VDP registers writing
+/// @param	src		Address of the data to be write into the registers
+/// @param	count	Number of registers to be write
+/// @param	reg		First register to be write (will be automaticaly incremented at each write)
+void VDP_RegIncWrite(u16 src, u8 count, u8 reg)
 {
-	src, size, reg;
+	src, count, reg;
 	
 	__asm
 		push	ix
@@ -237,7 +254,7 @@ void VDP_RegIncWrite(u16 src, u8 size, u8 reg)
 	.endm			\
 	ei
 
-// Fast incremental write to VDP register with backup to RAM
+/// Fast incremental write to VDP register with backup to RAM
 #define ASM_REG_WRITE_INC_BK(_addr, _reg, _count)	\
 	__asm											\
 		ld		hl, #(_##_addr)						\
@@ -247,7 +264,7 @@ void VDP_RegIncWrite(u16 src, u8 size, u8 reg)
 	__endasm;										\
 	ASM_REG_WRITE_INC(_addr, _reg, _count)
 
-// Fast incremental write to VDP register
+/// Fast incremental write to VDP register
 #define ASM_REG_WRITE_INC(_addr, _reg, _count)		\
 	__asm											\
 		ld		a, #(_reg)							\
@@ -262,7 +279,9 @@ void VDP_RegIncWrite(u16 src, u8 size, u8 reg)
 		OUTI(_count) ; 'ei' included				\
 	__endasm
 
+#if USE_VDP_MODE_T2
 //-----------------------------------------------------------------------------
+/// Data structure to initialize Text 2 screen mode
 static const u8 modeT2[] = 
 {
 	0x04, // R#0
@@ -276,13 +295,16 @@ static const u8 modeT2[] =
 	0x08, // R#8
 	0x02, // R#9
 };
-// Set Screen Mode Text 2
+/// Initialize Text 2 screen mode. Use MSX 2 incremental VDP registers writing
 void VDP_SetModeText2()
 {
 	ASM_REG_WRITE_INC_BK(modeT2, 0, 10);
 }
+#endif // USE_VDP_MODE_T2
 
+#if USE_VDP_MODE_G3
 //-----------------------------------------------------------------------------
+/// Data structure to initialize Graphic 3 screen mode
 static const u8 modeG3[] = 
 {
 	0x04, // R#0
@@ -296,13 +318,16 @@ static const u8 modeG3[] =
 	0x08, // R#8
 	0x02, // R#9
 };
-// Set Screen Mode Graphics 3
+/// Initialize Graphic 3 screen mode. Use MSX 2 incremental VDP registers writing
 void VDP_SetModeGraphic3()
 {
 	ASM_REG_WRITE_INC_BK(modeG3, 0, 10);
 }
+#endif // USE_VDP_MODE_G3
 
+#if USE_VDP_MODE_G4
 //-----------------------------------------------------------------------------
+/// Data structure to initialize Graphic 4 screen mode
 static const u8 modeG4[] = 
 {
 	0x06, // R#0
@@ -316,13 +341,16 @@ static const u8 modeG4[] =
 	0x08, // R#8
 	0x82, // R#9
 };
-// Set Screen Mode Graphics 4
+/// Initialize Graphic 4 screen mode. Use MSX 2 incremental VDP registers writing
 void VDP_SetModeGraphic4()
 {
 	ASM_REG_WRITE_INC_BK(modeG4, 0, 10);
 }
+#endif // USE_VDP_MODE_G4
 
+#if USE_VDP_MODE_G5
 //-----------------------------------------------------------------------------
+/// Data structure to initialize Graphic 5 screen mode
 static const u8 modeG5[] = 
 {
 	0x08, // R#0
@@ -336,13 +364,16 @@ static const u8 modeG5[] =
 	0x08, // R#8
 	0x82, // R#9
 };
-// Set Screen Mode Graphics 5
+/// Initialize Graphic 5 screen mode. Use MSX 2 incremental VDP registers writing
 void VDP_SetModeGraphic5()
 {
 	ASM_REG_WRITE_INC_BK(modeG5, 0, 10);
 }
+#endif // USE_VDP_MODE_G5
 
+#if USE_VDP_MODE_G6
 //-----------------------------------------------------------------------------
+/// Data structure to initialize Graphic 6 screen mode
 static const u8 modeG6[] = 
 {
 	0x0A, // R#0
@@ -356,13 +387,16 @@ static const u8 modeG6[] =
 	0x08, // R#8
 	0x82, // R#9
 };
-// Set Screen Mode Graphics 6
+/// Initialize Graphic 6 screen mode. Use MSX 2 incremental VDP registers writing
 void VDP_SetModeGraphic6()
 {
 	ASM_REG_WRITE_INC_BK(modeG6, 0, 10);
 }
+#endif // USE_VDP_MODE_G6
 
+#if USE_VDP_MODE_G7
 //-----------------------------------------------------------------------------
+/// Data structure to initialize Graphic 7 screen mode
 static const u8 modeG7[] = 
 {
 	0x0E, // R#0
@@ -376,13 +410,14 @@ static const u8 modeG7[] =
 	0x08, // R#8
 	0x82, // R#9
 };
-// Set Screen Mode Graphics 7
+/// Initialize Graphic 7 screen mode. Use MSX 2 incremental VDP registers writing
 void VDP_SetModeGraphic7()
 {
 	ASM_REG_WRITE_INC_BK(modeG7, 0, 10);
 }
+#endif // USE_VDP_MODE_G7
 
-#endif
+#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 //
@@ -407,71 +442,99 @@ inline void VDP_SetScreen(const u8 mode)
 {
 	switch(mode)
 	{
+#if USE_VDP_MODE_T1
 	//case VDP_MODE_SCREEN0:
 	case VDP_MODE_SCREEN0_W40:
 	case VDP_MODE_TEXT1:
 		VDP_SetModeText1();
 		return;
+#endif // USE_VDP_MODE_T1
 	
+#if USE_VDP_MODE_MC
 	case VDP_MODE_SCREEN3:
 	case VDP_MODE_MULTICOLOR:
 		VDP_SetModeMultiColor();
 		return;
+#endif // USE_VDP_MODE_MC
 
+#if USE_VDP_MODE_G1
 	case VDP_MODE_SCREEN1:
 	case VDP_MODE_GRAPHIC1:
 		VDP_SetModeGraphic1();
 		return;
+#endif // USE_VDP_MODE_G1
 
+#if USE_VDP_MODE_G2
 	case VDP_MODE_SCREEN2:
 	case VDP_MODE_GRAPHIC2:
 		VDP_SetModeGraphic2();
 		return;
+#endif // USE_VDP_MODE_G2
 
 #if (MSX_VERSION >= MSX_2)
+
+#if USE_VDP_MODE_T2
 	case VDP_MODE_SCREEN0_W80:
 	case VDP_MODE_TEXT2:
 		VDP_SetModeText2();
 		return;
+#endif // USE_VDP_MODE_T2²
 
+#if USE_VDP_MODE_G3
 	case VDP_MODE_SCREEN4:
 	case VDP_MODE_GRAPHIC3:
 		VDP_SetModeGraphic3();
 		return;
+#endif // USE_VDP_MODE_G3
 	
+#if USE_VDP_MODE_G4
 	case VDP_MODE_SCREEN5:
 	case VDP_MODE_GRAPHIC4:
 		VDP_SetModeGraphic4();
 		return;
+#endif // USE_VDP_MODE_G4
 	
+#if USE_VDP_MODE_G5
 	case VDP_MODE_SCREEN6:
 	case VDP_MODE_GRAPHIC5:
 		VDP_SetModeGraphic5();
 		return;
+#endif // USE_VDP_MODE_G5
 	
+#if USE_VDP_MODE_G6
 	case VDP_MODE_SCREEN7:
 	case VDP_MODE_GRAPHIC6:
 		VDP_SetModeGraphic6();
 		return;
+#endif // USE_VDP_MODE_G6
 		
+#if USE_VDP_MODE_G7
 	case VDP_MODE_SCREEN8:
 	case VDP_MODE_GRAPHIC7:
 		VDP_SetModeGraphic7();
 		return;
+#endif // USE_VDP_MODE_G7
 		
+#if USE_VDP_MODE_G5
 	// case VDP_MODE_SCREEN9:
 	case VDP_MODE_SCREEN9_40:
 		VDP_SetModeGraphic5();
 		// @todo Further setting needed
 		return;
+#endif // USE_VDP_MODE_G5
 	
+#if USE_VDP_MODE_G4
 	case VDP_MODE_SCREEN9_80:
 		VDP_SetModeGraphic4();
 		// @todo Further setting needed
 		return;
+#endif // USE_VDP_MODE_G4
 
-#endif
+#endif // (MSX_VERSION >= MSX_2)
+
 #if (MSX_VERSION >= MSX_2Plus)
+
+#if USE_VDP_MODE_G7
 	case VDP_MODE_SCREEN10:
 		VDP_SetModeGraphic7();
 		// @todo Further setting needed
@@ -486,7 +549,9 @@ inline void VDP_SetScreen(const u8 mode)
 		VDP_SetModeGraphic7();
 		// @todo Further setting needed
 		return;
-#endif
+#endif // USE_VDP_MODE_G7
+
+#endif // (MSX_VERSION >= MSX_2Plus)
 	}
 }
 
@@ -601,6 +666,13 @@ void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count)
 // Fill VRAM area with a given value
 void VDP_FillVRAM(u8 value, u16 dest, u8 page, u16 count)
 {
+	g_PortVDPAddr = (page << 2) + (dest >> 14);
+	g_PortVDPAddr = VDP_REG(14);
+	g_PortVDPAddr = (dest & 0xFF);
+	g_PortVDPAddr = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+	while(count--)
+		g_PortVDPData = value;
+/*	
 	dest, page, value, count;
 	__asm
 		push	ix
@@ -648,7 +720,7 @@ void VDP_FillVRAM(u8 value, u16 dest, u8 page, u16 count)
 		jp		nz, fll_loop_start
 
 		pop	ix
-	__endasm;
+	__endasm;*/
 }
 
 //-----------------------------------------------------------------------------
@@ -779,9 +851,6 @@ void VDP_EnableDisplay(u8 enable) __FASTCALL
 
 //-----------------------------------------------------------------------------
 // Set sprite parameters
-#define VDP_SPRITE_SIZE_8		0
-#define VDP_SPRITE_SIZE_16		R01_ST
-#define VDP_SPRITE_ENLARGE		R01_MAG
 void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 {
 	u8 reg = g_VDP_REGSAV[1];
@@ -817,8 +886,6 @@ void VDP_SetGrayScale(u8 enable) __FASTCALL
 
 //-----------------------------------------------------------------------------
 // Change VDP frequency
-#define VDP_FREQ_50HZ			R09_NT
-#define VDP_FREQ_60HZ			0
 void VDP_SetFrequency(u8 freq) __FASTCALL
 {
 	u8 reg = g_VDP_REGSAV[9];
@@ -845,6 +912,38 @@ void VDP_SetColor(u8 color) __FASTCALL
 	VDP_RegWrite(7, color);
 }
 
+extern u8* g_PlayerSprite_palette;
+
+//-----------------------------------------------------------------------------
+/// Set a new palette [red|blue][0|green]
+void VDP_SetPalette(const u8* pal) __FASTCALL
+{
+	// FastCall
+	//	ld		hl, pal
+	__asm
+		ld		a, #1
+		di  //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(#P_VDP_ADDR), a
+		ld		a, #VDP_REG(16)
+		ei  //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(#P_VDP_ADDR), a
+
+		ld		hl, #_g_PlayerSprite_palette
+		ld		c, #P_VDP_PALT
+		ld		b, #30
+		otir
+	__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// Set a new palette [red|blue][0|green]
+void VDP_SetPaletteColor(u8 index, u16 color)
+{
+	g_PortVDPAddr = index;
+	g_PortVDPAddr = VDP_REG(16);
+	g_PortVDPPal = color & 0x00FF;
+	g_PortVDPPal = color >> 8;
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -859,18 +958,18 @@ void VDP_WaitReady()
 	__asm
 	wait_vdp_ready:
 		ld		a, #2
-		di  //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a		; select s#2
+		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a		// select s#2
 		ld		a, #VDP_REG(15)
 		out		(P_VDP_ADDR), a
 		in		a, (P_VDP_ADDR)
 		rra
-		ld		a, #0				; back to s#0, enable ints
+		ld		a, #0				// back to s#0, enable ints
 		out		(P_VDP_ADDR), a
 		ld		a, #VDP_REG(15)
-		ei  //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a		; loop if vdp not ready (CE)
-		jp		c, wait_vdp_ready
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a
+		jp		c, wait_vdp_ready	// loop if vdp not ready (CE)
 	__endasm;
 }
 

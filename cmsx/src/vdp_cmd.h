@@ -130,32 +130,56 @@ inline void VDP_LMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 op)
 /**
  * Draw straight line in VRAM
  */
-inline void VDP_LINE()
+inline void VDP_LINE(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 arg, u8 op)
 {
+	g_VDP_Command.DX = dx;
+	g_VDP_Command.DY = dy;
+	g_VDP_Command.NX = nx;
+	g_VDP_Command.NY = ny;
+	g_VDP_Command.CLR = col;
+	g_VDP_Command.ARG = arg;
+	g_VDP_Command.CMD = VDP_CMD_LINE + op;
+	VPD_SendCommand36();
 }
 
 //-----------------------------------------------------------------------------
 /**
  * Search for the specific color in VRAM to the right or left of the starting point
  */
-inline void VDP_SRCH()
+inline void VDP_SRCH(u16 sx, u16 sy, u8 col, u8 arg)
 {
+	g_VDP_Command.SX = sx;
+	g_VDP_Command.SY = sy;
+	g_VDP_Command.CLR = col; 
+	g_VDP_Command.ARG = arg; 
+	g_VDP_Command.CMD = VDP_CMD_SRCH;
+	VPD_SendCommand32();
 }
 
 //-----------------------------------------------------------------------------
 /**
  * Draw a dot in VRAM 
  */
-inline void VDP_PSET()
+inline void VDP_PSET(u16 dx, u16 dy, u8 col, u8 op)
 {
+	g_VDP_Command.DX = dx;
+	g_VDP_Command.DY = dy;
+	g_VDP_Command.CLR = col;
+	g_VDP_Command.ARG = 0;
+	g_VDP_Command.CMD = VDP_CMD_PSET + op;
+	VPD_SendCommand36();
 }
 
 //-----------------------------------------------------------------------------
 /**
  * Read the color of the specified dot located in VRAM 
  */
-inline void VDP_POINT()
+inline void VDP_POINT(u16 sx, u16 sy)
 {
+	g_VDP_Command.SX = sx;
+	g_VDP_Command.SY = sy;
+	g_VDP_Command.CMD = VDP_CMD_POINT;
+	VPD_SendCommand32();
 }
 
 //-----------------------------------------------------------------------------

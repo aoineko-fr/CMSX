@@ -6,6 +6,49 @@
 
 #include "core.h"
 
+//-----------------------------------------------------------------------------
+// INITIALIZATION
+//-----------------------------------------------------------------------------
+
+/// Character display mode
+enum PRINT_MODE
+{
+	PRINT_MODE_TEXT = 0,
+	PRINT_MODE_GRAPH,
+};
+
+/// Print module configuration structure
+struct PrintConfig
+{
+	u8 Mode;				///< Render mode (0-3)
+	u8 Page;				///< The page to draw (0-3)
+	u8 Bpp;					///< Number of bits-per-pixel (0-15)
+	u8 UnitX;				///< X size of a character in screen unit (0-15)
+	u8 UnitY;				///< Y size of a character in screen unit (0-15)
+	u8 TextColor;			///< Text colot
+	u8 BackgroundColor;		///< Background color
+	u8 FontSize;			///< Current font size in pixels [x|y]
+	u8 FontFirst;			///< ASCII code of the first character of the current font
+	u8 FontLast;			///< ASCII code of the last character of the current font
+	const u8* FontForms;	///< Forms of the font
+};
+
+/// Initialize print module
+bool Print_Initialize(u8 screen, const u8* font);
+
+/// Set the current font
+void Print_SetFont(const u8* font) __FASTCALL;
+
+/// Set the draw color
+void Print_SetColor(u8 text, u8 background);
+
+//-----------------------------------------------------------------------------
+// DRAW FUNCTION
+//-----------------------------------------------------------------------------
+
+/// 
+void Print_DrawText(u8 x, u8 y, const c8* string);
+
 
 inline u8 IsTextScreen();
 void PrintInit(u8 color);
