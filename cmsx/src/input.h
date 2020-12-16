@@ -54,7 +54,10 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger);
 //-----------------------------------------------------------------------------
 #if (USE_INPUT_KEYBOARD || USE_INPUT_MANAGER)
 
-#define MAKE_KEY(_r, _b) ((_b << 4) | _r)
+#define MAKE_KEY(r, b)		((b << 4) | r)
+#define KEY_ROW(key)		(key & 0x0F)
+#define KEY_IDX(key)		(key >> 4)
+#define KEY_FLAG(key)		(1 << KEY_IDX(key))
 
 #define KEY_0			MAKE_KEY(0, 0)
 #define KEY_1			MAKE_KEY(0, 1)

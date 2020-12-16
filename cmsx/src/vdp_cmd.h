@@ -21,8 +21,17 @@
 /**
  * High speed move CPU to VRAM.
  */
-inline void VDP_HMMC()
+inline void VDP_HMMC(void* ram, u16 dx, u16 dy, u16 nx, u16 ny)
 {
+	g_VDP_Command.DX = dx;
+	g_VDP_Command.DY = dy;
+	g_VDP_Command.NX = nx;
+	g_VDP_Command.NY = ny;
+	g_VDP_Command.CLR = ((u8*)ram)[0];
+	g_VDP_Command.ARG = 0; 
+	g_VDP_Command.CMD = VDP_CMD_HMMC;
+	VPD_SendCommand36();
+	VPD_WriteCommandLoop(ram);
 }
 
 //-----------------------------------------------------------------------------

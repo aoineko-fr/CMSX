@@ -183,7 +183,7 @@
 // R#9								Mode Register 9
 //-----------------------------------------------------------------------------
 //	7	6	5	4	3	2	1	0	WRITE ONLY
-//	LN	0	S1	S0	IL	E0	NT	DC
+//	LN	0	S1	S0	IL	EO	NT	DC
 //   │		│	│	│	│	│	└── DC is to define the direction of the signal dot clock. 1 sets DLCLK pin as input, 0 as output.
 //   │		│	│	│	│	└────── NT define the frames display frequency for the RGB output. Write 1 for PAL TV (313 lines, 50Hz), 0 for NTSC TV (262 lines, 60Hz).
 //   │		│	│	│	└────────── EO bit is used to activate the display of an even and odd page alternately, 1 frame out of two, for the second period in SCREEN 5 to 12 modes. (For more details, see register 13.)
@@ -192,7 +192,7 @@
 //   └───────────────────────────── LN defines the height of the screen. 1 for 212 lines, 0 for 192 (Default value).
 #define R09_DC						(0b00000001)
 #define R09_NT						(0b00000010)
-#define R09_E0						(0b00000100)
+#define R09_EO						(0b00000100)
 #define R09_IL						(0b00001000)
 #define R09_S0						(0b00010000)
 #define R09_S1						(0b00100000)

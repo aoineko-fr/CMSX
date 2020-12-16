@@ -19,6 +19,7 @@
 u8 g_VDP_REGSAV[28];
 u8 g_VDP_STASAV[10];
 struct VDP_Command g_VDP_Command;
+struct VDP_Sprite g_VDP_Sprite;
 
 //-----------------------------------------------------------------------------
 // VDP Registers Flags
@@ -198,7 +199,7 @@ void VDP_RegIncWrite(u16 src, u8 count, u8 reg)
 
 		// Do incremental VDP port writing
 		ld		b, 6(ix)				// size
-		ld		c, #P_VDP_REGS
+		ld		c, #P_VDP_IREG
 		ld		l, 4(ix)				// source address
 		ld		h, 5(ix)
 		otir
@@ -274,7 +275,7 @@ void VDP_RegIncWrite(u16 src, u8 count, u8 reg)
 		ei											\
 		out		(#P_VDP_ADDR), a					\
 		ld		hl, #(_##_addr)						\
-		ld		c, #P_VDP_REGS						\
+		ld		c, #P_VDP_IREG						\
 		di											\
 		OUTI(_count) ; 'ei' included				\
 	__endasm
@@ -614,7 +615,7 @@ void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count)
 		ld		ix, #0
 		add		ix, sp
 		
-		// g_PortVDPAddr = (page << 2) + (dest >> 14);
+		// g_VDP_RegPort = (page << 2) + (dest >> 14);
 		ld		a, 8 (ix)
 		add		a, a
 		add		a, a
@@ -626,20 +627,20 @@ void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count)
 		add		a, c
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a
-		// g_PortVDPAddr = VDP_REG(14);
+		// g_VDP_RegPort = VDP_REG(14);
 		ld		a, #VDP_REG(14)
 		out		(P_VDP_ADDR), a
-		// g_PortVDPAddr = (dest & 0xFF);
+		// g_VDP_RegPort = (dest & 0xFF);
 		ld		a, 6 (ix)
 		out		(P_VDP_ADDR), a
-		// g_PortVDPAddr = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+		// g_VDP_RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
 		ld		a, 7 (ix)
 		and		a, #0x3f
 		add		a, #F_VDP_WRIT
 		out		(P_VDP_ADDR), a
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		
-		// while(count--) g_PortVDPData = *src++;
+		// while(count--) g_VDP_DataPort = *src++;
 		ld		l, 4 (ix)				// source address
 		ld		h, 5 (ix)
 		ld		c, #P_VDP_DATA			// data register
@@ -666,12 +667,12 @@ void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count)
 // Fill VRAM area with a given value
 void VDP_FillVRAM(u8 value, u16 dest, u8 page, u16 count)
 {
-	g_PortVDPAddr = (page << 2) + (dest >> 14);
-	g_PortVDPAddr = VDP_REG(14);
-	g_PortVDPAddr = (dest & 0xFF);
-	g_PortVDPAddr = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+	g_VDP_RegPort = (page << 2) + (dest >> 14);
+	g_VDP_RegPort = VDP_REG(14);
+	g_VDP_RegPort = (dest & 0xFF);
+	g_VDP_RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
 	while(count--)
-		g_PortVDPData = value;
+		g_VDP_DataPort = value;
 /*	
 	dest, page, value, count;
 	__asm
@@ -679,7 +680,7 @@ void VDP_FillVRAM(u8 value, u16 dest, u8 page, u16 count)
 		ld		ix, #0
 		add		ix, sp
 		
-		// g_PortVDPAddr = (page << 2) + (dest >> 14);
+		// g_VDP_RegPort = (page << 2) + (dest >> 14);
 		ld		a, 7 (ix)
 		add		a, a
 		add		a, a
@@ -691,20 +692,20 @@ void VDP_FillVRAM(u8 value, u16 dest, u8 page, u16 count)
 		add		a, c
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a
-		// g_PortVDPAddr = VDP_REG(14);
+		// g_VDP_RegPort = VDP_REG(14);
 		ld		a, #VDP_REG(14)
 		out		(P_VDP_ADDR), a
-		// g_PortVDPAddr = (dest & 0xFF);
+		// g_VDP_RegPort = (dest & 0xFF);
 		ld		a, 5 (ix)
 		out		(P_VDP_ADDR), a
-		// g_PortVDPAddr = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+		// g_VDP_RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
 		ld		a, 6 (ix)
 		and		a, #0x3f
 		add		a, #F_VDP_WRIT
 		out		(P_VDP_ADDR), a
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		
-		// while(count--) g_PortVDPData = value;
+		// while(count--) g_VDP_DataPort = value;
 		ld		e, 8 (ix)				// count
 		ld		d, 9 (ix)
 		ld		a, 4 (ix)				// value
@@ -729,12 +730,12 @@ void VDP_ReadVRAM(u16 srcAddr, u8 srcPage, u8* dest, u16 count)
 {
 	// @todo Convert to assembler
 	DisableInterrupt();
-	g_PortVDPAddr = (srcPage << 2) + (srcAddr >> 14);
-	g_PortVDPAddr = (u8)(VDP_REG(14));
-	g_PortVDPAddr = (srcAddr & 0xFF);
-	g_PortVDPAddr = ((srcAddr >> 8) & 0x3F) + F_VDP_READ;
+	g_VDP_RegPort = (srcPage << 2) + (srcAddr >> 14);
+	g_VDP_RegPort = (u8)(VDP_REG(14));
+	g_VDP_RegPort = (srcAddr & 0xFF);
+	g_VDP_RegPort = ((srcAddr >> 8) & 0x3F) + F_VDP_READ;
 	while(count--)
-		*dest++ = g_PortVDPData;
+		*dest++ = g_VDP_DataPort;
 	EnableInterrupt();
 }
 
@@ -850,30 +851,6 @@ void VDP_EnableDisplay(u8 enable) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-// Set sprite parameters
-void VDP_SetSpriteFlag(u8 flag) __FASTCALL
-{
-	u8 reg = g_VDP_REGSAV[1];
-	reg &= ~(R01_ST | R01_MAG);
-	if(flag & R01_ST)
-		reg |= R01_ST;
-	if(flag & R01_MAG)
-		reg |= R01_MAG;
-	VDP_RegWriteBak(1, reg);
-}
-
-//-----------------------------------------------------------------------------
-// Enable/disable sprite
-void VDP_EnableSprite(u8 enable) __FASTCALL
-{
-	u8 reg = g_VDP_REGSAV[8];
-	reg &= ~R08_SPD;
-	if(enable)
-		reg |= R08_SPD;
-	VDP_RegWriteBak(8, reg);
-}
-
-//-----------------------------------------------------------------------------
 // Enable/disable grayscale
 void VDP_SetGrayScale(u8 enable) __FASTCALL
 {
@@ -890,8 +867,7 @@ void VDP_SetFrequency(u8 freq) __FASTCALL
 {
 	u8 reg = g_VDP_REGSAV[9];
 	reg &= ~R09_NT;
-	if(freq)
-		reg |= R09_NT;
+	reg |= freq;
 	VDP_RegWriteBak(9, reg);
 }
 
@@ -915,9 +891,11 @@ void VDP_SetColor(u8 color) __FASTCALL
 extern u8* g_PlayerSprite_palette;
 
 //-----------------------------------------------------------------------------
-/// Set a new palette [red|blue][0|green]
-void VDP_SetPalette(const u8* pal) __FASTCALL
+/// Set a new palette from index 1
+/// Format : [red|blue][0|green]
+void VDP_SetPalette(void* pal) __FASTCALL
 {
+	pal;
 	// FastCall
 	//	ld		hl, pal
 	__asm
@@ -929,7 +907,7 @@ void VDP_SetPalette(const u8* pal) __FASTCALL
 		out		(#P_VDP_ADDR), a
 
 		ld		hl, #_g_PlayerSprite_palette
-		ld		c, #P_VDP_PALT
+		ld		c, #P_VDP_PAL
 		ld		b, #30
 		otir
 	__endasm;
@@ -937,13 +915,103 @@ void VDP_SetPalette(const u8* pal) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Set a new palette [red|blue][0|green]
-void VDP_SetPaletteColor(u8 index, u16 color)
+void VDP_SetPaletteEntry(u8 index, u16 color)
 {
-	g_PortVDPAddr = index;
-	g_PortVDPAddr = VDP_REG(16);
-	g_PortVDPPal = color & 0x00FF;
-	g_PortVDPPal = color >> 8;
+	g_VDP_RegPort = index;
+	g_VDP_RegPort = VDP_REG(16);
+	g_VDP_PalPort = color & 0x00FF;
+	g_VDP_PalPort = color >> 8;
 }
+
+//-----------------------------------------------------------------------------
+/// Set line count for the current screen mode
+void VDP_SetLineCount(u8 lines) __FASTCALL
+{
+	u8 reg = g_VDP_REGSAV[9];
+	reg &= ~R09_LN;
+	reg |= lines;
+	VDP_RegWriteBak(9, reg);
+}
+
+//-----------------------------------------------------------------------------
+/// Enable or disable interlace mode
+void VDP_SetInterlace(u8 enable) __FASTCALL
+{
+	u8 reg = g_VDP_REGSAV[9];
+	reg &= ~R09_IL;
+	if(enable)
+		reg |= R09_IL;
+	VDP_RegWriteBak(9, reg);
+}
+
+//-----------------------------------------------------------------------------
+/// Enable automatic page switch on even/odd frames
+void VDP_SetPageAlternance(u8 enable) __FASTCALL
+{
+	u8 reg = g_VDP_REGSAV[9];
+	reg &= ~R09_EO;
+	if(enable)
+		reg |= R09_EO;
+	VDP_RegWriteBak(9, reg);
+}
+
+//-----------------------------------------------------------------------------
+//
+//   S P R I T E S
+//
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Set sprite parameters
+void VDP_SetSpriteFlag(u8 flag) __FASTCALL
+{
+	u8 reg = g_VDP_REGSAV[1];
+	reg &= ~(R01_ST | R01_MAG);
+	if(flag & R01_ST)
+		reg |= R01_ST;
+	if(flag & R01_MAG)
+		reg |= R01_MAG;
+	VDP_RegWriteBak(1, reg);
+}
+
+//-----------------------------------------------------------------------------
+// Enable/disable sprite
+void VDP_EnableSprite(u8 enable) __FASTCALL
+{
+	u8 reg = g_VDP_REGSAV[8];
+	reg &= ~R08_SPD;
+	if(!enable)
+		reg |= R08_SPD;
+	VDP_RegWriteBak(8, reg);
+}
+
+/// Set sprite attribute
+void VDP_SendSpriteAttribute(u8 index) __FASTCALL
+{
+	/*VDP_WaitReady();
+	__asm
+		// Compute sprite attribute VRAM address
+		ld		a, l			// Sprite index
+		rlca
+		rlca
+		ld		hl, (ATRBAS)
+		add		a, l
+		ld		l, a
+		adc		a, h 
+		sub		l 
+		ld		h, a 
+		
+		ld		hl, #(_g_VDP_Sprite)
+		ld		c, #P_VDP_DATA 
+		di
+		outi
+		outi
+		outi
+		ei
+		outi
+	__endasm;*/
+}
+
 
 //-----------------------------------------------------------------------------
 //
@@ -974,7 +1042,7 @@ void VDP_WaitReady()
 }
 
 //-----------------------------------------------------------------------------
-// Send VDP command (form registres 32 to 46)
+/// Send VDP command (form registres 32 to 46)
 void VPD_SendCommand32()
 {
 	VDP_WaitReady();
@@ -982,10 +1050,62 @@ void VPD_SendCommand32()
 }
 
 //-----------------------------------------------------------------------------
-// Send VDP command (form registres 36 to 46)
+/// Send VDP command (form registres 36 to 46)
 void VPD_SendCommand36()
 {
 	VDP_WaitReady();
 	ASM_REG_WRITE_INC(g_VDP_Command + 4, 36, 11);
 }
 
+//-----------------------------------------------------------------------------
+/// Write to VRAM command loop
+void VPD_WriteCommandLoop(void* address) __FASTCALL
+{
+	address;
+	// FastCall
+	//	ld		hl, address
+	__asm
+		di
+
+	send_next_color:
+		inc		hl
+
+		;// 3 - envoyer l'octet suivant à mettre en VRAM dans le registre 45 (le premier octet a été traité à l'étape 1) par un OUT du Z80
+		;// Send next color
+		ld		a, (hl)
+		out		(P_VDP_ADDR), a
+		ld		a, VDP_REG(44)
+		out		(P_VDP_ADDR), a
+
+	wait_reg2:
+		;// 4 - lire le registre d'état 2 (status)
+		;// Get status ragister #2
+		ld		a, #2
+		out		(P_VDP_ADDR), a
+		ld		a, VDP_REG(15)
+		out		(P_VDP_ADDR), a
+
+		;// 5 - lire le registre d'état du bit CE, si celui-ci est à 0, alors l'instruction est terminée, sinon on passe à l'étape 6
+		nop
+		in		a, (P_VDP_ADDR)
+		ld		b, a ;// backup reg#2
+		rra     ;// send CE bit into Carry
+		jr		nc, color_copy_end
+
+		;// 6 - tester l'état du bit TR, si celui-ci se trouve à 0, alors le processeur vidéo n'est pas
+		;// prêt à recevoir l'octet suivant, recommencer en 4. Si par contre, ce bit est à 1, reprendre toute l'opération au niveau 3
+		ld		a, b ;// restore reg#2
+		rla     ;// send TR bit in the Carry
+		jr		nc, wait_reg2
+		jp		send_next_color
+
+	color_copy_end:
+		;// Clean status ragister #2
+		xor		a
+		out		(P_VDP_ADDR), a
+		ld		a, VDP_REG(15)
+		out		(P_VDP_ADDR), a
+
+		ei
+	__endasm;
+}

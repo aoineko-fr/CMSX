@@ -33,6 +33,17 @@ struct VDP_Command
 	u8  CMD; // 46
 };
 
+/// Structure to store a sprite attribute. @see function VDP_SetSpriteAttribute
+struct VDP_Sprite
+{
+    u8 Y;			///< Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
+    u8 X;			///< X coordinate of the sprite
+    u8 Pattern;		///< Pattern index
+    u8 Color  : 4;	///< Color index (Sprite Mode 1 only)
+    u8 pad_1  : 3;	///< (unused 3 bits)
+    u8 EC     : 1;	///< Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
+} ;
+ 
 //-----------------------------------------------------------------------------
 // EXTERNALS
 //-----------------------------------------------------------------------------
@@ -40,6 +51,7 @@ struct VDP_Command
 extern u8 g_VDP_REGSAV[28];
 extern u8 g_VDP_STASAV[10];
 extern struct VDP_Command g_VDP_Command;
+extern struct VDP_Sprite g_VDP_Sprite;
 
 //-----------------------------------------------------------------------------
 // DEFINES
@@ -128,7 +140,7 @@ void VDP_SetModeGraphic6();
 /// Set screen mode to Graphic 7
 void VDP_SetModeGraphic7();
 
-#endif
+#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 // MSX 2+ FUNCTIONS
@@ -174,15 +186,6 @@ void VDP_EnableVBlank(u8 enable) __FASTCALL;
 /// Enable/disable screen display
 void VDP_EnableDisplay(u8 enable) __FASTCALL;
 
-#define VDP_SPRITE_SIZE_8		0			///< Use 8x8 sprite size
-#define VDP_SPRITE_SIZE_16		R01_ST		///< Use 16x16 sprite size
-#define VDP_SPRITE_ENLARGE		R01_MAG		///> Double the size of the sprite (1 dot = 2 pixels)
-/// Set sprite parameters
-void VDP_SetSpriteFlag(u8 flag) __FASTCALL;
-
-/// Enable/disable sprite
-void VDP_EnableSprite(u8 flag) __FASTCALL;
-
 /// Enable/disable grayscale
 void VDP_SetGrayScale(u8 enable) __FASTCALL;
 
@@ -198,10 +201,36 @@ void VDP_SetPage(u8 page) __FASTCALL;
 void VDP_SetColor(u8 color) __FASTCALL;
 
 /// Set a new palette [red|blue][0|green]
-void VDP_SetPalette(const u8* pal) __FASTCALL;
+void VDP_SetPalette(void* pal) __FASTCALL;
 
 /// Set palette entry color
-void VDP_SetPaletteColor(u8 index, u16 color);
+void VDP_SetPaletteEntry(u8 index, u16 color);
+
+#define VDP_LINE_192			0			///< 192 lines mode
+#define VDP_LINE_212			R09_LN		///< 212 lines mode
+/// Set line count for the current screen mode
+void VDP_SetLineCount(u8 lines) __FASTCALL;
+
+/// Enable or disable interlace mode
+void VDP_SetInterlace(u8 enable) __FASTCALL;
+
+/// Enable automatic page switch on even/odd frames
+void VDP_SetPageAlternance(u8 enable) __FASTCALL;
+
+//-----------------------------------------------------------------------------
+// SPRITES
+//-----------------------------------------------------------------------------
+#define VDP_SPRITE_SIZE_8		0			///< Use 8x8 sprite size
+#define VDP_SPRITE_SIZE_16		R01_ST		///< Use 16x16 sprite size
+#define VDP_SPRITE_ENLARGE		R01_MAG		///> Double the size of the sprite (1 dot = 2 pixels)
+/// Set sprite parameters
+void VDP_SetSpriteFlag(u8 flag) __FASTCALL;
+
+/// Enable/disable sprite
+void VDP_EnableSprite(u8 enable) __FASTCALL;
+
+/// Set sprite attribute
+void VDP_SendSpriteAttribute(u8 index) __FASTCALL;
 
 //-----------------------------------------------------------------------------
 // VDP REGISTERS
@@ -225,6 +254,9 @@ void VPD_SendCommand32();
 
 /// Send VDP command (form registres 36 to 46)
 void VPD_SendCommand36();
+
+/// Write to VRAM command loop
+void VPD_WriteCommandLoop(void* address) __FASTCALL;
 
 //-----------------------------------------------------------------------------
 // INLINE FUNCTIONS
