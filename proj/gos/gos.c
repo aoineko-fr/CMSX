@@ -23,7 +23,7 @@
 void MainLoop();
 
 //-----------------------------------------------------------------------------
-// Program entry point
+/// Program entry point
 void main()
 {
 	MainLoop();
@@ -31,53 +31,74 @@ void main()
 
 //-----------------------------------------------------------------------------
 // DEFINES
-#define VERSION "V0.1.0"
+#define VERSION "V0.2.0"
 
-#define PLAYER_NB 	14
+#define PLAYER_NB 		14
 
-#define LINE_NB		192	// 192 or 212
-#define FIELD_SIZE	384 // 256 or 384
-#define TEAM_BMP_X	0
-#define TEAM_BMP_Y	384
-#define BACK_X		0
-#define BACK_Y		960
+#define LINE_NB			192	// 192 or 212
+#define FIELD_SIZE		384 // 256 or 384
+#define TEAM_BMP_X		128
+#define TEAM_BMP_Y		384
+#define BACK_X			0
+#define BACK_Y			960
+#define SPRT_OFS_X		(-7)
+#define SPRT_OFS_Y		(-15)
+#define MIN_DIFF		8
 
-enum ACTION
+/// Player action ID
+enum ACTION_ID
 {
 	ACTION_IDLE = 0,
 	ACTION_RUN,
+	ACTION_CHARGE,
+	ACTION_SHOOT,
+	ACTION_HEAD,
+	ACTION_TACKLE,
+	ACTION_JUMP,
+	ACTION_MAX = 15,
 };
 
 //-----------------------------------------------------------------------------
 // TYPES
 
+/// Vector tructure
 typedef struct
 {
 	i16		x, y;	
 } Vector16;
 
+/// Player information structure
 typedef struct
 {
-	u8	x, y;	
-} VectorU8;
-
-typedef struct
-{
-	Vector16	pos;
-	u8			dir;
-	u8			action; // 0=idle, 1=run
+	Vector16	pos;			///< Position
+	Vector16	target;			///< Position
+	u8			dir     : 3;	///< Direction (0-7)
+	u8			id      : 4;	///< Player team ID (0-15)
+	u8			nearest : 1;	///< Is the nearest player from the ball
+	u8			action  : 4;	///< Action ID (0-15): 0=idle, 1=run, 2=tackle @see ACTION_ID
+	u8			team    : 1;	///< Team ID (0 or 1)
+	u8			hasball : 1;	///< Is having ball?
+	u8			moving  : 1;	///< Is moving?: 0=false, 1=true
+	u8			display : 1;	///< Should be displayed: 0=false, 1=true
 } Player;
 
 //-----------------------------------------------------------------------------
 // DATA
+//#define D_g_PlayerSprite __at(0x0000)
 #include "data/player.data.h"
 
+/// Index of the current VDP display page (will be switch after V-Blank)
 u8 g_DisplayPage = 0;
+/// Index of the current VDP work page (will be switch after V-Blank)
 u8 g_WritePage = 1;
+/// Flag to inform game thread that a V-Blank occured
 u8 g_VBlank = 0;
+/// Frame counter
 u8 g_Frame = 0;
+/// Players information
 Player g_Player[2][PLAYER_NB];
 
+/// Table to convert direction flag to direction index (from 0 to 7)
 static const u8 DirToIdx[16] = 
 {
 	0xFF,	// 0 : No Direction
@@ -98,6 +119,7 @@ static const u8 DirToIdx[16] =
 	0xFF,	// F
 };
 
+/// Movement offset for each direction
 static const Vector16 RunMove[8] = 
 {
 	{ (i16)0,  (i16)-1 },	// Up
@@ -110,7 +132,8 @@ static const Vector16 RunMove[8] =
 	{ (i16)-1, (i16)-1 },	// Up + Left
 };
 
-static const u8 RunFrames[] = { 0, 1, 0, 2 };
+/// Run animation frames ID
+static const u8 Anim_RunFrames[] = { 0, 1, 0, 2 };
 
 static const Vector16 FormationDef[] =
 {
@@ -125,7 +148,7 @@ static const Vector16 FormationDef[] =
 
 static const Vector16 FormationAtt[] =
 {
-	{ 128, 184/*336*/ }, // G
+	{ 128, 336 }, // G
 	{  80, 144 }, // DL
 	{ 128, 224 }, // DC
 	{ 176, 144 }, // DR
@@ -192,14 +215,75 @@ void WaitVBlank()
 void SpriteBackup(u8 id) __FASTCALL
 {
 	Player* p = &g_Player[g_WritePage][id];
-	VDP_HMMM(p->pos.x, p->pos.y + (512 * g_WritePage), BACK_X + (id * 16), BACK_Y + (16 * g_WritePage), 16, 16);
+	VDP_HMMM(p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), BACK_X + (id * 16), BACK_Y + (16 * g_WritePage), 16, 16);
 }
 
 /// Restore sprite background
 void SpriteRestore(u8 id) __FASTCALL
 {
 	Player* p = &g_Player[g_WritePage][id];
-	VDP_HMMM(BACK_X + (id * 16), BACK_Y + (16 * g_WritePage), p->pos.x, p->pos.y + (512 * g_WritePage), 16, 16);
+	VDP_HMMM(BACK_X + (id * 16), BACK_Y + (16 * g_WritePage), p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), 16, 16);
+}
+
+/// Compute target position.
+/// @param		p		The player to compute
+/// @param		level	The ball position (from 0 to 5)
+void Player_ComputeTaget(Player* p, u8 level)
+{
+	if(p->team == 0)
+	{
+		switch(level)
+		{
+		// case 5:
+		// case 4:
+		default:
+			p->target = FormationDef[p->id];
+			break;
+		case 3:
+			p->target.x = (FormationDef[p->id].x * 3 + FormationAtt[p->id].x) / 4;
+			p->target.y = (FormationDef[p->id].y * 3 + FormationAtt[p->id].y) / 4;
+			break;
+		case 2:
+			p->target.x = (FormationDef[p->id].x + FormationAtt[p->id].x) / 2;
+			p->target.y = (FormationDef[p->id].y + FormationAtt[p->id].y) / 2;
+			break;
+		case 1:
+			p->target.x = (FormationDef[p->id].x + FormationAtt[p->id].x * 3) / 4;
+			p->target.y = (FormationDef[p->id].y + FormationAtt[p->id].y * 3) / 4;
+			break;
+		case 0:
+			p->target = FormationAtt[p->id];
+			break;
+		};
+	}
+	else // team == 1
+	{
+		switch(level)
+		{
+		// case 0:
+		// case 1:
+		default:
+			p->target.x = 255 - FormationDef[p->id].x;
+			p->target.y = 383 - FormationDef[p->id].y;
+			break;
+		case 2:
+			p->target.x = 255 - (FormationDef[p->id].x * 3 + FormationAtt[p->id].x) / 4;
+			p->target.y = 383 - (FormationDef[p->id].y * 3 + FormationAtt[p->id].y) / 4;
+			break;
+		case 3:
+			p->target.x = 255 - (FormationDef[p->id].x + FormationAtt[p->id].x) / 2;
+			p->target.y = 383 - (FormationDef[p->id].y + FormationAtt[p->id].y) / 2;
+			break;
+		case 4:
+			p->target.x = 255 - (FormationDef[p->id].x + FormationAtt[p->id].x * 3) / 4;
+			p->target.y = 383 - (FormationDef[p->id].y + FormationAtt[p->id].y * 3) / 4;
+			break;
+		case 5:
+			p->target.x = 255 - FormationAtt[p->id].x;
+			p->target.y = 383 - FormationAtt[p->id].y;
+			break;
+		};
+	}
 }
 
 /// Draw game field
@@ -221,6 +305,18 @@ void DrawField(u16 y) __FASTCALL
 	VDP_HMMV(64,  8 + y, 2,  48, 0xFF);
 	VDP_HMMV(190, 8 + y, 2,  48, 0xFF);
 	VDP_HMMV(64, 56 + y, 128, 2, 0xFF);
+	// Goal area
+	VDP_HMMV(64,  384-56 + y, 2,  48, 0xFF);
+	VDP_HMMV(190, 384-56 + y, 2,  48, 0xFF);
+	VDP_HMMV(64,  384-56 + y, 128, 2, 0xFF);
+}
+
+///
+u16 GetSqrDistance(const Vector16* from, const Vector16* to)
+{
+	u16 dx = Abs16(from->x - to->x);
+	u16 dy = Abs16(from->y - to->y);
+	return dx*dx + dy*dy;
 }
 
 //=============================================================================
@@ -233,15 +329,13 @@ void DrawField(u16 y) __FASTCALL
 /// Main loop
 void MainLoop()
 {
-	Bios_SetHookCallback(H_KEYI, InterruptHook);
-	Bios_SetHookCallback(H_TIMI, VBlankHook);
-
 	VDP_SetScreen(VDP_MODE_SCREEN5);
 	VDP_SetFrequency(VDP_FREQ_50HZ);
 	VDP_SetLineCount(LINE_NB == 192 ? VDP_LINE_192 : VDP_LINE_212);
 	VDP_SetColor(0x00);
 	VDP_EnableSprite(false);
 	VDP_SetPage(0);
+	VDP_EnableDisplay(false);
 	
 	// Field
 	DrawField(0);					// Page 0-1
@@ -250,19 +344,40 @@ void MainLoop()
 	VDP_HMMV(0, 384, 256, 128, 0);	// Page 1
 	VDP_HMMV(0, 896, 256, 128, 0);	// Page 3
 	
+	const static u8 ReplaceColorT0[] = { 1, 6, 15 };
+	const static u8 ReplaceColorT1[] = { 3, 6, 15, 11, 6, 3, 6 };
+	
 	// Import player sprites
-	MSXi_UnpackToVRAM(g_PlayerSprite, TEAM_BMP_X, TEAM_BMP_Y, 16, 16, 11, 8, COMPRESS_CropLine16, 0);
+	MSXi_UnpackToVRAM(g_PlayerSprite, TEAM_BMP_X*0, TEAM_BMP_Y, 16, 16, 8, 8, ReplaceColorT0, CropLine16, 4, 4);
+	MSXi_UnpackToVRAM(g_PlayerSprite, TEAM_BMP_X*1, TEAM_BMP_Y, 16, 16, 8, 8, ReplaceColorT1, CropLine16, 4, 4);
 	VDP_SetPalette(g_PlayerSprite_palette);
 	VDP_SetPaletteEntry(3,  RGB16(0, 0, 7)); // Arm
-	VDP_SetPaletteEntry(11, RGB16(0, 0, 7)); // Chest
-	VDP_SetPaletteEntry(6,  RGB16(7, 7, 7)); // Short
+	VDP_SetPaletteEntry(11, RGB16(0, 0, 7)); // Chest T0
+	VDP_SetPaletteEntry(6,  RGB16(7, 0, 0)); // Chest T1
 	VDP_SetPaletteEntry(5,  RGB16(7, 7, 7)); // Socks
 	VDP_SetPaletteEntry(13, RGB16(0, 6, 0)); 
 	VDP_SetPaletteEntry(14, RGB16(0, 4, 0)); 
 	VDP_SetPaletteEntry(15, RGB16(7, 7, 7)); 
 
-	// VDP_SetPage(2);
-	//while(!Keyboard_IsKeyPressed(KEY_SPACE)) {}
+	// [ 1] #000000		Black
+	// [ 2] #AA4400
+	// [ 3] #FF0000		Player Arms
+	// [ 4] #884400
+	// [ 5] #FFFF00		Player Socks
+	// [ 6] #00DD00		Player Short
+	// [ 7] #CC8800
+	// [ 8] #FFBB00
+	// [ 9] #FF7711
+	// [10] #772211
+	// [11] #0000FF		Player Chest
+	// [12] #FFFFFF		White
+	// [13] #999999		Gray
+	// [14] #0D0D0D
+	// [15] #0E0E0E
+	
+	// VDP_EnableDisplay(true);
+	// VDP_SetPage(1);
+	// while(!Keyboard_IsKeyPressed(KEY_SPACE)) {}
 	
 	//-------------------------------------------------------------------------
 	// Initialize players
@@ -270,19 +385,27 @@ void MainLoop()
 	{
 		Player* p = &g_Player[j][0];
 		for(i8 i = 0; i < PLAYER_NB; i++)
-		{
+		{			
+			p->id = i % 7;
 			if(i < PLAYER_NB / 2)
 			{
-				p->pos = FormationAtt[i % 7];
 				p->dir = 0;
+				p->team = 0;
 			}
 			else
 			{
-				p->pos.x = 256 - FormationDef[i % 7].x;
-				p->pos.y = 384 - FormationDef[i % 7].y;
 				p->dir = 4;
+				p->team = 1;
 			}
+
+			Player_ComputeTaget(p, 5);
+			p->pos = p->target;
+			
 			p->action = ACTION_IDLE;
+			p->hasball = false;
+			p->moving = false;
+			p->display = true;
+			p->nearest = false;
 			p++;
 			g_WritePage = j;
 			SpriteBackup(i);
@@ -292,21 +415,28 @@ void MainLoop()
 	u8  scrollSpeed = 2;
 	i16 scrollOffset = 0;
 	i16 scrollPrevious = 0;
-	VDP_SetHBlankLine(253);			
-
-	g_DisplayPage = 0;
-	g_WritePage = 1;
+	VDP_SetHBlankLine(253);
+	u8 ballLevel = 0;
+	Vector16 ballPosition;
+	u8 playerChara = 6;
 
 	Player* p;			
 	u8 dir;
+	
+	Bios_SetHookCallback(H_KEYI, InterruptHook);
+	Bios_SetHookCallback(H_TIMI, VBlankHook);
+	VDP_EnableDisplay(true);
+
 	while(1)
 	{
-		// VDP_SetColor(0x22); //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEBUG
+		ballPosition = g_Player[g_DisplayPage][playerChara].pos;
+		ballLevel = ballPosition.y >> 6;
+		
 		//---------------------------------------------------------------------
 		// SCROLLING
 		//---------------------------------------------------------------------
-		// follow the player
-		scrollOffset = g_Player[g_WritePage/*g_DisplayPage*/][0].pos.y - (LINE_NB / 2);
+		// follow the ball
+		scrollOffset = ballPosition.y - (LINE_NB / 2);
 		// Clamp scrolling value
 		if(scrollOffset < 0)
 			scrollOffset = 0;
@@ -322,28 +452,50 @@ void MainLoop()
 		// Backup previous scrolling offset
 		scrollPrevious = scrollOffset;
 
-		// VDP_SetColor(0x33); //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEBUG
 		//---------------------------------------------------------------------
 		// RESTORE BACKGROUND
 		//---------------------------------------------------------------------
+		u8 nearestPly = 0xFF;
+		u16 nearestDist = 0xFFFF;
 		for(i8 i = 0; i < PLAYER_NB; i++)
 		{
 			SpriteRestore(i);
-			g_Player[g_WritePage][i] = g_Player[g_DisplayPage][i];
+			g_Player[g_WritePage][i] = g_Player[g_DisplayPage][i]; // swap player data
+			
+			if(p->team == 1)
+			{
+				p = &g_Player[g_WritePage][i];
+				u16 sqrDist = GetSqrDistance(&(p->pos), &ballPosition);
+				if((sqrDist < nearestDist) || (nearestDist == 0xFFFF))
+				{
+					nearestDist = sqrDist;
+					nearestPly = i;				
+				}
+			}
+			p->nearest = false;
 		}
-
-		// VDP_SetColor(0x44); //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEBUG
+		if(nearestPly != 0xFF)
+			g_Player[g_WritePage][nearestPly].nearest = true;
+		
 		//---------------------------------------------------------------------
 		// UPDATE PLAYERS & BACKUP BACKGROUND
 		//---------------------------------------------------------------------
 		p = &g_Player[g_WritePage][0];			
 		for(i8 i = 0; i < PLAYER_NB; i++)
 		{
-			if(i == 0) // controller 1
+			if(i == playerChara) // controller 1
 			{
-				u8 row = Keyboard_Read(KEY_ROW(KEY_DOWN));
+				// Player change
+				u8 row = Keyboard_Read(KEY_ROW(KEY_GRAPH));
+				if((row & KEY_FLAG(KEY_GRAPH)) == 0)
+					playerChara = (playerChara + 1) % (PLAYER_NB / 2);
+
+				// Move & tackle
+				row = Keyboard_Read(KEY_ROW(KEY_DOWN));
 				dir = 0;
-				if((row & KEY_FLAG(KEY_UP)) == 0)
+				if((row & KEY_FLAG(KEY_SPACE)) == 0)
+					dir = p->dir;
+				else if((row & KEY_FLAG(KEY_UP)) == 0)
 					dir |= JOY_INPUT_DIR_UP;
 				else if((row & KEY_FLAG(KEY_DOWN)) == 0)
 					dir |= JOY_INPUT_DIR_DOWN;
@@ -362,41 +514,61 @@ void MainLoop()
 				else
 					p->action = ACTION_IDLE;	
 			}
-			/*else // AI
+			else // AI
 			{
-				Player* t = &g_Player[g_WritePage][i-1];
-								
-				dir = 0;
-				if(p->pos.x < t->pos.x)
-					dir += JOY_INPUT_DIR_RIGHT;
-				else if(p->pos.x > t->pos.x)
-					dir += JOY_INPUT_DIR_LEFT;
-				if(p->pos.y > t->pos.y)
-					dir += JOY_INPUT_DIR_UP;
-				else if(p->pos.y < t->pos.y)
-					dir += JOY_INPUT_DIR_DOWN;
-
-				u16 dx = Abs16(p->pos.x - t->pos.x);
-				u16 dy = Abs16(p->pos.y - t->pos.y);
-				u16 sqrDist = dx*dx + dy*dy;
-				if (sqrDist > 16*16)
+				Vector16* t = &ballPosition;
+				if(p->nearest == 0)
 				{
-					p->dir = DirToIdx[dir];
+					Player_ComputeTaget(p, ballLevel);
+					t = &p->target;
+				}
+				
+				u16 sqrDist = GetSqrDistance(&(p->pos), t);
+				if (sqrDist > 16*16) // Move
+				{
 					p->action = ACTION_RUN;
+					// Turn toward movement
+					dir = 0;
+					if(p->pos.x < t->x)
+						dir += JOY_INPUT_DIR_RIGHT;
+					else if(p->pos.x > t->x)
+						dir += JOY_INPUT_DIR_LEFT;
+					if(p->pos.y > t->y)
+						dir += JOY_INPUT_DIR_UP;
+					else if(p->pos.y < t->y)
+						dir += JOY_INPUT_DIR_DOWN;
+					p->dir = DirToIdx[dir];
+					// Move
 					p->pos.x += RunMove[p->dir].x;
 					p->pos.y += RunMove[p->dir].y;
 				}
-				else
+				else // Idle
+				{
+					Vector16* b = &ballPosition;
 					p->action = ACTION_IDLE;			
-			}*/
+					// Turn toward ball
+					dir = 0;
+					i16 dx = p->pos.x - b->x;
+					if(dx < -MIN_DIFF)
+						dir += JOY_INPUT_DIR_RIGHT;
+					else if(dx > MIN_DIFF)
+						dir += JOY_INPUT_DIR_LEFT;
+					i16 dy = p->pos.y - b->y;
+					if(dy > MIN_DIFF)
+						dir += JOY_INPUT_DIR_UP;
+					else if(dy < -MIN_DIFF)
+						dir += JOY_INPUT_DIR_DOWN;
+					p->dir = DirToIdx[dir];
+				}
+			}
 			if(p->pos.x < 0)
 				p->pos.x = 0;
-			else if(p->pos.x > 256-16)
-				p->pos.x = 256-16;
+			else if(p->pos.x > 255)
+				p->pos.x = 255;
 			if(p->pos.y < 0)
 				p->pos.y = 0;
-			else if(p->pos.y > FIELD_SIZE-16)
-				p->pos.y = FIELD_SIZE-16;
+			else if(p->pos.y > FIELD_SIZE-1)
+				p->pos.y = FIELD_SIZE-1;
 		
 			//if((p->pos.y + 16 >= scrollOffset) && (p->pos.y <= scrollOffset + LINE_NB))
 			{
@@ -404,28 +576,27 @@ void MainLoop()
 			}
 			p++;
 		}
-			
-		// VDP_SetColor(0x55); //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEBUG
+
 		//---------------------------------------------------------------------
 		// DRAW PLAYERS
 		//---------------------------------------------------------------------
 		p = &g_Player[g_WritePage][0];			
 		for(i8 i = 0; i < PLAYER_NB; i++)
 		{
-			if((p->pos.y + 16 >= scrollOffset) && (p->pos.y <= scrollOffset + LINE_NB))
+			if((p->pos.y + SPRT_OFS_Y + 16 >= scrollOffset) && (p->pos.y + SPRT_OFS_Y <= scrollOffset + LINE_NB))
 			{
 				u8 sx;
 				if(p->action == ACTION_IDLE)
 					sx = 0;
 				else //if(p->action == ACTION_RUN)
-					sx = (16 * RunFrames[(g_Frame >> 2) & 0x03]);
+					sx = (16 * Anim_RunFrames[(g_Frame >> 2) & 0x03]);
 					
-				VDP_LMMM(TEAM_BMP_X + sx, TEAM_BMP_Y + (16 * p->dir), p->pos.x, p->pos.y + (512 * g_WritePage), 16, 16, VDP_OP_TIMP); // Draw
+				VDP_LMMM(TEAM_BMP_X * p->team + sx, TEAM_BMP_Y + (16 * p->dir), p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), 16, 16, VDP_OP_TIMP); // Draw
 			}
 			p++;
 		}	
 
-		// VDP_SetColor(0x00); //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEBUG
+		//---------------------------------------------------------------------
 		g_VBlank = 0;
 		WaitVBlank();
 	}

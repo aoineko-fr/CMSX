@@ -75,3 +75,6 @@
 #define USE_MSXi_COMP_RLE0			1
 #define USE_MSXi_COMP_RLE4			1
 #define USE_MSXi_COMP_RLE8			1
+
+// Print
+#define PRINT_VALIDATE				0
