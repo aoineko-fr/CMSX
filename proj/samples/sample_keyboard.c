@@ -9,7 +9,6 @@
 
 #include "core.h"
 #include "color.h"
-#include "video.h"
 #include "bios_main.h"
 #include "print.h"
 #include "input.h"
@@ -241,7 +240,7 @@ void MainLoop()
 		u8 chr = count++ & 0x03;
 		PrintChar(chrAnim[chr]);
 		
-		VDP_WaitRetrace();
+		//VDP_WaitRetrace();
 	}
 
 	Bios_ClearScreen();

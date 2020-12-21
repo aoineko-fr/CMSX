@@ -22,9 +22,9 @@ set MSXDOS=%ToolsDir%\MSXDOS
 rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
-SET ProjName=sysinfo
-set SrcList=%ProjName%.c,%LibDir%\src\bios_main.c,%LibDir%\src\video.c,%LibDir%\src\print.c,%LibDir%\src\input.c,%LibDir%\src\memory.c
-set LibList=%OutDir%\%ProjName%.rel %OutDir%\bios_main.rel %OutDir%\video.rel %OutDir%\print.rel %OutDir%\input.rel %OutDir%\memory.rel
+SET ProjName=sample_print
+set SrcList=%ProjName%.c,%LibDir%\src\bios_main.c,%LibDir%\src\vdp.c,%LibDir%\src\print.c,%LibDir%\src\input.c,%LibDir%\src\memory.c,%LibDir%\src\math.c
+set LibList=%OutDir%\%ProjName%.rel %OutDir%\bios_main.rel %OutDir%\vdp.rel %OutDir%\print.rel %OutDir%\input.rel %OutDir%\memory.rel %OutDir%\math.rel
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
 rem  - ROM16	.rom	16KB ROM in page 1 (4000h ~ 7FFFh)

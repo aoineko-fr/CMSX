@@ -9,7 +9,7 @@
 
 #include "core.h"
 #include "color.h"
-#include "video.h"
+//#include "video.h"
 #include "bios_main.h"
 #include "print.h"
 #include "input.h"
@@ -235,6 +235,6 @@ void MainLoop()
 			if(timer < 10) PrintChar(' ');
 		}
 
-		VDP_WaitRetrace();
+		//VDP_WaitRetrace();
 	}
 }
