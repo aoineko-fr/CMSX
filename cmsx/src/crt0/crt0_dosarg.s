@@ -17,6 +17,7 @@
 .globl	l__INITIALIZER
 .globl	s__INITIALIZED
 .globl	s__INITIALIZER
+.globl	s__HEAP
 
 .module crt0
 ;------------------------------------------------------------------------------
@@ -151,6 +152,9 @@ cont:   ld      hl,#0x100
 
 _heap_top::
 	.dw 0
+_g_HeapStartAddress::
+	.dw		s__HEAP
+
 
 ;------------------------------------------------------------------------------
 .area   _GSINIT

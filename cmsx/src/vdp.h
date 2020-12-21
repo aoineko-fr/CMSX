@@ -10,6 +10,7 @@
  * - https://www.msx.org/wiki/Category:VDP_Registers
  * - http://map.grauw.nl/articles/
  */
+#pragma once
 #pragma sdcc_hash +
 
 #include "core.h"
@@ -39,9 +40,9 @@ struct VDP_Sprite
     u8 Y;			///< Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
     u8 X;			///< X coordinate of the sprite
     u8 Pattern;		///< Pattern index
-    u8 Color  : 4;	///< Color index (Sprite Mode 1 only)
-    u8 pad_1  : 3;	///< (unused 3 bits)
-    u8 EC     : 1;	///< Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
+    u8 Color   : 4;	///< Color index (Sprite Mode 1 only)
+    u8 _unused : 3;	///< (unused 3 bits)
+    u8 EC      : 1;	///< Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
 } ;
  
 //-----------------------------------------------------------------------------
@@ -77,18 +78,18 @@ enum VDP_MODE
 	VDP_MODE_GRAPHIC7,		// 11100	256 x 212; 256 colours are available for each dot
 #endif
 	// BASIC screens
-	VDP_MODE_SCREEN0,		// VDP_MODE_TEXT1
+	VDP_MODE_SCREEN0     = VDP_MODE_TEXT1,
 	VDP_MODE_SCREEN0_W40 = VDP_MODE_SCREEN0,
-	VDP_MODE_SCREEN3,		// VDP_MODE_MULTICOLOR
-	VDP_MODE_SCREEN1,		// VDP_MODE_GRAPHIC1
-	VDP_MODE_SCREEN2,		// VDP_MODE_GRAPHIC2
+	VDP_MODE_SCREEN1     = VDP_MODE_GRAPHIC1,
+	VDP_MODE_SCREEN2     = VDP_MODE_GRAPHIC2,
+	VDP_MODE_SCREEN3     = VDP_MODE_MULTICOLOR,
 #if (MSX_VERSION >= MSX_2)
-	VDP_MODE_SCREEN0_W80,	// VDP_MODE_TEXT2,	
-	VDP_MODE_SCREEN4,       // VDP_MODE_GRAPHIC3
-	VDP_MODE_SCREEN5,       // VDP_MODE_GRAPHIC4
-	VDP_MODE_SCREEN6,       // VDP_MODE_GRAPHIC5
-	VDP_MODE_SCREEN7,       // VDP_MODE_GRAPHIC6
-	VDP_MODE_SCREEN8,       // VDP_MODE_GRAPHIC7
+	VDP_MODE_SCREEN0_W80 = VDP_MODE_TEXT2,
+	VDP_MODE_SCREEN4     = VDP_MODE_GRAPHIC3,
+	VDP_MODE_SCREEN5     = VDP_MODE_GRAPHIC4,
+	VDP_MODE_SCREEN6     = VDP_MODE_GRAPHIC5,
+	VDP_MODE_SCREEN7     = VDP_MODE_GRAPHIC6,
+	VDP_MODE_SCREEN8     = VDP_MODE_GRAPHIC7,
 	VDP_MODE_SCREEN9,
 	VDP_MODE_SCREEN9_40 = VDP_MODE_SCREEN9,
 	VDP_MODE_SCREEN9_80,
@@ -98,6 +99,7 @@ enum VDP_MODE
 	VDP_MODE_SCREEN11,
 	VDP_MODE_SCREEN12,
 #endif
+	VDP_MODE_MAX,
 };
 
 //-----------------------------------------------------------------------------

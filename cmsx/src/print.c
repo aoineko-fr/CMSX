@@ -6,8 +6,32 @@
 #include "bios_main.h"
 #include "vdp.h"
 #include "print.h"
+#include "memory.h"
+#include "math.h"
 
-static struct PrintConfig g_PrintConfig;
+struct Print_Data g_PrintData;
+
+#if (MSX_VERSION >= MSX_2)
+void PutChar_G4(u8 chr) __FASTCALL;
+void PutChar_G6(u8 chr) __FASTCALL;
+void PutChar_G7(u8 chr) __FASTCALL;
+#endif
+
+#if USE_PRINT_VALIDATOR
+u8 g_PrintInvalid[] =
+{
+	0xFF, /* ######## */ 
+	0x81, /* #......# */ 
+	0x81, /* #......# */ 
+	0x81, /* #......# */ 
+	0x81, /* #......# */ 
+	0x81, /* #......# */ 
+	0x81, /* #......# */ 
+	0xFF, /* ######## */ 
+};
+#endif
+
+static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 //-----------------------------------------------------------------------------
 //
@@ -19,37 +43,36 @@ static struct PrintConfig g_PrintConfig;
 /// Initialize print module
 bool Print_Initialize(u8 screen, const u8* font)
 {
-	Print_SetFont(font);
+	g_PrintData.Mode = screen; // must be set first because used in other functions (like SetColor)
+	g_PrintData.Page = 0;
+	g_PrintData.TabSize = 32;
 
-	g_PrintConfig.Mode = PRINT_MODE_GRAPH;
-	g_PrintConfig.Page = 0;
-	g_PrintConfig.Bpp = 4;
-	g_PrintConfig.UnitX = 8;
-	g_PrintConfig.UnitY = 8;
-	g_PrintConfig.TextColor = 0xFF;
-	g_PrintConfig.BackgroundColor = 0;
-	
+	Print_SetFont(font);
+	Print_SetColor(0xF, 0x0);
+	Print_SetPosition(0, 0);
+#if USE_PRINT_SHADOW
+	Print_SetShadow(false, 0, 0, 0);
+#endif
+
 	switch(screen)
 	{
-	case 0:
-	case 1:
-		g_PrintConfig.Mode = PRINT_MODE_TEXT;
-		g_PrintConfig.UnitX = 1;
-		g_PrintConfig.UnitY = 1;
+#if (MSX_VERSION >= MSX_2)
+	case VDP_MODE_GRAPHIC4:		// 256 x 212; 16 colours are available for each dot
+		g_PrintData.PutChar     = PutChar_G4;
+		g_PrintData.ScreenWidth = 256;
 		break;
-	
-	case 6:
-		g_PrintConfig.Bpp = 1;
+	case VDP_MODE_GRAPHIC6:		// 512 x 212; 16 colours are available for each dot
+		g_PrintData.PutChar     = PutChar_G6;
+		g_PrintData.ScreenWidth = 512;
 		break;
-	
-	case 8:
-		g_PrintConfig.Bpp = 8;
+	case VDP_MODE_GRAPHIC7:		// 256 x 212; 256 colours are available for each dot
+		Print_SetColor(0xFF, 0x0);
+		g_PrintData.PutChar     = PutChar_G7;
+		g_PrintData.ScreenWidth = 256;
 		break;
-	case 9:
-	case 10:
-	case 11:
-	case 12:
-		/// @todo Implement
+#endif // (MSX_VERSION >= MSX_2)
+	default:
+		// Screen mode not (yet) supported!
 		return false;
 	}
 	return true;
@@ -60,72 +83,118 @@ bool Print_Initialize(u8 screen, const u8* font)
 void Print_SetFont(const u8* font) __FASTCALL
 {
 	if(font == null) // Use Bios font (if any)
-	{
-		g_PrintConfig.FontSize  = 0x88;
-		g_PrintConfig.FontFirst = 0;
-		g_PrintConfig.FontLast  = 255;
-		g_PrintConfig.FontForms = (const u8*)g_CGTABL;
-	}
+		Print_SetFontEx(8, 8, 6, 8, 0, 255, (const u8*)g_CGTABL);
 	else
-	{
-		g_PrintConfig.FontSize  = *font++;
-		g_PrintConfig.FontFirst = *font++;
-		g_PrintConfig.FontLast  = *font++;
-		g_PrintConfig.FontForms = font;
-	}
+		Print_SetFontEx(font[0] >> 4, font[0] & 0x0F, font[1] >> 4, font[1] & 0x0F, font[2], font[3], font+4);
 }
 
 //-----------------------------------------------------------------------------
-/// Set the draw color
-void Print_SetColor(u8 text, u8 background)
+/// Clear screen
+void Print_Clear()
 {
-	g_PrintConfig.TextColor = text;
-	g_PrintConfig.BackgroundColor = background;
+	VDP_HMMV(0, 0, g_PrintData.ScreenWidth, 256, g_PrintData.BackgroundColor);
 }
 
-
 //-----------------------------------------------------------------------------
-//
-// SYSTEM FUNCTION
-//
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-/// Draw a character in a 4-bits color mode
-void DrawChar4B(u8 character, u8 x, u8 y, u8 color, u8 bg)
+/// Set shadow effect
+#if USE_PRINT_SHADOW	
+void Print_SetShadow(bool activate, i8 offsetX, i8 offsetY, u8 color)
 {
-	u8* font = (u8*)(g_CGTABL + 8 * character);
-	i8 i, j;
-	u8 of = x & 0x01; // offset
-		
-	u8 line[5];
-	for(j = 0; j < 8; j++) // lines
+	g_PrintData.Shadow        = activate;
+	g_PrintData.ShadowOffsetX = 3 + offsetX; // Math_Clamp(offsetX, (i8)-3, 4);
+	g_PrintData.ShadowOffsetY = 3 + offsetY; // Math_Clamp(offsetY, (i8)-3, 4);
+	g_PrintData.ShadowColor   = color;
+}
+#endif // USE_PRINT_SHADOW	
+
+//-----------------------------------------------------------------------------
+//
+// SCREEN MODE FUNCTION
+//
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+///
+#if USE_PRINT_VALIDATOR
+void Print_ValidateForm(u8* chr, const c8** form)
+{
+	if((*chr < g_PrintData.FontFirst) || (*chr > g_PrintData.FontLast))
 	{
-		line[0] = line[1] = line[2] = line[3] = line[4] = (bg << 4) | bg;
-		for(i = 0; i < 8; i++) // columns
+		if((*chr >= 'a') && (*chr <= 'z') && (g_PrintData.FontFirst <= 'A') && (g_PrintData.FontLast >= 'Z')) // try to remap to upper case letters
 		{
-			if(font[j] & (1 << (7 - i)))
-			{
-				if((i + of) & 0x01)
-				{
-					line[(i + of) >> 1] &= 0xF0;
-					line[(i + of) >> 1] |= color;
-				}
-				else
-				{
-					line[(i + of) >> 1] &= 0x0F;
-					line[(i + of) >> 1] |= color << 4;
-				}
-			}
-		}		
-// #if (RENDER_MODE == RENDER_BIOS)
-		// Bios_TransfertRAMtoVRAM((u16)line, ((y + j) * 128) + (x >> 1), 4 + of);
-// #elif (RENDER_MODE == RENDER_VDP)
-		// VDP_HMMC((x >> 1), y + j, 4 + of, 1, (u16)line);
-// #endif
+			*chr = *chr - 'a' + 'A';
+			*form = g_PrintData.FontForms + g_PrintData.FormY * (*chr - g_PrintData.FontFirst);
+		}
+		else
+			*form = g_PrintInvalid;
+	}
+}
+#endif // USE_PRINT_VALIDATOR
+
+#if (MSX_VERSION >= MSX_2)
+
+//-----------------------------------------------------------------------------
+///
+void PutChar_G4(u8 chr) __FASTCALL
+{
+	const u8* form = g_PrintData.FontForms + g_PrintData.FormY * (chr - g_PrintData.FontFirst);
+#if USE_PRINT_VALIDATOR
+	Print_ValidateForm(&chr, &form);
+#endif
+	for(i8 j = 0; j < g_PrintData.FormY; j++) // lines
+	{
+		u8 f = form[j];
+		u8* l = &g_PrintData.Buffer[4];
+		*l++ = g_PrintData.Buffer[f >> 6];
+		*l++ = g_PrintData.Buffer[(f >> 4) & 0x03];
+		*l++ = g_PrintData.Buffer[(f >> 2) & 0x03];
+		*l   = g_PrintData.Buffer[f & 0x03];
+		VDP_WriteVRAM(&g_PrintData.Buffer[4], ((g_PrintData.CursorY + j) * 128) + (g_PrintData.CursorX >> 1), 0, 4);
 	}
 }
 
+//-----------------------------------------------------------------------------
+///
+void PutChar_G6(u8 chr) __FASTCALL
+{
+	const u8* form = g_PrintData.FontForms + g_PrintData.FormY * (chr - g_PrintData.FontFirst);
+#if USE_PRINT_VALIDATOR
+	Print_ValidateForm(&chr, &form);
+#endif
+	for(i8 j = 0; j < g_PrintData.FormY; j++) // lines
+	{
+		u8 f = form[j];
+		u8* l = &g_PrintData.Buffer[4];
+		*l++ = g_PrintData.Buffer[f >> 6];
+		*l++ = g_PrintData.Buffer[(f >> 4) & 0x03];
+		*l++ = g_PrintData.Buffer[(f >> 2) & 0x03];
+		*l   = g_PrintData.Buffer[f & 0x03];
+		VDP_WriteVRAM(&g_PrintData.Buffer[4], ((g_PrintData.CursorY + j) * 256) + (g_PrintData.CursorX >> 1), 0, 4);
+	}
+}
+
+//-----------------------------------------------------------------------------
+///
+void PutChar_G7(u8 chr) __FASTCALL
+{
+	const u8* form = g_PrintData.FontForms + g_PrintData.FormY * (chr - g_PrintData.FontFirst);
+#if USE_PRINT_VALIDATOR
+	Print_ValidateForm(&chr, &form);
+#endif
+	for(i8 j = 0; j < g_PrintData.FormY; j++) // lines
+	{
+		for(i8 i = 0; i < g_PrintData.FormX; i++)
+		{
+			if(form[j] & (1 << (7 - i)))
+				g_PrintData.Buffer[i] = g_PrintData.TextColor;
+			else
+				g_PrintData.Buffer[i] = g_PrintData.BackgroundColor;
+		}
+		VDP_WriteVRAM(g_PrintData.Buffer, ((g_PrintData.CursorY + j) * 256) + g_PrintData.CursorX, 0, g_PrintData.FormX);
+	}
+}
+
+#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 //
@@ -133,144 +202,109 @@ void DrawChar4B(u8 character, u8 x, u8 y, u8 color, u8 bg)
 //
 //-----------------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
+//-----------------------------------------------------------------------------
+///
+void Print_DrawChar(u8 chr) __FASTCALL
+{
+#if USE_PRINT_SHADOW
+	if(g_PrintData.Shadow)
+	{
+		// Backup
+		u8 cx = g_PrintData.CursorX;
+		u8 cy = g_PrintData.CursorY;
+		u8 tc = g_PrintData.TextColor;
+		// Set
+		g_PrintData.CursorX += g_PrintData.ShadowOffsetX - 3;
+		g_PrintData.CursorY += g_PrintData.ShadowOffsetY - 3;
+		g_PrintData.TextColor = g_PrintData.ShadowColor;
+		g_PrintData.PutChar(chr);
+		// Restore
+		g_PrintData.CursorX = cx;
+		g_PrintData.CursorY = cy;
+		g_PrintData.TextColor = tc;
+	}
+#endif
+#if USE_PRINT_VALIDATOR
+	if(g_PrintData.CursorX + g_PrintData.UnitX > g_PrintData.ScreenWidth)
+		Print_Return();
+#endif
+	g_PrintData.PutChar(chr);
+	g_PrintData.CursorX += g_PrintData.UnitX;
+}
 
 //-----------------------------------------------------------------------------
-//
-void Print_DrawText(u8 x, u8 y, const c8* string)
-{
-}
-
-
-static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-
-inline u8 IsTextScreen() { return (g_SCRMOD == 0) || (g_SCRMOD == 1) || (g_SCRMOD == 2); }
-
-void PrintInit(u8 color)
-{
-	g_LOGOPR = LOG_OP_TIMP;
-	g_FORCLR = color;
-}
-
-void SetPrintPos(u8 x, u8 y)
-{
-	if(IsTextScreen())
-	{
-		g_CSRX = x;
-		g_CSRY = y;
-	}
-	else
-	{
-		g_GRPACX = x;
-		g_GRPACY = y;
-	}
-}
-
-void PrintReturn()
-{
-	if(IsTextScreen())
-	{
-		g_CSRX = 1;
-		g_CSRY++;
-	}
-	else
-	{
-		g_GRPACX = 0;
-		g_GRPACY += 8;
-	}
-}
-
-void PrintTab()
-{
-	if(IsTextScreen())
-	{
-		g_CSRX += 2;
-	}
-	else
-	{
-		g_GRPACX += 2 * 8;
-	}
-}
-
-void PrintChar(c8 chr)
-{
-	if(IsTextScreen())
-		Bios_TextPrintChar(chr);	
-	else
-		Bios_GraphPrintChar(chr);	
-}
-
-void PrintCharX(c8 chr, u8 num)
+///
+void Print_DrawCharX(c8 chr, u8 num)
 {
 	for(i8 i = 0; i < num; i++)
-		PrintChar(chr);
+		Print_DrawChar(chr);
 }
 
-void PrintTextX(const c8* str, u8 num)
-{
-	for(i8 i = 0; i < num; i++)
-		PrintText(str);	
-}
-
-void PrintText(const c8* str)
+//-----------------------------------------------------------------------------
+///
+void Print_DrawText(const c8* str) __FASTCALL
 {
 	while(*str != 0)
 	{
-		if(*str == '\n')
-		{
-			PrintReturn();
-		}
+		if(*str == ' ')
+			Print_Space();
 		else if(*str == '\t')
-		{
-			PrintTab();
-		}
+			Print_Tab();
+		else if(*str == '\n')
+			Print_Return();
 		else
-			PrintChar(*str);
+			Print_DrawChar(*str);
 		str++;
 	}
 }
 
-void PrintBin8(u8 value)
+//-----------------------------------------------------------------------------
+///
+void Print_DrawTextX(const c8* str, u8 num)
+{
+	for(i8 i = 0; i < num; i++)
+		Print_DrawText(str);	
+}
+
+//-----------------------------------------------------------------------------
+///
+void Print_DrawBin8(u8 value) __FASTCALL
 {
 	for(i8 i = 0; i < 8; i++)
 	{
 		if(value & (1 << (7 - i)))
-			PrintChar('1');
+			Print_DrawChar('1');
 		else
-			PrintChar('0');
+			Print_DrawChar('0');
 	}
-	PrintChar('b');
+	Print_DrawChar('b');
 }
 
-void PrintHex8(u8 value)
+//-----------------------------------------------------------------------------
+///
+void Print_DrawHex8(u8 value) __FASTCALL
 {
-	PrintChar(hexChar[(value >> 4) & 0x000F]);
-	PrintChar(hexChar[value & 0x000F]);
-	PrintChar('h');
+	Print_DrawChar(hexChar[(value >> 4) & 0x000F]);
+	Print_DrawChar(hexChar[value & 0x000F]);
+	Print_DrawChar('h');
 }
 
-void PrintHex16(u16 value)
+//-----------------------------------------------------------------------------
+///
+void Print_DrawHex16(u16 value) __FASTCALL
 {
-	PrintChar(hexChar[(value >> 12) & 0x000F]);
-	PrintChar(hexChar[(value >> 8) & 0x000F]);
-	PrintHex8((u8)value);
+	Print_DrawChar(hexChar[(value >> 12) & 0x000F]);
+	Print_DrawChar(hexChar[(value >> 8) & 0x000F]);
+	Print_DrawHex8((u8)value);
 }
 
-void PrintInt(i16 value)
+//-----------------------------------------------------------------------------
+///
+void Print_DrawInt(i16 value) __FASTCALL
 {
 	if(value < 0)
 	{	
-		PrintChar('-');
+		Print_DrawChar('-');
 		value = -value;
 	}
 	
@@ -284,168 +318,5 @@ void PrintInt(i16 value)
 	}
 	*++ptr = '0' + value;
 	while(*ptr != 0)
-		PrintChar(*ptr--);	
+		Print_DrawChar(*ptr--);	
 }
-
-void PrintSlot(u8 slot)
-{
-	PrintInt(slot & 0x03);
-	if(slot & 0x80)
-	{
-		PrintChar('-');	
-		PrintInt((slot >> 2) & 0x03);
-	}
-}
-
-void PrintLineX(u8 x, u8 y, u8 len)
-{
-	SetPrintPos(x, y);
-	for(i8 i = 0; i < len; i++)
-	{
-		PrintChar(0x01); // graph
-		PrintChar(0x57); // -
-	}
-}
-
-void PrintLineY(u8 x, u8 y, u8 len)
-{
-	for(i8 i = 0; i < len; i++)
-	{
-		SetPrintPos(x, y + i);
-		PrintChar(0x01); // graph
-		PrintChar(0x56); // |
-	}
-}
-
-void PrintBox(u8 sx, u8 sy, u8 dx, u8 dy)
-{
-	// Corner
-	SetPrintPos(sx, sy);
-	PrintChar(0x01); // graph
-	PrintChar(0x58);
-	SetPrintPos(dx, sy);
-	PrintChar(0x01); // graph
-	PrintChar(0x59);
-	SetPrintPos(sx, dy);
-	PrintChar(0x01); // graph
-	PrintChar(0x5A);
-	SetPrintPos(dx, dy);
-	PrintChar(0x01); // graph
-	PrintChar(0x5B);
-
-	PrintLineX(sx + 1, sy, dx - sx - 1);
-	PrintLineX(sx + 1, dy, dx - sx - 1);
-
-	PrintLineY(sx, sy + 1, dy - sy - 1);
-	PrintLineY(dx, sy + 1, dy - sy - 1);
-}
-
-
-/*
-typedef void (*DrawCharaCallback)(u8, u8, u8, u8);
-
-void PrintCharGraph(u8 chr, u8 x, u8 y, u8 color)
-{
-	g_GRPACX = x * 8;
-	g_GRPACY = y * 8;
-	Bios_TextPrintChar(chr);	
-}
-
-void PrintCharText(u8 chr, u8 x, u8 y, u8 color)
-{
-	g_CSRX = x;
-	g_CSRY = y;
-	Bios_TextPrintChar(chr);	
-}
-
-	
-//-----------------------------------------------------------------------------
-// Draw a character from the Main-ROM charset in Screen 5
-void DrawChar5(u8 character, u8 x, u8 y, u8 color, u8 bg)
-{
-	u8* font = (u8*)(g_CGTABL + 8 * character);
-	i8 i, j;
-	u8 of = x & 0x01; // offset
-		
-	u8 line[5];
-	for(j = 0; j < 8; j++) // lines
-	{
-		line[0] = line[1] = line[2] = line[3] = line[4] = (bg << 4) | bg;
-		for(i = 0; i < 8; i++) // columns
-		{
-			if(font[j] & (1 << (7 - i)))
-			{
-				if((i + of) & 0x01)
-				{
-					line[(i + of) >> 1] &= 0xF0;
-					line[(i + of) >> 1] |= color;
-				}
-				else
-				{
-					line[(i + of) >> 1] &= 0x0F;
-					line[(i + of) >> 1] |= color << 4;
-				}
-			}
-		}		
-#if (RENDER_MODE == RENDER_BIOS)
-		Bios_TransfertRAMtoVRAM((u16)line, ((y + j) * 128) + (x >> 1), 4 + of);
-#elif (RENDER_MODE == RENDER_VDP)
-		HMMC((x >> 1), y + j, 4 + of, 1, (u16)line);
-#endif
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Draw a character from the Main-ROM charset in Screen 8
-void DrawChar8(u8 character, u8 x, u8 y, u8 color, u8 bg)
-{
-	u8* font = (u8*)(g_CGTABL + 8 * character);
-	i8 i, j;
-	u8 line[8];
-	for(j = 0; j < 8; j++) // lines
-	{
-		for(i = 0; i < 8; i++) // columns
-		{
-			line[i] = (font[j] & (1 << (7 - i))) ? color : bg;
-		}		
-#if (RENDER_MODE == RENDER_BIOS)
-		Bios_TransfertRAMtoVRAM((u16)line, ((y + j) * 256) + x, 8);
-#elif (RENDER_MODE == RENDER_VDP)
-		HMMC(x, y + j, 8, 1, (u16)line); 
-#endif
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Draw a text in graphical mode at given position
-void PrintString(const c8* string, u8 x, u8 y, u8 color, u8 scr)
-{
-	DrawCharaCallback cb;
-	if((src == 0) || (src == 2))
-		cb = PrintCharText;
-	else
-		cb = PrintCharGraph;
-		
-	g_LOGOPR = LOG_OP_TIMP;
-	g_FORCLR = color;
-
-	u8 px = x;
-	u8 py = y;
-	for(i8 i = 0; string[i] != '\0'; i++)
-	{
-		if(string[i] == '\n')
-		{
-			px = x;
-			py++;
-		}
-		else if(string[i] == '\t')
-		{
-			px += 3;
-		}
-		else
-		{
-			cb(string[i], px, py, color);
-			px++;
-		}
-	}
-}*/

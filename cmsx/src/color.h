@@ -4,6 +4,15 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
+/// Bits-per-color enum
+enum COLOR_BPC
+{
+	BPC_1 = 0,	///< 1-bit		2 colors		[c1|c2|c3|c4|c5|c6|c7|c8]
+	BPC_2,		///< 2-bits		4 colors		[c1:2|c2:2|c3:2|c4:2]
+	BPC_4,		///< 4-bits		16 colors		[c1:4|c2:4]
+	BPC_8,		///< 8-bits		256 colors		[c:8]
+};
+
 //-----------------------------------------------------------------------------
 // DEFAULT 4-BITS MSX PALETTE
 //-----------------------------------------------------------------------------
@@ -80,6 +89,7 @@
 #define COLOR8_DARKLIME		RGB8(2,5,0)
 
 // Default palette colors
+#define COLOR8_DEFAULT0		RGB8(0,0,0)		
 #define COLOR8_DEFAULT1		RGB8(0,0,0)		
 #define COLOR8_DEFAULT2		RGB8(1,6,0)		
 #define COLOR8_DEFAULT3		RGB8(3,7,1)		

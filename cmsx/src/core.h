@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "cmsx_config.h"
+#include "config_default.h"
 
 //-----------------------------------------------------------------------------
 // Compilation switch
@@ -70,7 +71,7 @@ inline void DisableInterrupt() { __asm__("di"); }
 // - 8-bit values are passed in L
 // - 16-bit values in HL
 // - 32-bit values in DEHL
-#define __FASTCALL __z88dk_fastcall
+#define __FASTCALL			__z88dk_fastcall
 // For 8 bits parameter
 #define FC8(a)				(u8)(a)					// L
 // For 16 bits parameters

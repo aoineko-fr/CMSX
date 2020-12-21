@@ -27,6 +27,18 @@
 /// Get the power-of-2 modulo of a integer (ie. "ModuloPow2(100, 32)")
 #define ModuloPow2(a, b)	((a) & ((b) - 1))
 
+/// Clamp a 8-bits value into a interval 
+#define Clamp8(a, b, c)		((i8)(a) < (i8)(b)) ? (b) : ((i8)(a) > (i8)(c)) ? (c) : (a)
+/// Clamp a 16-bits value into a interval 
+#define Clamp16(a, b, c)	((i16)(a) < (i16)(b)) ? (b) : ((i16)(a) > (i16)(c)) ? (c) : (a)
+
+//-----------------------------------------------------------------------------
+// Helper functions
+//-----------------------------------------------------------------------------
+
+/// Clamp a value into a interval 
+i8 Math_Clamp(i8 val, i8 min, i8 max);
+
 //-----------------------------------------------------------------------------
 // Quick math routines
 //-----------------------------------------------------------------------------

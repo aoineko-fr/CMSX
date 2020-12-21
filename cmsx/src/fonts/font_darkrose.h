@@ -2,7 +2,7 @@
 //  █▀▀ █▀▄▀█ █▀ ▀▄▀
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
-// Author: darkrose
+// Author: Darkrose
 // License(s): CC-BY-SA 3.0, GPL 2.0 & 3.0
 // See: https://opengameart.org/content/8x8-ascii-bitmap-font-with-c-source
 
@@ -18,7 +18,8 @@
 // Data table
 const unsigned char g_Font_Darkrose[] =
 {
-	0x88, // Size [x|y]
+	0x88, // Data size [x|y]
+	0x88, // Font size [x|y]
 	'!', // First character ASCII code
 	'~', // Last character ASCII code
 // Sprite[32] (offset:256)
@@ -586,15 +587,6 @@ const unsigned char g_Font_Darkrose[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x7E, /* .######. */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-// Sprite[95] (offset:760)
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 // Sprite[96] (offset:768)
