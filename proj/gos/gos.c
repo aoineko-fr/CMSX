@@ -290,7 +290,7 @@ void Player_ComputeTaget(Player* p, u8 level)
 void DrawField(u16 y) __FASTCALL
 {
 	// Field
-	for(i8 j = 0; j < 24; j++)
+	for(u8 j = 0; j < 24; ++j)
 	{
 		u8 col = (j & 1) ? 0xDD : 0xEE;
 		VDP_HMMV(0, (j * 16) + y, 256, 16, col);
@@ -381,10 +381,10 @@ void MainLoop()
 	
 	//-------------------------------------------------------------------------
 	// Initialize players
-	for(i8 j = 0; j < 2; j++)
+	for(u8 j = 0; j < 2; ++j)
 	{
 		Player* p = &g_Player[j][0];
-		for(i8 i = 0; i < PLAYER_NB; i++)
+		for(u8 i = 0; i < PLAYER_NB; ++i)
 		{			
 			p->id = i % 7;
 			if(i < PLAYER_NB / 2)
@@ -457,7 +457,7 @@ void MainLoop()
 		//---------------------------------------------------------------------
 		u8 nearestPly = 0xFF;
 		u16 nearestDist = 0xFFFF;
-		for(i8 i = 0; i < PLAYER_NB; i++)
+		for(u8 i = 0; i < PLAYER_NB; ++i)
 		{
 			SpriteRestore(i);
 			g_Player[g_WritePage][i] = g_Player[g_DisplayPage][i]; // swap player data
@@ -481,7 +481,7 @@ void MainLoop()
 		// UPDATE PLAYERS & BACKUP BACKGROUND
 		//---------------------------------------------------------------------
 		p = &g_Player[g_WritePage][0];			
-		for(i8 i = 0; i < PLAYER_NB; i++)
+		for(u8 i = 0; i < PLAYER_NB; ++i)
 		{
 			if(i == playerChara) // controller 1
 			{
@@ -581,7 +581,7 @@ void MainLoop()
 		// DRAW PLAYERS
 		//---------------------------------------------------------------------
 		p = &g_Player[g_WritePage][0];			
-		for(i8 i = 0; i < PLAYER_NB; i++)
+		for(u8 i = 0; i < PLAYER_NB; ++i)
 		{
 			if((p->pos.y + SPRT_OFS_Y + 16 >= scrollOffset) && (p->pos.y + SPRT_OFS_Y <= scrollOffset + LINE_NB))
 			{
