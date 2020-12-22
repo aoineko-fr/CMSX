@@ -9,13 +9,26 @@
 #include "memory.h"
 #include "math.h"
 
-struct Print_Data g_PrintData;
+//-----------------------------------------------------------------------------
+// DEFINE
+
+#if USE_PRINT_NO8
+	#define PRINT_8(a) (a)
+#else
+	#define PRINT_8(a) 8
+#endif
+
 
 #if (MSX_VERSION >= MSX_2)
 void PutChar_G4(u8 chr) __FASTCALL;
 void PutChar_G6(u8 chr) __FASTCALL;
 void PutChar_G7(u8 chr) __FASTCALL;
 #endif
+
+//-----------------------------------------------------------------------------
+// DATA
+
+struct Print_Data g_PrintData;
 
 #if USE_PRINT_VALIDATOR
 u8 g_PrintInvalid[] =
@@ -137,11 +150,12 @@ void Print_ValidateForm(u8* chr, const c8** form)
 ///
 void PutChar_G4(u8 chr) __FASTCALL
 {
-	const u8* form = g_PrintData.FontForms + g_PrintData.FormY * (chr - g_PrintData.FontFirst);
+	const u8* form = g_PrintData.FontAddr + chr * PRINT_8(g_PrintData.FormY);
 #if USE_PRINT_VALIDATOR
 	Print_ValidateForm(&chr, &form);
 #endif
-	for(i8 j = 0; j < g_PrintData.FormY; j++) // lines
+	u16 addr = (g_PrintData.CursorY * 128) + (g_PrintData.CursorX >> 1);
+	for(i8 j = 0; j < PRINT_8(g_PrintData.FormY); j++) // lines
 	{
 		u8 f = form[j];
 		u8* l = &g_PrintData.Buffer[4];
@@ -149,7 +163,8 @@ void PutChar_G4(u8 chr) __FASTCALL
 		*l++ = g_PrintData.Buffer[(f >> 4) & 0x03];
 		*l++ = g_PrintData.Buffer[(f >> 2) & 0x03];
 		*l   = g_PrintData.Buffer[f & 0x03];
-		VDP_WriteVRAM(&g_PrintData.Buffer[4], ((g_PrintData.CursorY + j) * 128) + (g_PrintData.CursorX >> 1), 0, 4);
+		VDP_WriteVRAM(&g_PrintData.Buffer[4], addr, 0, 4);
+		addr += 128;
 	}
 }
 
@@ -157,11 +172,12 @@ void PutChar_G4(u8 chr) __FASTCALL
 ///
 void PutChar_G6(u8 chr) __FASTCALL
 {
-	const u8* form = g_PrintData.FontForms + g_PrintData.FormY * (chr - g_PrintData.FontFirst);
+	const u8* form = g_PrintData.FontAddr + chr * PRINT_8(g_PrintData.FormY);
 #if USE_PRINT_VALIDATOR
 	Print_ValidateForm(&chr, &form);
 #endif
-	for(i8 j = 0; j < g_PrintData.FormY; j++) // lines
+	u16 addr = (g_PrintData.CursorY * 256) + (g_PrintData.CursorX >> 1);
+	for(i8 j = 0; j < PRINT_8(g_PrintData.FormY); j++) // lines
 	{
 		u8 f = form[j];
 		u8* l = &g_PrintData.Buffer[4];
@@ -169,7 +185,8 @@ void PutChar_G6(u8 chr) __FASTCALL
 		*l++ = g_PrintData.Buffer[(f >> 4) & 0x03];
 		*l++ = g_PrintData.Buffer[(f >> 2) & 0x03];
 		*l   = g_PrintData.Buffer[f & 0x03];
-		VDP_WriteVRAM(&g_PrintData.Buffer[4], ((g_PrintData.CursorY + j) * 256) + (g_PrintData.CursorX >> 1), 0, 4);
+		VDP_WriteVRAM(&g_PrintData.Buffer[4], addr, 0, 4);
+		addr += 256;
 	}
 }
 
@@ -177,11 +194,12 @@ void PutChar_G6(u8 chr) __FASTCALL
 ///
 void PutChar_G7(u8 chr) __FASTCALL
 {
-	const u8* form = g_PrintData.FontForms + g_PrintData.FormY * (chr - g_PrintData.FontFirst);
+	const u8* form = g_PrintData.FontAddr + chr * PRINT_8(g_PrintData.FormY);
 #if USE_PRINT_VALIDATOR
 	Print_ValidateForm(&chr, &form);
 #endif
-	for(i8 j = 0; j < g_PrintData.FormY; j++) // lines
+	u16 addr = (g_PrintData.CursorY * 256) + g_PrintData.CursorX;
+	for(i8 j = 0; j < PRINT_8(g_PrintData.FormY); j++) // lines
 	{
 		for(i8 i = 0; i < g_PrintData.FormX; i++)
 		{
@@ -190,7 +208,8 @@ void PutChar_G7(u8 chr) __FASTCALL
 			else
 				g_PrintData.Buffer[i] = g_PrintData.BackgroundColor;
 		}
-		VDP_WriteVRAM(g_PrintData.Buffer, ((g_PrintData.CursorY + j) * 256) + g_PrintData.CursorX, 0, g_PrintData.FormX);
+		VDP_WriteVRAM(g_PrintData.Buffer, addr, 0, g_PrintData.FormX);
+		addr += 256;
 	}
 }
 

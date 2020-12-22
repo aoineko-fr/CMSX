@@ -15,6 +15,7 @@ inline void Print_SetFontEx(u8 formX, u8 formY, u8 sizeX, u8 sizeY, u8 firstChr,
 	g_PrintData.FontFirst = firstChr;
 	g_PrintData.FontLast  = lastChr;
 	g_PrintData.FontForms = forms;
+	g_PrintData.FontAddr  = g_PrintData.FontForms - (g_PrintData.FontFirst * g_PrintData.FormY);
 }
 
 //-----------------------------------------------------------------------------

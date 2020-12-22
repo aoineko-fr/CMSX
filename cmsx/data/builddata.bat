@@ -6,6 +6,8 @@ REM ..\..\tools\MSXImage\MSXImage.exe -in font\misc\acme_5_outlines_font_gb.png 
 ..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_neon1.png	-out font_cmsx_neon1.h  -pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Neon1		-skip -font 8 8 ! ~
 ..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_neon1b.png	-out font_cmsx_neon1b.h	-pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Neon1B	-skip -font 8 8 ! ~
 ..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_neon2.png	-out font_cmsx_neon2.h  -pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Neon2		-skip -font 8 8 ! ~
+..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_rune2.png	-out font_cmsx_rune2.h  -pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Rune2		-skip -font 8 8 ! _
+..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_rune2b.png	-out font_cmsx_rune2b.h	-pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Rune2B	-skip -font 8 8 ! _
 ..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_std1.png	-out font_cmsx_std1.h   -pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Std1		-skip -font 6 8 ! ~
 ..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_std2.png	-out font_cmsx_std2.h   -pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Std2		-skip -font 6 8 ! ~
 ..\..\tools\MSXImage\MSXImage.exe -in font\font_cmsx_std3.png	-out font_cmsx_std3.h   -pos 0 16 -size 8 7  -gap 0 1 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_CMSX_Std3		-skip -font 6 8 ! }

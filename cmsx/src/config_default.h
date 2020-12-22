@@ -44,3 +44,6 @@
 #ifndef USE_PRINT_SHADOW
 	#define USE_PRINT_SHADOW	0
 #endif
+#ifndef USE_PRINT_NO8
+	#define USE_PRINT_NO8		1
+#endif

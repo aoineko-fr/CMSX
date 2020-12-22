@@ -3,7 +3,6 @@
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
 #pragma once
-
 #include "core.h"
 #include "vdp.h"
 
@@ -33,6 +32,7 @@ struct Print_Data
 	u8 FontFirst;				///< ASCII code of the first character of the current font
 	u8 FontLast;				///< ASCII code of the last character of the current font
 	const u8* FontForms;		///< Forms of the font
+	const u8* FontAddr;			///< 
 	print_putchar PutChar;		///< Put char function
 	u16 ScreenWidth;			///< Screen width
 #if USE_PRINT_SHADOW	
