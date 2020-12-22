@@ -47,3 +47,9 @@
 #ifndef USE_PRINT_NO8
 	#define USE_PRINT_NO8		1
 #endif
+#ifndef PRINT_WIDTH
+	#define PRINT_WIDTH			PRINT_WIDTH_8
+#endif
+#ifndef PRINT_HEIGHT
+	#define PRINT_HEIGHT		PRINT_HEIGHT_8
+#endif

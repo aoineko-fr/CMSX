@@ -41,7 +41,7 @@ struct Print_Data
 	u8 ShadowOffsetY	: 3;	///< Shadow Y offset (0:7 => -3:+4)
 	u8 ShadowColor;				///< Shadow color
 #endif
-	u8 Buffer[10];				///< Mode specifique buffer
+	u8 Buffer[16];				///< Mode specifique buffer
 };
 
 /// Initialize print module
@@ -75,27 +75,27 @@ void Print_SetShadow(bool activate, i8 offsetX, i8 offsetY, u8 color);
 // DRAW FUNCTION
 //-----------------------------------------------------------------------------
 
-/// 
-void Print_DrawText(const c8* string) __FASTCALL;
-
-/// 
-void Print_DrawTextX(const c8* str, u8 num);
-
-/// 
+/// Print a single character 
 void Print_DrawChar(u8 chr) __FASTCALL;
 
-/// 
+/// Print the same character many times
 void Print_DrawCharX(c8 chr, u8 num);
 
-/// 
+/// Print a character string
+void Print_DrawText(const c8* string) __FASTCALL;
+
+/// Print a character string many times
+void Print_DrawTextX(const c8* str, u8 num);
+
+/// Print a 8-bits binary value 
 void Print_DrawHex8(u8 value) __FASTCALL;
 
-/// 
+/// Print a 8-bits hexadecimal value
 void Print_DrawHex16(u16 value) __FASTCALL;
 
-/// 
+/// Print a 16-bits hexadecimal value
 void Print_DrawBin8(u8 value) __FASTCALL;
 
-/// 
+/// Print a 16-bits signed decimal value
 void Print_DrawInt(i16 value) __FASTCALL;
 

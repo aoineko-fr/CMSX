@@ -65,6 +65,15 @@ inline void EnableInterrupt() { __asm__("ei"); }
 /// Disable interruption
 inline void DisableInterrupt() { __asm__("di"); }
 
+
+//-----------------------------------------------------------------------------
+// PEEK & POKE
+//-----------------------------------------------------------------------------
+#define POKE(addr, val)		(*(u8*)(addr) = (val))
+#define POKEW(addr, val)	(*(u16*)(addr) = (val))
+#define PEEK(addr)			(*(u8*)(addr))
+#define PEEKW(addr)			(*(u16*)(addr))
+
 //-----------------------------------------------------------------------------
 // Fastcall (__z88dk_fastcall)
 //-----------------------------------------------------------------------------

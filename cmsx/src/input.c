@@ -155,12 +155,12 @@ u8 CheckDoubleClickHold(u8 dev, u8 input)
 // Inupts:		config		The manager configuration (null: default config will be used)
 void IPM_Initialize(IPM_Config* config)
 {
-	for(i8 dev = 0; dev < IPM_DEVICE_MAX; dev++)
+	for(u8 dev = 0; dev < IPM_DEVICE_MAX; ++dev)
 	{
 		g_IPM.Process[dev].CurrentStatus  = 0xFF;
 		g_IPM.Process[dev].PreviousStatus = 0xFF;
 		
-		for(i8 in = 0; in < IPM_INPUT_MAX; in++)
+		for(u8 in = 0; in < IPM_INPUT_MAX; ++in)
 		{
 			g_IPM.Process[dev].State[in] = 0;
 			g_IPM.Process[dev].Timer[in] = 0xFF;
@@ -185,7 +185,7 @@ void IPM_Initialize(IPM_Config* config)
 void IPM_Update()
 {
 	// Update device status
-	for(i8 dev = 0; dev < IPM_DEVICE_MAX; dev++)
+	for(u8 dev = 0; dev < IPM_DEVICE_MAX; ++dev)
 	{
 		IPM_Process* proc = &g_IPM.Process[dev];
 		proc->PreviousStatus = proc->CurrentStatus;
@@ -215,8 +215,8 @@ void IPM_Update()
 			proc->CurrentStatus = flag;
 		}
 
-		i8 in;
-		for(in = 0; in < IPM_INPUT_MAX; in++)
+		u8 in;
+		for(in = 0; in < IPM_INPUT_MAX; ++in)
 		{
 			// Increment previous state counter
 			if(proc->Timer[in] < 0xFF)
@@ -279,7 +279,7 @@ void IPM_Update()
 	}
 	
 	// Check registered events
-	for(i8 i = 0; i < g_IPM.EventsNum; i++)
+	for(u8 i = 0; i < g_IPM.EventsNum; ++i)
 	{
 		IPM_Event* entry = &g_IPM.Events[i];
 		
@@ -301,14 +301,14 @@ void IPM_Update()
 				}
 				else // IPM_INPUT_ANY
 				{
-					for(i8 in = 0; in < IPM_INPUT_MAX; in ++)
+					for(u8 in = 0; in < IPM_INPUT_MAX; ++in)
 						if(g_IPM.Checker[ev](dev, in))
 							cb(dev, in, ev);			
 				}
 			}
 			else // IPM_EVENT_ANY
 			{
-				for(i8 ev = 0; ev < IPM_EVENT_MAX; ev++)
+				for(u8 ev = 0; ev < IPM_EVENT_MAX; ++ev)
 				{
 					if(entry->Input < IPM_INPUT_MAX)
 					{
@@ -318,7 +318,7 @@ void IPM_Update()
 					}
 					else // IPM_INPUT_ANY
 					{
-						for(i8 in = 0; in < IPM_INPUT_MAX; in ++)
+						for(u8 in = 0; in < IPM_INPUT_MAX; ++in)
 							if(g_IPM.Checker[ev](dev, in))
 								cb(dev, in, ev);			
 					}
@@ -327,7 +327,7 @@ void IPM_Update()
 		}	
 		else // IPM_DEVICE_ANY
 		{	
-			for(i8 dev = 0; dev < IPM_DEVICE_MAX; dev++)
+			for(u8 dev = 0; dev < IPM_DEVICE_MAX; ++dev)
 			{
 				if(entry->Event < IPM_EVENT_MAX)
 				{
@@ -340,14 +340,14 @@ void IPM_Update()
 					}
 					else // IPM_INPUT_ANY
 					{
-						for(i8 in = 0; in < IPM_INPUT_MAX; in ++)
+						for(u8 in = 0; in < IPM_INPUT_MAX; ++in)
 							if(g_IPM.Checker[ev](dev, in))
 								cb(dev, in, ev);			
 					}
 				}
 				else // IPM_EVENT_ANY
 				{
-					for(i8 ev = 0; ev < IPM_EVENT_MAX; ev++)
+					for(u8 ev = 0; ev < IPM_EVENT_MAX; ++ev)
 					{
 						if(entry->Input < IPM_INPUT_MAX)
 						{
@@ -357,7 +357,7 @@ void IPM_Update()
 						}
 						else // IPM_INPUT_ANY
 						{
-							for(i8 in = 0; in < IPM_INPUT_MAX; in ++)
+							for(u8 in = 0; in < IPM_INPUT_MAX; ++in)
 								if(g_IPM.Checker[ev](dev, in))
 									cb(dev, in, ev);			
 						}
@@ -395,7 +395,7 @@ inline u8 IPM_GetStatus(u8 dev)
 
 //-----------------------------------------------------------------------------
 // Get current direction of the given device
-inline i8 IPM_GetStickDirection(u8 dev)
+inline u8 IPM_GetStickDirection(u8 dev)
 {
 	u8 in = g_IPM.Process[dev].CurrentStatus;
 	in = ~in;
@@ -413,7 +413,7 @@ inline i8 IPM_GetStickDirection(u8 dev)
 	default:						break;
 	}	
 	
-	return -1;
+	return 0xFF;
 }
 
 //-----------------------------------------------------------------------------

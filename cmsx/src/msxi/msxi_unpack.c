@@ -18,7 +18,7 @@ bool SearchColorReplacement(const u8* clrReplace, u8* color)
 {
 	if((clrReplace == null) || (clrReplace[0] == 0))
 		return false;
-	for(i8 i = 0; i < clrReplace[0]; i++)
+	for(u8 i = 0; i < clrReplace[0]; ++i)
 	{
 		if(*color == clrReplace[i * 2 + 1])
 		{
@@ -62,14 +62,14 @@ void MSXi_UnpackToVRAM_CropLine16_4_4(void* src, u16 destX, u16 destY, u8 sizeX,
 		pageY = 1;
 	}
 	
-	for(i8 j = 0; j < numY; j++)
+	for(u8 j = 0; j < numY; ++j)
 	{
-		for(i8 i = 0; i < numX; i++)
+		for(u8 i = 0; i < numX; ++i)
 		{
 			u8 minY = *ptr >> 4;
 			u8 maxY = *ptr & 0x0F;
 			ptr++;
-			for(i8 y = minY; y <= maxY; y++)
+			for(u8 y = minY; y <= maxY; ++y)
 			{
 				u8 minX = *ptr >> 4;
 				u8 maxX = *ptr & 0x0F;
@@ -82,7 +82,7 @@ void MSXi_UnpackToVRAM_CropLine16_4_4(void* src, u16 destX, u16 destY, u8 sizeX,
 				{
 					u8* buffer = Mem_HeapAlloc(len);
 					Mem_Copy(ptr, buffer, len);
-					for(i8 k = 0; k < len; k++)
+					for(u8 k = 0; k < len; ++k)
 					{
 						u8 c1 = buffer[k] >> 4;
 						if(SearchColorReplacement(clrReplace, &c1))

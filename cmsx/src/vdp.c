@@ -55,7 +55,7 @@ static const u8 modeT1[] =
 void VDP_SetModeText1()
 {
 	// Backup vdp register @todo Can be optimized
-	for(i8 i = 0; i < 10; i += 2)
+	for(u8 i = 0; i < 10; i += 2)
 		g_VDP_REGSAV[modeT1[i + 1] & 0x7F] = modeT1[i];
 
 	__asm
@@ -84,7 +84,7 @@ static const u8 modeMC[] =
 void VDP_SetModeMultiColor()
 {
 	// Backup vdp register @todo Can be optimized
-	for(i8 i = 0; i < 14; i += 2)
+	for(u8 i = 0; i < 14; i += 2)
 		g_VDP_REGSAV[modeMC[i + 1] & 0x7F] = modeMC[i];
 
 	__asm
@@ -113,7 +113,7 @@ static const u8 modeG1[] =
 void VDP_SetModeGraphic1()
 {
 	// Backup vdp register @todo Can be optimized
-	for(i8 i = 0; i < 16; i += 2)
+	for(u8 i = 0; i < 16; i += 2)
 		g_VDP_REGSAV[modeG1[i + 1] & 0x7F] = modeG1[i];
 
 	__asm
@@ -142,7 +142,7 @@ static const u8 modeG2[] =
 void VDP_SetModeGraphic2()
 {
 	// Backup vdp register @todo Can be optimized
-	for(i8 i = 0; i < 16; i += 2)
+	for(u8 i = 0; i < 16; i += 2)
 		g_VDP_REGSAV[modeG2[i + 1] & 0x7F] = modeG2[i];
 
 	__asm

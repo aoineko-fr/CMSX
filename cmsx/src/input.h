@@ -275,7 +275,7 @@ typedef struct
 {
 	IPM_Process	Process[IPM_DEVICE_MAX];
 	IPM_Event	Events[IPM_EVENT_TAB_SIZE];
-	i8			EventsNum;
+	u8			EventsNum;
 	IPM_check	Checker[IPM_EVENT_MAX];
 	IPM_Config  Config;
 } IPM_Data;
@@ -295,7 +295,7 @@ bool IPM_RegisterEvent(u8 joy, u8 input, u8 event, IPM_cb cb);
 inline u8 IPM_GetStatus(u8 joy);
 
 // Get current direction of the given device
-inline i8 IPM_GetStickDirection(u8 joy);
+inline u8 IPM_GetStickDirection(u8 joy);
 
 // Get current device state
 inline u8 IPM_GetInputState(u8 joy, u8 in);
