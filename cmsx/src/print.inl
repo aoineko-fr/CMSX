@@ -26,32 +26,6 @@ inline void Print_SetFontEx(u8 formX, u8 formY, u8 sizeX, u8 sizeY, u8 firstChr,
 }
 
 //-----------------------------------------------------------------------------
-/// Set the draw color
-/// @param		text		Text color (format depend of current screen mode)
-/// @param		bg			Background color (format depend of current screen mode)
-inline void Print_SetColor(u8 text, u8 bg)
-{
-	g_PrintData.TextColor = text;
-	g_PrintData.BackgroundColor = bg;
-
-	// Pre-compute colors combinaison for 2-bits of a character form line (used to quick drawing in PutChar_GX functions)
-	if((g_PrintData.Mode == VDP_MODE_GRAPHIC4) || (g_PrintData.Mode == VDP_MODE_GRAPHIC6))
-	{
-		g_PrintData.Buffer[0] = (bg << 4)   | bg;
-		g_PrintData.Buffer[1] = (bg << 4)   | text;
-		g_PrintData.Buffer[2] = (text << 4) | bg;
-		g_PrintData.Buffer[3] = (text << 4) | text;
-	}
-	else if(g_PrintData.Mode == VDP_MODE_GRAPHIC7)
-	{
-		((u16*)g_PrintData.Buffer)[0] = ((u16)bg << 8)   | (u16)bg;
-		((u16*)g_PrintData.Buffer)[1] = ((u16)text << 8) | (u16)bg;
-		((u16*)g_PrintData.Buffer)[2] = ((u16)bg << 8)   | (u16)text;
-		((u16*)g_PrintData.Buffer)[3] = ((u16)text << 8) | (u16)text;
-	}
-}
-
-//-----------------------------------------------------------------------------
 /// Set cursor position
 inline void Print_SetPosition(u8 x, u8 y)
 {
@@ -79,14 +53,14 @@ inline void Print_SetTabSize(u8 size)
 /// Print space
 inline void Print_Space()
 {
-	g_PrintData.CursorX += g_PrintData.UnitX;
+	g_PrintData.CursorX += PRINT_W(g_PrintData.UnitX);
 }
 
 //-----------------------------------------------------------------------------
 /// Print tabulation
 inline void Print_Tab()
 {
-	g_PrintData.CursorX += g_PrintData.UnitX + g_PrintData.TabSize - 1;
+	g_PrintData.CursorX += PRINT_W(g_PrintData.UnitX) + g_PrintData.TabSize - 1;
 	g_PrintData.CursorX &= ~(g_PrintData.TabSize - 1);
 }
 
@@ -95,5 +69,5 @@ inline void Print_Tab()
 inline void Print_Return()
 {
 	g_PrintData.CursorX = 0;
-	g_PrintData.CursorY += g_PrintData.UnitY;
+	g_PrintData.CursorY += PRINT_H(g_PrintData.UnitY);
 }

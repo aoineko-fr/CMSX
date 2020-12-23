@@ -7,13 +7,33 @@
 #include "vdp.h"
 
 //-----------------------------------------------------------------------------
-// INITIALIZATION
+// DEFINES
 //-----------------------------------------------------------------------------
+
+// Handle fixed of variables character width
+#if (PRINT_WIDTH == PRINT_WIDTH_6)
+	#define PRINT_W(a) 6
+#elif (PRINT_WIDTH == PRINT_WIDTH_8)
+	#define PRINT_W(a) 8
+#else // (PRINT_WIDTH == PRINT_WIDTH_X)
+	#define PRINT_W(a) (a)
+#endif
+
+// Handle fixed of variables character height
+#if (PRINT_HEIGHT == PRINT_HEIGHT_8)
+	#define PRINT_H(a) 8
+#else // (PRINT_HEIGHT == PRINT_HEIGHT_X)
+	#define PRINT_H(a) a
+#endif
 
 extern struct Print_Data g_PrintData;
 
 // Functions
 typedef void (*print_putchar)(u8) __FASTCALL; ///< Callback default signature
+
+//-----------------------------------------------------------------------------
+// STRUCTURES
+//-----------------------------------------------------------------------------
 
 /// Print module configuration structure
 struct Print_Data
@@ -41,8 +61,12 @@ struct Print_Data
 	u8 ShadowOffsetY	: 3;	///< Shadow Y offset (0:7 => -3:+4)
 	u8 ShadowColor;				///< Shadow color
 #endif
-	u8 Buffer[16];				///< Mode specifique buffer
+	u8 Buffer[20];				///< Mode specifique buffer
 };
+
+//-----------------------------------------------------------------------------
+// INITIALIZATION
+//-----------------------------------------------------------------------------
 
 /// Initialize print module
 bool Print_Initialize(u8 screen, const u8* font);
@@ -53,6 +77,9 @@ void Print_SetFont(const u8* font) __FASTCALL;
 /// Clear screen
 void Print_Clear();
 
+/// Set the draw color
+void Print_SetColor(u8 text, u8 bg);
+
 /// Set shadow effect
 #if USE_PRINT_SHADOW	
 void Print_SetShadow(bool activate, i8 offsetX, i8 offsetY, u8 color);
@@ -62,7 +89,6 @@ void Print_SetShadow(bool activate, i8 offsetX, i8 offsetY, u8 color);
 // INLINE FUNCTIONS
 //-----------------------------------------------------------------------------
 // inline void Print_SetFontEx(u8 formX, u8 formY, u8 sizeX, u8 sizeY, u8 firstChr, u8 lastChr, const u8* forms); // Set the current font
-// inline void Print_SetColor(u8 text, u8 background); // Set the draw color
 // inline void Print_SetPosition(u8 x, u8 y); // Set cursor position
 // inline void Print_SetCharSize(u8 x, u8 y); // Set cursor position
 // inline void Print_SetTabSize(u8 size) // Set tabulation size in pixel (must be a power of 2 like 16, 32, 64, ...);

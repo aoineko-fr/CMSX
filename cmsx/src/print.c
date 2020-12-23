@@ -15,25 +15,16 @@
 //
 //-----------------------------------------------------------------------------
 
-// Handle fixed of variables character width
-#if (PRINT_WIDTH == PRINT_HEIGHT_6)
-	#define PRINT_W(a) 6
-#elif (PRINT_HEIGHT == PRINT_HEIGHT_8)
-	#define PRINT_W(a) 8
-#else
-	#define PRINT_W(a) (a)
-#endif
-
-// Handle fixed of variables character height
-#if (PRINT_HEIGHT == PRINT_HEIGHT_8)
-	#define PRINT_H(a) 8
-#else
-	#define PRINT_H(a) a
-#endif
-
-#if (MSX_VERSION >= MSX_2)
+#if USE_VDP_MODE_G4
 void PutChar_G4(u8 chr) __FASTCALL;
+#endif
+#if USE_VDP_MODE_G5
+void PutChar_G5(u8 chr) __FASTCALL;
+#endif
+#if USE_VDP_MODE_G6
 void PutChar_G6(u8 chr) __FASTCALL;
+#endif
+#if USE_VDP_MODE_G7
 void PutChar_G7(u8 chr) __FASTCALL;
 #endif
 
@@ -89,21 +80,32 @@ bool Print_Initialize(u8 screen, const u8* font)
 
 	switch(screen) // Screen mode specific initialization
 	{
-#if (MSX_VERSION >= MSX_2)
+#if USE_VDP_MODE_G4
 	case VDP_MODE_GRAPHIC4:		// 256 x 212; 16 colours are available for each dot
 		g_PrintData.PutChar     = PutChar_G4;
 		g_PrintData.ScreenWidth = 256;
 		break;
+#endif // USE_VDP_MODE_G4
+#if USE_VDP_MODE_G5
+	case VDP_MODE_GRAPHIC5:		// 512 x 212; 4 colours are available for each dot
+		Print_SetColor(0x03, 0x0);
+		g_PrintData.PutChar     = PutChar_G5;
+		g_PrintData.ScreenWidth = 512;
+		break;
+#endif // USE_VDP_MODE_G5
+#if USE_VDP_MODE_G6
 	case VDP_MODE_GRAPHIC6:		// 512 x 212; 16 colours are available for each dot
 		g_PrintData.PutChar     = PutChar_G6;
 		g_PrintData.ScreenWidth = 512;
 		break;
+#endif // USE_VDP_MODE_G6
+#if USE_VDP_MODE_G7
 	case VDP_MODE_GRAPHIC7:		// 256 x 212; 256 colours are available for each dot
 		Print_SetColor(0xFF, 0x0);
 		g_PrintData.PutChar     = PutChar_G7;
 		g_PrintData.ScreenWidth = 256;
 		break;
-#endif // (MSX_VERSION >= MSX_2)
+#endif // USE_VDP_MODE_G7
 	default:
 		// Screen mode not (yet) supported!
 		return false;
@@ -128,6 +130,68 @@ void Print_Clear()
 {
 	VDP_HMMV(0, g_PrintData.Page * 256, g_PrintData.ScreenWidth, 256, g_PrintData.BackgroundColor);
 	VDP_WaitReady();
+}
+
+//-----------------------------------------------------------------------------
+/// Set the draw color
+/// @param		text		Text color (format depend of current screen mode)
+/// @param		bg			Background color (format depend of current screen mode)
+void Print_SetColor(u8 text, u8 bg)
+{
+	register u8 t = text;
+	register u8 b = bg;
+	g_PrintData.TextColor = t;
+	g_PrintData.BackgroundColor = b;
+
+	// Pre-compute colors combinaison for 2-bits of a character form line (used to quick drawing in PutChar_GX functions)
+	switch(g_PrintData.Mode)
+	{
+#if (USE_VDP_MODE_G4)
+	case VDP_MODE_GRAPHIC4:
+#endif
+#if (USE_VDP_MODE_G6)
+	case VDP_MODE_GRAPHIC6:
+#endif
+#if (USE_VDP_MODE_G4 || USE_VDP_MODE_G6)
+		g_PrintData.Buffer[0] = (b << 4) | b;	// [ 0, 0 ]
+		g_PrintData.Buffer[1] = (b << 4) | t;	// [ 0, 1 ]
+		g_PrintData.Buffer[2] = (t << 4) | b;	// [ 1, 0 ]
+		g_PrintData.Buffer[3] = (t << 4) | t;	// [ 1, 1 ]
+		break;
+#endif
+#if (USE_VDP_MODE_G5)
+	case VDP_MODE_GRAPHIC5:
+		g_PrintData.Buffer[ 0] = (b << 6) | (b << 4) | (b << 2) | b;	// [ 0, 0, 0, 0 ]
+		g_PrintData.Buffer[ 1] = (b << 6) | (b << 4) | (b << 2) | t;	// [ 0, 0, 0, 1 ]
+		g_PrintData.Buffer[ 2] = (b << 6) | (b << 4) | (t << 2) | b;	// [ 0, 0, 1, 0 ]
+		g_PrintData.Buffer[ 3] = (b << 6) | (b << 4) | (t << 2) | t;	// [ 0, 0, 1, 1 ]
+		g_PrintData.Buffer[ 4] = (b << 6) | (t << 4) | (b << 2) | b;	// [ 0, 1, 0, 0 ]
+		g_PrintData.Buffer[ 5] = (b << 6) | (t << 4) | (b << 2) | t;	// [ 0, 1, 0, 1 ]
+		g_PrintData.Buffer[ 6] = (b << 6) | (t << 4) | (t << 2) | b;	// [ 0, 1, 1, 0 ]
+		g_PrintData.Buffer[ 7] = (b << 6) | (t << 4) | (t << 2) | t;	// [ 0, 1, 1, 1 ]
+		g_PrintData.Buffer[ 8] = (t << 6) | (b << 4) | (b << 2) | b;	// [ 1, 0, 0, 0 ]
+		g_PrintData.Buffer[ 9] = (t << 6) | (b << 4) | (b << 2) | t;	// [ 1, 0, 0, 1 ]
+		g_PrintData.Buffer[10] = (t << 6) | (b << 4) | (t << 2) | b;	// [ 1, 0, 1, 0 ]
+		g_PrintData.Buffer[11] = (t << 6) | (b << 4) | (t << 2) | t;	// [ 1, 0, 1, 1 ]
+		g_PrintData.Buffer[12] = (t << 6) | (t << 4) | (b << 2) | b;	// [ 1, 1, 0, 0 ]
+		g_PrintData.Buffer[13] = (t << 6) | (t << 4) | (b << 2) | t;	// [ 1, 1, 0, 1 ]
+		g_PrintData.Buffer[14] = (t << 6) | (t << 4) | (t << 2) | b;	// [ 1, 1, 1, 0 ]
+		g_PrintData.Buffer[15] = (t << 6) | (t << 4) | (t << 2) | t;	// [ 1, 1, 1, 1 ]
+		break;
+#endif
+#if (USE_VDP_MODE_G7)
+	case VDP_MODE_GRAPHIC7:
+		g_PrintData.Buffer[0] = b;	// [ 0, 0 ]
+		g_PrintData.Buffer[1] = b;
+		g_PrintData.Buffer[2] = b;	// [ 0, 1 ]
+		g_PrintData.Buffer[3] = t;
+		g_PrintData.Buffer[4] = t;	// [ 1, 0 ]
+		g_PrintData.Buffer[5] = b;
+		g_PrintData.Buffer[6] = t;	// [ 1, 1 ]
+		g_PrintData.Buffer[7] = t;
+		break;
+#endif
+	}
 }
 
 #if USE_PRINT_SHADOW	
@@ -177,8 +241,7 @@ void Print_ValidateForm(u8* chr, const c8** form)
 }
 #endif // USE_PRINT_VALIDATOR
 
-#if (MSX_VERSION >= MSX_2)
-
+#if USE_VDP_MODE_G4
 //-----------------------------------------------------------------------------
 /// Graphic 4 (Screen mode 5) low-level function to draw a character in VRAM 
 /// @param		chr			The character to draw
@@ -205,7 +268,32 @@ void PutChar_G4(u8 chr) __FASTCALL
 		addr += 128;
 	}
 }
+#endif // USE_VDP_MODE_G4
 
+#if USE_VDP_MODE_G5
+//-----------------------------------------------------------------------------
+/// Graphic 5 (Screen mode 6) low-level function to draw a character in VRAM 
+/// @param		chr			The character to draw
+void PutChar_G5(u8 chr) __FASTCALL
+{
+	const u8* form = g_PrintData.FontAddr + chr * PRINT_H(g_PrintData.FormY); // Get character form's base address
+#if USE_PRINT_VALIDATOR
+	Print_ValidateForm(&chr, &form);
+#endif
+	u16 addr = (g_PrintData.CursorY * 128) + (g_PrintData.CursorX >> 2); // Get VRAM destination base address
+	for(u8 j = 0; j < PRINT_H(g_PrintData.FormY); ++j) // Unpack each 6/8-bits line to buffer and send it to VRAM
+	{
+		u8 f = form[j];
+		u8* l = &g_PrintData.Buffer[16];
+		  *l = g_PrintData.Buffer[f >> 4];
+		*++l = g_PrintData.Buffer[f & 0x0F];
+		VDP_WriteVRAM(&g_PrintData.Buffer[16], addr, 0, 2);
+		addr += 128;
+	}
+}
+#endif // USE_VDP_MODE_G5
+
+#if USE_VDP_MODE_G6
 //-----------------------------------------------------------------------------
 /// Graphic 6 (Screen mode 7) low-level function to draw a character in VRAM 
 /// @param		chr			The character to draw
@@ -232,7 +320,9 @@ void PutChar_G6(u8 chr) __FASTCALL
 		addr += 256;
 	}
 }
+#endif // USE_VDP_MODE_G6
 
+#if USE_VDP_MODE_G7
 //-----------------------------------------------------------------------------
 /// Graphic 7 (Screen mode 8) low-level function to draw a character in VRAM 
 /// @param		chr			The character to draw
@@ -259,8 +349,7 @@ void PutChar_G7(u8 chr) __FASTCALL
 		addr += 256;
 	}
 }
-
-#endif // (MSX_VERSION >= MSX_2)
+#endif // USE_VDP_MODE_G7
 
 //-----------------------------------------------------------------------------
 //
@@ -292,11 +381,11 @@ void Print_DrawChar(u8 chr) __FASTCALL
 	}
 #endif
 #if USE_PRINT_VALIDATOR
-	if(g_PrintData.CursorX + g_PrintData.UnitX > g_PrintData.ScreenWidth) // Handle automatic new-line when 
+	if(g_PrintData.CursorX + PRINT_W(g_PrintData.UnitX) > g_PrintData.ScreenWidth) // Handle automatic new-line when 
 		Print_Return();
 #endif
 	g_PrintData.PutChar(chr);
-	g_PrintData.CursorX += g_PrintData.UnitX;
+	g_PrintData.CursorX += PRINT_W(g_PrintData.UnitX);
 }
 
 //-----------------------------------------------------------------------------
