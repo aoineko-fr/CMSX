@@ -35,12 +35,12 @@ void main()
 
 #define PLAYER_NB 		14
 
-#define LINE_NB			192	// 192 or 212
+#define LINE_NB			212	// 192 or 212
 #define FIELD_SIZE		384 // 256 or 384
 #define TEAM_BMP_X		128
 #define TEAM_BMP_Y		384
 #define BACK_X			0
-#define BACK_Y			960
+#define BACK_Y			(1024-32)
 #define SPRT_OFS_X		(-7)
 #define SPRT_OFS_Y		(-15)
 #define MIN_DIFF		8
@@ -61,26 +61,59 @@ enum ACTION_ID
 //-----------------------------------------------------------------------------
 // TYPES
 
+/// 8-bits vector structure
+typedef struct
+{
+	u8			x, y;	
+} Vector8;
+
+/// 8/16-bits vector structure
+typedef struct
+{
+	u8			x;	
+	u16			y;	
+} Vector816;
+
 /// Vector tructure
 typedef struct
 {
-	i16		x, y;	
+	u16			x, y;	
 } Vector16;
+
+typedef struct
+{
+	Vector816	sprtPos;		///< 
+	Vector8		sprtSize;		///<
+	
+} PlyRender;
 
 /// Player information structure
 typedef struct
 {
-	Vector16	pos;			///< Position
-	Vector16	target;			///< Position
+	Vector816	pos;			///< Position
+	Vector816	target;			///< Position
 	u8			dir     : 3;	///< Direction (0-7)
 	u8			id      : 4;	///< Player team ID (0-15)
 	u8			nearest : 1;	///< Is the nearest player from the ball
+	
 	u8			action  : 4;	///< Action ID (0-15): 0=idle, 1=run, 2=tackle @see ACTION_ID
 	u8			team    : 1;	///< Team ID (0 or 1)
 	u8			hasball : 1;	///< Is having ball?
 	u8			moving  : 1;	///< Is moving?: 0=false, 1=true
 	u8			display : 1;	///< Should be displayed: 0=false, 1=true
-} Player;
+	
+	u8			visible : 1;	///< Is player visible
+	u8			drawn   : 1;	///< Has player been drawn
+	u8			sprtIdX : 3;	///< 
+	u8			sprtIdY : 3;	///< 
+
+	u8			minX    : 4;	///< 
+	u8			minY    : 4;	///< 
+	Vector816	sprtPos;		///< 
+	Vector8		sprtSize;		///<
+	PlyRender	render[2];
+	
+} PlyInfo;
 
 //-----------------------------------------------------------------------------
 // DATA
@@ -96,7 +129,7 @@ u8 g_VBlank = 0;
 /// Frame counter
 u8 g_Frame = 0;
 /// Players information
-Player g_Player[2][PLAYER_NB];
+PlyInfo g_Player[2][PLAYER_NB];
 
 /// Table to convert direction flag to direction index (from 0 to 7)
 static const u8 DirToIdx[16] = 
@@ -119,23 +152,23 @@ static const u8 DirToIdx[16] =
 	0xFF,	// F
 };
 
-/// Movement offset for each direction
-static const Vector16 RunMove[8] = 
+/// Movement offset for each direction (x-1)
+static const Vector8 RunMove[8] = 
 {
-	{ (i16)0,  (i16)-1 },	// Up
-	{ (i16)1,  (i16)-1 },	// Up + Right
-	{ (i16)1,  (i16)0 },	// Right
-	{ (i16)1,  (i16)1 },	// Down + Right
-	{ (i16)0,  (i16)1 },	// Down
-	{ (i16)-1, (i16)1 },	// Down + Left
-	{ (i16)-1, (i16)0 },	// Left
-	{ (i16)-1, (i16)-1 },	// Up + Left
+	{ 1, 0 },	// Up
+	{ 2, 0 },	// Up + Right
+	{ 2, 1 },	// Right
+	{ 2, 2 },	// Down + Right
+	{ 1, 2 },	// Down
+	{ 0, 2 },	// Down + Left
+	{ 0, 1 },	// Left
+	{ 0, 0 },	// Up + Left
 };
 
 /// Run animation frames ID
 static const u8 Anim_RunFrames[] = { 0, 1, 0, 2 };
 
-static const Vector16 FormationDef[] =
+static const Vector816 FormationDef[] =
 {
 	{ 128, 368 }, // G
 	{  48, 320 }, // DL
@@ -146,7 +179,7 @@ static const Vector16 FormationDef[] =
 	{ 128, 192 }, // AT
 };
 
-static const Vector16 FormationAtt[] =
+static const Vector816 FormationAtt[] =
 {
 	{ 128, 336 }, // G
 	{  80, 144 }, // DL
@@ -156,6 +189,9 @@ static const Vector16 FormationAtt[] =
 	{ 192,  64 }, // MR
 	{ 128,  64 }, // AT
 };
+
+// u8 HookBackup_KEYI[5];
+// u8 HookBackup_TIMI[5];
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
@@ -183,13 +219,15 @@ void InterruptHook()
 		rrca
 		jp		nc, _no_hblank
 		call	_HBlankHook // call to C function HBlankHook() 
-		// Reset R#15 to S#0
 	_no_hblank:
+		// Reset R#15 to S#0
 		xor		a           		
 		out		(#P_VDP_ADDR), a
 		ld		a, #(0x80 + 15)
 		out		(#P_VDP_ADDR),a
 	__endasm;
+
+	// Call((u16)HookBackup_KEYI);
 }
 
 /// H_TIMI interrupt hook
@@ -199,6 +237,8 @@ void VBlankHook() //__preserves_regs(a)
 	VDP_SetPage(V8(g_DisplayPage) * 2);
 	g_VBlank = 1;
 	__asm__("pop	af");
+	
+	// Call((u16)HookBackup_KEYI);
 }
 
 /// Wait for V-Blank period
@@ -211,28 +251,14 @@ void WaitVBlank()
 	g_Frame++;
 }
 
-/// Backup sprite background
-void SpriteBackup(u8 id) __FASTCALL
-{
-	Player* p = &g_Player[g_WritePage][id];
-	VDP_HMMM(p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), BACK_X + (id * 16), BACK_Y + (16 * g_WritePage), 16, 16);
-}
-
-/// Restore sprite background
-void SpriteRestore(u8 id) __FASTCALL
-{
-	Player* p = &g_Player[g_WritePage][id];
-	VDP_HMMM(BACK_X + (id * 16), BACK_Y + (16 * g_WritePage), p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), 16, 16);
-}
-
 /// Compute target position.
 /// @param		p		The player to compute
-/// @param		level	The ball position (from 0 to 5)
-void Player_ComputeTaget(Player* p, u8 level)
+/// @param		area	The ball position (from 0 to 5)
+void Player_ComputeTaget(PlyInfo* p, u8 area)
 {
 	if(p->team == 0)
 	{
-		switch(level)
+		/*switch(area)
 		{
 		// case 5:
 		// case 4:
@@ -254,11 +280,46 @@ void Player_ComputeTaget(Player* p, u8 level)
 		case 0:
 			p->target = FormationAtt[p->id];
 			break;
+		};*/
+		switch(area)
+		{
+		case 5:
+		case 4:
+		case 3:
+			p->target = FormationDef[p->id];
+			break;
+		case 2:
+			p->target.x = (FormationDef[p->id].x + FormationAtt[p->id].x) / 2;
+			p->target.y = (FormationDef[p->id].y + FormationAtt[p->id].y) / 2;
+			break;
+		case 1:
+		case 0:
+			p->target = FormationAtt[p->id];
+			break;
 		};
 	}
 	else // team == 1
 	{
-		switch(level)
+		switch(area)
+		{
+		case 0:
+		case 1:
+		case 2:
+			p->target.x = 255 - FormationDef[p->id].x;
+			p->target.y = 383 - FormationDef[p->id].y;
+			break;
+		case 3:
+			p->target.x = 255 - (FormationDef[p->id].x + FormationAtt[p->id].x) / 2;
+			p->target.y = 383 - (FormationDef[p->id].y + FormationAtt[p->id].y) / 2;
+			break;
+		case 4:
+		case 5:
+			p->target.x = 255 - FormationAtt[p->id].x;
+			p->target.y = 383 - FormationAtt[p->id].y;
+			break;
+		};
+
+		/*switch(area)
 		{
 		// case 0:
 		// case 1:
@@ -282,7 +343,7 @@ void Player_ComputeTaget(Player* p, u8 level)
 			p->target.x = 255 - FormationAtt[p->id].x;
 			p->target.y = 383 - FormationAtt[p->id].y;
 			break;
-		};
+		};*/
 	}
 }
 
@@ -312,9 +373,9 @@ void DrawField(u16 y) __FASTCALL
 }
 
 ///
-u16 GetSqrDistance(const Vector16* from, const Vector16* to)
+u16 GetSqrDistance(const Vector816* from, const Vector816* to)
 {
-	u16 dx = Abs16(from->x - to->x);
+	u8 dx = Abs8(from->x - to->x);
 	u16 dy = Abs16(from->y - to->y);
 	return dx*dx + dy*dy;
 }
@@ -333,7 +394,8 @@ void MainLoop()
 	VDP_SetFrequency(VDP_FREQ_50HZ);
 	VDP_SetLineCount(LINE_NB == 192 ? VDP_LINE_192 : VDP_LINE_212);
 	VDP_SetColor(0x00);
-	VDP_EnableSprite(false);
+	VDP_EnableSprite(true);
+	VDP_SetSpriteTables(VRAM16b(0x1C000), VRAM16b(0x1C600));
 	VDP_SetPage(0);
 	VDP_EnableDisplay(false);
 	
@@ -343,13 +405,13 @@ void MainLoop()
 	// Buffer 	
 	VDP_HMMV(0, 384, 256, 128, 0);	// Page 1
 	VDP_HMMV(0, 896, 256, 128, 0);	// Page 3
-	
+	VDP_WaitReady();
 	const static u8 ReplaceColorT0[] = { 1, 6, 15 };
 	const static u8 ReplaceColorT1[] = { 3, 6, 15, 11, 6, 3, 6 };
 	
 	// Import player sprites
-	MSXi_UnpackToVRAM(g_PlayerSprite, TEAM_BMP_X*0, TEAM_BMP_Y, 16, 16, 8, 8, ReplaceColorT0, CropLine16, 4, 4);
-	MSXi_UnpackToVRAM(g_PlayerSprite, TEAM_BMP_X*1, TEAM_BMP_Y, 16, 16, 8, 8, ReplaceColorT1, CropLine16, 4, 4);
+	MSXi_UnpackToVRAM(g_PlayerSprite, TEAM_BMP_X*0, TEAM_BMP_Y, 16, 16, 8, 8, ReplaceColorT0, Crop16, 4, 4);
+	MSXi_UnpackToVRAM(g_PlayerSprite, TEAM_BMP_X*1, TEAM_BMP_Y, 16, 16, 8, 8, ReplaceColorT1, Crop16, 4, 4);
 	VDP_SetPalette(g_PlayerSprite_palette);
 	VDP_SetPaletteEntry(3,  RGB16(0, 0, 7)); // Arm
 	VDP_SetPaletteEntry(11, RGB16(0, 0, 7)); // Chest T0
@@ -383,7 +445,7 @@ void MainLoop()
 	// Initialize players
 	for(u8 j = 0; j < 2; ++j)
 	{
-		Player* p = &g_Player[j][0];
+		PlyInfo* p = &g_Player[j][0];
 		for(u8 i = 0; i < PLAYER_NB; ++i)
 		{			
 			p->id = i % 7;
@@ -408,47 +470,49 @@ void MainLoop()
 			p->nearest = false;
 			p++;
 			g_WritePage = j;
-			SpriteBackup(i);
+			p->drawn = 0;
 		}
 	}
 	
-	u8  scrollSpeed = 2;
-	i16 scrollOffset = 0;
-	i16 scrollPrevious = 0;
+	u8 scrollOffset = 0;
+	u8 scrollPrevious = 0;
 	VDP_SetHBlankLine(253);
-	u8 ballLevel = 0;
-	Vector16 ballPosition;
+	u8 ballArea = 0;
+	Vector816 ballPosition;
 	u8 playerChara = 6;
 
-	Player* p;			
+	PlyInfo* p;			
 	u8 dir;
 	
+	//Mem_Copy((void*)H_KEYI, (void*)HookBackup_KEYI, 5);
 	Bios_SetHookCallback(H_KEYI, InterruptHook);
+	//Mem_Copy((void*)H_TIMI, (void*)HookBackup_TIMI, 5);
 	Bios_SetHookCallback(H_TIMI, VBlankHook);
 	VDP_EnableDisplay(true);
 
 	while(1)
 	{
 		ballPosition = g_Player[g_DisplayPage][playerChara].pos;
-		ballLevel = ballPosition.y >> 6;
+		ballArea = ballPosition.y >> 6;
 		
 		//---------------------------------------------------------------------
 		// SCROLLING
 		//---------------------------------------------------------------------
-		// follow the ball
-		scrollOffset = ballPosition.y - (LINE_NB / 2);
-		// Clamp scrolling value
-		if(scrollOffset < 0)
+		
+		// Follow the ball Y position
+		if(ballPosition.y < (LINE_NB / 2))
 			scrollOffset = 0;
-		else if(scrollOffset > FIELD_SIZE - LINE_NB)
-			scrollOffset = FIELD_SIZE - LINE_NB;
+		else if(ballPosition.y > FIELD_SIZE - (LINE_NB / 2))
+			scrollOffset = (u8)(FIELD_SIZE - LINE_NB);
+		else
+			scrollOffset = (u8)ballPosition.y - (LINE_NB / 2);
 		// Handle scroll events
 		if((scrollPrevious < 256 - LINE_NB) && (scrollOffset >= 256 - LINE_NB))
 			VDP_EnableHBlank(true);
 		else if((scrollPrevious >= 256 - LINE_NB) && (scrollOffset < 256 - LINE_NB))
 			VDP_EnableHBlank(false);
 		// Set the screen scrolling offset
-		VDP_SetVerticalOffset(scrollOffset & 0x00FF);
+		VDP_SetVerticalOffset(scrollOffset);
 		// Backup previous scrolling offset
 		scrollPrevious = scrollOffset;
 
@@ -457,9 +521,23 @@ void MainLoop()
 		//---------------------------------------------------------------------
 		u8 nearestPly = 0xFF;
 		u16 nearestDist = 0xFFFF;
-		for(u8 i = 0; i < PLAYER_NB; ++i)
+		p = &g_Player[g_WritePage][0];
+		u8 i;		
+		for(i = 0; i < PLAYER_NB; ++i)
 		{
-			SpriteRestore(i);
+			// Do restore
+			if(p->drawn)
+			{
+				VDP_HMMM(
+					BACK_X + (i * 16), 
+					BACK_Y + (16 * g_WritePage), 
+					p->sprtPos.x,
+					p->sprtPos.y,
+					p->sprtSize.x + 2, 
+					p->sprtSize.y);
+				p->drawn = 0;
+			}
+
 			g_Player[g_WritePage][i] = g_Player[g_DisplayPage][i]; // swap player data
 			
 			if(p->team == 1)
@@ -473,6 +551,7 @@ void MainLoop()
 				}
 			}
 			p->nearest = false;
+			p++;
 		}
 		if(nearestPly != 0xFF)
 			g_Player[g_WritePage][nearestPly].nearest = true;
@@ -481,17 +560,12 @@ void MainLoop()
 		// UPDATE PLAYERS & BACKUP BACKGROUND
 		//---------------------------------------------------------------------
 		p = &g_Player[g_WritePage][0];			
-		for(u8 i = 0; i < PLAYER_NB; ++i)
+		for(i = 0; i < PLAYER_NB; ++i)
 		{
 			if(i == playerChara) // controller 1
 			{
-				// Player change
-				u8 row = Keyboard_Read(KEY_ROW(KEY_GRAPH));
-				if((row & KEY_FLAG(KEY_GRAPH)) == 0)
-					playerChara = (playerChara + 1) % (PLAYER_NB / 2);
-
 				// Move & tackle
-				row = Keyboard_Read(KEY_ROW(KEY_DOWN));
+				u8 row = Keyboard_Read(KEY_ROW(KEY_DOWN));
 				dir = 0;
 				if((row & KEY_FLAG(KEY_SPACE)) == 0)
 					dir = p->dir;
@@ -508,18 +582,18 @@ void MainLoop()
 				{
 					p->dir = DirToIdx[dir];
 					p->action = ACTION_RUN;
-					p->pos.x += RunMove[p->dir].x;
-					p->pos.y += RunMove[p->dir].y;
+					p->pos.x += RunMove[p->dir].x - 1;
+					p->pos.y += RunMove[p->dir].y - 1;
 				}
 				else
 					p->action = ACTION_IDLE;	
 			}
 			else // AI
 			{
-				Vector16* t = &ballPosition;
+				Vector816* t = &ballPosition;
 				if(p->nearest == 0)
 				{
-					Player_ComputeTaget(p, ballLevel);
+					Player_ComputeTaget(p, ballArea);
 					t = &p->target;
 				}
 				
@@ -539,59 +613,114 @@ void MainLoop()
 						dir += JOY_INPUT_DIR_DOWN;
 					p->dir = DirToIdx[dir];
 					// Move
-					p->pos.x += RunMove[p->dir].x;
-					p->pos.y += RunMove[p->dir].y;
+					p->pos.x += RunMove[p->dir].x - 1;
+					p->pos.y += RunMove[p->dir].y - 1;
 				}
 				else // Idle
 				{
-					Vector16* b = &ballPosition;
+					Vector816* b = &ballPosition;
 					p->action = ACTION_IDLE;			
 					// Turn toward ball
 					dir = 0;
-					i16 dx = p->pos.x - b->x;
-					if(dx < -MIN_DIFF)
+					u8 dx = 128 + p->pos.x - b->x;
+					if(dx < 128 + -MIN_DIFF)
 						dir += JOY_INPUT_DIR_RIGHT;
-					else if(dx > MIN_DIFF)
+					else if(dx > 128 + MIN_DIFF)
 						dir += JOY_INPUT_DIR_LEFT;
-					i16 dy = p->pos.y - b->y;
-					if(dy > MIN_DIFF)
+					u8 dy = 128 + p->pos.y - b->y;
+					if(dy > 128 + MIN_DIFF)
 						dir += JOY_INPUT_DIR_UP;
-					else if(dy < -MIN_DIFF)
+					else if(dy < 128 + -MIN_DIFF)
 						dir += JOY_INPUT_DIR_DOWN;
 					p->dir = DirToIdx[dir];
 				}
 			}
-			if(p->pos.x < 0)
-				p->pos.x = 0;
-			else if(p->pos.x > 255)
-				p->pos.x = 255;
-			if(p->pos.y < 0)
-				p->pos.y = 0;
+			if(p->pos.x < 8)
+				p->pos.x = 8;
+			else if(p->pos.x > (u8)(255 - 8))
+				p->pos.x = (u8)(255 - 8);
+			if(p->pos.y < 16)
+				p->pos.y = 16;
 			else if(p->pos.y > FIELD_SIZE-1)
 				p->pos.y = FIELD_SIZE-1;
 		
-			//if((p->pos.y + 16 >= scrollOffset) && (p->pos.y <= scrollOffset + LINE_NB))
+			if(p->action == ACTION_IDLE)
+				p->sprtIdX = 0;
+			else //if(p->action == ACTION_RUN)
+				p->sprtIdX = Anim_RunFrames[(g_Frame >> 2) & 0x03];
+			p->sprtIdY = p->dir;
+
+			const u8* ptr = g_PlayerSprite + g_PlayerSprite_index[p->sprtIdX + (p->sprtIdY << 3)];
+			u8 minX = *ptr >> 4;
+			u8 maxX = *ptr & 0x0F;
+			++ptr;
+			u8 minY = *ptr >> 4;
+			u8 maxY = *ptr & 0x0F;
+
+			p->minX = minX;
+			p->minY = minY;
+			p->sprtPos.x = p->pos.x + SPRT_OFS_X + minX;
+			p->sprtPos.y = p->pos.y + SPRT_OFS_Y + (512 * g_WritePage) + minY;
+			p->sprtSize.x = (maxX - minX + 1);
+			p->sprtSize.y = (maxY - minY + 1);
+
+			// Do backup
+			p->visible = 0;
+			//if((p->pos.y + SPRT_OFS_Y + 16 >= scrollOffset) && (p->pos.y + SPRT_OFS_Y <= scrollOffset + LINE_NB))
 			{
-				SpriteBackup(i);
+				p->visible = 1;
+				VDP_HMMM(
+					p->sprtPos.x,
+					p->sprtPos.y,
+					BACK_X + (i * 16), 
+					BACK_Y + (16 * g_WritePage), 
+					p->sprtSize.x + 2, 
+					p->sprtSize.y);
 			}
 			p++;
 		}
 
+		// Player change
+		u8 row = Keyboard_Read(KEY_ROW(KEY_GRAPH));
+		if((row & KEY_FLAG(KEY_GRAPH)) == 0)
+		{
+			playerChara = (playerChara + 1) % (PLAYER_NB / 2);
+		}
+			
 		//---------------------------------------------------------------------
 		// DRAW PLAYERS
 		//---------------------------------------------------------------------
-		p = &g_Player[g_WritePage][0];			
-		for(u8 i = 0; i < PLAYER_NB; ++i)
+		p = &g_Player[g_WritePage][0];
+		for(i = 0; i < PLAYER_NB; ++i)
 		{
-			if((p->pos.y + SPRT_OFS_Y + 16 >= scrollOffset) && (p->pos.y + SPRT_OFS_Y <= scrollOffset + LINE_NB))
+			if(p->visible)
 			{
-				u8 sx;
-				if(p->action == ACTION_IDLE)
-					sx = 0;
-				else //if(p->action == ACTION_RUN)
-					sx = (16 * Anim_RunFrames[(g_Frame >> 2) & 0x03]);
+				// Do draw
+				VDP_LMMM(
+					(TEAM_BMP_X * p->team) + (p->sprtIdX * 16) + p->minX, 
+					TEAM_BMP_Y + (p->sprtIdY * 16) + p->minY, 
+					p->sprtPos.x,
+					p->sprtPos.y,
+					p->sprtSize.x, 
+					p->sprtSize.y, 
+					VDP_OP_TIMP);
+				/*VDP_HMMV(
+					p->sprtPos.x,
+					p->sprtPos.y,
+					p->sprtSize.x, 
+					p->sprtSize.y,
+					(p->dir + 2) << 4 | (p->dir + 2));*/
+				/*VDP_HMMM(
+					(TEAM_BMP_X * p->team) + (p->sprtIdX * 16) + p->minX, 
+					TEAM_BMP_Y + (p->sprtIdY * 16) + p->minY, 
+					p->sprtPos.x,
+					p->sprtPos.y,
+					p->sprtSize.x, 
+					p->sprtSize.y);*/
 					
-				VDP_LMMM(TEAM_BMP_X * p->team + sx, TEAM_BMP_Y + (16 * p->dir), p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), 16, 16, VDP_OP_TIMP); // Draw
+				p->drawn = 1;
+
+				// VDP_LMMM(TEAM_BMP_X * p->team + (sx * 16), TEAM_BMP_Y + (sy * 16), p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), 16, 16, VDP_OP_TIMP); // Draw
 			}
 			p++;
 		}	
