@@ -4,7 +4,7 @@
 //   /  \ /  \ \_____  \  \     / |  |
 //  /    Y    \/        \ /     \ |  |
 //  \____|__  /_______  //___/\  \|__| 
-//          \/        \/       \_/     v1.7.2
+//          \/        \/       \_/     v1.7.5
 //
 // by Guillaume "Aoineko" Blanchard (aoineko@free.fr)
 // available on GitHub (https://github.com/aoineko-fr/MSXImage)
@@ -12,7 +12,7 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
-#define MSXi_VERSION "1.7.2"
+#define MSXi_VERSION "1.7.5"
 
 /// Compression mode
 enum MSXi_Compressor
@@ -39,13 +39,14 @@ enum MSXi_Compressor
 /// Header structure
 struct MSXi_Header
 {
-	unsigned short posX;
-	unsigned short posY;
-	unsigned short sizeX;
-	unsigned short sizeY;
-	unsigned short numX;
-	unsigned short numY;
-	unsigned char bpc;
-	unsigned char comp;
-	unsigned char bSkipEmpty;
+	unsigned short sizeX;			///< Width of each image
+	unsigned short sizeY;			///< Height of each image
+	unsigned short numX;			///< Number of columns of images
+	unsigned short numY;			///< Number of rows of images
+	unsigned char bpc;				///< Bits-per-colors
+	unsigned char comp;				///< Compressor ID @see MSXi_Compressor
+	unsigned char bSkipEmpty;		///< 
 };
+
+/// No entry flag
+#define MSXi_NO_ENTRY	0x8000

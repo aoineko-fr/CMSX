@@ -9,22 +9,32 @@
 // - Pratique du MSX2
 //-----------------------------------------------------------------------------
 #pragma once
+#include "memory.h"
 
 //-----------------------------------------------------------------------------
 // Hooks handler
 
-// Set a Hook to jump to given function
+/// Set a Hook to jump to given function
 inline void Bios_SetHookCallback(u16 hook, callback cb)
 {
 	*((u8*)hook) = 0xC3; // JUMP
 	*((callback*)++hook) = cb;
 }
 
-// Clear a Hook (set RET asm code)
-inline void Bios_ClearHookFunc(u16 hook)
+/// Clear a Hook (set RET asm code)
+inline void Bios_ClearHook(u16 hook)
 {
 	*((u8*)hook) = 0xC9; // RET
 }
+
+/// Backup hook content into a buffer (must be 5 bytes length). The buffer content can been call at any time using Call() function
+inline void Bios_BackupHook(u16 hook, void* buffer)
+{
+	Mem_Copy((void*)hook, (void*)buffer, 5);
+}
+
+
+
 
 //-----------------------------------------------------------------------------
 // Deferred Hooks handler

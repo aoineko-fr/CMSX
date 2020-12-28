@@ -40,13 +40,16 @@ u8 Joystick_Read(u8 port) __FASTCALL;
 
 // Get current direction of the given joystick
 // Input  : JOY_PORT_1 or JOY_PORT_2
-inline u8 Joystick_GetDirection(u8 port);
+u8 Joystick_GetDirection(u8 port) __FASTCALL;
 
 // Get current trigger status of the given joystick (0: released; 1: pressed)
 // Input  : JOY_PORT_1 or JOY_PORT_2
 //          JOY_INPUT_TRIGGER_A or JOY_INPUT_TRIGGER_B
-inline u8 Joystick_GetTrigger(u8 port, u8 trigger);
-
+inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
+{
+	u8 in = Joystick_Read(port);
+	return ((in & trigger) == 0);
+}
 #endif // (USE_INPUT_JOYSTICK || USE_INPUT_MANAGER)
 
 //-----------------------------------------------------------------------------

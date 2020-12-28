@@ -16,6 +16,33 @@
 #include "core.h"
 #include "vdp_reg.h"
 
+// @todo Handle VRAM read/write access timing
+//
+// Minimum VRAM access timings in 3.58 MHz Z80 cycles
+//
+// Screen	VDP		MSX1	MSX2/2+
+// mode		mode	cycles	cycles
+//---------------------------------
+// 0,W40	T1		12		20
+// 0,W80	T2				20
+// 1		G1		29		15
+// 2		G2		29		15
+// 3		MC		13		15
+// 4		G3				15
+// 5		G4				15
+// 6		G5				15
+// 7		G6				15
+// 8		G7				15
+//
+// outi			; 16 T-States
+//
+// outir		; 23 Cycles (21 T-States ?)
+//
+// OutiToVram:  ; 29 Cycles (26 T-States ?)
+//     outi
+//     jp nz, OutiToVram
+
+
 //-----------------------------------------------------------------------------
 // STRUCTURES
 //-----------------------------------------------------------------------------
@@ -43,8 +70,8 @@ struct VDP_Sprite
     u8 Color   : 4;	///< Color index (Sprite Mode 1 only)
     u8 _unused : 3;	///< (unused 3 bits)
     u8 EC      : 1;	///< Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
-} ;
- 
+};
+
 //-----------------------------------------------------------------------------
 // EXTERNALS
 //-----------------------------------------------------------------------------
@@ -58,8 +85,12 @@ extern struct VDP_Sprite g_VDP_Sprite;
 // DEFINES
 //-----------------------------------------------------------------------------
 
-#define REGSAV(_n) #(_g_VDP_REGSAV+_n)
-#define STASAV(_n) #(g_VDP_STASAV+_n)
+#define VRAM16b(a)		(u16)((u32)(a >> 4))
+#define Addr20bTo16b(a)	(u16)((u32)(a >> 4))	///< Convert 20-bits (V)RAM address into 16-bits with bit shifting
+#define Addr17bTo16b(a)	(u16)((u32)(a >> 1))	///< Convert 17-bits (V)RAM address into 16-bits with bit shifting
+
+#define REGSAV(a)		#(_g_VDP_REGSAV+a)
+#define STASAV(a)		#(_g_VDP_STASAV+a)
 
 /// VDP display modes
 enum VDP_MODE
@@ -156,7 +187,7 @@ void VDP_SetModeGraphic7();
 inline void VDP_SetScreen(const u8 mode);
 
 /// Wait for VBlank flag trigger
-void VDP_WaitVBlank();
+// void VDP_WaitVBlank();
 
 /// Read default S#0 register
 u8 VDP_ReadDefaultStatus();
@@ -165,10 +196,10 @@ u8 VDP_ReadDefaultStatus();
 u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
 /// Write data from RAM to VRAM
-void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count);
+void VDP_WriteVRAM(u8* src, u16 destLow, u8 destHigh, u16 count);
 
 /// Fill VRAM area with a given value
-void VDP_FillVRAM(u8 value, u16 destAddr, u8 destPage, u16 count);
+void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count);
 
 ///
 void VDP_ReadVRAM(u16 srcAddr, u8 srcPage, u8* dest, u16 count);
@@ -222,17 +253,29 @@ void VDP_SetPageAlternance(u8 enable) __FASTCALL;
 //-----------------------------------------------------------------------------
 // SPRITES
 //-----------------------------------------------------------------------------
+/// Enable/disable sprite
+void VDP_EnableSprite(u8 enable) __FASTCALL;
+
 #define VDP_SPRITE_SIZE_8		0			///< Use 8x8 sprite size
 #define VDP_SPRITE_SIZE_16		R01_ST		///< Use 16x16 sprite size
 #define VDP_SPRITE_ENLARGE		R01_MAG		///> Double the size of the sprite (1 dot = 2 pixels)
 /// Set sprite parameters
 void VDP_SetSpriteFlag(u8 flag) __FASTCALL;
 
-/// Enable/disable sprite
-void VDP_EnableSprite(u8 enable) __FASTCALL;
+/// Set sprite table address
+void VDP_SetSpriteTables(u16 patternAddr, u16 attribAddr);
 
 /// Set sprite attribute
 void VDP_SendSpriteAttribute(u8 index) __FASTCALL;
+
+///
+void VDP_ClearSprite();
+
+///
+void VDP_SetSpriteMultiColor(u8 index, u8 X, u8 Y, u8 shape, void* ram);
+
+///
+void VDP_SetSpriteUniColor(u8 index, u8 X, u8 Y, u8 shape, u8 color);
 
 //-----------------------------------------------------------------------------
 // VDP REGISTERS
@@ -249,19 +292,50 @@ void VDP_RegWriteBakFC(u16 reg_value) __FASTCALL;
 //-----------------------------------------------------------------------------
 
 /// Wait for previous VDP command to be finished
-void VDP_WaitReady();
+void VDP_CommandWait();
 
 /// Send VDP command (form registres 32 to 46)
-void VPD_SendCommand32();
+void VPD_CommandSetupR32();
 
 /// Send VDP command (form registres 36 to 46)
-void VPD_SendCommand36();
+void VPD_CommandSetupR36();
 
 /// Write to VRAM command loop
-void VPD_WriteCommandLoop(void* address) __FASTCALL;
+void VPD_CommandWriteLoop(void* addr) __FASTCALL;
 
 //-----------------------------------------------------------------------------
 // INLINE FUNCTIONS
 //-----------------------------------------------------------------------------
 
-#include "vdp_cmd.h"
+#include "vdp.inl"
+
+//-----------------------------------------------------------------------------
+// VDP COMMANDS
+
+// inline void VDP_CommandHMMC(void* addr, u16 dx, u16 dy, u16 nx, u16 ny); // High speed move CPU to VRAM.
+// inline void VDP_CommandYMMM(u16 sy, u16 dx, u16 dy, u16 ny, u8 dir); // High speed move VRAM to VRAM, Y coordinate only.
+// inline void VDP_CommandHMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny); // High speed move VRAM to VRAM
+// inline void VDP_CommandHMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col); // High speed move VDP to VRAM
+// inline void VDP_CommandLMMC(); // Logical move CPU to VRAM
+// inline void VDP_CommandLMCM(); // Logical move VRAM to CPU
+// inline void VDP_CommandLMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny, u8 op); // Logical move VRAM to VRAM
+// inline void VDP_CommandLMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 op); // Logical move VDP to VRAM
+// inline void VDP_CommandLINE(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 arg, u8 op); // Draw straight line in VRAM
+// inline void VDP_CommandSRCH(u16 sx, u16 sy, u8 col, u8 arg); // Search for the specific color in VRAM to the right or left of the starting point
+// inline void VDP_CommandPSET(u16 dx, u16 dy, u8 col, u8 op); // Draw a dot in VRAM 
+// inline void VDP_CommandPOINT(u16 sx, u16 sy); // Read the color of the specified dot located in VRAM 
+// inline void VDP_CommandSTOP(); // Abort current command
+
+#define VDP_CopyRAMtoVRAM			VDP_CommandHMMC		///< High speed move CPU to VRAM
+#define VDP_YMoveVRAM				VDP_CommandYMMM		///< High speed move VRAM to VRAM, Y coordinate only
+#define VDP_MoveVRAM				VDP_CommandHMMM		///< High speed move VRAM to VRAM
+//#define VDP_FillVRAM				VDP_CommandHMMV		///< High speed move VDP to VRAM
+#define VDP_LogicalCopyRAMtoVRAM	VDP_CommandLMMC		///< Logical move CPU to VRAM
+#define VDP_LogicalYMoveVRAM		VDP_CommandLMCM		///< Logical move VRAM to CPU
+#define VDP_LogicalMoveVRAM			VDP_CommandLMMM		///< Logical move VRAM to VRAM
+#define VDP_LogicalFillVRAM			VDP_CommandLMMV		///< Logical move VDP to VRAM
+#define VDP_DrawLine				VDP_CommandLINE		///< Draw straight line in VRAM
+#define VDP_SearchColor				VDP_CommandSRCH		///< Search for the specific color in VRAM to the right or left of the starting point
+#define VDP_DrawPoint				VDP_CommandPSET		///< Draw a dot in VRAM 
+#define VDP_ReadPoint				VDP_CommandPOINT	///< Read the color of the specified dot located in VRAM 
+#define VDP_AbortCommand			VDP_CommandSTOP		///< Abort current command

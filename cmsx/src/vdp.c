@@ -192,10 +192,10 @@ void VDP_RegIncWrite(u16 src, u8 count, u8 reg)
 		// Setup incremental VDP port writing
 		ld		a, 7(ix)				// first register
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, #VDP_REG(17)
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 
 		// Do incremental VDP port writing
 		ld		b, 6(ix)				// size
@@ -270,10 +270,10 @@ void VDP_RegIncWrite(u16 src, u8 count, u8 reg)
 	__asm											\
 		ld		a, #(_reg)							\
 		di											\
-		out		(#P_VDP_ADDR), a					\
+		out		(P_VDP_ADDR), a						\
 		ld		a, #VDP_REG(17)						\
 		ei											\
-		out		(#P_VDP_ADDR), a					\
+		out		(P_VDP_ADDR), a						\
 		ld		hl, #(_##_addr)						\
 		ld		c, #P_VDP_IREG						\
 		di											\
@@ -558,18 +558,19 @@ inline void VDP_SetScreen(const u8 mode)
 
 //-----------------------------------------------------------------------------
 // Wait for VBlank flag trigger
-void VDP_WaitVBlank()
+/*void VDP_WaitVBlank()
 {
 	__asm
 	WAIT_RETRACE:
 		in		a, (P_VDP_STAT)
 		// rla
 		// jr		nc, WAIT_RETRACE
+		// jr		nc, WAIT_RETRACE
 		and		#0x80
 		cp		#0
 		jr		z, WAIT_RETRACE
 	__endasm;
-}
+}*/
 
 //-----------------------------------------------------------------------------
 // Read default S#0 register
@@ -583,6 +584,7 @@ u8 VDP_ReadDefaultStatus()
 
 //-----------------------------------------------------------------------------
 // Read a given status register then reset status register to default (0)
+#if (MSX_VERSION >= MSX_2)
 u8 VDP_ReadStatus(u8 stat) __FASTCALL
 {
 	stat;
@@ -591,25 +593,27 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL
 	__asm
 		ld		a, l
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, #VDP_REG(15)
-		out		(#P_VDP_ADDR), a
-		in		a, (#P_VDP_STAT)
+		out		(P_VDP_ADDR), a
+		in		a, (P_VDP_STAT)
 		ld		l, a				// return value
 		// Reset R#15 to default status register S#0
 		xor		a           		// ld a, 0
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, #VDP_REG(15)
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR),a
+		out		(P_VDP_ADDR),a
 	__endasm;
 }
+#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 // Write data from RAM to VRAM
-void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count)
+//                 4-5      6-7           8            9-10
+void VDP_WriteVRAM(u8* src, u16 destLow, u8 destHigh, u16 count)
 {
-	src, destAddr, destPage, count;
+	src, destLow, destHigh, count;
 	__asm
 		push	ix
 		ld		ix, #0
@@ -644,14 +648,18 @@ void VDP_WriteVRAM(u8* src, u16 destAddr, u8 destPage, u16 count)
 		ld		l, 4 (ix)				// source address
 		ld		h, 5 (ix)
 		ld		c, #P_VDP_DATA			// data register
-		ld		b, 9 (ix)				// count LSB
 		
-		otir							// send first package (count & 0x00FF)
+		ld		a, 9 (ix)				// count LSB
+		cp		a, #0
+		jp		z, wrt_loop_init		// skip LSB
+		ld		b, a					// send (count & 0x00FF) bytes
+		otir		
 		
+	wrt_loop_init:
 		ld		a, 10 (ix)				// count MSB
 	wrt_loop_start:
 		cp		a, #0
-		jp		z, wrt_loop_end
+		jp		z, wrt_loop_end			// finished
 
 		ld		b, #0					// send 256 bytes packages
 		otir
@@ -749,11 +757,11 @@ void VDP_RegWriteFC(u16 reg_value) __FASTCALL
 	__asm
 		ld		a, l
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, h
 		add		#0x80
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 	__endasm;
 }
 
@@ -774,11 +782,11 @@ void VDP_RegWriteBakFC(u16 reg_value) __FASTCALL
 		ld		(hl), a
 		// Write to register
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, c
 		add		#0x80
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 	__endasm;
 }
 
@@ -788,10 +796,10 @@ void VDP_RegWriteBakFC(u16 reg_value) __FASTCALL
 	__asm											\
 		ld		a, _val								\
 		di											\
-		out		(#P_VDP_ADDR), a					\
+		out		(P_VDP_ADDR), a						\
 		ld		a, #VDP_REG(_reg)					\
 		ei											\
-		out		(#P_VDP_ADDR), a					\
+		out		(P_VDP_ADDR), a						\
 	__endasm
 
 //-----------------------------------------------------------------------------
@@ -899,10 +907,10 @@ void VDP_SetPalette(void* pal) __FASTCALL
 	__asm
 		ld		a, #1
 		di  //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, #VDP_REG(16)
 		ei  //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 
 //		ld		hl, #_g_PlayerSprite_palette
 		ld		c, #P_VDP_PAL
@@ -960,6 +968,31 @@ void VDP_SetPageAlternance(u8 enable) __FASTCALL
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
+// Enable/disable sprite
+void VDP_EnableSprite(u8 enable) __FASTCALL
+{
+	u8 reg = g_VDP_REGSAV[8];
+	reg &= ~R08_SPD;
+	if(!enable)
+		reg |= R08_SPD;
+	VDP_RegWriteBak(8, reg);
+}
+
+/// Set sprite table address
+void VDP_SetSpriteTables(u16 patternAddr, u16 attribAddr)
+{
+	u8 reg;
+	// Set pattern table address
+	reg = patternAddr >> 7;
+	VDP_RegWrite(6, reg);
+	// Set attribute table address
+	reg = (attribAddr >> 3) | 0b111;
+	VDP_RegWrite(5, reg);
+	reg = attribAddr >> 11;
+	VDP_RegWrite(11, reg);
+}
+
+//-----------------------------------------------------------------------------
 // Set sprite parameters
 void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 {
@@ -973,26 +1006,16 @@ void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-// Enable/disable sprite
-void VDP_EnableSprite(u8 enable) __FASTCALL
-{
-	u8 reg = g_VDP_REGSAV[8];
-	reg &= ~R08_SPD;
-	if(!enable)
-		reg |= R08_SPD;
-	VDP_RegWriteBak(8, reg);
-}
-
 /// Set sprite attribute
 void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 {
-	/*VDP_WaitReady();
+	/*VDP_CommandWait();
 	__asm
 		// Compute sprite attribute VRAM address
 		ld		a, l			// Sprite index
 		rlca
 		rlca
-		ld		hl, (ATRBAS)
+		ld		hl, (#M_ATRBAS)
 		add		a, l
 		ld		l, a
 		adc		a, h 
@@ -1010,6 +1033,36 @@ void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 	__endasm;*/
 }
 
+//-----------------------------------------------------------------------------
+///
+void VDP_ClearSprite()
+{
+	VDP_SetSpriteUniColor(0, 0, 216, 0, 0);
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_SetSpriteMultiColor(u8 index, u8 X, u8 Y, u8 shape, void* ram)
+{
+	g_VDP_Sprite.X = X;
+	g_VDP_Sprite.Y = Y;
+	g_VDP_Sprite.Pattern = shape;
+	VDP_CommandHMMC(ram, (index * 16) & 0x00FF, 244 + (index / 16), 8, 1);
+	VDP_CommandHMMC(&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
+	//VDP_SendSpriteAttribute(index);
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_SetSpriteUniColor(u8 index, u8 X, u8 Y, u8 shape, u8 color)
+{
+	g_VDP_Sprite.X = X;
+	g_VDP_Sprite.Y = Y;
+	g_VDP_Sprite.Pattern = shape;
+	VDP_CommandHMMV(color, (index * 16) & 0x00FF, 244 + (index / 16), 8, 1);
+	VDP_CommandHMMC(&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
+	//VDP_SendSpriteAttribute(index);
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -1019,90 +1072,85 @@ void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 
 //-----------------------------------------------------------------------------
 // Wait for previous VDP command to be finished
-void VDP_WaitReady()
+void VDP_CommandWait()
 {
 	__asm
 	wait_vdp_ready:
+		// Set current status ragister to S#2
 		ld		a, #2
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a		// select s#2
+		out		(P_VDP_REG), a
 		ld		a, #VDP_REG(15)
-		out		(P_VDP_ADDR), a
-		in		a, (P_VDP_ADDR)
-		rra
-		ld		a, #0				// back to s#0, enable ints
-		out		(P_VDP_ADDR), a
+		out		(P_VDP_REG), a
+		in		a, (P_VDP_STAT)		// get S#2 value
+		rra							// check CE (bit#0)
+		// Reset current status register to S#0 before enabling interruptions
+		ld		a, #0				// don't use XOR here to keep C flag from RRA alive
+		out		(P_VDP_REG), a
 		ld		a, #VDP_REG(15)
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a
-		jp		c, wait_vdp_ready	// loop if vdp not ready (CE)
+		out		(P_VDP_REG), a
+		jp		c, wait_vdp_ready	// CE==1 ? command not finished
 	__endasm;
 }
 
 //-----------------------------------------------------------------------------
 /// Send VDP command (form registres 32 to 46)
-void VPD_SendCommand32()
+void VPD_CommandSetupR32()
 {
-	VDP_WaitReady();
+	VDP_CommandWait();
 	ASM_REG_WRITE_INC(g_VDP_Command, 32, 15);
 }
 
 //-----------------------------------------------------------------------------
 /// Send VDP command (form registres 36 to 46)
-void VPD_SendCommand36()
+void VPD_CommandSetupR36()
 {
-	VDP_WaitReady();
+	VDP_CommandWait();
 	ASM_REG_WRITE_INC(g_VDP_Command + 4, 36, 11);
 }
 
 //-----------------------------------------------------------------------------
 /// Write to VRAM command loop
-void VPD_WriteCommandLoop(void* address) __FASTCALL
+void VPD_CommandWriteLoop(void* addr) __FASTCALL
 {
-	address;
-	// FastCall
-	//	ld		hl, address
+	addr;
+	
 	__asm
-		di
+ //		ld		hl, address			// FastCall
+		di 
+		// Set indirect register write to R#44
+		ld  	a, #VDP_REG(44)
+		out 	(P_VDP_REG), a
+		ld  	a, #VDP_REG(17)
+		out 	(P_VDP_REG), a		
 
-	send_next_color:
-		inc		hl
+		// Set current status ragister to S#2
+		ld  	a, #2
+		out 	(P_VDP_REG), a
+		ld  	a, #VDP_REG(15)
+		out 	(P_VDP_REG), a
+	write_loop:
+		// Read  to check CE & TR flags
+		in  	a, (P_VDP_STAT)
+		and		#0x01
+		jp		z, write_finished       // CE==0 ? command finished
+		// sra     a					// check CE (bit#0)
+		// jp		nc, write_finished	// CE==0 ? command finished
+		// rla							// check TR (bit#7)
+		// jp		nc, write_loop	    // TR==0 ? VDP not ready
+		
+		inc 	hl 
+		ld 		a, (hl)
+		out		(P_VDP_IREG), a
+		jp		write_loop
 
-		;// 3 - envoyer l'octet suivant à mettre en VRAM dans le registre 45 (le premier octet a été traité à l'étape 1) par un OUT du Z80
-		;// Send next color
-		ld		a, (hl)
-		out		(P_VDP_ADDR), a
-		ld		a, VDP_REG(44)
-		out		(P_VDP_ADDR), a
-
-	wait_reg2:
-		;// 4 - lire le registre d'état 2 (status)
-		;// Get status ragister #2
-		ld		a, #2
-		out		(P_VDP_ADDR), a
-		ld		a, VDP_REG(15)
-		out		(P_VDP_ADDR), a
-
-		;// 5 - lire le registre d'état du bit CE, si celui-ci est à 0, alors l'instruction est terminée, sinon on passe à l'étape 6
-		nop
-		in		a, (P_VDP_ADDR)
-		ld		b, a ;// backup reg#2
-		rra     ;// send CE bit into Carry
-		jr		nc, color_copy_end
-
-		;// 6 - tester l'état du bit TR, si celui-ci se trouve à 0, alors le processeur vidéo n'est pas
-		;// prêt à recevoir l'octet suivant, recommencer en 4. Si par contre, ce bit est à 1, reprendre toute l'opération au niveau 3
-		ld		a, b ;// restore reg#2
-		rla     ;// send TR bit in the Carry
-		jr		nc, wait_reg2
-		jp		send_next_color
-
-	color_copy_end:
-		;// Clean status ragister #2
-		xor		a
-		out		(P_VDP_ADDR), a
-		ld		a, VDP_REG(15)
-		out		(P_VDP_ADDR), a
+	write_finished:
+		// Reset current status register to S#0
+		xor 	a	
+		out 	(P_VDP_REG), a
+		ld  	a, #VDP_REG(15)
+		out 	(P_VDP_REG), a
 
 		ei
 	__endasm;

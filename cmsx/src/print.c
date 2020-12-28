@@ -128,8 +128,8 @@ void Print_SetFont(const u8* font) __FASTCALL
 /// Clear screen on the current page
 void Print_Clear()
 {
-	VDP_HMMV(0, g_PrintData.Page * 256, g_PrintData.ScreenWidth, 256, g_PrintData.BackgroundColor);
-	VDP_WaitReady();
+	VDP_CommandHMMV(0, g_PrintData.Page * 256, g_PrintData.ScreenWidth, 256, g_PrintData.BackgroundColor);
+	VDP_CommandWait();
 }
 
 //-----------------------------------------------------------------------------

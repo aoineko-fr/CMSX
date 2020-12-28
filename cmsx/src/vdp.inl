@@ -18,31 +18,27 @@
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-/**
- * High speed move CPU to VRAM.
- */
-inline void VDP_HMMC(void* ram, u16 dx, u16 dy, u16 nx, u16 ny)
+/// High speed move CPU to VRAM.
+inline void VDP_CommandHMMC(void* addr, u16 dx, u16 dy, u16 nx, u16 ny)
 {
 	g_VDP_Command.DX = dx;
 	g_VDP_Command.DY = dy;
 	g_VDP_Command.NX = nx;
 	g_VDP_Command.NY = ny;
-	g_VDP_Command.CLR = ((u8*)ram)[0];
+	g_VDP_Command.CLR = *((u8*)addr);
 	g_VDP_Command.ARG = 0; 
 	g_VDP_Command.CMD = VDP_CMD_HMMC;
-	VPD_SendCommand36();
-	VPD_WriteCommandLoop(ram);
+	VPD_CommandSetupR36();
+	VPD_CommandWriteLoop(addr);
 }
 
 //-----------------------------------------------------------------------------
-/**
- * High speed move VRAM to VRAM, Y coordinate only.
- * @param	sy		Y coordinate of the source area
- * @param	dx,dy	X/Y coordinate of the destination area
- * @param	ny		Y size of the area to move
- * @param	dir		Direction of the move (from the destination)
- */
-inline void VDP_YMMM(u16 sy, u16 dx, u16 dy, u16 ny, u8 dir)
+/// High speed move VRAM to VRAM, Y coordinate only.
+/// @param	sy		Y coordinate of the source area
+/// @param	dx,dy	X/Y coordinate of the destination area
+/// @param	ny		Y size of the area to move
+/// @param	dir		Direction of the move (from the destination)
+inline void VDP_CommandYMMM(u16 sy, u16 dx, u16 dy, u16 ny, u8 dir)
 {
 	g_VDP_Command.SY = sy;
 	g_VDP_Command.DX = dx;
@@ -50,14 +46,12 @@ inline void VDP_YMMM(u16 sy, u16 dx, u16 dy, u16 ny, u8 dir)
 	g_VDP_Command.NY = ny;
 	g_VDP_Command.ARG = dir; 
 	g_VDP_Command.CMD = VDP_CMD_YMMM;
-	VPD_SendCommand32();
+	VPD_CommandSetupR32();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * High speed move VRAM to VRAM
- */
-inline void VDP_HMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny)
+/// High speed move VRAM to VRAM
+inline void VDP_CommandHMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny)
 {
 	g_VDP_Command.SX = sx;
 	g_VDP_Command.SY = sy;
@@ -67,14 +61,12 @@ inline void VDP_HMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny)
 	g_VDP_Command.NY = ny;
 	g_VDP_Command.ARG = 0; 
 	g_VDP_Command.CMD = VDP_CMD_HMMM;
-	VPD_SendCommand32();
+	VPD_CommandSetupR32();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * High speed move VDP to VRAM
- */
-inline void VDP_HMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col)
+/// High speed move VDP to VRAM
+inline void VDP_CommandHMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col)
 {
 	g_VDP_Command.DX = dx; 
 	g_VDP_Command.DY = dy; 
@@ -83,30 +75,24 @@ inline void VDP_HMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col)
 	g_VDP_Command.CLR = col; 
 	g_VDP_Command.ARG = 0; 
 	g_VDP_Command.CMD = VDP_CMD_HMMV;
-	VPD_SendCommand36();
+	VPD_CommandSetupR36();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Logical move CPU to VRAM
- */
-inline void VDP_LMMC()
+/// Logical move CPU to VRAM
+inline void VDP_CommandLMMC()
 {
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Logical move VRAM to CPU
- */
-inline void VDP_LMCM()
+/// Logical move VRAM to CPU
+inline void VDP_CommandLMCM()
 {
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Logical move VRAM to VRAM
- */
-inline void VDP_LMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny, u8 op)
+/// Logical move VRAM to VRAM
+inline void VDP_CommandLMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny, u8 op)
 {
 	g_VDP_Command.SX = sx;
 	g_VDP_Command.SY = sy;
@@ -116,14 +102,12 @@ inline void VDP_LMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny, u8 op)
 	g_VDP_Command.NY = ny;
 	g_VDP_Command.ARG = 0; 
 	g_VDP_Command.CMD = VDP_CMD_LMMM + op;
-	VPD_SendCommand32();
+	VPD_CommandSetupR32();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Logical move VDP to VRAM
- */
-inline void VDP_LMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 op)
+/// Logical move VDP to VRAM
+inline void VDP_CommandLMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 op)
 {
 	g_VDP_Command.DX = dx; 
 	g_VDP_Command.DY = dy; 
@@ -132,14 +116,12 @@ inline void VDP_LMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 op)
 	g_VDP_Command.CLR = col; 
 	g_VDP_Command.ARG = 0; 
 	g_VDP_Command.CMD = VDP_CMD_LMMV + op;
-	VPD_SendCommand36();
+	VPD_CommandSetupR36();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Draw straight line in VRAM
- */
-inline void VDP_LINE(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 arg, u8 op)
+/// Draw straight line in VRAM
+inline void VDP_CommandLINE(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 arg, u8 op)
 {
 	g_VDP_Command.DX = dx;
 	g_VDP_Command.DY = dy;
@@ -148,68 +130,46 @@ inline void VDP_LINE(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 arg, u8 op)
 	g_VDP_Command.CLR = col;
 	g_VDP_Command.ARG = arg;
 	g_VDP_Command.CMD = VDP_CMD_LINE + op;
-	VPD_SendCommand36();
+	VPD_CommandSetupR36();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Search for the specific color in VRAM to the right or left of the starting point
- */
-inline void VDP_SRCH(u16 sx, u16 sy, u8 col, u8 arg)
+/// Search for the specific color in VRAM to the right or left of the starting point
+inline void VDP_CommandSRCH(u16 sx, u16 sy, u8 col, u8 arg)
 {
 	g_VDP_Command.SX = sx;
 	g_VDP_Command.SY = sy;
 	g_VDP_Command.CLR = col; 
 	g_VDP_Command.ARG = arg; 
 	g_VDP_Command.CMD = VDP_CMD_SRCH;
-	VPD_SendCommand32();
+	VPD_CommandSetupR32();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Draw a dot in VRAM 
- */
-inline void VDP_PSET(u16 dx, u16 dy, u8 col, u8 op)
+/// Draw a dot in VRAM 
+inline void VDP_CommandPSET(u16 dx, u16 dy, u8 col, u8 op)
 {
 	g_VDP_Command.DX = dx;
 	g_VDP_Command.DY = dy;
 	g_VDP_Command.CLR = col;
 	g_VDP_Command.ARG = 0;
 	g_VDP_Command.CMD = VDP_CMD_PSET + op;
-	VPD_SendCommand36();
+	VPD_CommandSetupR36();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Read the color of the specified dot located in VRAM 
- */
-inline void VDP_POINT(u16 sx, u16 sy)
+/// Read the color of the specified dot located in VRAM 
+inline void VDP_CommandPOINT(u16 sx, u16 sy)
 {
 	g_VDP_Command.SX = sx;
 	g_VDP_Command.SY = sy;
 	g_VDP_Command.CMD = VDP_CMD_POINT;
-	VPD_SendCommand32();
+	VPD_CommandSetupR32();
 }
 
 //-----------------------------------------------------------------------------
-/**
- * Abort current command
- */
-inline void VDP_STOP()
+/// Abort current command
+inline void VDP_CommandSTOP()
 {
 	VDP_RegWrite(46, VDP_CMD_STOP);
 }
-
-// #define VDP_CopyRAMtoVRAM			VDP_HMMC	///< High speed move CPU to VRAM
-// #define VDP_YMoveVRAM				VDP_YMMM	///< High speed move VRAM to VRAM, Y coordinate only
-// #define VDP_MoveVRAM				VDP_HMMM	///< High speed move VRAM to VRAM
-// #define VDP_FillVRAM				VDP_HMMV	///< High speed move VDP to VRAM
-// #define VDP_LogicalCopyRAMtoVRAM	VDP_LMMC	///< Logical move CPU to VRAM
-// #define VDP_LogicalYMoveVRAM		VDP_LMCM	///< Logical move VRAM to CPU
-// #define VDP_LogicalMoveVRAM			VDP_LMMM	///< Logical move VRAM to VRAM
-// #define VDP_LogicalFillVRAM			VDP_LMMV	///< Logical move VDP to VRAM
-// #define VDP_DrawLine				VDP_LINE	///< Draw straight line in VRAM
-// #define VDP_SearchColor				VDP_SRCH	///< Search for the specific color in VRAM to the right or left of the starting point
-// #define VDP_DrawPoint				VDP_PSET	///< Draw a dot in VRAM 
-// #define VDP_ReadPoint				VDP_POINT	///< Read the color of the specified dot located in VRAM 
-// #define VDP_AbortCommand			VDP_STOP	///< Abort current command
