@@ -86,6 +86,7 @@ extern struct VDP_Sprite g_VDP_Sprite;
 //-----------------------------------------------------------------------------
 
 #define VRAM16b(a)		(u16)((u32)(a >> 4))
+#define VRAM17b(a)		(u16)((u32)(a >> 1))
 #define Addr20bTo16b(a)	(u16)((u32)(a >> 4))	///< Convert 20-bits (V)RAM address into 16-bits with bit shifting
 #define Addr17bTo16b(a)	(u16)((u32)(a >> 1))	///< Convert 17-bits (V)RAM address into 16-bits with bit shifting
 
@@ -184,7 +185,7 @@ void VDP_SetModeGraphic7();
 //-----------------------------------------------------------------------------
 
 /// Set screen mode. @see VDP_MODE
-inline void VDP_SetScreen(const u8 mode);
+void VDP_SetScreen(const u8 mode) __FASTCALL;
 
 /// Wait for VBlank flag trigger
 // void VDP_WaitVBlank();
@@ -196,13 +197,13 @@ u8 VDP_ReadDefaultStatus();
 u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
 /// Write data from RAM to VRAM
-void VDP_WriteVRAM(u8* src, u16 destLow, u8 destHigh, u16 count);
+void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count);
 
 /// Fill VRAM area with a given value
 void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count);
 
-///
-void VDP_ReadVRAM(u16 srcAddr, u8 srcPage, u8* dest, u16 count);
+/// Read data from VRAM to RAM
+void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count);
 
 /// Enable/disable horizontal interruption
 void VDP_EnableHBlank(u8 enable) __FASTCALL;
@@ -234,7 +235,7 @@ void VDP_SetPage(u8 page) __FASTCALL;
 void VDP_SetColor(u8 color) __FASTCALL;
 
 /// Set a new palette [red|blue][0|green]
-void VDP_SetPalette(void* pal) __FASTCALL;
+void VDP_SetPalette(const u8* pal) __FASTCALL;
 
 /// Set palette entry color
 void VDP_SetPaletteEntry(u8 index, u16 color);
@@ -253,29 +254,52 @@ void VDP_SetPageAlternance(u8 enable) __FASTCALL;
 //-----------------------------------------------------------------------------
 // SPRITES
 //-----------------------------------------------------------------------------
-/// Enable/disable sprite
+/// Enable/disable sprite rendering
 void VDP_EnableSprite(u8 enable) __FASTCALL;
 
 #define VDP_SPRITE_SIZE_8		0			///< Use 8x8 sprite size
 #define VDP_SPRITE_SIZE_16		R01_ST		///< Use 16x16 sprite size
-#define VDP_SPRITE_ENLARGE		R01_MAG		///> Double the size of the sprite (1 dot = 2 pixels)
+#define VDP_SPRITE_SCALE_1		0			///> Normal size of the sprite (1 dot = 1 px)
+#define VDP_SPRITE_SCALE_2		R01_MAG		///> Double the size of the sprite (1 dot = 2 px)
 /// Set sprite parameters
 void VDP_SetSpriteFlag(u8 flag) __FASTCALL;
 
-/// Set sprite table address
-void VDP_SetSpriteTables(u16 patternAddr, u16 attribAddr);
+/// Set sprite attribute table address
+void VDP_SetSpriteAttributeTable(u32 addr) __FASTCALL;
 
-/// Set sprite attribute
-void VDP_SendSpriteAttribute(u8 index) __FASTCALL;
+/// Set sprite pattern table address
+void VDP_SetSpritePatternTable(u32 addr) __FASTCALL;
+
+/// Set sprite table address (bit#16 to bit#1)
+void VDP_SetSpriteTables(u32 patternAddr, u32 attribAddr);
+
+/// Load pattern data into VRAM
+void VDP_LoadSpritePattern(const u8* addr, u8 index, u8 count);
+
+#define VDP_SPRITE_EC			0x80		///> Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
+/// Set sprite attribute for Sprite Mode 1 (MSX1)
+void VDP_SetSpriteSM1(u8 index, u8 x, u8 y, u8 shape, u8 color);
+
+/// Set sprite attribute for Sprite Mode 2
+void VDP_SetSprite(u8 index, u8 x, u8 y, u8 shape);
+
+/// Set sprite attribute for Sprite Mode 2 and fill color table with color data
+void VDP_SetSpriteMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram);
+
+/// Set sprite attribute for Sprite Mode 2 and fill color table with unique color
+void VDP_SetSpriteUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color);
+
+/// Update sprite position
+void VDP_SetSpritePosition(u8 index, u8 x, u8 y);
+
+/// Update sprite pattern
+void VDP_SetSpritePattern(u8 index, u8 shape);
+
+/// Set sprite data for Sprite Mode 2
+void VDP_SetSpriteData(u8 index, const u8* data);
 
 ///
-void VDP_ClearSprite();
-
-///
-void VDP_SetSpriteMultiColor(u8 index, u8 X, u8 Y, u8 shape, void* ram);
-
-///
-void VDP_SetSpriteUniColor(u8 index, u8 X, u8 Y, u8 shape, u8 color);
+void VDP_HideSprite(u8 fromIdx) __FASTCALL;
 
 //-----------------------------------------------------------------------------
 // VDP REGISTERS
@@ -301,7 +325,10 @@ void VPD_CommandSetupR32();
 void VPD_CommandSetupR36();
 
 /// Write to VRAM command loop
-void VPD_CommandWriteLoop(void* addr) __FASTCALL;
+void VPD_CommandWriteLoop(const u8* addr) __FASTCALL;
+
+/// Read to VRAM command loop
+void VPD_CommandReadLoop(u8* addr) __FASTCALL;
 
 //-----------------------------------------------------------------------------
 // INLINE FUNCTIONS
@@ -312,7 +339,7 @@ void VPD_CommandWriteLoop(void* addr) __FASTCALL;
 //-----------------------------------------------------------------------------
 // VDP COMMANDS
 
-// inline void VDP_CommandHMMC(void* addr, u16 dx, u16 dy, u16 nx, u16 ny); // High speed move CPU to VRAM.
+// inline void VDP_CommandHMMC(const u8* addr, u16 dx, u16 dy, u16 nx, u16 ny); // High speed move CPU to VRAM.
 // inline void VDP_CommandYMMM(u16 sy, u16 dx, u16 dy, u16 ny, u8 dir); // High speed move VRAM to VRAM, Y coordinate only.
 // inline void VDP_CommandHMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny); // High speed move VRAM to VRAM
 // inline void VDP_CommandHMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col); // High speed move VDP to VRAM

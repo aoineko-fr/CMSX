@@ -27,7 +27,7 @@ inline void Print_SetFontEx(u8 formX, u8 formY, u8 sizeX, u8 sizeY, u8 firstChr,
 
 //-----------------------------------------------------------------------------
 /// Set cursor position
-inline void Print_SetPosition(u8 x, u8 y)
+inline void Print_SetPosition(u16 x, u8 y)
 {
 	g_PrintData.CursorX = x;
 	g_PrintData.CursorY = y;	

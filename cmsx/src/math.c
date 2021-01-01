@@ -2,6 +2,12 @@
 //  █▀▀ █▀▄▀█ █▀ ▀▄▀
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
+// References:
+// - http://map.grauw.nl/sources/external/z80bits.html#4
+// - http://z80-heaven.wikidot.com/math
+// - http://z80-heaven.wikidot.com/advanced-math
+// - https://wikiti.brandonw.net/index.php?title=Category:Z80_Routines:Math
+//-----------------------------------------------------------------------------
 #include "core.h"
 #include "math.h"
 
@@ -20,13 +26,31 @@ i8 Math_Clamp(i8 val, i8 min, i8 max)
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-/// 16-bits fast 10 times division 
-i16 Math_Div10(i16 val) __FASTCALL
+/// 8-bits fast 10 times division 
+i8 Math_Div10(i8 val) __FASTCALL
 {
 	val;
-// 	Fast call
-//		ld		hl, val
 	__asm
+//		ld		l, val		// fast call
+		ld		d, #0
+		ld		h, d
+		add		hl, hl
+		add		hl, de
+		add		hl, hl
+		add		hl, hl
+		add		hl, de
+		add		hl, hl
+		ld		l, h
+	__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// 16-bits fast 10 times division 
+i16 Math_Div10_16b(i16 val) __FASTCALL
+{
+	val;
+	__asm
+//		ld		hl, val		// fast call
 		ld		bc, #0x0D0A
 		xor		a
 		add		hl, hl
@@ -48,28 +72,40 @@ i16 Math_Div10(i16 val) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-/// 8-bits fast 10 times division 
-i8 Math_Div10_8b(i8 val) __FASTCALL
-{
-	val;
-// 	Fast call
-//		ld		l, val
-	__asm
-		ld		d, #0
-		ld		h, d
-		add		hl, hl
-		add		hl, de
-		add		hl, hl
-		add		hl, hl
-		add		hl, de
-		add		hl, hl
-		ld		l, h
-	__endasm;
-}
-
-//-----------------------------------------------------------------------------
 // MODULO
 //-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+/// 18-bits fast modulo-10 
+// Inputs:		A	8-bit unsigned integer
+// Outputs:		A	HL mod 10
+//				Z	Flag is set if divisible by 10
+// 20 bytes, 83 cycles
+u8 Math_Mod10(u8 val) __FASTCALL
+{
+	val;
+	__asm
+//		ld		l, val		// fast call
+		ld		a, l		// add bytes
+		ld		h, a		// add nibbles
+		rrca
+		rrca
+		rrca
+		rrca
+		add		a, h
+		adc		a, #0		// n mod 15 (+1) in both nibbles
+		daa
+		ld		l, a
+		sub		h			// test if quotient is even or odd
+		rra
+		sbc		a, a
+		and		#5
+		add		a, l
+		daa
+		and		#0x0F
+		ld		l, a
+	__endasm;
+}
 
 //-----------------------------------------------------------------------------
 /// 16-bits fast modulo-10 
@@ -77,12 +113,11 @@ i8 Math_Div10_8b(i8 val) __FASTCALL
 // Outputs:		A	HL mod 10
 //				Z	Flag is set if divisible by 10
 // 24 bytes,  98cc
-u8 Math_Mod10(u16 val) __FASTCALL
+u8 Math_Mod10_16b(u16 val) __FASTCALL
 {
 	val;
-// 	Fast call
-//		ld		hl, val
 	__asm
+//		ld		hl, val		// fast call
 		ld		a, h		// add bytes
 		add		a, l
 		adc		a, #0		// n mod 255 (+1)
@@ -107,35 +142,66 @@ u8 Math_Mod10(u16 val) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-/// 18-bits fast modulo-10 
-// Inputs:		A	8-bit unsigned integer
-// Outputs:		A	HL mod 10
-//				Z	Flag is set if divisible by 10
-// 20 bytes, 83 cycles
-u8 Math_Mod10_8b(u8 val) __FASTCALL
+// BITS OPERATION
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+/// 8-bits fast bits flip 
+// Inputs:		L		8-bits value
+// Outputs:		L		Bits flipped value
+// Author:		John Metcalf (http://www.retroprogramming.com/2014/01/fast-z80-bit-reversal.html)
+u8 Math_Flip(u8 val) __FASTCALL
 {
 	val;
-// 	Fast call
-//		ld		l, val
 	__asm
-		ld		a, l		// add bytes
-		ld		h, a		// add nibbles
-		rrca
-		rrca
-		rrca
-		rrca
-		add		a, h
-		adc		a, #0		// n mod 15 (+1) in both nibbles
-		daa
+//		ld		l, val		// fast call
+		ld		a, l		// a = 76543210
+#if 0	// Methode 2: 8 bytes / 206 cycles
+		ld		b, #8
 		ld		l, a
-		sub		h			// test if quotient is even or odd
+	FlipLoop:
+		rl		l
 		rra
-		sbc		a, a
-		and		#5
-		add		a, l
-		daa
-		and		#0x0F
+		djnz FlipLoop
+#else	// Methode 2: 17 bytes / 66 cycles
+		rlca
+		rlca				// a = 54321076
+		xor		l
+		and		#0xAA
+		xor		l			// a = 56341270
 		ld		l, a
+		rlca
+		rlca
+		rlca				// a = 41270563
+		rrc 	l			// l = 05634127
+		xor 	l
+		and 	#0x66
+		xor 	l			// a = 01234567
+#endif
+		ld		l, a
+	__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// 16-bits bits flip 
+u16 Math_Flip_16b(u16 val) __FASTCALL
+{
+	// register u8 a = val >> 8;
+	// register u8 b = val & 0x00FF;
+	// a = Math_Flip(a);
+	// b = Math_Flip(b);
+	// return (b << 8) + a;
+	
+	val;
+	__asm
+//		ld		hl, val		// fast call
+		ld		a, h
+		call	_Math_Flip	// flip high bits
+		ld		b, a
+		ld		a, l
+		call	_Math_Flip	// flip low bits
+		ld		h, a		// flip high/low
+		ld		l, b
 	__endasm;
 }
 

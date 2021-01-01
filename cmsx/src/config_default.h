@@ -9,31 +9,31 @@
 //-----------------------------------------------------------------------------
 // MSX_VERSION
 #ifndef MSX_VERSION
-	#define MSX_VERSION		MSX_2
+	#define MSX_VERSION			MSX_2
 #endif
 
 //-----------------------------------------------------------------------------
 // RENDER_MODE
 #ifndef RENDER_MODE
-	#define RENDER_MODE		RENDER_VDP
+	#define RENDER_MODE			RENDER_VDP
 #endif
 
 //-----------------------------------------------------------------------------
 // BIOS_CALL
 #ifndef CALL_MAINROM
-	#define CALL_MAINROM	CALL_DIRECT
+	#define CALL_MAINROM		CALL_DIRECT
 #endif
 #ifndef CALL_SUBROM
-	#define CALL_SUBROM		CALL_INTERSLOT
+	#define CALL_SUBROM			CALL_INTERSLOT
 #endif
 #ifndef CALL_DISCROM
-	#define CALL_DISCROM	CALL_INTERSLOT
+	#define CALL_DISCROM		CALL_INTERSLOT
 #endif
 
 //-----------------------------------------------------------------------------
-// RANDOM_METHOD
-#ifndef RANDOM_METHOD
-	#define RANDOM_METHOD	RANDOM_XORSHIFT
+// DRAW_UNIT
+#ifndef DRAW_UNIT
+	#define DRAW_UNIT			DRAW_UNIT_DEFAULT
 #endif
 
 //-----------------------------------------------------------------------------
@@ -53,3 +53,10 @@
 #ifndef PRINT_HEIGHT
 	#define PRINT_HEIGHT		PRINT_HEIGHT_8
 #endif
+
+//-----------------------------------------------------------------------------
+// RANDOM_METHOD
+#ifndef RANDOM_METHOD
+	#define RANDOM_METHOD		RANDOM_XORSHIFT
+#endif
+

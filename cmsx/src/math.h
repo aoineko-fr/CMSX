@@ -18,7 +18,7 @@
 #define Abs32(i)			(((u32)(i) & 0x80000000) ? ~((u32)(i) - 1) : (i))
 
 /// Invert sign of a signed integer
-#define Invert(a)				((^a)++)
+#define Invert(a)			((^a)++)
 
 /// Merge two 4 bits value into a 8 bits integer
 #define Merge44(a, b)		(u8)(((a) & 0x0F) << 4 | ((b) & 0x0F))
@@ -43,17 +43,24 @@ i8 Math_Clamp(i8 val, i8 min, i8 max);
 // Quick math routines
 //-----------------------------------------------------------------------------
 
-/// 16-bits fast 10 times division 
-i16 Math_Div10(i16 val) __FASTCALL;
-
 /// 8-bits fast 10 times division 
-i8 Math_Div10_8b(i8 val) __FASTCALL;
+i8 Math_Div10(i8 val) __FASTCALL;
 
-/// 16-bits fast modulo-10 
-u8 Math_Mod10(u16 val) __FASTCALL;
+/// 16-bits fast 10 times division 
+i16 Math_Div10_16b(i16 val) __FASTCALL;
 
 /// 8-bits fast modulo-10 
-u8 Math_Mod10_8b(u8 val) __FASTCALL;
+u8 Math_Mod10(u8 val) __FASTCALL;
+
+/// 16-bits fast modulo-10 
+u8 Math_Mod10_16b(u16 val) __FASTCALL;
+
+/// Bits flip routine
+u8 Math_Flip(u8 val) __FASTCALL;
+
+/// Bits flip routine
+u16 Math_Flip_16b(u16 val) __FASTCALL;
 
 /// Generates 16-bit pseudorandom numbers with a period of 65535
 u16 Math_GetRandom();
+

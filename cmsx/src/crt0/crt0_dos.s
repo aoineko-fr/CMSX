@@ -25,8 +25,8 @@ HIMEM = #0xFC4A
 .area	_CODE
 
 init:
-	; Set stack address at the top of free memory
 	di
+	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
 	
 	; Initialize globals
@@ -38,17 +38,15 @@ init:
 	ld		hl, #s__INITIALIZER
 	ldir
 
+	; Initialize heap address
+	ld		hl, #s__HEAP
+	ld		(#_g_HeapStartAddress), hl
+
 start:
 	; start main() function
 	ei
 	call	_main
 	rst		0
-
-;------------------------------------------------------------------------------
-.area	_DATA
-
-_g_HeapStartAddress::
-	.dw		s__HEAP
 
 ;------------------------------------------------------------------------------
 ; Ordering of segments for the linker
@@ -59,6 +57,9 @@ _g_HeapStartAddress::
 .area   _GSINIT
 .area   _GSFINAL
 .area	_DATA
+_g_HeapStartAddress::
+	.ds 2
+
 .area	_INITIALIZED
 .area	_BSEG
 .area   _BSS
