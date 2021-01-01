@@ -49,7 +49,7 @@ void Mem_HeapFree(u16 size) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Copy a memory block from a source address to an other
-void Mem_Copy(void* src, void* dest, u16 size)
+void Mem_Copy(const void* src, void* dest, u16 size)
 {
 	src, dest, size;
 	__asm

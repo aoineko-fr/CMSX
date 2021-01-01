@@ -57,6 +57,50 @@ static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 
 //-----------------------------------------------------------------------------
 //
+// HELPER FUNCTIONS
+//
+//-----------------------------------------------------------------------------
+
+u8 Print_SplitColor(u8 color) __FASTCALL
+{
+	switch(g_PrintData.Mode)
+	{
+#if (USE_VDP_MODE_G4)
+	case VDP_MODE_GRAPHIC4: return color & 0x0F;
+#endif
+#if (USE_VDP_MODE_G5)
+	case VDP_MODE_GRAPHIC5: return color & 0x03;
+#endif
+#if (USE_VDP_MODE_G6)
+	case VDP_MODE_GRAPHIC6: return color & 0x0F;
+#endif
+#if (USE_VDP_MODE_G7)
+	case VDP_MODE_GRAPHIC7: return color;
+#endif
+	}
+}
+
+u8 Print_MergeColor(u8 color) __FASTCALL
+{
+	switch(g_PrintData.Mode)
+	{
+#if (USE_VDP_MODE_G4)
+	case VDP_MODE_GRAPHIC4: return (color & 0x0F) << 4 | (color & 0x0F);
+#endif
+#if (USE_VDP_MODE_G5)
+	case VDP_MODE_GRAPHIC5: return (color & 0x03) << 6 + (color & 0x03) << 4 + (color & 0x03) << 2 + (color & 0x03);
+#endif
+#if (USE_VDP_MODE_G6)
+	case VDP_MODE_GRAPHIC6: return (color & 0x0F) << 4 | (color & 0x0F);
+#endif
+#if (USE_VDP_MODE_G7)
+	case VDP_MODE_GRAPHIC7: return color;
+#endif
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
 // INITIALIZATION FUNCTIONS
 //
 //-----------------------------------------------------------------------------
@@ -128,7 +172,8 @@ void Print_SetFont(const u8* font) __FASTCALL
 /// Clear screen on the current page
 void Print_Clear()
 {
-	VDP_CommandHMMV(0, g_PrintData.Page * 256, g_PrintData.ScreenWidth, 256, g_PrintData.BackgroundColor);
+	u8 color = Print_MergeColor(g_PrintData.BackgroundColor);
+	VDP_CommandHMMV(0, g_PrintData.Page * 256, g_PrintData.ScreenWidth, 212, color); // @todo Check the 192/212 lines parameter
 	VDP_CommandWait();
 }
 
@@ -140,6 +185,12 @@ void Print_SetColor(u8 text, u8 bg)
 {
 	register u8 t = text;
 	register u8 b = bg;
+	
+#if USE_PRINT_VALIDATOR
+	t = Print_SplitColor(t);
+	b = Print_SplitColor(b);
+#endif
+
 	g_PrintData.TextColor = t;
 	g_PrintData.BackgroundColor = b;
 
@@ -383,6 +434,7 @@ void Print_DrawChar(u8 chr) __FASTCALL
 #if USE_PRINT_VALIDATOR
 	if(g_PrintData.CursorX + PRINT_W(g_PrintData.UnitX) > g_PrintData.ScreenWidth) // Handle automatic new-line when 
 		Print_Return();
+	VDP_CommandWait();
 #endif
 	g_PrintData.PutChar(chr);
 	g_PrintData.CursorX += PRINT_W(g_PrintData.UnitX);

@@ -19,13 +19,13 @@
 
 //-----------------------------------------------------------------------------
 /// High speed move CPU to VRAM.
-inline void VDP_CommandHMMC(void* addr, u16 dx, u16 dy, u16 nx, u16 ny)
+inline void VDP_CommandHMMC(const u8* addr, u16 dx, u16 dy, u16 nx, u16 ny)
 {
 	g_VDP_Command.DX = dx;
 	g_VDP_Command.DY = dy;
 	g_VDP_Command.NX = nx;
 	g_VDP_Command.NY = ny;
-	g_VDP_Command.CLR = *((u8*)addr);
+	g_VDP_Command.CLR = *addr;
 	g_VDP_Command.ARG = 0; 
 	g_VDP_Command.CMD = VDP_CMD_HMMC;
 	VPD_CommandSetupR36();
@@ -80,8 +80,17 @@ inline void VDP_CommandHMMV(u16 dx, u16 dy, u16 nx, u16 ny, u8 col)
 
 //-----------------------------------------------------------------------------
 /// Logical move CPU to VRAM
-inline void VDP_CommandLMMC()
+inline void VDP_CommandLMMC(const u8* addr, u16 dx, u16 dy, u16 nx, u16 ny, u8 op)
 {
+	g_VDP_Command.DX = dx;
+	g_VDP_Command.DY = dy;
+	g_VDP_Command.NX = nx;
+	g_VDP_Command.NY = ny;
+	g_VDP_Command.CLR = *addr;
+	g_VDP_Command.ARG = 0; 
+	g_VDP_Command.CMD = VDP_CMD_LMMC + op;
+	VPD_CommandSetupR36();
+	VPD_CommandWriteLoop(addr);
 }
 
 //-----------------------------------------------------------------------------
@@ -159,12 +168,14 @@ inline void VDP_CommandPSET(u16 dx, u16 dy, u8 col, u8 op)
 
 //-----------------------------------------------------------------------------
 /// Read the color of the specified dot located in VRAM 
-inline void VDP_CommandPOINT(u16 sx, u16 sy)
+inline u8 VDP_CommandPOINT(u16 sx, u16 sy)
 {
 	g_VDP_Command.SX = sx;
 	g_VDP_Command.SY = sy;
 	g_VDP_Command.CMD = VDP_CMD_POINT;
 	VPD_CommandSetupR32();
+	VDP_CommandWait();
+	return VDP_ReadStatus(7);
 }
 
 //-----------------------------------------------------------------------------

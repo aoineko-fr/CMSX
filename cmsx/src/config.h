@@ -44,12 +44,6 @@
 #define CALL_INTERSLOT		1 // Use inter-slot access to Bios routines
 
 //-----------------------------------------------------------------------------
-// RANDOM_METHOD
-#define RANDOM_LFSR_LCG_16	0 // Combined LFSR/LCG (16-bit seeds)
-#define RANDOM_LFSR_LCG_32	1 // Combined LFSR/LCG (32-bit seeds)
-#define RANDOM_XORSHIFT		2 // Xorshift RNGs (16-bit seeds)
-
-//-----------------------------------------------------------------------------
 // PRINT_WIDTH
 #define PRINT_WIDTH_6		0 // 
 #define PRINT_WIDTH_8		1 // 
@@ -57,3 +51,15 @@
 // PRINT_HEIGHT
 #define PRINT_HEIGHT_8		1 // 
 #define PRINT_HEIGHT_X		2 // 
+
+//-----------------------------------------------------------------------------
+// DRAW_UNIT
+#define DRAW_UNIT_DEFAULT	0
+#define DRAW_UNIT_Y16		1
+
+//-----------------------------------------------------------------------------
+// RANDOM_METHOD
+#define RANDOM_LFSR_LCG_16	0 // Combined LFSR/LCG (16-bit seeds)
+#define RANDOM_LFSR_LCG_32	1 // Combined LFSR/LCG (32-bit seeds)
+#define RANDOM_XORSHIFT		2 // Xorshift RNGs (16-bit seeds)
+

@@ -129,7 +129,7 @@ if /I %Ext%==bin (
 	copy %OutDir%\%Crt0%.%Ext% .\emul\dsk\%ProjName%.%Ext%
 	if errorlevel 1 goto :Error
 	echo Create emul\dsk\autoexec.bas
-	echo 10 bload"%ProjName%.%Ext%",r > .\emul\dsk\autoexec.bas
+	echo 10 bload"%ProjName:~0,8%.%Ext%",r > .\emul\dsk\autoexec.bas
 	if errorlevel 1 goto :Error
 )
 if /I %Ext%==rom (

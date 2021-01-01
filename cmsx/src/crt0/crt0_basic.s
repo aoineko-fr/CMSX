@@ -31,8 +31,8 @@ HIMEM = #0xFC4A
 	.dw 	init	; Execution address
 
 init:
-	; Set stack address at the top of free memory
 	di
+	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
 
 	; Initialize globals and jump to main()
@@ -50,12 +50,6 @@ start:
 	jp		_main
 
 ;------------------------------------------------------------------------------
-.area	_DATA
-
-_g_HeapStartAddress::
-	.dw		s__HEAP
-
-;------------------------------------------------------------------------------
 ; Ordering of segments for the linker
 .area	_HOME
 .area	_CODE
@@ -63,6 +57,9 @@ _g_HeapStartAddress::
 .area   _GSINIT
 .area   _GSFINAL
 .area	_DATA
+_g_HeapStartAddress::
+	.dw		s__HEAP
+
 .area	_INITIALIZED
 .area	_BSEG
 .area   _BSS

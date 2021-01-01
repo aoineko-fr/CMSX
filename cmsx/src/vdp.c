@@ -20,6 +20,18 @@ u8 g_VDP_REGSAV[28];
 u8 g_VDP_STASAV[10];
 struct VDP_Command g_VDP_Command;
 struct VDP_Sprite g_VDP_Sprite;
+u8  g_ScreenLayoutHigh;		///< Address of the Pattern Layout Table
+u16 g_ScreenLayoutLow;		///< Address of the Pattern Layout Table
+u8  g_ScreenColorHigh;		///< Address of the Color Table
+u16 g_ScreenColorLow;		///< Address of the Color Table
+u8  g_ScreenPatternHigh;	///< Address of the Pattern Generator Table
+u16 g_ScreenPatternLow;		///< Address of the Pattern Generator Table
+u8  g_SpriteAtributeHigh;	///< Address of the Sprite Attribute Table
+u16 g_SpriteAtributeLow;	///< Address of the Sprite Attribute Table
+u8  g_SpritePatternHigh;	///< Address of the Sprite Pattern Generator Table
+u16 g_SpritePatternLow;		///< Address of the Sprite Pattern Generator Table
+u8  g_SpriteColorHigh;		///< Address of the Sprite Color Table
+u16 g_SpriteColorLow;		///< Address of the Sprite Color Table
 
 //-----------------------------------------------------------------------------
 // VDP Registers Flags
@@ -439,7 +451,7 @@ void VDP_SetModeGraphic7()
 
 //-----------------------------------------------------------------------------
 //
-inline void VDP_SetScreen(const u8 mode)
+void VDP_SetScreen(const u8 mode) __FASTCALL
 {
 	switch(mode)
 	{
@@ -609,17 +621,15 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL
 #endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
-// Write data from RAM to VRAM
-//                 4-5      6-7           8            9-10
-void VDP_WriteVRAM(u8* src, u16 destLow, u8 destHigh, u16 count)
+/// Write data from RAM to VRAM
+void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count)
 {
 	src, destLow, destHigh, count;
 	__asm
 		push	ix
 		ld		ix, #0
 		add		ix, sp
-		
-		// g_VDP_RegPort = (page << 2) + (dest >> 14);
+		// Setup address register 
 		ld		a, 8 (ix)
 		add		a, a
 		add		a, a
@@ -630,65 +640,52 @@ void VDP_WriteVRAM(u8* src, u16 destLow, u8 destHigh, u16 count)
 		and		a, #0x03
 		add		a, c
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a
-		// g_VDP_RegPort = VDP_REG(14);
+		out		(P_VDP_ADDR), a			// RegPort = (page << 2) + (dest >> 14)
 		ld		a, #VDP_REG(14)
-		out		(P_VDP_ADDR), a
-		// g_VDP_RegPort = (dest & 0xFF);
+		out		(P_VDP_REG), a			// RegPort = VDP_REG(14)
 		ld		a, 6 (ix)
-		out		(P_VDP_ADDR), a
-		// g_VDP_RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF)
 		ld		a, 7 (ix)
 		and		a, #0x3f
 		add		a, #F_VDP_WRIT
-		out		(P_VDP_ADDR), a
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		// while(count--) g_VDP_DataPort = *src++;
+		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT
+		// while(count--) DataPort = *src++;
 		ld		l, 4 (ix)				// source address
 		ld		h, 5 (ix)
 		ld		c, #P_VDP_DATA			// data register
-		
+		// Handle count LSB
 		ld		a, 9 (ix)				// count LSB
 		cp		a, #0
 		jp		z, wrt_loop_init		// skip LSB
 		ld		b, a					// send (count & 0x00FF) bytes
-		otir		
-		
+		otir
+		// Handle count MSB
 	wrt_loop_init:
 		ld		a, 10 (ix)				// count MSB
 	wrt_loop_start:
 		cp		a, #0
 		jp		z, wrt_loop_end			// finished
-
 		ld		b, #0					// send 256 bytes packages
 		otir
 		dec		a
 		jp		wrt_loop_start
+
 	wrt_loop_end:
-	
 		pop	ix
 	__endasm;
 }
 
 //-----------------------------------------------------------------------------
-// Fill VRAM area with a given value
-void VDP_FillVRAM(u8 value, u16 dest, u8 page, u16 count)
+/// Fill VRAM area with a given value
+void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count)
 {
-	g_VDP_RegPort = (page << 2) + (dest >> 14);
-	g_VDP_RegPort = VDP_REG(14);
-	g_VDP_RegPort = (dest & 0xFF);
-	g_VDP_RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
-	while(count--)
-		g_VDP_DataPort = value;
-/*	
-	dest, page, value, count;
+	destLow, destHigh, value, count;
 	__asm
 		push	ix
 		ld		ix, #0
 		add		ix, sp
-		
-		// g_VDP_RegPort = (page << 2) + (dest >> 14);
+		// Setup address register 
 		ld		a, 7 (ix)
 		add		a, a
 		add		a, a
@@ -699,52 +696,88 @@ void VDP_FillVRAM(u8 value, u16 dest, u8 page, u16 count)
 		and		a, #0x03
 		add		a, c
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a
-		// g_VDP_RegPort = VDP_REG(14);
+		out		(P_VDP_ADDR), a			// RegPort = (page << 2) + (dest >> 14);
 		ld		a, #VDP_REG(14)
-		out		(P_VDP_ADDR), a
-		// g_VDP_RegPort = (dest & 0xFF);
+		out		(P_VDP_ADDR), a			// RegPort = VDP_REG(14);
 		ld		a, 5 (ix)
-		out		(P_VDP_ADDR), a
-		// g_VDP_RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF);
 		ld		a, 6 (ix)
 		and		a, #0x3f
 		add		a, #F_VDP_WRIT
-		out		(P_VDP_ADDR), a
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		// while(count--) g_VDP_DataPort = value;
+		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+		// while(count--) DataPort = value;
 		ld		e, 8 (ix)				// count
 		ld		d, 9 (ix)
 		ld		a, 4 (ix)				// value
 		// fast 16-bits loop
-		ld		b, e					// Number of loops is in DE
-		dec		de						// Calculate DB value (destroys B, D and E)
+		ld		b, e					// number of loops is in DE
+		dec		de						// calculate DB value (destroys B, D and E)
 		inc		d
 	fll_loop_start:
-		out		(P_VDP_DATA), a
-		// ... do something here
+		out		(P_VDP_DATA), a			// fill
 		djnz	fll_loop_start
 		dec		d
 		jp		nz, fll_loop_start
 
 		pop	ix
-	__endasm;*/
+	__endasm;
 }
 
 //-----------------------------------------------------------------------------
-//
-void VDP_ReadVRAM(u16 srcAddr, u8 srcPage, u8* dest, u16 count)
+/// Read data from VRAM to RAM
+void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count)
 {
-	// @todo Convert to assembler
-	DisableInterrupt();
-	g_VDP_RegPort = (srcPage << 2) + (srcAddr >> 14);
-	g_VDP_RegPort = (u8)(VDP_REG(14));
-	g_VDP_RegPort = (srcAddr & 0xFF);
-	g_VDP_RegPort = ((srcAddr >> 8) & 0x3F) + F_VDP_READ;
-	while(count--)
-		*dest++ = g_VDP_DataPort;
-	EnableInterrupt();
+	srcLow, srcHigh, dest, count;
+	__asm
+		push	ix
+		ld		ix, #0
+		add		ix, sp
+		// Setup address register 	
+		ld		a, 6 (ix)
+		add		a, a
+		add		a, a
+		ld		c, a
+		ld		a, 5 (ix)
+		rlca
+		rlca
+		and		a, #0x03
+		add		a, c
+		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// AddrPort = (srcHigh << 2) + (srcLow >> 14)
+		ld		a, #VDP_REG(14)
+		out		(P_VDP_REG), a			// RegPort  = (u8)(VDP_REG(14))
+		ld		a, 4 (ix)
+		out		(P_VDP_ADDR), a			// AddrPort = (srcLow & 0xFF)
+		ld		a, 5 (ix)
+		and		a, #0x3f
+		add		a, #F_VDP_READ
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// AddrPort = ((srcLow >> 8) & 0x3F) + F_VDP_READ
+		// while(count--) *src++ = DataPort;
+		ld		l, 7 (ix)				// source address
+		ld		h, 8 (ix)
+		ld		c, #P_VDP_DATA			// data register
+		// Handle count LSB
+		ld		a, 9 (ix)				// count LSB
+		cp		a, #0
+		jp		z, rd_loop_init			// skip LSB
+		ld		b, a					// retreive (count & 0x00FF) bytes
+		inir		
+		// Handle count MSB		
+	rd_loop_init:
+		ld		a, 10 (ix)				// count MSB
+	rd_loop_start:
+		cp		a, #0
+		jp		z, rd_loop_end			// finished
+		ld		b, #0					// retreive 256 bytes packages
+		inir
+		dec		a
+		jp		rd_loop_start
+		
+	rd_loop_end:
+		pop	ix
+	__endasm;
 }
 
 //-----------------------------------------------------------------------------
@@ -899,12 +932,11 @@ void VDP_SetColor(u8 color) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Set a new palette from index 1
 /// Format : [red|blue][0|green]
-void VDP_SetPalette(void* pal) __FASTCALL
+void VDP_SetPalette(const u8* pal) __FASTCALL
 {
 	pal;
-	// FastCall
-	//	ld		hl, pal
 	__asm
+//		ld		hl, pal				// FastCall
 		ld		a, #1
 		di  //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a
@@ -968,7 +1000,7 @@ void VDP_SetPageAlternance(u8 enable) __FASTCALL
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// Enable/disable sprite
+/// Enable/disable sprite rendering
 void VDP_EnableSprite(u8 enable) __FASTCALL
 {
 	u8 reg = g_VDP_REGSAV[8];
@@ -978,22 +1010,9 @@ void VDP_EnableSprite(u8 enable) __FASTCALL
 	VDP_RegWriteBak(8, reg);
 }
 
-/// Set sprite table address
-void VDP_SetSpriteTables(u16 patternAddr, u16 attribAddr)
-{
-	u8 reg;
-	// Set pattern table address
-	reg = patternAddr >> 7;
-	VDP_RegWrite(6, reg);
-	// Set attribute table address
-	reg = (attribAddr >> 3) | 0b111;
-	VDP_RegWrite(5, reg);
-	reg = attribAddr >> 11;
-	VDP_RegWrite(11, reg);
-}
 
 //-----------------------------------------------------------------------------
-// Set sprite parameters
+/// Set sprite parameters
 void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 {
 	u8 reg = g_VDP_REGSAV[1];
@@ -1006,10 +1025,174 @@ void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
+/// Set sprite attribute table address (bit#16 to bit#1)
+/// @param		addr		VRAM address (only the lowest 17 bits are used)
+void VDP_SetSpriteAttributeTable(u32 addr) __FASTCALL
+{
+	g_SpriteAtributeHigh = addr >> 8;
+	g_SpriteAtributeLow = (u16)addr;
+	addr -= 0x200;
+	g_SpriteColorHigh = addr >> 8;
+	g_SpriteColorLow = (u16)addr;
+	
+	u8 reg;
+	reg = (u8)(addr >> 7) | 0b111;
+	VDP_RegWrite(5, reg);
+	reg = (u8)(addr >> 15);
+	VDP_RegWrite(11, reg);
+}
+
+//-----------------------------------------------------------------------------
+/// Set sprite pattern table address
+/// @param		addr		1-bit right shifted VRAM address (bit#16 to bit#1)
+void VDP_SetSpritePatternTable(u32 addr) __FASTCALL __naked
+{
+	__asm
+//		ld		de, addr.hi			// FastCall
+//		ld		hl, addr.lo			// FastCall
+		ld		(#_g_SpritePatternLow), hl	// g_SpritePatternLow = (u16)addr;
+		ld		a, h
+		ld		hl, #_g_SpritePatternHigh	// g_SpritePatternHigh = addr >> 8;
+		ld		(hl), e
+		sra		e							// put bit#0 in carry
+		rra									// shift right and get carry to bit#7
+		sra		a							// shift right
+		sra		a							// shift right
+		ld		l, a						// set register value
+		ld		a, #0x06
+		ld		h, a						// set register id
+		jp		_VDP_RegWriteFC
+	__endasm;
+
+	/*g_SpritePatternHigh = addr >> 8;
+	g_SpritePatternLow  = (u16)addr;
+	u8 reg = addr >> 11;
+	VDP_RegWrite(6, reg);*/
+}
+
+//-----------------------------------------------------------------------------
+/// Set sprite table address (bit#16 to bit#1)
+/// @param		pattern		1-bit right shifted VRAM address (bit#16 to bit#1)
+/// @param		attrib		1-bit right shifted VRAM address (bit#16 to bit#1)
+void VDP_SetSpriteTables(u32 pattern, u32 attrib)
+{
+	VDP_SetSpritePatternTable(pattern);
+	VDP_SetSpriteAttributeTable(attrib);
+}
+
+//-----------------------------------------------------------------------------
+/// Load pattern data into VRAM
+void VDP_LoadSpritePattern(const u8* addr, u8 index, u8 count)
+{
+	u16 low = g_SpritePatternLow;
+	low += (index * 8);
+	VDP_WriteVRAM(addr, low, g_SpritePatternHigh, count * 8);
+}
+
+//-----------------------------------------------------------------------------
+/// Set sprite attribute for Sprite Mode 1 (MSX1)
+void VDP_SetSpriteSM1(u8 index, u8 x, u8 y, u8 shape, u8 color)
+{
+	g_VDP_Sprite.Y = y;				// Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
+    g_VDP_Sprite.X = x;				// X coordinate of the sprite
+    g_VDP_Sprite.Pattern = shape;	// Pattern index
+    g_VDP_Sprite.Color = color;		// Color index (Sprite Mode 1 only) + Early clock*
+
+	u16 low = g_SpriteAtributeLow;
+	low += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite, low, g_SpriteAtributeHigh, 4);
+}
+
+//-----------------------------------------------------------------------------
+/// Set sprite attribute for Sprite Mode 2
+void VDP_SetSprite(u8 index, u8 x, u8 y, u8 shape)
+{
+	g_VDP_Sprite.Y = y;				// Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
+    g_VDP_Sprite.X = x;				// X coordinate of the sprite
+    g_VDP_Sprite.Pattern = shape;	// Pattern index
+
+	u16 low = g_SpriteAtributeLow;
+	low += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite, low, g_SpriteAtributeHigh, 3);
+}
+
+//-----------------------------------------------------------------------------
+/// Set sprite attribute for Sprite Mode 2 and fill color table with color data
+void VDP_SetSpriteMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram)
+{
+	u16 col = g_SpriteColorLow;
+	col += (index * 16);
+	VDP_WriteVRAM(ram, col, g_SpriteColorHigh, 16);
+
+	g_VDP_Sprite.X = x;				// Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
+	g_VDP_Sprite.Y = y;				// X coordinate of the sprite
+	g_VDP_Sprite.Pattern = shape;	// Pattern index
+	u16 attr = g_SpriteAtributeLow;
+	attr += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite, attr, g_SpriteAtributeHigh, 3);
+}
+
+//-----------------------------------------------------------------------------
+/// Set sprite attribute for Sprite Mode 2 and fill color table with unique color
+void VDP_SetSpriteUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color)
+{
+	u16 col = g_SpriteColorLow;
+	col += (index * 16);
+	VDP_FillVRAM(color, col, g_SpriteColorHigh, 16);
+
+	g_VDP_Sprite.X = x;				// Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
+	g_VDP_Sprite.Y = y;				// X coordinate of the sprite
+	g_VDP_Sprite.Pattern = shape;	// Pattern index
+	u16 attr = g_SpriteAtributeLow;
+	attr += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite, attr, g_SpriteAtributeHigh, 3);
+}
+
+//-----------------------------------------------------------------------------
+/// Update sprite position
+void VDP_SetSpritePosition(u8 index, u8 x, u8 y)
+{
+	g_VDP_Sprite.Y = y;				// Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
+    g_VDP_Sprite.X = x;				// X coordinate of the sprite
+
+	u16 low = g_SpriteAtributeLow;
+	low += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite, low, g_SpriteAtributeHigh, 2);
+}
+
+//-----------------------------------------------------------------------------
+/// Update sprite pattern
+void VDP_SetSpritePattern(u8 index, u8 shape)
+{
+    g_VDP_Sprite.Pattern = shape;	// Pattern index
+
+	u16 low = g_SpriteAtributeLow;
+	low += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite.Pattern, low, g_SpriteAtributeHigh, 1);
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_SetSpriteData(u8 index, const u8* data)
+{
+	u16 low = g_SpriteAtributeLow;
+	low += (index * 4);
+	VDP_WriteVRAM(data, low, g_SpriteAtributeHigh, 3);
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_HideSprite(u8 fromIdx) __FASTCALL
+{
+}
+
+
+/*
+//-----------------------------------------------------------------------------
 /// Set sprite attribute
 void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 {
-	/*VDP_CommandWait();
+	VDP_CommandWait();
 	__asm
 		// Compute sprite attribute VRAM address
 		ld		a, l			// Sprite index
@@ -1030,7 +1213,7 @@ void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 		outi
 		ei
 		outi
-	__endasm;*/
+	__endasm;
 }
 
 //-----------------------------------------------------------------------------
@@ -1042,13 +1225,13 @@ void VDP_ClearSprite()
 
 //-----------------------------------------------------------------------------
 ///
-void VDP_SetSpriteMultiColor(u8 index, u8 X, u8 Y, u8 shape, void* ram)
+void VDP_SetSpriteMultiColor(u8 index, u8 X, u8 Y, u8 shape, const u8* ram)
 {
 	g_VDP_Sprite.X = X;
 	g_VDP_Sprite.Y = Y;
 	g_VDP_Sprite.Pattern = shape;
 	VDP_CommandHMMC(ram, (index * 16) & 0x00FF, 244 + (index / 16), 8, 1);
-	VDP_CommandHMMC(&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
+	VDP_CommandHMMC((u8*)&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
 	//VDP_SendSpriteAttribute(index);
 }
 
@@ -1060,9 +1243,10 @@ void VDP_SetSpriteUniColor(u8 index, u8 X, u8 Y, u8 shape, u8 color)
 	g_VDP_Sprite.Y = Y;
 	g_VDP_Sprite.Pattern = shape;
 	VDP_CommandHMMV(color, (index * 16) & 0x00FF, 244 + (index / 16), 8, 1);
-	VDP_CommandHMMC(&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
+	VDP_CommandHMMC((u8*)&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
 	//VDP_SendSpriteAttribute(index);
 }
+*/
 
 //-----------------------------------------------------------------------------
 //
@@ -1112,37 +1296,32 @@ void VPD_CommandSetupR36()
 
 //-----------------------------------------------------------------------------
 /// Write to VRAM command loop
-void VPD_CommandWriteLoop(void* addr) __FASTCALL
+void VPD_CommandWriteLoop(const u8* addr) __FASTCALL
 {
 	addr;
 	
 	__asm
  //		ld		hl, address			// FastCall
-		di 
 		// Set indirect register write to R#44
 		ld  	a, #VDP_REG(44)
+		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out 	(P_VDP_REG), a
 		ld  	a, #VDP_REG(17)
 		out 	(P_VDP_REG), a		
-
 		// Set current status ragister to S#2
 		ld  	a, #2
 		out 	(P_VDP_REG), a
 		ld  	a, #VDP_REG(15)
 		out 	(P_VDP_REG), a
+		// Setup outi loop (value of register B don't matter)
+		inc 	hl
+		ld		c, #P_VDP_IREG
 	write_loop:
-		// Read  to check CE & TR flags
+		// Read S#2 to check CE flag (no need to check TR (bit#7) while write loop is longer than worse case VDP write duration (~29cc)
 		in  	a, (P_VDP_STAT)
-		and		#0x01
-		jp		z, write_finished       // CE==0 ? command finished
-		// sra     a					// check CE (bit#0)
-		// jp		nc, write_finished	// CE==0 ? command finished
-		// rla							// check TR (bit#7)
-		// jp		nc, write_loop	    // TR==0 ? VDP not ready
-		
-		inc 	hl 
-		ld 		a, (hl)
-		out		(P_VDP_IREG), a
+		rra							// check CE (bit#0)
+		jp		nc, write_finished	// CE==0 ? command finished
+		outi						// write a byte from HL to port VDP_IREG
 		jp		write_loop
 
 	write_finished:
@@ -1150,8 +1329,7 @@ void VPD_CommandWriteLoop(void* addr) __FASTCALL
 		xor 	a	
 		out 	(P_VDP_REG), a
 		ld  	a, #VDP_REG(15)
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out 	(P_VDP_REG), a
-
-		ei
 	__endasm;
 }
