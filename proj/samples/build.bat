@@ -22,9 +22,11 @@ set MSXDOS=%ToolsDir%\MSXDOS
 rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
-SET ProjName=sample_print
-set SrcList=%ProjName%.c,%LibDir%\src\bios_main.c,%LibDir%\src\vdp.c,%LibDir%\src\print.c,%LibDir%\src\input.c,%LibDir%\src\memory.c,%LibDir%\src\math.c
-set LibList=%OutDir%\%ProjName%.rel %OutDir%\bios_main.rel %OutDir%\vdp.rel %OutDir%\print.rel %OutDir%\input.rel %OutDir%\memory.rel %OutDir%\math.rel
+SET ProjName=%1
+REM set SrcList=%ProjName%.c,%LibDir%\src\bios.c,%LibDir%\src\vdp.c,%LibDir%\src\print.c,%LibDir%\src\input.c,%LibDir%\src\memory.c,%LibDir%\src\math.c,%LibDir%\src\draw.c
+REM set LibList=%OutDir%\%ProjName%.rel %OutDir%\bios.rel %OutDir%\vdp.rel %OutDir%\print.rel %OutDir%\input.rel %OutDir%\memory.rel %OutDir%\math.rel %OutDir%\draw.rel
+set SrcList=%ProjName%.c,%LibDir%\src\bios.c,%LibDir%\src\vdp.c,%LibDir%\src\input.c,%LibDir%\src\memory.c,%LibDir%\src\math.c
+set LibList=%OutDir%\%ProjName%.rel %OutDir%\bios.rel %OutDir%\vdp.rel %OutDir%\input.rel %OutDir%\memory.rel %OutDir%\math.rel
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
 rem  - ROM16	.rom	16KB ROM in page 1 (4000h ~ 7FFFh)
@@ -33,7 +35,7 @@ rem  - ROM32	.rom	32KB ROM in page 1&2 (4000h ~ BFFFh)
 rem  - ROM48	.rom	48KB ROM in page 0-2 (0000h ~ BFFFh) No direct acces to Main-ROM @todo To be implemented!
 rem  - DOS		.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOSARG	.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
-set Target=ROM32
+set Target=ROM16
 rem  Optim:
 rem  - Default
 rem  - Speed

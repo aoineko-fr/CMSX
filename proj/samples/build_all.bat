@@ -1,0 +1,1 @@
+for /R .\ %%G in (*.c) do build %%~nG

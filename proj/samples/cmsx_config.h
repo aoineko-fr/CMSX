@@ -6,6 +6,10 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
+//-----------------------------------------------------------------------------
+// BUILD
+//-----------------------------------------------------------------------------
+
 // Target
 // - TARGET_BIN ...........	BASIC binary program
 // - TARGET_ROM16 ......... 16KB ROM in page 1
@@ -29,7 +33,11 @@
 // - MSX_2 ................ MSX 2
 // - MSX_2Plus ............ MSX 2+
 // - MSX_TurboR ........... MSX Turbo-R
-#define MSX_VERSION					MSX_2
+#define MSX_VERSION					MSX_1
+
+//-----------------------------------------------------------------------------
+// BIOS MODULE
+//-----------------------------------------------------------------------------
 
 // Render mode
 // - RENDER_VDP ........... Use direct access to VDP registers
@@ -43,6 +51,17 @@
 #define CALL_SUBROM					CALL_INTERSLOT
 #define CALL_DISCROM				CALL_INTERSLOT
 
+// MAIN-Bios module setting
+#define USE_BIOS_MAINROM			1
+#define USE_BIOS_VDP				1
+#define USE_BIOS_PSG				1
+#define USE_BIOS_SUBROM				1
+#define USE_BIOS_DISCROM			1
+
+//-----------------------------------------------------------------------------
+// VDP MODULE
+//-----------------------------------------------------------------------------
+
 // VDP screen modes (additionnal limitations come from the selected MSX_VERSION)
 #define USE_VDP_MODE_T1				1	// MSX1		Screen 0 Width 40
 #define USE_VDP_MODE_MC				1	// MSX1		Screen 3
@@ -55,14 +74,35 @@
 #define USE_VDP_MODE_G6				1	// MSX2		Screen 7
 #define USE_VDP_MODE_G7				1	// MSX2/2+	Screen 8, 10, 11 & 12
 
+//-----------------------------------------------------------------------------
+// INPUT MODULE
+//-----------------------------------------------------------------------------
+
 // Input module setting
 #define USE_INPUT_JOYSTICK			1
 #define USE_INPUT_KEYBOARD			1
 #define USE_INPUT_MANAGER			1
 
+//-----------------------------------------------------------------------------
+// DRAW MODULE
+//-----------------------------------------------------------------------------
+
+// Draw module setting
+#define DRAW_UNIT					DRAW_UNIT_U16
+
+//-----------------------------------------------------------------------------
+// PRINT MODULE
+//-----------------------------------------------------------------------------
+
 // Print module setting
-#define USE_PRINT_VALIDATOR			1
-#define USE_PRINT_SHADOW			0
+#define USE_PRINT_VALIDATOR			1	// Add validator character code (slower)
+#define USE_PRINT_SHADOW			0	// Allow use of text shadow (slower)
+#define PRINT_WIDTH					PRINT_WIDTH_X
+#define PRINT_HEIGHT				PRINT_HEIGHT_X
+
+//-----------------------------------------------------------------------------
+// MSXi MODULE
+//-----------------------------------------------------------------------------
 
 // MSXi compressor support
 #define USE_MSXi_COMP_NONE			1

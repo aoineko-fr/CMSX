@@ -10,22 +10,29 @@
 #include "print.h"
 #include "vdp.h"
 #include "memory.h"
+#include "bios.h"
+#include "bios_mainrom.h"
+#include "draw.h"
 
 // Inclide font data
-#include "fonts/font_acme.h"
-#include "fonts/font_carwar.h"
-#include "fonts/font_cmsx_big1.h"
-#include "fonts/font_cmsx_curs1.h"
-#include "fonts/font_cmsx_curs1b.h"
-#include "fonts/font_cmsx_mini1.h"
-#include "fonts/font_cmsx_neon1.h"
-#include "fonts/font_cmsx_neon2.h"
-#include "fonts/font_cmsx_std1.h"
-#include "fonts/font_cmsx_std2.h"
-#include "fonts/font_cmsx_std3.h"
-#include "fonts/font_darkrose.h"
-#include "fonts/font_ibm.h"
-#include "fonts/font_oxygene.h"
+#include "font/font_acme.h"
+#include "font/font_carwar.h"
+#include "font/font_cmsx_big1.h"
+#include "font/font_cmsx_curs1.h"
+#include "font/font_cmsx_curs1b.h"
+#include "font/font_cmsx_mini1.h"
+#include "font/font_cmsx_neon1.h"
+#include "font/font_cmsx_neon1b.h"
+#include "font/font_cmsx_neon2.h"
+#include "font/font_cmsx_rune2.h"
+#include "font/font_cmsx_rune2b.h"
+#include "font/font_cmsx_std0.h"
+#include "font/font_cmsx_std1.h"
+#include "font/font_cmsx_std2.h"
+#include "font/font_cmsx_std3.h"
+#include "font/font_darkrose.h"
+#include "font/font_ibm.h"
+#include "font/font_oxygene.h"
 
 const u8 g_ScreenMode = VDP_MODE_SCREEN5;
 const u8* g_SampleText =
@@ -54,7 +61,11 @@ struct FontEntry g_Fonts[] =
 	{ "C-MSX Cursive 1B [8*8]",	g_Font_CMSX_Curs1B },
 	{ "C-MSX Mini 1 [4*6]",		g_Font_CMSX_Mini1 },
 	{ "C-MSX Neon 1 [8*8]",		g_Font_CMSX_Neon1 },
+	{ "C-MSX Neon 1B [8*8]",	g_Font_CMSX_Neon1B },
 	{ "C-MSX Neon 2 [8*8]",		g_Font_CMSX_Neon2 },
+	{ "C-MSX Rune 2 [8*8]",		g_Font_CMSX_Rune2 },
+	{ "C-MSX Rune 2B [8*8]",	g_Font_CMSX_Rune2B },
+	{ "C-MSX Standard 0 [6*8]",	g_Font_CMSX_Std0 },
 	{ "C-MSX Standard 1 [6*8]",	g_Font_CMSX_Std1 },
 	{ "C-MSX Standard 2 [6*8]",	g_Font_CMSX_Std2 },
 	{ "C-MSX Standard 3 [6*8]",	g_Font_CMSX_Std3 },
@@ -66,18 +77,21 @@ static u8 g_FontIndex = 0;
 
 void PrintHeader()
 {
+	Print_SetColor(0xF, 0x0);
 	Print_Clear();
+	Print_SetFont(g_Font_CMSX_Std0);
 	Print_SetCharSize(6, 8);
 	Print_SetPosition(0, 0);
 	Print_DrawText("PRINT SAMPLE\n");
-	Print_DrawCharX('-', 42);
+	Draw_HLine(0, 255, 12, 0xFF, 0);
 }
 
 void PrintFooter()
 {
+	Print_SetColor(0xE, 0x0);
+	Print_SetFont(g_Font_CMSX_Std0);
 	Print_SetPosition(0, 204);
-	Print_SetFont(null);
-	Print_DrawText("F1:List  F2:Text  F3:FX  <>:Prev/next ");
+	Print_DrawText("F1:List  F2:Text  F3:FX  <>:Prev/Next ");
 }
 
 void PrintList()
@@ -85,7 +99,6 @@ void PrintList()
 	PrintHeader();
 
 	Print_SetPosition(0, 24);
-	Print_SetFont(null);
 	Print_DrawText("List:\n\n");
 	for(i8 i = 0; i < numberof(g_Fonts); i++)
 	{
@@ -102,12 +115,9 @@ void PrintSample()
 	PrintHeader();
 
 	Print_SetPosition(0, 24);
-	Print_SetFont(null);
-	Print_DrawText("Sample: ");
-
-	Print_SetFont(g_Fonts[g_FontIndex].Font);
-	Print_SetPosition(g_PrintData.CursorX, 24 + 8 - g_PrintData.UnitY);
+	Print_DrawText("Font: ");
 	Print_DrawText(g_Fonts[g_FontIndex].Name);
+	Print_SetFont(g_Fonts[g_FontIndex].Font);
 	Print_SetPosition(0, 40);
 	Print_DrawText(g_SampleText);
 
@@ -120,6 +130,8 @@ void main()
 {
 	VDP_SetScreen(g_ScreenMode);
 	VDP_SetColor(0x00);
+	VDP_SetFrequency(VDP_FREQ_50HZ);
+	VDP_EnableSprite(false);
 	
 	Print_Initialize(g_ScreenMode, null);
 	Print_SetTabSize(16);
@@ -127,8 +139,33 @@ void main()
 	Print_SetShadow(true, (i8)2, (i8)2, COLOR8_RED);
 #endif
 
-	PrintList();
+	//////////////////////////
+    // static const char text1[]="BONJOUR LE FUTUR\n";
+    // static const char text2[]="ICI LE MSX QUI VOUS PARLE\n";
+    // static const char text3[]="DEPUIS L'ANNEE 1985\n";
+    // static const char text4[]="IL PARAIT QUE LES VIEUX\n";
+    // static const char text5[]="JOUENT ENCORE AVEC MOI\n";
+    // static const char text6[]="DANS LES ANNEES 2020 ?\n";
+    // static const char text7[]="Incroyable !\n";
 
+	// Print_Clear();
+	// // Print_DrawText("B");
+	// // Print_SetPosition(0, 0);
+	// u8 startTime = g_JIFFY;
+	// Print_DrawText(text1);
+	// Print_DrawText(text2);
+	// Print_DrawText(text3);
+	// Print_DrawText(text4);
+	// Print_DrawText(text5);
+	// Print_DrawText(text6);
+	// Print_DrawText(text7);
+	// u8 elapsedTime = g_JIFFY - startTime;
+	// Print_DrawInt(elapsedTime);
+
+	// while(!Keyboard_IsKeyPressed(KEY_SPACE)) {}
+	//////////////////////////
+
+	PrintList();
 
 	Print_SetFont(null);
 	u8 count = 0;
@@ -162,4 +199,6 @@ void main()
 
 		//VDP_WaitRetrace();*/
 	}
+
+	Bios_Exit(0);
 }
