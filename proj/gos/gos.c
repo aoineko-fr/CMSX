@@ -9,8 +9,7 @@
 #include "memory.h"
 #include "vdp.h"
 #include "msxi/msxi_unpack.h"
-#include "bios_hook.h"
-#include "ports.h"
+#include "bios.h"
 #include "math.h"
 
 
@@ -44,6 +43,14 @@ void main()
 #define SPRT_OFS_X		(-7)
 #define SPRT_OFS_Y		(-15)
 #define MIN_DIFF		8
+
+#if (TARGET_TYPE == TARGET_TYPE_BIN)
+	#define HBLANK_LINE		255-9
+#elif (TARGET_TYPE == TARGET_TYPE_ROM)
+	#define HBLANK_LINE		255-5
+#elif (TARGET_TYPE == TARGET_TYPE_DOS)
+	#define HBLANK_LINE		255-10
+#endif
 
 /// Player action ID
 enum ACTION_ID
@@ -109,8 +116,8 @@ typedef struct
 
 	u8			minX    : 4;	///< 
 	u8			minY    : 4;	///< 
-	Vector816	sprtPos;		///< 
-	Vector8		sprtSize;		///<
+	// Vector816	sprtPos;		///< 
+	// Vector8		sprtSize;		///<
 	PlyRender	render[2];
 	
 } PlyInfo;
@@ -119,6 +126,13 @@ typedef struct
 // DATA
 //#define D_g_PlayerSprite __at(0x0000)
 #include "data/player.data.h"
+
+u8 Cursor[] =
+{
+	0b11111000,
+	0b01110000,
+	0b00100000,
+};
 
 /// Index of the current VDP display page (will be switch after V-Blank)
 u8 g_DisplayPage = 0;
@@ -211,10 +225,10 @@ void InterruptHook()
 	__asm
 		// Get S#1
 		ld		a, #1
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, #(0x80 + 15)
-		out		(#P_VDP_ADDR), a
-		in		a, (#P_VDP_STAT)
+		out		(P_VDP_ADDR), a
+		in		a, (P_VDP_STAT)
 		//  Call H-Blank if bit #0 of S#1 is set 
 		rrca
 		jp		nc, _no_hblank
@@ -222,9 +236,9 @@ void InterruptHook()
 	_no_hblank:
 		// Reset R#15 to S#0
 		xor		a           		
-		out		(#P_VDP_ADDR), a
+		out		(P_VDP_ADDR), a
 		ld		a, #(0x80 + 15)
-		out		(#P_VDP_ADDR),a
+		out		(P_VDP_ADDR),a
 	__endasm;
 
 	// Call((u16)HookBackup_KEYI);
@@ -354,22 +368,22 @@ void DrawField(u16 y) __FASTCALL
 	for(u8 j = 0; j < 24; ++j)
 	{
 		u8 col = (j & 1) ? 0xDD : 0xEE;
-		VDP_HMMV(0, (j * 16) + y, 256, 16, col);
+		VDP_CommandHMMV(0, (j * 16) + y, 256, 16, col);
 	}
 	// Lines
-	VDP_HMMV(8,   8 + y, 240, 2, 0xFF); // Top
-	VDP_HMMV(8, (FIELD_SIZE/2 - 1) + y, 240, 2, 0xFF); // Mid
-	VDP_HMMV(8, FIELD_SIZE-8 + y, 240, 2, 0xFF); // Bot
-	VDP_HMMV(8,   8 + y, 2, FIELD_SIZE-16, 0xFF); // Left
-	VDP_HMMV(246, 8 + y, 2, FIELD_SIZE-16, 0xFF); // Right
+	VDP_CommandHMMV(8,   8 + y, 240, 2, 0xFF); // Top
+	VDP_CommandHMMV(8, (FIELD_SIZE/2 - 1) + y, 240, 2, 0xFF); // Mid
+	VDP_CommandHMMV(8, FIELD_SIZE-8 + y, 240, 2, 0xFF); // Bot
+	VDP_CommandHMMV(8,   8 + y, 2, FIELD_SIZE-16, 0xFF); // Left
+	VDP_CommandHMMV(246, 8 + y, 2, FIELD_SIZE-16, 0xFF); // Right
 	// Goal area
-	VDP_HMMV(64,  8 + y, 2,  48, 0xFF);
-	VDP_HMMV(190, 8 + y, 2,  48, 0xFF);
-	VDP_HMMV(64, 56 + y, 128, 2, 0xFF);
+	VDP_CommandHMMV(64,  8 + y, 2,  48, 0xFF);
+	VDP_CommandHMMV(190, 8 + y, 2,  48, 0xFF);
+	VDP_CommandHMMV(64, 56 + y, 128, 2, 0xFF);
 	// Goal area
-	VDP_HMMV(64,  384-56 + y, 2,  48, 0xFF);
-	VDP_HMMV(190, 384-56 + y, 2,  48, 0xFF);
-	VDP_HMMV(64,  384-56 + y, 128, 2, 0xFF);
+	VDP_CommandHMMV(64,  384-56 + y, 2,  48, 0xFF);
+	VDP_CommandHMMV(190, 384-56 + y, 2,  48, 0xFF);
+	VDP_CommandHMMV(64,  384-56 + y, 128, 2, 0xFF);
 }
 
 ///
@@ -394,18 +408,20 @@ void MainLoop()
 	VDP_SetFrequency(VDP_FREQ_50HZ);
 	VDP_SetLineCount(LINE_NB == 192 ? VDP_LINE_192 : VDP_LINE_212);
 	VDP_SetColor(0x00);
-	VDP_EnableSprite(true);
 	VDP_SetSpriteTables(VRAM16b(0x1C000), VRAM16b(0x1C600));
 	VDP_SetPage(0);
+
+	// Speed-up VDP setup
+	VDP_EnableSprite(false);
 	VDP_EnableDisplay(false);
 	
 	// Field
 	DrawField(0);					// Page 0-1
 	DrawField(512);					// Page 2-3
 	// Buffer 	
-	VDP_HMMV(0, 384, 256, 128, 0);	// Page 1
-	VDP_HMMV(0, 896, 256, 128, 0);	// Page 3
-	VDP_WaitReady();
+	VDP_CommandHMMV(0, 384, 256, 128, 0);	// Page 1
+	VDP_CommandHMMV(0, 896, 256, 128, 0);	// Page 3
+	VDP_CommandWait();
 	const static u8 ReplaceColorT0[] = { 1, 6, 15 };
 	const static u8 ReplaceColorT1[] = { 3, 6, 15, 11, 6, 3, 6 };
 	
@@ -468,15 +484,14 @@ void MainLoop()
 			p->moving = false;
 			p->display = true;
 			p->nearest = false;
-			p++;
-			g_WritePage = j;
 			p->drawn = 0;
+			p++;
 		}
 	}
 	
 	u8 scrollOffset = 0;
 	u8 scrollPrevious = 0;
-	VDP_SetHBlankLine(253);
+	VDP_SetHBlankLine(HBLANK_LINE);
 	u8 ballArea = 0;
 	Vector816 ballPosition;
 	u8 playerChara = 6;
@@ -484,10 +499,12 @@ void MainLoop()
 	PlyInfo* p;			
 	u8 dir;
 	
-	//Mem_Copy((void*)H_KEYI, (void*)HookBackup_KEYI, 5);
+	// Bios_BackupHook(H_KEYI, (void*)HookBackup_KEYI);
 	Bios_SetHookCallback(H_KEYI, InterruptHook);
-	//Mem_Copy((void*)H_TIMI, (void*)HookBackup_TIMI, 5);
+	// Bios_BackupHook(H_TIMI, (void*)HookBackup_TIMI);
 	Bios_SetHookCallback(H_TIMI, VBlankHook);
+	
+	VDP_EnableSprite(true);
 	VDP_EnableDisplay(true);
 
 	while(1)
@@ -528,13 +545,13 @@ void MainLoop()
 			// Do restore
 			if(p->drawn)
 			{
-				VDP_HMMM(
+				VDP_CommandHMMM(
 					BACK_X + (i * 16), 
 					BACK_Y + (16 * g_WritePage), 
-					p->sprtPos.x,
-					p->sprtPos.y,
-					p->sprtSize.x + 2, 
-					p->sprtSize.y);
+					p->render[0].sprtPos.x,
+					p->render[0].sprtPos.y,
+					p->render[0].sprtSize.x + 2, 
+					p->render[0].sprtSize.y);
 				p->drawn = 0;
 			}
 
@@ -659,23 +676,23 @@ void MainLoop()
 
 			p->minX = minX;
 			p->minY = minY;
-			p->sprtPos.x = p->pos.x + SPRT_OFS_X + minX;
-			p->sprtPos.y = p->pos.y + SPRT_OFS_Y + (512 * g_WritePage) + minY;
-			p->sprtSize.x = (maxX - minX + 1);
-			p->sprtSize.y = (maxY - minY + 1);
+			p->render[0].sprtPos.x = p->pos.x + SPRT_OFS_X + minX;
+			p->render[0].sprtPos.y = p->pos.y + SPRT_OFS_Y + (512 * g_WritePage) + minY;
+			p->render[0].sprtSize.x = (maxX - minX + 1);
+			p->render[0].sprtSize.y = (maxY - minY + 1);
 
 			// Do backup
 			p->visible = 0;
 			//if((p->pos.y + SPRT_OFS_Y + 16 >= scrollOffset) && (p->pos.y + SPRT_OFS_Y <= scrollOffset + LINE_NB))
 			{
 				p->visible = 1;
-				VDP_HMMM(
-					p->sprtPos.x,
-					p->sprtPos.y,
+				VDP_CommandHMMM(
+					p->render[0].sprtPos.x,
+					p->render[0].sprtPos.y,
 					BACK_X + (i * 16), 
 					BACK_Y + (16 * g_WritePage), 
-					p->sprtSize.x + 2, 
-					p->sprtSize.y);
+					p->render[0].sprtSize.x + 2, 
+					p->render[0].sprtSize.y);
 			}
 			p++;
 		}
@@ -696,31 +713,16 @@ void MainLoop()
 			if(p->visible)
 			{
 				// Do draw
-				VDP_LMMM(
+				VDP_CommandLMMM(
 					(TEAM_BMP_X * p->team) + (p->sprtIdX * 16) + p->minX, 
 					TEAM_BMP_Y + (p->sprtIdY * 16) + p->minY, 
-					p->sprtPos.x,
-					p->sprtPos.y,
-					p->sprtSize.x, 
-					p->sprtSize.y, 
+					p->render[0].sprtPos.x,
+					p->render[0].sprtPos.y,
+					p->render[0].sprtSize.x, 
+					p->render[0].sprtSize.y, 
 					VDP_OP_TIMP);
-				/*VDP_HMMV(
-					p->sprtPos.x,
-					p->sprtPos.y,
-					p->sprtSize.x, 
-					p->sprtSize.y,
-					(p->dir + 2) << 4 | (p->dir + 2));*/
-				/*VDP_HMMM(
-					(TEAM_BMP_X * p->team) + (p->sprtIdX * 16) + p->minX, 
-					TEAM_BMP_Y + (p->sprtIdY * 16) + p->minY, 
-					p->sprtPos.x,
-					p->sprtPos.y,
-					p->sprtSize.x, 
-					p->sprtSize.y);*/
 					
 				p->drawn = 1;
-
-				// VDP_LMMM(TEAM_BMP_X * p->team + (sx * 16), TEAM_BMP_Y + (sy * 16), p->pos.x + SPRT_OFS_X, p->pos.y + SPRT_OFS_Y + (512 * g_WritePage), 16, 16, VDP_OP_TIMP); // Draw
 			}
 			p++;
 		}	
