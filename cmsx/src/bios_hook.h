@@ -14,11 +14,22 @@
 //-----------------------------------------------------------------------------
 // Hooks handler
 
+/// Set a safe hook jump to given function
+void Bios_SetHookCallback(u16 hook, callback cb);
+
 /// Set a Hook to jump to given function
-inline void Bios_SetHookCallback(u16 hook, callback cb)
+inline void Bios_SetHookDirectCallback(u16 hook, callback cb)
 {
 	*((u8*)hook) = 0xC3; // JUMP
-	*((callback*)++hook) = cb;
+	*((callback*)++hook) = cb; // Callback address
+}
+
+/// Set a Hook to jump to given function
+inline void Bios_SetHookInterSlotCallback(u16 hook, u32 slot, callback cb)
+{
+	*((u8*)hook) = 0xF7; // RST #30
+	*((u8*)++hook) = slot; // Slot ID
+	*((callback*)++hook) = cb; // Callback address
 }
 
 /// Clear a Hook (set RET asm code)
@@ -32,9 +43,6 @@ inline void Bios_BackupHook(u16 hook, void* buffer)
 {
 	Mem_Copy((void*)hook, (void*)buffer, 5);
 }
-
-
-
 
 //-----------------------------------------------------------------------------
 // Deferred Hooks handler

@@ -5,7 +5,7 @@
 // User input handler using direct access to ports
 //-----------------------------------------------------------------------------
 #include "core.h"
-#include "ports.h"
+#include "bios_port.h"
 #include "input.h"
 #include "memory.h"
 

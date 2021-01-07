@@ -3,7 +3,7 @@
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
 #include "core.h"
-#include "bios_main.h"
+#include "bios_mainrom.h"
 #include "vdp.h"
 #include "print.h"
 #include "memory.h"

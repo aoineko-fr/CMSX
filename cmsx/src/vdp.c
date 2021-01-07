@@ -11,7 +11,7 @@
  * - http://map.grauw.nl/articles/
  */
 #include "vdp.h"
-#include "ports.h"
+#include "bios_port.h"
 
 //-----------------------------------------------------------------------------
 // VDP Registers
@@ -620,9 +620,54 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL
 }
 #endif // (MSX_VERSION >= MSX_2)
 
+#if (MSX_VERSION == MSX_1)
 //-----------------------------------------------------------------------------
 /// Write data from RAM to VRAM
-void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count)
+void VDP_WriteVRAM1(const u8* src, u16 dest, u16 count)
+{
+	src, dest, count;
+	__asm
+		push	ix
+		ld		ix, #0
+		add		ix, sp
+		// Setup address register 
+		ld		a, 6 (ix)
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF)
+		ld		a, 7 (ix)
+		and		a, #0x3f
+		add		a, #F_VDP_WRIT
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT
+		// while(count--) DataPort = *src++;
+		ld		l, 4 (ix)				// source address
+		ld		h, 5 (ix)
+		ld		c, #P_VDP_DATA			// data register
+		// Handle count LSB
+		ld		a, 8 (ix)				// count LSB
+		cp		a, #0
+		jp		z, wrt_loop_init		// skip LSB
+		ld		b, a					// send (count & 0x00FF) bytes
+		otir
+		// Handle count MSB
+	wrt_loop_init:
+		ld		a, 9 (ix)				// count MSB
+	wrt_loop_start:
+		cp		a, #0
+		jp		z, wrt_loop_end			// finished
+		ld		b, #0					// send 256 bytes packages
+		otir
+		dec		a
+		jp		wrt_loop_start
+
+	wrt_loop_end:
+		pop	ix
+	__endasm;
+}
+#else // (MSX_VERSION >= MSX_2)
+//-----------------------------------------------------------------------------
+/// Write data from RAM to VRAM
+void VDP_WriteVRAM2(const u8* src, u16 destLow, u8 destHigh, u16 count)
 {
 	src, destLow, destHigh, count;
 	__asm
@@ -675,10 +720,49 @@ void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count)
 		pop	ix
 	__endasm;
 }
+#endif // (MSX_VERSION >= MSX_2)
 
+
+#if (MSX_VERSION == MSX_1)
 //-----------------------------------------------------------------------------
 /// Fill VRAM area with a given value
-void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count)
+void VDP_FillVRAM1(u8 value, u16 dest, u16 count)
+{
+	dest, value, count;
+	__asm
+		push	ix
+		ld		ix, #0
+		add		ix, sp
+		// Setup address register
+		ld		a, 5 (ix)
+		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF);
+		ld		a, 6 (ix)
+		and		a, #0x3f
+		add		a, #F_VDP_WRIT
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
+		// while(count--) DataPort = value;
+		ld		e, 7 (ix)				// count
+		ld		d, 8 (ix)
+		ld		a, 4 (ix)				// value
+		// fast 16-bits loop
+		ld		b, e					// number of loops is in DE
+		dec		de						// calculate DB value (destroys B, D and E)
+		inc		d
+	fll_loop_start:
+		out		(P_VDP_DATA), a			// fill
+		djnz	fll_loop_start
+		dec		d
+		jp		nz, fll_loop_start
+
+		pop	ix
+	__endasm;
+}
+#else // (MSX_VERSION >= MSX_2)
+//-----------------------------------------------------------------------------
+/// Fill VRAM area with a given value
+void VDP_FillVRAM2(u8 value, u16 destLow, u8 destHigh, u16 count)
 {
 	destLow, destHigh, value, count;
 	__asm
@@ -723,10 +807,18 @@ void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count)
 		pop	ix
 	__endasm;
 }
+#endif // (MSX_VERSION >= MSX_2)
 
+#if (MSX_VERSION == MSX_1)
 //-----------------------------------------------------------------------------
 /// Read data from VRAM to RAM
-void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count)
+void VDP_ReadVRAM1(u16 src, u8* dest, u16 count)
+{
+}
+#else // (MSX_VERSION >= MSX_2)
+//-----------------------------------------------------------------------------
+/// Read data from VRAM to RAM
+void VDP_ReadVRAM2(u16 srcLow, u8 srcHigh, u8* dest, u16 count)
 {
 	srcLow, srcHigh, dest, count;
 	__asm
@@ -779,6 +871,7 @@ void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count)
 		pop	ix
 	__endasm;
 }
+#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 void VDP_RegWriteFC(u16 reg_value) __FASTCALL
@@ -891,6 +984,7 @@ void VDP_EnableDisplay(u8 enable) __FASTCALL
 	VDP_RegWriteBak(1, reg);
 }
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 // Enable/disable grayscale
 void VDP_SetGrayScale(u8 enable) __FASTCALL
@@ -901,7 +995,9 @@ void VDP_SetGrayScale(u8 enable) __FASTCALL
 		reg |= R08_BW;
 	VDP_RegWriteBak(8, reg);
 }
+#endif
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 // Change VDP frequency
 void VDP_SetFrequency(u8 freq) __FASTCALL
@@ -911,6 +1007,7 @@ void VDP_SetFrequency(u8 freq) __FASTCALL
 	reg |= freq;
 	VDP_RegWriteBak(9, reg);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Set current VRAM page
@@ -929,6 +1026,7 @@ void VDP_SetColor(u8 color) __FASTCALL
 	VDP_RegWrite(7, color);
 }
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Set a new palette from index 1
 /// Format : [red|blue][0|green]
@@ -950,7 +1048,9 @@ void VDP_SetPalette(const u8* pal) __FASTCALL
 		otir
 	__endasm;
 }
+#endif
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Set a new palette [red|blue][0|green]
 void VDP_SetPaletteEntry(u8 index, u16 color)
@@ -960,7 +1060,9 @@ void VDP_SetPaletteEntry(u8 index, u16 color)
 	g_VDP_PalPort = color & 0x00FF;
 	g_VDP_PalPort = color >> 8;
 }
+#endif
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Set line count for the current screen mode
 void VDP_SetLineCount(u8 lines) __FASTCALL
@@ -970,7 +1072,9 @@ void VDP_SetLineCount(u8 lines) __FASTCALL
 	reg |= lines;
 	VDP_RegWriteBak(9, reg);
 }
+#endif
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Enable or disable interlace mode
 void VDP_SetInterlace(u8 enable) __FASTCALL
@@ -981,7 +1085,9 @@ void VDP_SetInterlace(u8 enable) __FASTCALL
 		reg |= R09_IL;
 	VDP_RegWriteBak(9, reg);
 }
+#endif
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Enable automatic page switch on even/odd frames
 void VDP_SetPageAlternance(u8 enable) __FASTCALL
@@ -992,6 +1098,7 @@ void VDP_SetPageAlternance(u8 enable) __FASTCALL
 		reg |= R09_EO;
 	VDP_RegWriteBak(9, reg);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 //
@@ -999,6 +1106,7 @@ void VDP_SetPageAlternance(u8 enable) __FASTCALL
 //
 //-----------------------------------------------------------------------------
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Enable/disable sprite rendering
 void VDP_EnableSprite(u8 enable) __FASTCALL
@@ -1009,7 +1117,7 @@ void VDP_EnableSprite(u8 enable) __FASTCALL
 		reg |= R08_SPD;
 	VDP_RegWriteBak(8, reg);
 }
-
+#endif
 
 //-----------------------------------------------------------------------------
 /// Set sprite parameters
@@ -1035,11 +1143,17 @@ void VDP_SetSpriteAttributeTable(u32 addr) __FASTCALL
 	g_SpriteColorHigh = addr >> 8;
 	g_SpriteColorLow = (u16)addr;
 	
+#if (MSX_VERSION == MSX_1)
+	u8 reg;
+	reg = (u8)(addr >> 7);
+	VDP_RegWrite(5, reg);
+#else // (MSX_VERSION >= MSX_2)
 	u8 reg;
 	reg = (u8)(addr >> 7) | 0b111;
 	VDP_RegWrite(5, reg);
 	reg = (u8)(addr >> 15);
 	VDP_RegWrite(11, reg);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1096,7 +1210,7 @@ void VDP_SetSpriteSM1(u8 index, u8 x, u8 y, u8 shape, u8 color)
 	g_VDP_Sprite.Y = y;				// Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
     g_VDP_Sprite.X = x;				// X coordinate of the sprite
     g_VDP_Sprite.Pattern = shape;	// Pattern index
-    g_VDP_Sprite.Color = color;		// Color index (Sprite Mode 1 only) + Early clock*
+    g_VDP_Sprite.Color = color;		// Color index (Sprite Mode 1 only) + Early clock
 
 	u16 low = g_SpriteAtributeLow;
 	low += (index * 4);
@@ -1118,7 +1232,7 @@ void VDP_SetSprite(u8 index, u8 x, u8 y, u8 shape)
 
 //-----------------------------------------------------------------------------
 /// Set sprite attribute for Sprite Mode 2 and fill color table with color data
-void VDP_SetSpriteMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram)
+void VDP_SetSpriteExMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram)
 {
 	u16 col = g_SpriteColorLow;
 	col += (index * 16);
@@ -1134,7 +1248,7 @@ void VDP_SetSpriteMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram)
 
 //-----------------------------------------------------------------------------
 /// Set sprite attribute for Sprite Mode 2 and fill color table with unique color
-void VDP_SetSpriteUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color)
+void VDP_SetSpriteExUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color)
 {
 	u16 col = g_SpriteColorLow;
 	col += (index * 16);
@@ -1166,9 +1280,38 @@ void VDP_SetSpritePattern(u8 index, u8 shape)
 {
     g_VDP_Sprite.Pattern = shape;	// Pattern index
 
-	u16 low = g_SpriteAtributeLow;
+	u16 low = g_SpriteAtributeLow + 2;
 	low += (index * 4);
 	VDP_WriteVRAM((u8*)&g_VDP_Sprite.Pattern, low, g_SpriteAtributeHigh, 1);
+}
+
+//-----------------------------------------------------------------------------
+/// Update sprite pattern (Shader mode 1)
+void VDP_SetSpriteColorSM1(u8 index, u8 color)
+{
+    g_VDP_Sprite.Color = color;	// Color index (Sprite Mode 1 only) + Early clock
+
+	u16 low = g_SpriteAtributeLow + 3;
+	low += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite.Pattern, low, g_SpriteAtributeHigh, 1);
+}
+
+//-----------------------------------------------------------------------------
+/// Update sprite color (Uni-color)
+void VDP_SetSpriteUniColor(u8 index, u8 color)
+{
+	u16 col = g_SpriteColorLow;
+	col += (index * 16);
+	VDP_FillVRAM(color, col, g_SpriteColorHigh, 16);
+}
+
+//-----------------------------------------------------------------------------
+/// Update sprite color (Multi-color)
+void VDP_SetSpriteMultiColor(u8 index, const u8* ram)
+{
+	u16 col = g_SpriteColorLow;
+	col += (index * 16);
+	VDP_WriteVRAM(ram, col, g_SpriteColorHigh, 16);	
 }
 
 //-----------------------------------------------------------------------------
@@ -1182,8 +1325,12 @@ void VDP_SetSpriteData(u8 index, const u8* data)
 
 //-----------------------------------------------------------------------------
 ///
-void VDP_HideSprite(u8 fromIdx) __FASTCALL
+void VDP_HideSpriteFrom(u8 index) __FASTCALL
 {
+	g_VDP_Sprite.Y = 216;
+ 	u16 low = g_SpriteAtributeLow;
+	low += (index * 4);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite, low, g_SpriteAtributeHigh, 1);
 }
 
 
@@ -1215,37 +1362,6 @@ void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 		outi
 	__endasm;
 }
-
-//-----------------------------------------------------------------------------
-///
-void VDP_ClearSprite()
-{
-	VDP_SetSpriteUniColor(0, 0, 216, 0, 0);
-}
-
-//-----------------------------------------------------------------------------
-///
-void VDP_SetSpriteMultiColor(u8 index, u8 X, u8 Y, u8 shape, const u8* ram)
-{
-	g_VDP_Sprite.X = X;
-	g_VDP_Sprite.Y = Y;
-	g_VDP_Sprite.Pattern = shape;
-	VDP_CommandHMMC(ram, (index * 16) & 0x00FF, 244 + (index / 16), 8, 1);
-	VDP_CommandHMMC((u8*)&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
-	//VDP_SendSpriteAttribute(index);
-}
-
-//-----------------------------------------------------------------------------
-///
-void VDP_SetSpriteUniColor(u8 index, u8 X, u8 Y, u8 shape, u8 color)
-{
-	g_VDP_Sprite.X = X;
-	g_VDP_Sprite.Y = Y;
-	g_VDP_Sprite.Pattern = shape;
-	VDP_CommandHMMV(color, (index * 16) & 0x00FF, 244 + (index / 16), 8, 1);
-	VDP_CommandHMMC((u8*)&g_VDP_Sprite, (index * 4) & 0x00FF, 246 + (index / 64), 3, 1);
-	//VDP_SendSpriteAttribute(index);
-}
 */
 
 //-----------------------------------------------------------------------------
@@ -1254,6 +1370,7 @@ void VDP_SetSpriteUniColor(u8 index, u8 X, u8 Y, u8 shape, u8 color)
 //
 //-----------------------------------------------------------------------------
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 // Wait for previous VDP command to be finished
 void VDP_CommandWait()
@@ -1333,3 +1450,4 @@ void VPD_CommandWriteLoop(const u8* addr) __FASTCALL
 		out 	(P_VDP_REG), a
 	__endasm;
 }
+#endif // (MSX_VERSION >= MSX_2)

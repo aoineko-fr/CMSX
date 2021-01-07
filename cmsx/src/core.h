@@ -4,7 +4,7 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
-#include "config.h"
+#include "config_option.h"
 #include "cmsx_config.h"
 #include "config_default.h"
 

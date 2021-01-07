@@ -129,7 +129,8 @@ if /I %Ext%==bin (
 	copy %OutDir%\%Crt0%.%Ext% .\emul\dsk\%ProjName%.%Ext%
 	if errorlevel 1 goto :Error
 	echo Create emul\dsk\autoexec.bas
-	echo 10 bload"%ProjName:~0,8%.%Ext%",r > .\emul\dsk\autoexec.bas
+	echo 10 print"Loading..." > .\emul\dsk\autoexec.bas
+	echo 20 bload"%ProjName:~0,8%.%Ext%",r >> .\emul\dsk\autoexec.bas
 	if errorlevel 1 goto :Error
 )
 if /I %Ext%==rom (
@@ -142,7 +143,8 @@ if /I %Ext%==com (
 	copy %OutDir%\%Crt0%.%Ext% .\emul\dos\%ProjName%.%Ext%
 	if errorlevel 1 goto :Error
 	echo Create emul\dos\autoexec.bat
-	echo %ProjName%.%Ext% > .\emul\dos\autoexec.bat
+	echo echo Loading... > .\emul\dos\autoexec.bat
+	echo %ProjName%.%Ext% >> .\emul\dos\autoexec.bat
 	if errorlevel 1 goto :Error
 )
 echo [92mSucceed![0m

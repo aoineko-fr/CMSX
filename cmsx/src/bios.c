@@ -10,12 +10,16 @@
 // - https://www.msx.org/wiki/Main-ROM_BIOS
 //-----------------------------------------------------------------------------
 #include "core.h"
-#include "bios_main.h"
+#include "bios_mainrom.h"
+
+//=============================================================================
+//
+// Helper functions
+//
+//=============================================================================
 
 //-----------------------------------------------------------------------------
-// Helper functions
-
-// Call a bios function
+/// Call a bios function
 inline void Bios_MainCall(u16 addr)
 {
 #if (CALL_MAINROM == CALL_DIRECT)
@@ -25,6 +29,74 @@ inline void Bios_MainCall(u16 addr)
 #endif
 }
 
+//-----------------------------------------------------------------------------
+/// Handle soft reboot
+void Bios_Reboot()
+{
+	Bios_MainROMCall(0);
+}
+
+//-----------------------------------------------------------------------------
+/// Handle clean transition to Basic or MSX-DOS environment
+// For MSX-DOS, return value is in L
+void Bios_Exit(u8 ret) __FASTCALL
+{
+#if (TARGET_TYPE == TARGET_TYPE_DOS)
+
+	__asm
+		push	hl
+		// Set Screen mode to 5...
+		ld		a, #5
+		ld		ix, #R_CHGMOD
+		ld		iy, (M_EXPTBL-1)
+		call	R_CALSLT
+		// ... to be able to call TOTEXT routine
+		ld		ix, #R_TOTEXT
+		ld		iy, (M_EXPTBL-1)
+		call	R_CALSLT
+		ei
+		// Set return value to L
+		pop		hl
+	__endasm;
+
+#elif (TARGET_TYPE == TARGET_TYPE_BIN)
+	
+	Call(R_INITXT); // Back to Screen Mode 0 (T1)
+
+#else // if (TARGET_TYPE == TARGET_TYPE_ROM)
+
+	// Do nothing
+
+#endif
+}
+
+//-----------------------------------------------------------------------------
+/// Get the slot ID of a given page
+u8 Bios_GetSlot(u8 page) __FASTCALL
+{
+	u8 slot = (g_PortPrimarySlot >> (page * 2)) & 0x03;
+	if(g_EXPTBL[slot] & 0x80)
+	{
+		slot |= SLOT_EXP;
+		slot |= (((~g_SLTSL) >> (page * 2)) & 0x03) << 2;
+	}
+	return slot;
+}
+
+/// Set a safe hook jump to given function
+void Bios_SetHookCallback(u16 hook, callback cb)
+{
+	u8 slot = Bios_GetSlot((u16)cb >> 14);
+	Bios_SetHookInterSlotCallback(hook, slot, cb);
+}
+
+// Bios calls that can be called directly from MSX-DOS
+//
+// RDSLT (000CH) - read value at specified address of specified slot
+// WRSLT (0014H) - write value at specified address of specified slot
+// CALSLT (001CH) - call specified address of specified slot
+// ENASLT (0024H) - make specified slot available
+// CALLF (0030H) - call specified address of specified slot
 
 //=============================================================================
 //
@@ -59,9 +131,9 @@ inline void Bios_Startup() { Bios_MainCall(R_CHKRAM); }
 // Address  : #000C
 // Function : Reads the value of an address in another slot
 // Input    : A  - ExxxSSPP  Slot-ID
-//            │        ││└┴─ Primary slot number (00-11)
-//            │        └┴─── Secondary slot number (00-11)
-//            └───────────── Expanded slot (0 = no, 1 = yes)
+//                 │   ││└┴─ Primary slot number (00-11)
+//                 │   └┴─── Secondary slot number (00-11)
+//                 └──────── Expanded slot (0 = no, 1 = yes)
 //            HL - Address to read
 // Output   : A  - Contains the value of the read address
 // Registers: AF, C, DE
@@ -88,9 +160,8 @@ u8 Bios_InterSlotRead(u8 slot, u16 addr)
 u8 Bios_MainROMRead(u16 addr) __FASTCALL
 {
 	addr;
-	// FastCall
-	//	ld		hl, addr
 	__asm
+//		ld		hl, addr	// FastCall
 		ld		a, (M_EXPTBL-1)
 		call	R_RDSLT
 		ld		l, a // return value
@@ -115,9 +186,9 @@ u8 Bios_MainROMRead(u16 addr) __FASTCALL
 // Address  : #0014 
 // Function : Writes a value to an address in another slot
 // Input    : A  - ExxxSSPP  Slot-ID
-//            │        ││└┴─ Primary slot number (00-11)
-//            │        └┴─── Secondary slot number (00-11)
-//            └───────────── Expanded slot (0 = no, 1 = yes)
+//                 │   ││└┴─ Primary slot number (00-11)
+//                 │   └┴─── Secondary slot number (00-11)
+//                 └──────── Expanded slot (0 = no, 1 = yes)
 //            HL - Address
 //            E  - Value
 // Registers: AF, BC, D
@@ -178,6 +249,7 @@ void Bios_InterSlotCall(u8 slot, u16 addr)
 		pop		ix
 		
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 
 		pop		ix
 	__endasm;
@@ -186,13 +258,13 @@ void Bios_InterSlotCall(u8 slot, u16 addr)
 void Bios_MainROMCall(u16 addr) __FASTCALL
 {
 	addr;
-	// FastCall
-	//	ld		hl, addr
 	__asm
+//		ld		hl, addr			// FastCall
         push 	hl 
         pop		ix 
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 	__endasm;
 }
 
@@ -310,6 +382,7 @@ void Bios_WriteVDP(u8 reg, u8 value)
 		ld		ix, #R_WRTVDP
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		pop		ix
 	__endasm;
@@ -335,6 +408,7 @@ u8 Bios_ReadVRAM(u16 addr) __FASTCALL
 		ld		ix, #R_RDVRM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;
@@ -365,6 +439,7 @@ void Bios_WriteVRAM(u16 addr, u8 value)
 		ld		ix, #R_WRTVRM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif		
 		pop		ix
 	__endasm;
@@ -390,6 +465,7 @@ void Bios_SetAddressForRead(u16 addr) __FASTCALL
 		ld		ix, #R_SETRD
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;
 }
@@ -414,6 +490,7 @@ void Bios_SetAddressForWrite(u16 addr) __FASTCALL
 		ld		ix, #R_SETWRT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;
 }
@@ -446,6 +523,7 @@ void Bios_FillVRAM(u16 addr, u16 length, u8 value)
 		ld		ix, #R_FILVRM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		pop		ix
 	__endasm;
@@ -480,6 +558,7 @@ void Bios_TransfertVRAMtoRAM(u16 vram, u16 ram, u16 length)
 		ld		ix, #R_LDIRMV
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		pop		ix
 	__endasm;
@@ -514,6 +593,7 @@ void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length)
 		ld		ix, #R_LDIRVM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		pop		ix
 	__endasm;
@@ -539,6 +619,7 @@ void Bios_ChangeMode(u8 screen) __FASTCALL
 		ld		ix, #R_CHGMOD
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;
 }
@@ -572,6 +653,7 @@ void Bios_ChangeColor(u8 text, u8 back, u8 border)
 		ld		ix, #R_CHGCLR
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 
 		pop		ix
@@ -747,6 +829,7 @@ u16 Bios_GetPatternTableAddress(u8 id) __FASTCALL
 		ld		ix, #R_CALPAT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;
 }
@@ -771,6 +854,7 @@ u16 Bios_GetAttributeTableAddress(u8 id) __FASTCALL
 		ld		ix, #R_CALATR
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;
 }
@@ -791,6 +875,7 @@ u8 Bios_GetSpriteSize()
 		ld		ix, #R_GSPSIZ
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;
@@ -814,6 +899,7 @@ void Bios_GraphPrintChar(u8 chr) __FASTCALL
 		ld		ix, #R_GRPPRT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;	
 }
@@ -876,6 +962,7 @@ void Bios_WritePSG(u8 reg, u8 value)
 		ld		ix, #R_WRTPSG
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 
 		pop		ix
@@ -901,6 +988,7 @@ u8 Bios_ReadPSG(u8 reg) __FASTCALL
 		ld		ix, #R_RDPSG
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;	
@@ -948,6 +1036,7 @@ u8 Bios_GetCharacter()
 		ld		ix, #R_CHGET
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;	
@@ -971,6 +1060,7 @@ void Bios_TextPrintChar(u8 chr) __FASTCALL
 		ld		ix, #R_CHPUT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;	
 }
@@ -1069,6 +1159,7 @@ inline void Bios_ClearScreen()
 		ld		ix, #R_CLS
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 __endasm;	
 }
@@ -1134,6 +1225,7 @@ u8 Bios_GetJoystickDirection(u8 port) __FASTCALL
 		ld		ix, #R_GTSTCK
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;
@@ -1165,6 +1257,7 @@ u8 Bios_GetJoystickTrigger(u8 trigger) __FASTCALL
 		ld		ix, #R_GTTRIG
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;
@@ -1452,6 +1545,7 @@ u8 Bios_GetKeyboardMatrix(u8 line) __FASTCALL
 		ld		ix, #R_SNSMAT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;
@@ -1693,6 +1787,7 @@ void Bios_SetCPUMode(u8 mode) __FASTCALL
 		ld		ix, #R_CHGCPU
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 	__endasm;
 }
@@ -1716,6 +1811,7 @@ u8 Bios_GetCPUMode()
 		ld		ix, #R_GETCPU
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
+		ei							// because CALSLT do DI
 #endif
 		ld		l, a
 	__endasm;

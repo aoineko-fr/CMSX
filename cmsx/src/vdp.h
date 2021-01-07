@@ -67,9 +67,10 @@ struct VDP_Sprite
     u8 Y;			///< Y coordinate on screen (all lower priority sprite will be disable if equal to 216 or 0xD0)
     u8 X;			///< X coordinate of the sprite
     u8 Pattern;		///< Pattern index
-    u8 Color   : 4;	///< Color index (Sprite Mode 1 only)
-    u8 _unused : 3;	///< (unused 3 bits)
-    u8 EC      : 1;	///< Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
+    u8 Color;		///< Color index (Sprite Mode 1 only)
+    // u8 Color   : 4;	///< Color index (Sprite Mode 1 only)
+    // u8 _unused : 3;	///< (unused 3 bits)
+    // u8 EC      : 1;	///< Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
 };
 
 //-----------------------------------------------------------------------------
@@ -196,14 +197,39 @@ u8 VDP_ReadDefaultStatus();
 /// Read a given status register then reset status register to default (0)
 u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
+//-----------------------------------------------------------------------------
+#if (MSX_VERSION == MSX_1)
+
 /// Write data from RAM to VRAM
-void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count);
+void VDP_WriteVRAM1(const u8* src, u16 dest, u16 count);
 
 /// Fill VRAM area with a given value
-void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count);
+void VDP_FillVRAM1(u8 value, u16 dest, u16 count);
 
 /// Read data from VRAM to RAM
-void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count);
+void VDP_ReadVRAM1(u16 src, u8* dest, u16 count);
+
+#define VDP_WriteVRAM(src, destLow, destHigh, count)	VDP_WriteVRAM1(src, destLow, count)
+#define VDP_FillVRAM(value, destLow, destHigh, count)	VDP_FillVRAM1(value, destLow, count)
+#define VDP_ReadVRAM(srcLow, srcHigh, dest, count)		VDP_ReadVRAM1(srcLow, dest, count)
+
+//-----------------------------------------------------------------------------
+#else // (MSX_VERSION >= MSX_2)
+
+/// Write data from RAM to VRAM
+void VDP_WriteVRAM2(const u8* src, u16 destLow, u8 destHigh, u16 count);
+
+/// Fill VRAM area with a given value
+void VDP_FillVRAM2(u8 value, u16 destLow, u8 destHigh, u16 count);
+
+/// Read data from VRAM to RAM
+void VDP_ReadVRAM2(u16 srcLow, u8 srcHigh, u8* dest, u16 count);
+
+#define VDP_WriteVRAM	VDP_WriteVRAM2
+#define VDP_FillVRAM	VDP_FillVRAM2
+#define VDP_ReadVRAM	VDP_ReadVRAM2
+
+#endif
 
 /// Enable/disable horizontal interruption
 void VDP_EnableHBlank(u8 enable) __FASTCALL;
@@ -231,7 +257,7 @@ void VDP_SetFrequency(u8 freq) __FASTCALL;
 /// Set current VRAM page
 void VDP_SetPage(u8 page) __FASTCALL;
 
-/// Set text and border default color
+/// Set text and border default color (format: [TXT:4|BG:4])
 void VDP_SetColor(u8 color) __FASTCALL;
 
 /// Set a new palette [red|blue][0|green]
@@ -276,7 +302,9 @@ void VDP_SetSpriteTables(u32 patternAddr, u32 attribAddr);
 /// Load pattern data into VRAM
 void VDP_LoadSpritePattern(const u8* addr, u8 index, u8 count);
 
-#define VDP_SPRITE_EC			0x80		///> Early clock ; used to offset sprite by  32  dots  to  the  left  (Sprite Mode 1 only)
+#define VDP_SPRITE_EC			0x80		///> Early clock ; used to offset sprite by 32 dots to the left
+#define VDP_SPRITE_CC			0x40		///> Sprite priority control
+#define VDP_SPRITE_IC			0x20		///> Line collision detection
 /// Set sprite attribute for Sprite Mode 1 (MSX1)
 void VDP_SetSpriteSM1(u8 index, u8 x, u8 y, u8 shape, u8 color);
 
@@ -284,10 +312,10 @@ void VDP_SetSpriteSM1(u8 index, u8 x, u8 y, u8 shape, u8 color);
 void VDP_SetSprite(u8 index, u8 x, u8 y, u8 shape);
 
 /// Set sprite attribute for Sprite Mode 2 and fill color table with color data
-void VDP_SetSpriteMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram);
+void VDP_SetSpriteExMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram);
 
 /// Set sprite attribute for Sprite Mode 2 and fill color table with unique color
-void VDP_SetSpriteUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color);
+void VDP_SetSpriteExUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color);
 
 /// Update sprite position
 void VDP_SetSpritePosition(u8 index, u8 x, u8 y);
@@ -295,11 +323,20 @@ void VDP_SetSpritePosition(u8 index, u8 x, u8 y);
 /// Update sprite pattern
 void VDP_SetSpritePattern(u8 index, u8 shape);
 
+/// Update sprite pattern (Shader mode 1)
+void VDP_SetSpriteColorSM1(u8 index, u8 color);
+
+/// Update sprite color (Uni-color)
+void VDP_SetSpriteUniColor(u8 index, u8 color);
+
+/// Update sprite color (Multi-color)
+void VDP_SetSpriteMultiColor(u8 index, const u8* ram);
+
 /// Set sprite data for Sprite Mode 2
 void VDP_SetSpriteData(u8 index, const u8* data);
 
 ///
-void VDP_HideSprite(u8 fromIdx) __FASTCALL;
+void VDP_HideSpriteFrom(u8 index) __FASTCALL;
 
 //-----------------------------------------------------------------------------
 // VDP REGISTERS

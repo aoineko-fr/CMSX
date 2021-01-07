@@ -7,6 +7,9 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
+// BUILD
+//-----------------------------------------------------------------------------
+
 // TARGET options
 #define TARGET_BIN			100 // BASIC binary program (8000h~)
 #define TARGET_ROM16		200 // 16KB ROM in page 1 (4000h ~ 7FFFh)
@@ -19,14 +22,12 @@
 #define TARGET_DOSARG		510 // MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
 // TARGET is defined by the build tool
 
-//-----------------------------------------------------------------------------
 // TARGET_TYPE options
 #define TARGET_TYPE_BIN		0 // BASIC binary program
 #define TARGET_TYPE_ROM		1 // ROM program
 #define TARGET_TYPE_DOS		2 // MSX-DOS program
 // TARGET_TYPE is defined by the build tool
 
-//-----------------------------------------------------------------------------
 // MSX_VERSION options
 #define MSX_1				0 // MSX
 #define MSX_2				1 // MSX 2
@@ -34,16 +35,21 @@
 #define MSX_TurboR			3 // MSX Turbo-R
 
 //-----------------------------------------------------------------------------
+// BIOS MODULE
+//-----------------------------------------------------------------------------
+
 // RENDER_MODE options
 #define RENDER_BIOS			0 // Use BIOS routines
 #define RENDER_VDP			1 // Use direct VDP registers
 
-//-----------------------------------------------------------------------------
 // BIOS_CALL options
 #define CALL_DIRECT			0 // Use direct access to Bios routines (Main-ROM must be in Slot 0)
 #define CALL_INTERSLOT		1 // Use inter-slot access to Bios routines
 
 //-----------------------------------------------------------------------------
+// PRINT MODULE
+//-----------------------------------------------------------------------------
+
 // PRINT_WIDTH
 #define PRINT_WIDTH_6		0 // 
 #define PRINT_WIDTH_8		1 // 
@@ -53,11 +59,18 @@
 #define PRINT_HEIGHT_X		2 // 
 
 //-----------------------------------------------------------------------------
+// DRAW MODULE
+//-----------------------------------------------------------------------------
+
 // DRAW_UNIT
-#define DRAW_UNIT_DEFAULT	0
-#define DRAW_UNIT_Y16		1
+#define DRAW_UNIT_U8		0 // X and Y use 8-bits values
+#define DRAW_UNIT_Y16		1 // X use 8-bits and Y use 16-bits values
+#define DRAW_UNIT_U16		2 // X and Y use 16-bits values
 
 //-----------------------------------------------------------------------------
+// MATH MODULE
+//-----------------------------------------------------------------------------
+
 // RANDOM_METHOD
 #define RANDOM_LFSR_LCG_16	0 // Combined LFSR/LCG (16-bit seeds)
 #define RANDOM_LFSR_LCG_32	1 // Combined LFSR/LCG (32-bit seeds)

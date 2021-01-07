@@ -3,7 +3,6 @@
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
 #pragma once
-
 #include "core.h"
 
 /// Get the current address of the stack top (lower address)
