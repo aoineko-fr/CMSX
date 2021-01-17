@@ -19,7 +19,7 @@
 // DEFINES
 
 #define PATTERN_8_1ST			(u8)0
-#define PATTERN_8_NUM			(u8)96
+#define PATTERN_8_NUM			(u8)64
 #define PATTERN_16_1ST			(u8)(PATTERN_8_1ST+PATTERN_8_NUM)
 #define PATTERN_16_NUM			(u8)(6*2*4)
 #define PATTERN_16OR_1ST		(u8)(PATTERN_16_1ST+PATTERN_16_NUM)
@@ -43,7 +43,6 @@
 	#define SPRITE_8_LINE		113-10
 #endif
 
-
 typedef struct
 {
 	i8 x, y;
@@ -54,9 +53,10 @@ typedef struct
 
 // Fonts
 #include "font\font_cmsx_std0.h"
+#include "font\font_cmsx_symbol1.h"
 
 // Fonts
-#include "data\data_sprt_8.h"
+//#include "data\data_sprt_8.h"
 #include "data\data_sprt_16.h"
 #include "data\data_sprt_16or.h"
 
@@ -64,7 +64,6 @@ const u8 chrAnim[] = { '|', '\\', '-', '/' };
 
 const Vector DirMove[] = 
 {
-	{ (i8)0,  (i8)1 },
 	{ (i8)1,  (i8)1 },
 	{ (i8)1,  (i8)0 },
 	{ (i8)1,  (i8)-1 },
@@ -72,6 +71,7 @@ const Vector DirMove[] =
 	{ (i8)-1, (i8)-1 },
 	{ (i8)-1, (i8)0 },
 	{ (i8)-1, (i8)1 },
+	{ (i8)0,  (i8)1 },
 };
 
 const u8 ColorTab[] = 
@@ -89,15 +89,18 @@ u8 g_Phase = 0;
 /// H-Blank interrupt hook
 void HBlankHook()
 {
+	// VDP_SetColor(0);
 	if(g_Phase == 0)
 	{
 		VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 + VDP_SPRITE_SCALE_2);
 		VDP_SetHBlankLine(SPRITE_8_LINE);
 		g_Phase++;
+		// VDP_SetColor(12);
 	}
 	else
 	{
 		VDP_SetSpriteFlag(VDP_SPRITE_SIZE_8);
+		// VDP_SetColor(6);
 	}
 }
 
@@ -153,11 +156,25 @@ struct SpriteData
 
 struct SpriteData g_Sprite[32];
 
+struct Test
+{ 
+	u8 a : 3;
+	u8 b : 2;
+	u8 c : 3;
+};
 
 //-----------------------------------------------------------------------------
 // Program entry point
 void main()
 {
+	struct Test T;
+	
+	T.a = 1;
+	T.b = 1;
+	T.c = 1;
+	
+	g_Frame = T.a + T.b + T.c;
+	
 	// Setup screen
 	VDP_SetScreen(VDP_MODE_SCREEN5);
 	VDP_SetColor(0x4);
@@ -172,7 +189,7 @@ void main()
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 /*+ VDP_SPRITE_SCALE_2*/);
 
 	// Load 8x8 sprites (Pattern 0~95)
-	VDP_LoadSpritePattern(g_DataSprt8, PATTERN_8_1ST, PATTERN_8_NUM);
+	VDP_LoadSpritePattern(g_Font_CMSX_Symbol1 + 4 + (16 * 10 * 8), PATTERN_8_1ST, PATTERN_8_NUM);
 	// Load 16x16 sprites (Pattern 96~143)
 	u8 chrSprt = PATTERN_16_1ST;
 	for(u8 i5 = 0; i5 < 6; i5++)
@@ -210,7 +227,7 @@ void main()
 		u16 rnd = Math_GetRandom();
 		g_Sprite[i].X = rnd >> 8;
 		g_Sprite[i].Y = (rnd & 0x007F) + 114;
-		g_Sprite[i].Shape = PATTERN_8_1ST + ((rnd >> 4) & 0x1F) + 1;
+		g_Sprite[i].Shape = PATTERN_8_1ST + ((rnd >> 4) & 0x3F);
 		VDP_SetSpriteExUniColor(SPRITE_8_1ST + i, g_Sprite[i].X, g_Sprite[i].Y, g_Sprite[i].Shape, ((rnd >> 12) & 0x7) + 0x08);
 	}
 	// Initialize 16x16 sprites
@@ -272,6 +289,9 @@ void main()
 	bool bContinue = true;
 	while(bContinue)
 	{
+		WaitVBlank();
+		// VDP_SetColor(0x4);
+	
 		Print_SetPosition(248, 2);
 		Print_DrawChar(chrAnim[g_Frame & 0x03]);
 		
@@ -314,8 +334,6 @@ void main()
 
 		if(Keyboard_IsKeyPressed(KEY_ESC))
 			bContinue = false;
-
-		WaitVBlank();
 	}
 
 	Bios_ClearHook(H_TIMI);

@@ -33,7 +33,7 @@ const unsigned char g_DataBmp2b[] =
 // Custom palette | Format: [X|R:3|X|B:3] [X:5|G:3]
 const unsigned char g_DataBmp2b_palette[] =
 {
-	0x00, 0x00, // [ 1] #020102
+	0x00, 0x00, // [ 1] #020203
 	0x43, 0x04, // [ 2] #81807F
-	0x77, 0x07, // [ 3] #FFFFFE
+	0x77, 0x07, // [ 3] #FEFEFE
 };

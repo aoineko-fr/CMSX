@@ -2,13 +2,7 @@
 //  █▀▀ █▀▄▀█ █▀ ▀▄▀
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
-#pragma sdcc_hash +
-
-#include "core.h"
-#include "vdp.h"
-#include "draw.h"
-#include "print.h"
-#include "input.h"
+#include "cmsx.h"
 
 //-----------------------------------------------------------------------------
 // Data
@@ -16,7 +10,15 @@
 // Fonts
 #include "font\font_cmsx_std0.h"
 // Animation characters
-static const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
+const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
+
+const u8 TestByte = 0xFF;
+const u16 TestWord = 0xFFFF;
+const c8 TestString[] = "ABCDEFG";
+
+__at(0x7000) const u8 TestData[] = { 13, 24, 75, 96 };
+
+__at(0xC000) u8 TestRAM[4];
 
 //-----------------------------------------------------------------------------
 // Program entry point
@@ -38,4 +40,6 @@ void main()
 		u8 chr = count++ & 0x03;
 		Print_DrawChar(g_ChrAnim[chr]);
 	}
+
+	Bios_Exit(0);
 }

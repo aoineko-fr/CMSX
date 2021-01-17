@@ -2,8 +2,6 @@
 //  █▀▀ █▀▄▀█ █▀ ▀▄▀
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
-#pragma sdcc_hash +
-
 #include "core.h"
 #include "color.h"
 #include "input.h"
@@ -13,37 +11,50 @@
 #include "bios.h"
 #include "bios_mainrom.h"
 #include "draw.h"
+#include "string.h"
+
+//-----------------------------------------------------------------------------
+// DATA
+//-----------------------------------------------------------------------------
 
 // Inclide font data
-#include "font/font_acme.h"
 #include "font/font_carwar.h"
-#include "font/font_cmsx_big1.h"
-#include "font/font_cmsx_curs1.h"
-#include "font/font_cmsx_curs1b.h"
-#include "font/font_cmsx_mini1.h"
-#include "font/font_cmsx_neon1.h"
-#include "font/font_cmsx_neon1b.h"
-#include "font/font_cmsx_neon2.h"
-#include "font/font_cmsx_rune2.h"
-#include "font/font_cmsx_rune2b.h"
 #include "font/font_cmsx_std0.h"
-#include "font/font_cmsx_std1.h"
 #include "font/font_cmsx_std2.h"
 #include "font/font_cmsx_std3.h"
+#include "font/font_cmsx_big1.h"
+#include "font/font_cmsx_curs1b.h"
+#include "font/font_cmsx_rune2b.h"
+#include "font/font_cmsx_symbol1.h"
+#include "font/font_cmsx_mini1.h"
+#if (TARGET_TYPE != TARGET_TYPE_BIN)
+	#include "font/font_cmsx_mini2.h"
+	#include "font/font_cmsx_mini3.h"
+	#include "font/font_cmsx_neon1b.h"
+	#include "font/font_acme.h"
+#endif
 #include "font/font_darkrose.h"
-#include "font/font_ibm.h"
 #include "font/font_oxygene.h"
+#include "font/font_tsm9900.h"
+#include "font/font_ibm.h"
 
-const u8 g_ScreenMode = VDP_MODE_SCREEN5;
-const u8* g_SampleText =
-	" !\"#$%&'()*+,-./0123456789:;<=>?\n"
-	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_\n"
-	"`abcdefghijklmnopqrstuvwxyz{|}~\n\n"
-	"Equation: (x+7)*42=(10h>>x)^2-3\n\n"
+// Trigo
+#include "mathtable/mt_trigo_32.inc"
+
+//-----------------------------------------------------------------------------
+const c8* g_SampleText =
+	"\nEquation: (x+7)*42=(10h>>x)^2-3\n"
 	"\"Nous sommes au 21e siecle ; toute la Gaule est occupee par les PC, Mac, Xbox, Switch et autres Playstation..."
 	"Toute ? Non ! Car une association de fanatiques resiste encore et toujours a l'envahisseur, "
 	"en proposant un site qui fleure bon les annees 80, "
-	"entierement consacre au culte d'un standard fabuleux : le MSX !\"";
+	"entierement consacre au culte d'un standard fabuleux : le MSX !\"\n"
+	"Bienvenue au MSX Village, le site des irreductibles Gaulois du MSX !";
+
+//-----------------------------------------------------------------------------
+const c8* g_SampleTextShort =
+	"Bienvenue au MSX Village, le site des irreductibles Gaulois du MSX !";
+
+const c8* g_SpriteText = "SPRITE!";
 
 struct FontEntry
 {
@@ -54,53 +65,104 @@ struct FontEntry
 struct FontEntry g_Fonts[] =
 {
 	{ "Main-ROM [6*8]",			null },
-	{ "ACME [8*8]",				g_Font_Acme },
 	{ "CARWAR [8*8]",			g_Font_Carwar },
-	{ "C-MSX Big 1 [8*11]",		g_Font_CMSX_Big1 },
-	{ "C-MSX Cursive 1 [8*8]",	g_Font_CMSX_Curs1 },
-	{ "C-MSX Cursive 1B [8*8]",	g_Font_CMSX_Curs1B },
-	{ "C-MSX Mini 1 [4*6]",		g_Font_CMSX_Mini1 },
-	{ "C-MSX Neon 1 [8*8]",		g_Font_CMSX_Neon1 },
-	{ "C-MSX Neon 1B [8*8]",	g_Font_CMSX_Neon1B },
-	{ "C-MSX Neon 2 [8*8]",		g_Font_CMSX_Neon2 },
-	{ "C-MSX Rune 2 [8*8]",		g_Font_CMSX_Rune2 },
-	{ "C-MSX Rune 2B [8*8]",	g_Font_CMSX_Rune2B },
 	{ "C-MSX Standard 0 [6*8]",	g_Font_CMSX_Std0 },
-	{ "C-MSX Standard 1 [6*8]",	g_Font_CMSX_Std1 },
 	{ "C-MSX Standard 2 [6*8]",	g_Font_CMSX_Std2 },
 	{ "C-MSX Standard 3 [6*8]",	g_Font_CMSX_Std3 },
+	{ "C-MSX Big 1 [8*11]",		g_Font_CMSX_Big1 },
+	{ "C-MSX Cursive 1B [8*8]",	g_Font_CMSX_Curs1B },
+	{ "C-MSX Rune 2B [8*8]",	g_Font_CMSX_Rune2B },
+	{ "C-MSX Symbol 1 [8*8]",	g_Font_CMSX_Symbol1 },	
+	{ "C-MSX Mini 1 [4*6]",		g_Font_CMSX_Mini1 },
+#if (TARGET_TYPE != TARGET_TYPE_BIN) // No enough free RAM in Basic to load all fonts
+	{ "C-MSX Mini 2 [5*6]",		g_Font_CMSX_Mini2 },
+	{ "C-MSX Mini 3 [5*6]",		g_Font_CMSX_Mini3 },
+	{ "C-MSX Neon 1B [8*8]",	g_Font_CMSX_Neon1B },
+	{ "ACME [8*8]",				g_Font_Acme },
+#endif
 	{ "Darkrose [8*8]",			g_Font_Darkrose },
-	{ "IBM VGA [8*8]",			g_Font_IBM },
 	{ "OXYGENE [8*8]",			g_Font_Oxygene },
+	{ "TMS9900 [6*8]",			g_Font_TMS9900 },
+	{ "IBM VGA [8*8]",			g_Font_IBM },
 };
 static u8 g_FontIndex = 0;
 
+struct ModeEntry
+{
+	const c8* Name;
+	const u8  Mode;
+	const u8* Font;
+	const u8  ColorText;
+	const u8  ColorBG;
+	const u8  ColorGray;
+	const u8  ColorAlt;
+	const u8  ColorShade[12];
+};
+
+struct ModeEntry g_Modes[] =
+{
+	{ "G4", VDP_MODE_GRAPHIC4, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
+	{ "G5", VDP_MODE_GRAPHIC5, g_Font_IBM,       0x3, 0x0, 0x2, 0x2, { 3, 3,  2, 2, 3, 3,  2, 2, 3, 3,  2, 2 } },
+	{ "G6", VDP_MODE_GRAPHIC6, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
+	{ "G7",	VDP_MODE_GRAPHIC7, g_Font_CMSX_Std0, COLOR8_WHITE, COLOR8_BLACK, RGB8(4,4,2), RGB8(6,6,2), 
+		{ COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2, 
+		  COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2, 
+		  COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2 } },
+};
+static u8 g_ModeIndex = 0;
+
+static u8 g_StartTime = 0;
+
+//-----------------------------------------------------------------------------
 void PrintHeader()
 {
-	Print_SetColor(0xF, 0x0);
+	VDP_SetMode(g_Modes[g_ModeIndex].Mode);
+	VDP_SetColor(g_Modes[g_ModeIndex].ColorBG);
+	VDP_EnableSprite(false);
+	
+	Print_Initialize(null);
 	Print_Clear();
-	Print_SetFont(g_Font_CMSX_Std0);
-	Print_SetCharSize(6, 8);
+	Print_SetTabSize(16);
+
+	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
+	Print_SetFont(g_Modes[g_ModeIndex].Font);
 	Print_SetPosition(0, 0);
-	Print_DrawText("PRINT SAMPLE\n");
-	Draw_HLine(0, 255, 12, 0xFF, 0);
+	Print_DrawText("PRINT SAMPLE (");
+	Print_DrawText(g_Modes[g_ModeIndex].Name);
+	Print_DrawText(")\n");
+	Draw_HLine(0, g_PrintData.ScreenWidth - 1, 12, 0xFF, 0);
+
+	g_StartTime = g_JIFFY;
 }
 
+//-----------------------------------------------------------------------------
 void PrintFooter()
 {
-	Print_SetColor(0xE, 0x0);
-	Print_SetFont(g_Font_CMSX_Std0);
+	u8 elapsedTime = g_JIFFY - g_StartTime;
+
+	Print_SetColor(g_Modes[g_ModeIndex].ColorGray, g_Modes[g_ModeIndex].ColorBG);
+	Print_SetFont(g_Modes[g_ModeIndex].Font);
 	Print_SetPosition(0, 204);
-	Print_DrawText("F1:List  F2:Text  F3:FX  <>:Prev/Next ");
+	Print_DrawText("F1:List F2:Text F3:FX ");
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_DrawChar(61);
+	Print_SetFont(g_Modes[g_ModeIndex].Font);
+	Print_DrawText(" Font ");
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_DrawChar(60);
+	Print_SetFont(g_Modes[g_ModeIndex].Font);
+	Print_DrawText(" Mode #");
+	Print_DrawInt(elapsedTime);
 }
 
+//-----------------------------------------------------------------------------
 void PrintList()
 {
 	PrintHeader();
 
 	Print_SetPosition(0, 24);
 	Print_DrawText("List:\n\n");
-	for(i8 i = 0; i < numberof(g_Fonts); i++)
+	for(u8 i = 0; i < numberof(g_Fonts); ++i)
 	{
 		Print_SetFont(g_Fonts[i].Font);
 		Print_DrawText(g_Fonts[i].Name);
@@ -110,6 +172,7 @@ void PrintList()
 	PrintFooter();
 }
 
+//-----------------------------------------------------------------------------
 void PrintSample()
 {
 	PrintHeader();
@@ -118,9 +181,110 @@ void PrintSample()
 	Print_DrawText("Font: ");
 	Print_DrawText(g_Fonts[g_FontIndex].Name);
 	Print_SetFont(g_Fonts[g_FontIndex].Font);
+
 	Print_SetPosition(0, 40);
+	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
+	const struct Print_Data* data = Print_GetFontInfo();
+	for(u16 i = data->FontFirst; i <= data->FontLast; ++i)
+		Print_DrawChar(i);
+
+	Print_Return();
+	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
 	Print_DrawText(g_SampleText);
 
+	PrintFooter();
+}
+
+//-----------------------------------------------------------------------------
+void PrintEffect()
+{
+	PrintHeader();
+
+	Print_SetPosition(0, 24);
+	Print_DrawText("Font: ");
+	Print_DrawText(g_Fonts[g_FontIndex].Name);
+
+	Print_SetFont(g_Fonts[g_FontIndex].Font);
+
+	// Multi-color
+	Print_SetPosition(0, 40);
+	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
+	Print_DrawText("Multi-color: ");
+#if (PRINT_COLOR_NUM > 1)
+	Print_SetColorShade(g_Modes[g_ModeIndex].ColorShade);
+	Print_DrawText(g_SampleTextShort);
+#else
+	Print_DrawText("Disabled! (see config)");
+#endif
+	Print_Return();
+	Print_Return();
+
+	// Shadow
+	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
+	Print_DrawText("Shadow: ");
+#if (USE_PRINT_FX_SHADOW)
+	Print_SetShadow(true, 1, 1, g_Modes[g_ModeIndex].ColorGray);
+	Print_DrawText(g_SampleTextShort);
+	Print_EnableShadow(false);
+#else
+	Print_DrawText("Disabled! (see config)");
+#endif
+	Print_Return();
+	Print_Return();
+
+	// Outine
+	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
+	Print_DrawText("Outline: ");
+#if (USE_PRINT_FX_OUTLINE)
+	Print_SetOutline(true, g_Modes[g_ModeIndex].ColorGray);
+	Print_DrawText(g_SampleTextShort);
+	Print_EnableOutline(false);
+#else
+	Print_DrawText("Disabled! (see config)");
+#endif
+	Print_Return();
+	Print_Return();
+
+	// VRAM font
+	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
+	Print_DrawText("VRAM: ");
+#if (USE_PRINT_VRAM)
+	Print_DrawText("Loading...");
+	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
+	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212);
+	Print_Backspace(String_GetLength("Loading..."));
+	Print_DrawText(g_SampleTextShort);
+#else
+	Print_DrawText("Disabled! (see config)");
+#endif
+	Print_Return();
+	Print_Return();
+
+	// Sprite font
+	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
+
+	Print_DrawText("Sprite: ");
+#if (USE_PRINT_SPRITE)
+	Print_DrawText("Loading...");
+	VDP_EnableSprite(true);
+	VDP_SetSpriteTables(0x0C000, 0x0CA00);
+	VDP_SetSpriteFlag(VDP_SPRITE_SCALE_2);
+	#if (PRINT_COLOR_NUM > 1)
+		Print_SetColorShade(g_Modes[g_ModeIndex].ColorShade);
+	#else
+		Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
+	#endif
+	Print_SetFontSprite(g_Fonts[g_FontIndex].Font, 0, 0);
+	Print_Backspace(String_GetLength("Loading..."));
+	Print_SetCharSize(g_PrintData.UnitX*2, g_PrintData.UnitY*2);
+	Print_SetPosition(64, 180);
+	Print_DrawText(g_SpriteText);
+#else
+	Print_DrawText("Disabled! (see config)");
+#endif
+
+	Print_SetMode(PRINT_MODE_DEFAULT);
 	PrintFooter();
 }
 
@@ -128,76 +292,79 @@ void PrintSample()
 // Program entry point
 void main()
 {
-	VDP_SetScreen(g_ScreenMode);
-	VDP_SetColor(0x00);
-	VDP_SetFrequency(VDP_FREQ_50HZ);
-	VDP_EnableSprite(false);
-	
-	Print_Initialize(g_ScreenMode, null);
-	Print_SetTabSize(16);
-#if USE_PRINT_SHADOW
-	Print_SetShadow(true, (i8)2, (i8)2, COLOR8_RED);
-#endif
+	callback cb = PrintList;
+	cb();
 
-	//////////////////////////
-    // static const char text1[]="BONJOUR LE FUTUR\n";
-    // static const char text2[]="ICI LE MSX QUI VOUS PARLE\n";
-    // static const char text3[]="DEPUIS L'ANNEE 1985\n";
-    // static const char text4[]="IL PARAIT QUE LES VIEUX\n";
-    // static const char text5[]="JOUENT ENCORE AVEC MOI\n";
-    // static const char text6[]="DANS LES ANNEES 2020 ?\n";
-    // static const char text7[]="Incroyable !\n";
-
-	// Print_Clear();
-	// // Print_DrawText("B");
-	// // Print_SetPosition(0, 0);
-	// u8 startTime = g_JIFFY;
-	// Print_DrawText(text1);
-	// Print_DrawText(text2);
-	// Print_DrawText(text3);
-	// Print_DrawText(text4);
-	// Print_DrawText(text5);
-	// Print_DrawText(text6);
-	// Print_DrawText(text7);
-	// u8 elapsedTime = g_JIFFY - startTime;
-	// Print_DrawInt(elapsedTime);
-
-	// while(!Keyboard_IsKeyPressed(KEY_SPACE)) {}
-	//////////////////////////
-
-	PrintList();
-
-	Print_SetFont(null);
 	u8 count = 0;
-	while(!Keyboard_IsKeyPressed(KEY_ESC))
+	bool bContinue = true;
+	while(bContinue)
 	{
-		if(Keyboard_IsKeyPressed(KEY_F1))
-			PrintList();
-		else if(Keyboard_IsKeyPressed(KEY_F2))
-			PrintSample();
+		if(Keyboard_IsKeyPressed(KEY_ESC))
+			bContinue = false;
 
-		if(Keyboard_IsKeyPressed(KEY_RIGHT))
+		u8 row = Keyboard_Read(KEY_ROW(KEY_F1));
+		
+		if(IS_KEY_PRESSED(row, KEY_F1))
+		{
+			cb = PrintList;
+			cb();
+		}
+		else if(IS_KEY_PRESSED(row, KEY_F2))
+		{
+			cb = PrintSample;
+			cb();
+		}
+		else if(IS_KEY_PRESSED(row, KEY_F3))
+		{
+			cb = PrintEffect;
+			cb();
+		}
+
+		row = Keyboard_Read(KEY_ROW(KEY_RIGHT));
+
+		if(IS_KEY_PRESSED(row, KEY_RIGHT))
 		{
 			if(g_FontIndex < numberof(g_Fonts) - 1)
 				g_FontIndex++;
 			else
 				g_FontIndex = 0;			
-			PrintSample();
+			cb();
 		}
-		else if(Keyboard_IsKeyPressed(KEY_LEFT))
+		else if(IS_KEY_PRESSED(row, KEY_LEFT))
 		{
 			if(g_FontIndex > 0)
 				g_FontIndex--;
 			else
 				g_FontIndex = numberof(g_Fonts) - 1;			
-			PrintSample();
+			cb();
+		}
+		if(IS_KEY_PRESSED(row, KEY_UP))
+		{
+			if(g_ModeIndex < numberof(g_Modes) - 1)
+				g_ModeIndex++;
+			else
+				g_ModeIndex = 0;			
+			cb();
+		}
+		else if(IS_KEY_PRESSED(row, KEY_DOWN))
+		{
+			if(g_ModeIndex > 0)
+				g_ModeIndex--;
+			else
+				g_ModeIndex = numberof(g_Modes) - 1;			
+			cb();
 		}
 
-		Print_SetPosition(248, 0);
+		Print_SetPosition(g_PrintData.ScreenWidth - 8, 0);
 		static const u8 chrAnim[] = { '|', '\\', '-', '/' };
-		Print_DrawChar(chrAnim[count++ & 0x03]);
-
-		//VDP_WaitRetrace();*/
+		Print_DrawChar(chrAnim[count & 0x03]);
+		
+		for(u8 i = 0; i < String_GetLength(g_SpriteText); ++i)
+		{
+			VDP_SetSpritePositionY(i, 155 + ((i16)(g_Sinus32[((count >> 2) + i) % 32]) >> 8));
+		}
+		
+		count++;
 	}
 
 	Bios_Exit(0);
