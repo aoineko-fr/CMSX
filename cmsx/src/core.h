@@ -3,55 +3,56 @@
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
 #pragma once
-
-#include "config_option.h"
-#include "cmsx_config.h"
-#include "config_default.h"
+// Library configuration
+#include "config_option.h"		// Configuration options
+#include "cmsx_config.h"		// Application configuration
+#include "config_default.h"		// Default configuration
+// #include "config_validate.h" // @todo Implement configuration parameters validation (for ex. no Screen Mode 7 support for MSX 1)
 
 //-----------------------------------------------------------------------------
 // Compilation switch
 //-----------------------------------------------------------------------------
-#pragma disable_warning 59	///< remove "function must return value" warning
-#pragma disable_warning 85	///< remove "unreferenced function argument" warning
-#pragma disable_warning 218 ///< remove "z80instructionSize() failed to parse line node, assuming 999 bytes" info
+#pragma disable_warning	59		///< remove "function must return value" warning
+#pragma disable_warning	85		///< remove "unreferenced function argument" warning
+#pragma disable_warning	218 	///< remove "z80instructionSize() failed to parse line node, assuming 999 bytes" info
 
 //-----------------------------------------------------------------------------
 // Basic types
 //-----------------------------------------------------------------------------
 
 // Boolean
-typedef unsigned char bool; ///< 8 bits boolean type
-#define true  0x01			///< Value for "true" boolean
-#define false 0x00			///< Value for "false" boolean
+typedef unsigned char	bool; 	///< 8 bits boolean type
+#define true			1		///< Value for "true" boolean
+#define false			0		///< Value for "false" boolean
 
 // Integer
-typedef char i8;			///< 8 bits signed integer type
-typedef unsigned char u8;	///< 8 bits unsigned integer type
-typedef short i16;			///< 16 bits signed integer type
-typedef unsigned short u16;	///< 16 bits unsigned integer type
-typedef long i32;			///< 32 bits signed integer type
-typedef unsigned long u32;	///< 32 bits unsigned integer type
+typedef char			i8;		///< 8 bits signed integer type
+typedef unsigned char	u8;		///< 8 bits unsigned integer type
+typedef short			i16;	///< 16 bits signed integer type
+typedef unsigned short	u16;	///< 16 bits unsigned integer type
+typedef long			i32;	///< 32 bits signed integer type
+typedef unsigned long	u32;	///< 32 bits unsigned integer type
 
 // Float
-typedef float f32;			///< 32 bits float type (IEEE 754)
+typedef float			f32;	///< 32 bits float type (IEEE 754)
 
 // Character
-typedef unsigned char c8;	///< 8 bits character type
-typedef unsigned short c16;	///< 16 bits character type
+typedef unsigned char	c8;		///< 8 bits character type
+typedef unsigned short	c16;	///< 16 bits character type
 
 // Pointer
-typedef void* ptr;			///< Pointer type
-#define null 0				///< Pointer "null" value
+typedef void*			ptr;	///< Pointer type
+#define null			0		///< Pointer "null" value
 
 // Functions
-typedef void (*callback)(void); ///< Callback default signature
+typedef void (*callback)(void);	///< Callback default signature
 
 //-----------------------------------------------------------------------------
 // Helper macros
 //-----------------------------------------------------------------------------
 
-/// Get the nimmber of element of a static initialized structure
-#define numberof(tab)		sizeof(tab) / sizeof(tab[0])
+/// Get the number of elements of a static initialized structure
+#define numberof(tab)	sizeof(tab) / sizeof(tab[0])
 
 //-----------------------------------------------------------------------------
 // Helper inline functions
@@ -64,7 +65,6 @@ inline void EnableInterrupt() { __asm__("ei"); }
 
 /// Disable interruption
 inline void DisableInterrupt() { __asm__("di"); }
-
 
 //-----------------------------------------------------------------------------
 // PEEK & POKE
@@ -96,14 +96,41 @@ inline void DisableInterrupt() { __asm__("di"); }
 //-----------------------------------------------------------------------------
 // Bits handling
 //-----------------------------------------------------------------------------
-#define BIT_0 0x01  // LSB
-#define BIT_1 0x02
-#define BIT_2 0x04
-#define BIT_3 0x08
-#define BIT_4 0x10
-#define BIT_5 0x20
-#define BIT_6 0x40
-#define BIT_7 0x80  // MSB
+#define BIT_0	0x01	// LSB
+#define BIT_1	0x02
+#define BIT_2	0x04
+#define BIT_3	0x08
+#define BIT_4	0x10
+#define BIT_5	0x20
+#define BIT_6	0x40
+#define BIT_7	0x80	// 8-bits MSB
+#define BIT_8	0x0100
+#define BIT_9	0x0200
+#define BIT_10	0x0400
+#define BIT_11	0x0800
+#define BIT_12	0x1000
+#define BIT_13	0x2000
+#define BIT_14	0x4000
+#define BIT_15	0x8000	// 16-bits MSB
 
-#define BIT_SET(val, bit) val |=  (1 << bit)  // Sets a bit
-#define BIT_CLR(val, bit) val &= ~(1 << bit)  // Clears a bit
+#define BIT_SET(val, bit)	val |=  (1 << bit)  	///< Macro to set a given bit in an integer
+#define BIT_CLR(val, bit)	val &= ~(1 << bit)  	///< Macro to clear a given bit in an integer
+#define BIT_ISSET(val, bit)	(val & (1 << bit) != 0)	///< Macro to tell if a given bit is set or not
+
+//-----------------------------------------------------------------------------
+
+
+// __FILE__
+// This macro expands to the name of the current input file, in the form of a C string constant.
+// The precise name returned is the one that was specified in `#include' or as the input file name argument.
+// __LINE__
+// This macro expands to the current input line number, in the form of a decimal integer constant. 
+// While we call it a predefined macro, it's a pretty strange macro, since its "definition" changes with each new line of source code.
+// This and `__FILE__' are useful in generating an error message to report an inconsistency detected by the program; 
+// the message can state the source line at which the inconsistency was detected. For example,
+// __DATE__
+// This macro expands to a string constant that describes the date on which the preprocessor is being run. 
+// The string constant contains eleven characters and looks like `"Feb 1 1996"'.
+// __TIME__
+// This macro expands to a string constant that describes the time at which the preprocessor is being run. 
+// The string constant contains eight characters and looks like `"23:59:01"'.

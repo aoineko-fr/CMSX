@@ -11,6 +11,11 @@
  * - http://map.grauw.nl/articles/
  */
 
+inline u8 VDP_GetMode()
+{
+	return g_VDP_Data.Mode;
+}
+
 //-----------------------------------------------------------------------------
 //
 // VDP COMMANDS

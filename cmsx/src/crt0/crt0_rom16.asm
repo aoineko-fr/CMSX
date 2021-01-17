@@ -65,6 +65,7 @@ start:
 ;-- ROM --
 .area	_HOME
 .area	_CODE
+.area	_RODATA
 .area	_INITIALIZER 
 .area   _GSINIT
 .area   _GSFINAL

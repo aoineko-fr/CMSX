@@ -34,11 +34,11 @@
 // 7		G6				15
 // 8		G7				15
 //
-// outi			; 16 T-States
+// outi			; 18 T-States
 //
-// outir		; 23 Cycles (21 T-States ?)
+// otir			; 23 T-States
 //
-// OutiToVram:  ; 29 Cycles (26 T-States ?)
+// OutiToVram:  ; 29 T-States (18 + 11)
 //     outi
 //     jp nz, OutiToVram
 
@@ -46,6 +46,15 @@
 //-----------------------------------------------------------------------------
 // STRUCTURES
 //-----------------------------------------------------------------------------
+
+/// Structure used to store VDP module data
+struct VDP_Data
+{
+	u8  Mode;		///< Current screen mode (@see VDP_MODE)
+	u8  BPC : 4;	///< Bits per color of the current mode (can be 1, 2, 4 or 8)
+	u8  Width : 1;	///< Width of the current screen (0: 256 px, 1: 512 px)
+	u8  Height : 1;	///< Height of the current screen (0: 192 px, 1: 212 px)
+};
 
 /// Structure used to store register data for VDP command
 struct VDP_Command
@@ -79,20 +88,46 @@ struct VDP_Sprite
 
 extern u8 g_VDP_REGSAV[28];
 extern u8 g_VDP_STASAV[10];
+extern struct VDP_Data    g_VDP_Data;
 extern struct VDP_Command g_VDP_Command;
-extern struct VDP_Sprite g_VDP_Sprite;
+extern struct VDP_Sprite  g_VDP_Sprite;
 
 //-----------------------------------------------------------------------------
 // DEFINES
 //-----------------------------------------------------------------------------
 
-#define VRAM16b(a)		(u16)((u32)(a >> 4))
-#define VRAM17b(a)		(u16)((u32)(a >> 1))
-#define Addr20bTo16b(a)	(u16)((u32)(a >> 4))	///< Convert 20-bits (V)RAM address into 16-bits with bit shifting
-#define Addr17bTo16b(a)	(u16)((u32)(a >> 1))	///< Convert 17-bits (V)RAM address into 16-bits with bit shifting
+#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_16)
+	#define VADDR			u16
+	#define VADDR_Lo(a)		(a)
+	#define VADDR_Hi(a)		0
+#else // if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+	#define VADDR			u32
+	#define VADDR_Lo(a)		(u16)(a)
+	#define VADDR_Hi(a)		(u16)(a >> 16)
+#endif
 
-#define REGSAV(a)		#(_g_VDP_REGSAV+a)
-#define STASAV(a)		#(_g_VDP_STASAV+a)
+#if (VDP_UNIT == VDP_UNIT_U16)
+	#define UX				u16
+	#define UY				u16
+#elif (VDP_UNIT == VDP_UNIT_X16)
+	#define UX				u16
+	#define UY				u8
+#elif (VDP_UNIT == VDP_UNIT_Y16)
+	#define UX				u8
+	#define UY				u16
+#else // if (VDP_UNIT == VDP_UNIT_U8)
+	#define UX				u8
+	#define UY				u8
+#endif
+
+
+#define VRAM16b(a)			(u16)((u32)(a >> 4))
+#define VRAM17b(a)			(u16)((u32)(a >> 1))
+#define Addr20bTo16b(a)		(u16)((u32)(a >> 4))	///< Convert 20-bits (V)RAM address into 16-bits with bit shifting
+#define Addr17bTo16b(a)		(u16)((u32)(a >> 1))	///< Convert 17-bits (V)RAM address into 16-bits with bit shifting
+
+#define REGSAV(a)			#(_g_VDP_REGSAV+a)
+#define STASAV(a)			#(_g_VDP_STASAV+a)
 
 /// VDP display modes
 enum VDP_MODE
@@ -139,43 +174,9 @@ enum VDP_MODE
 // MSX 1 FUNCTIONS
 //-----------------------------------------------------------------------------
 
-/// Set screen mode to Text 1
-void VDP_SetModeText1();
-
-/// Set screen mode to Multi-color
-void VDP_SetModeMultiColor();
-
-/// Set screen mode to Graphic 1
-void VDP_SetModeGraphic1();
-
-/// Set screen mode to Graphic 2
-void VDP_SetModeGraphic2();
-
 //-----------------------------------------------------------------------------
 // MSX 2 FUNCTIONS
 //-----------------------------------------------------------------------------
-
-#if (MSX_VERSION >= MSX_2)
-
-/// Set screen mode to Text 2
-void VDP_SetModeText2();
-
-/// Set screen mode to Graphic 3
-void VDP_SetModeGraphic3();
-
-/// Set screen mode to Graphic 4
-void VDP_SetModeGraphic4();
-
-/// Set screen mode to Graphic 5
-void VDP_SetModeGraphic5();
-
-/// Set screen mode to Graphic 6
-void VDP_SetModeGraphic6();
-
-/// Set screen mode to Graphic 7
-void VDP_SetModeGraphic7();
-
-#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 // MSX 2+ FUNCTIONS
@@ -186,10 +187,7 @@ void VDP_SetModeGraphic7();
 //-----------------------------------------------------------------------------
 
 /// Set screen mode. @see VDP_MODE
-void VDP_SetScreen(const u8 mode) __FASTCALL;
-
-/// Wait for VBlank flag trigger
-// void VDP_WaitVBlank();
+void VDP_SetMode(const u8 mode) __FASTCALL;
 
 /// Read default S#0 register
 u8 VDP_ReadDefaultStatus();
@@ -197,57 +195,53 @@ u8 VDP_ReadDefaultStatus();
 /// Read a given status register then reset status register to default (0)
 u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
+
+/// Write data from RAM to VRAM
+void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count);
+
+/// Fill VRAM area with a given value
+void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count);
+
+/// Read data from VRAM to RAM
+void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count);
+
 //-----------------------------------------------------------------------------
 #if (MSX_VERSION == MSX_1)
 
-/// Write data from RAM to VRAM
-void VDP_WriteVRAM1(const u8* src, u16 dest, u16 count);
+	#define VDP_WriteVRAM(src, destLow, destHigh, count)	VDP_WriteVRAM_16K(src, destLow, count)
+	#define VDP_FillVRAM(value, destLow, destHigh, count)	VDP_FillVRAM_16K(value, destLow, count)
+	#define VDP_ReadVRAM(srcLow, srcHigh, dest, count)		VDP_ReadVRAM_16K(srcLow, dest, count)
 
-/// Fill VRAM area with a given value
-void VDP_FillVRAM1(u8 value, u16 dest, u16 count);
-
-/// Read data from VRAM to RAM
-void VDP_ReadVRAM1(u16 src, u8* dest, u16 count);
-
-#define VDP_WriteVRAM(src, destLow, destHigh, count)	VDP_WriteVRAM1(src, destLow, count)
-#define VDP_FillVRAM(value, destLow, destHigh, count)	VDP_FillVRAM1(value, destLow, count)
-#define VDP_ReadVRAM(srcLow, srcHigh, dest, count)		VDP_ReadVRAM1(srcLow, dest, count)
-
-//-----------------------------------------------------------------------------
 #else // (MSX_VERSION >= MSX_2)
 
-/// Write data from RAM to VRAM
-void VDP_WriteVRAM2(const u8* src, u16 destLow, u8 destHigh, u16 count);
+	/// Write data from RAM to VRAM
+	void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count);
 
-/// Fill VRAM area with a given value
-void VDP_FillVRAM2(u8 value, u16 destLow, u8 destHigh, u16 count);
+	/// Fill VRAM area with a given value
+	void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count);
 
-/// Read data from VRAM to RAM
-void VDP_ReadVRAM2(u16 srcLow, u8 srcHigh, u8* dest, u16 count);
-
-#define VDP_WriteVRAM	VDP_WriteVRAM2
-#define VDP_FillVRAM	VDP_FillVRAM2
-#define VDP_ReadVRAM	VDP_ReadVRAM2
+	/// Read data from VRAM to RAM
+	void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count);
 
 #endif
 
-/// Enable/disable horizontal interruption
-void VDP_EnableHBlank(u8 enable) __FASTCALL;
+/// Enable/disable horizontal interruption [MSX2/2+/TR]
+void VDP_EnableHBlank(bool enable) __FASTCALL;
 
-///
+/// Set the horizontal-blank interruption line [MSX2/2+/TR]
 void VDP_SetHBlankLine(u8 line) __FASTCALL;
 
-///
+/// Set the vertical rendeing offset (in pixel) [MSX2/2+/TR]
 void VDP_SetVerticalOffset(u8 offset) __FASTCALL;
 
 /// Enable/disable vertical interruption
-void VDP_EnableVBlank(u8 enable) __FASTCALL;
+void VDP_EnableVBlank(bool enable) __FASTCALL;
 
 /// Enable/disable screen display
-void VDP_EnableDisplay(u8 enable) __FASTCALL;
+void VDP_EnableDisplay(bool enable) __FASTCALL;
 
 /// Enable/disable grayscale
-void VDP_SetGrayScale(u8 enable) __FASTCALL;
+void VDP_SetGrayScale(bool enable) __FASTCALL;
 
 #define VDP_FREQ_50HZ			R09_NT		///< Frequency at 50 Hz
 #define VDP_FREQ_60HZ			0			///< Frequency at 60 Hz
@@ -272,10 +266,10 @@ void VDP_SetPaletteEntry(u8 index, u16 color);
 void VDP_SetLineCount(u8 lines) __FASTCALL;
 
 /// Enable or disable interlace mode
-void VDP_SetInterlace(u8 enable) __FASTCALL;
+void VDP_SetInterlace(bool enable) __FASTCALL;
 
 /// Enable automatic page switch on even/odd frames
-void VDP_SetPageAlternance(u8 enable) __FASTCALL;
+void VDP_SetPageAlternance(bool enable) __FASTCALL;
 
 //-----------------------------------------------------------------------------
 // SPRITES
@@ -291,13 +285,13 @@ void VDP_EnableSprite(u8 enable) __FASTCALL;
 void VDP_SetSpriteFlag(u8 flag) __FASTCALL;
 
 /// Set sprite attribute table address
-void VDP_SetSpriteAttributeTable(u32 addr) __FASTCALL;
+void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL;
 
 /// Set sprite pattern table address
-void VDP_SetSpritePatternTable(u32 addr) __FASTCALL;
+void VDP_SetSpritePatternTable(VADDR addr) __FASTCALL;
 
 /// Set sprite table address (bit#16 to bit#1)
-void VDP_SetSpriteTables(u32 patternAddr, u32 attribAddr);
+void VDP_SetSpriteTables(VADDR patternAddr, VADDR attribAddr);
 
 /// Load pattern data into VRAM
 void VDP_LoadSpritePattern(const u8* addr, u8 index, u8 count);
@@ -319,6 +313,9 @@ void VDP_SetSpriteExUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color);
 
 /// Update sprite position
 void VDP_SetSpritePosition(u8 index, u8 x, u8 y);
+
+/// Update sprite position Y
+void VDP_SetSpritePositionY(u8 index, u8 y);
 
 /// Update sprite pattern
 void VDP_SetSpritePattern(u8 index, u8 shape);
@@ -373,9 +370,10 @@ void VPD_CommandReadLoop(u8* addr) __FASTCALL;
 
 #include "vdp.inl"
 
-//-----------------------------------------------------------------------------
-// VDP COMMANDS
+// DATA
+// inline u8 VDP_GetMode();
 
+// VDP COMMANDS
 // inline void VDP_CommandHMMC(const u8* addr, u16 dx, u16 dy, u16 nx, u16 ny); // High speed move CPU to VRAM.
 // inline void VDP_CommandYMMM(u16 sy, u16 dx, u16 dy, u16 ny, u8 dir); // High speed move VRAM to VRAM, Y coordinate only.
 // inline void VDP_CommandHMMM(u16 sx, u16 sy, u16 dx, u16 dy, u16 nx, u16 ny); // High speed move VRAM to VRAM

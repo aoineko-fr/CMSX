@@ -9,17 +9,6 @@
 //-----------------------------------------------------------------------------
 // DFINES
 
-#if (DRAW_UNIT == DRAW_UNIT_U16)
-	#define UX			u16
-	#define UY			u16
-#elif (DRAW_UNIT == DRAW_UNIT_Y16)
-	#define UX			u8
-	#define UY			u16
-#else // if (DRAW_UNIT == DRAW_UNIT_U8)
-	#define UX			u8
-	#define UY			u8
-#endif
-
 //-----------------------------------------------------------------------------
 // FUNCTIONS
 

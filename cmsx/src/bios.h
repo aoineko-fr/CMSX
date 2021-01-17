@@ -20,11 +20,10 @@
 // I_xxxx	Interrupts
 #include "bios_var.h"
 #include "bios_hook.h"
-#include "bios_func.h"
 #include "bios_port.h"
-
-
-
+#include "bios_mainrom.h"
+#include "bios_subrom.h"
+#include "bios_discrom.h"
 
 //─────────────────────────────────────────────────────────────────────────────
 // Defines
@@ -64,20 +63,24 @@
 #define SLOT(_p) (0x03 & _p)
 #define SLOTEX(_p, _s) ((0x03 & _p) | ((0x03 & _s) << 2) | SLOT_EXP)
 
-// Screens
-#define SCREEN_0	0
-#define SCREEN_1	1
-#define SCREEN_2	2
-#define SCREEN_3	3
-#define SCREEN_4	4
-#define SCREEN_5	5
-#define SCREEN_6	6
-#define SCREEN_7	7
-#define SCREEN_8	8
-#define SCREEN_9	9
-#define SCREEN_10	10
-#define SCREEN_11	10
-#define SCREEN_12	10
-
 // Files
 #define FILE(str) "\"" str "\""
+
+
+//-----------------------------------------------------------------------------
+//  █ █ █▀▀ █   █▀█ █▀▀ █▀█   █▀▀ █ █ █▄ █ █▀▀ ▀█▀ █ █▀█ █▄ █ █▀
+//  █▀█ ██▄ █▄▄ █▀▀ ██▄ █▀▄   █▀  █▄█ █ ▀█ █▄▄  █  █ █▄█ █ ▀█ ▄█
+//-----------------------------------------------------------------------------
+
+// Call a bios function
+inline void Bios_MainCall(u16 addr);
+
+/// Handle soft reboot
+void Bios_Reboot();
+
+/// Handle clean transition to Basic or MSX-DOS environment
+void Bios_Exit(u8 ret) __FASTCALL;
+
+/// Get the slot ID of a given page
+u8 Bios_GetSlot(u8 page) __FASTCALL;
+

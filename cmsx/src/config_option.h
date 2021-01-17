@@ -59,13 +59,23 @@
 #define PRINT_HEIGHT_X		2 // 
 
 //-----------------------------------------------------------------------------
-// DRAW MODULE
+// VDP MODULE
 //-----------------------------------------------------------------------------
 
-// DRAW_UNIT
-#define DRAW_UNIT_U8		0 // X and Y use 8-bits values
-#define DRAW_UNIT_Y16		1 // X use 8-bits and Y use 16-bits values
-#define DRAW_UNIT_U16		2 // X and Y use 16-bits values
+// VDP_VRAM
+#define VDP_VRAM_ADDR_16	0 // Use 16-bits VRAM address (u16)
+#define VDP_VRAM_ADDR_17	1 // Use 17-bits VRAM address (u32)
+
+// VDP_UNIT
+#define VDP_UNIT_U8			0 // X and Y use 8-bits values
+#define VDP_UNIT_X16		1 // X use 16-bits and Y use 8-bits values
+#define VDP_UNIT_Y16		2 // X use 8-bits and Y use 16-bits values
+#define VDP_UNIT_U16		3 // X and Y use 16-bits values
+
+
+//-----------------------------------------------------------------------------
+// DRAW MODULE
+//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // MATH MODULE

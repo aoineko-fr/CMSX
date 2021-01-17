@@ -4,6 +4,8 @@
 //-----------------------------------------------------------------------------
 #include "draw.h"
 
+#if (MSX_VERSION >= MSX_2)
+
 //-----------------------------------------------------------------------------
 /// Draw a line (pixel unit)
 void Draw_Line(UX x1, UY y1, UX x2, UY y2, u8 color, u8 op)
@@ -146,3 +148,5 @@ void Draw_Circle(UX dx, UY dy, u8 radius, u8 color, u8 op)
 		}
 	}	
 }
+
+#endif // (MSX_VERSION >= MSX_2)

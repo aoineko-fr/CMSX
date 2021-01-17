@@ -62,6 +62,8 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_IDX(key)		(key >> 4)
 #define KEY_FLAG(key)		(1 << KEY_IDX(key))
 
+#define IS_KEY_PRESSED(row, key) ((row & KEY_FLAG(key)) == 0)
+
 #define KEY_0			MAKE_KEY(0, 0)
 #define KEY_1			MAKE_KEY(0, 1)
 #define KEY_2			MAKE_KEY(0, 2)

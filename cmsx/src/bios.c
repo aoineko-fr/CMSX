@@ -2,7 +2,9 @@
 //  █▀▀ █▀▄▀█ █▀ ▀▄▀
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
-// MAIN-ROM ROUTINES WRAPPER
+//
+//  █▄▄ █ █▀█ █▀
+//  █▄█ █ █▄█ ▄█
 //
 // References:
 // - MSX2 Technical Handbook
@@ -12,11 +14,10 @@
 #include "core.h"
 #include "bios_mainrom.h"
 
-//=============================================================================
-//
-// Helper functions
-//
-//=============================================================================
+//-----------------------------------------------------------------------------
+//  █ █ █▀▀ █   █▀█ █▀▀ █▀█
+//  █▀█ ██▄ █▄▄ █▀▀ ██▄ █▀▄
+//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 /// Call a bios function
@@ -61,7 +62,16 @@ void Bios_Exit(u8 ret) __FASTCALL
 
 #elif (TARGET_TYPE == TARGET_TYPE_BIN)
 	
-	Call(R_INITXT); // Back to Screen Mode 0 (T1)
+	__asm
+		// Set Screen mode to 5...
+		ld		a, #5
+		call	R_CHGMOD
+		// ... to be able to call TOTEXT routine
+		call	R_TOTEXT
+		// 
+		ld		ix, #0x409B
+		call	R_CALBAS
+	__endasm;
 
 #else // if (TARGET_TYPE == TARGET_TYPE_ROM)
 
@@ -83,6 +93,7 @@ u8 Bios_GetSlot(u8 page) __FASTCALL
 	return slot;
 }
 
+//-----------------------------------------------------------------------------
 /// Set a safe hook jump to given function
 void Bios_SetHookCallback(u16 hook, callback cb)
 {
@@ -90,13 +101,10 @@ void Bios_SetHookCallback(u16 hook, callback cb)
 	Bios_SetHookInterSlotCallback(hook, slot, cb);
 }
 
-// Bios calls that can be called directly from MSX-DOS
-//
-// RDSLT (000CH) - read value at specified address of specified slot
-// WRSLT (0014H) - write value at specified address of specified slot
-// CALSLT (001CH) - call specified address of specified slot
-// ENASLT (0024H) - make specified slot available
-// CALLF (0030H) - call specified address of specified slot
+//-----------------------------------------------------------------------------
+//  █▀▄▀█ ▄▀█ █ █▄ █ ▄▄ █▀█ █▀█ █▀▄▀█
+//  █ ▀ █ █▀█ █ █ ▀█    █▀▄ █▄█ █ ▀ █
+//-----------------------------------------------------------------------------
 
 //=============================================================================
 //
@@ -1635,7 +1643,11 @@ u8 Bios_GetKeyboardMatrix(u8 line) __FASTCALL
 // Input    : IX - For the calling address
 // Output   : Depends on the called routine
 // Registers: Depends on the called routine
-
+#define CallBASIC(_addr)				\
+__asm									\
+	ld		ix, _addr					\
+	call	R_CALBAS					\
+__endasm
 
 //=============================================================================
 //

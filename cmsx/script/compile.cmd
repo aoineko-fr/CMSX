@@ -22,7 +22,7 @@ if /I %Ext%==com (set TargetType=TARGET_TYPE_DOS)
 if not exist %OutDir% ( md %OutDir% )
 
 REM set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src --opt-code-speed --max-allocs-per-node20000 %File% -o %OutDir%\
-set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src --opt-code-speed %File% -o %OutDir%\
+set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src --opt-code-speed --constseg RODATA %File% -o %OutDir%\
 set ASMParam=-o -l -s -I%ProjDir% -I%LibDir%\src %File%
 
 if /I %FileExt%==.c (
@@ -33,7 +33,7 @@ if /I %FileExt%==.c (
     if errorlevel 1 ( goto :Error )
 )
 
-if /I %FileExt%==.s (
+if /I %FileExt%==.asm (
 	echo [94mCompiling %1 using SDASZ80 ASM compiler...[0m
 	
 	echo SDASZ80 %ASMParam%

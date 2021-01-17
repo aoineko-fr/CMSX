@@ -64,6 +64,7 @@ void Mem_Copy(const void* src, void* dest, u16 size)
 		ld		c, 8(ix)
 		ld		b, 9(ix)
 		pop		ix
+#if 1			
 		// Skip if size == 0
 		ld		a, b
 		or		a, c
@@ -71,6 +72,42 @@ void Mem_Copy(const void* src, void* dest, u16 size)
 		// Do copy
 		ldir
 	_copy_end:
+
+#else // Fast LDIR (with 16x unrolled LDI) ; only work on RAM
+// Up to 19% faster alternative for large LDIRs (break-even at 21 loops)
+// hl = source (“home location”)
+// de = destination
+// bc = byte count
+	FastLDIR:
+		xor		a
+		sub		c
+		and		#(16 - 1)
+		add		a, a
+		di
+		ld		(FastLDIR_jumpOffset), a
+		ei
+		jr nz,$  ; self modifying code
+	FastLDIR_jumpOffset: equ $ - 1
+	FastLDIR_Loop:
+		ldi  ; 16x LDI
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		ldi
+		jp		pe, FastLDIR_Loop
+		ret
+#endif
 
 	__endasm;
 }

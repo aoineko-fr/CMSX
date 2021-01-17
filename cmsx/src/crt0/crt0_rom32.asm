@@ -2,10 +2,10 @@
 ;  █▀▀ █▀▄▀█ █▀ ▀▄▀
 ;  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 ;------------------------------------------------------------------------------
-; crt0 header for MSX-DOS program
+; crt0 header for 32KB ROM
 ; 
-; Code address: 0x0100
-; Data address: (after code)
+; Code address: 0x4010
+; Data address: 0xC000
 ;------------------------------------------------------------------------------
 .module	crt0
 
@@ -16,10 +16,22 @@
 .globl  s__HEAP
 
 HIMEM = #0xFC4A
+PPI_A = #0xA8
 
 ;------------------------------------------------------------------------------
 .area	_HEADER (ABS)
-	.org	0x0100 ; MSX-DOS .com program start address
+	.org	0x4000
+
+	; ROM header
+	.db		0x41
+	.db		0x42
+	.dw		init
+	.dw		0x0000
+	.dw		0x0000
+	.dw		0x0000
+	.dw		0x0000
+	.dw		0x0000
+	.dw		0x0000
 
 ;------------------------------------------------------------------------------
 .area	_CODE
@@ -29,11 +41,22 @@ init:
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
 	
+	; Set Page 2 slot equal to Page 1 slot
+	in		a, (PPI_A)
+	and		a, #0xCF
+	ld		c, a
+	in		a, (PPI_A)
+	and		a, #0x0C
+	add		a, a
+	add		a, a
+	or		a, c
+	out		(PPI_A), a
+	
 	; Initialize globals
     ld		bc, #l__INITIALIZER
 	ld		a, b
 	or		a, c
-	jp		z, start
+	jp		z, start	
 	ld		de, #s__INITIALIZED
 	ld		hl, #s__INITIALIZER
 	ldir
@@ -46,25 +69,23 @@ start:
 	; start main() function
 	ei
 	call	_main
-	; exit program and return value from L register
-	ld		c, #0x62
-	ld		b, l
-	call	5				; Try the DOS-2 termination function (_TERM)
-	ld		c, #0x00
-	jp		5				; Otherwise, try the DOS-1 termination function (0)
+	rst		0
 
 ;------------------------------------------------------------------------------
 ; Ordering of segments for the linker
 
+;-- ROM --
 .area	_HOME
 .area	_CODE
+.area	_RODATA
 .area	_INITIALIZER 
 .area   _GSINIT
 .area   _GSFINAL
+
+;-- RAM --
 .area	_DATA
 _g_HeapStartAddress::
 	.ds 2
-
 .area	_INITIALIZED
 .area	_BSEG
 .area   _BSS

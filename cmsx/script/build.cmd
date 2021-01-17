@@ -10,13 +10,31 @@ echo ║ BUILD TOOL                                                             
 echo ╚═══════════════════════════════════════════════════════════════════════════╝
 echo.
 
+setlocal EnableDelayedExpansion
+
 rem ***************************************************************************
 rem * TARGET SETTINGS                                                         *
 rem ***************************************************************************
 call %LibDir%\script\target_config.cmd
 
-set SrcList=%LibDir%\src\crt0\%Crt0%.s %SrcList%
-set LibList=%OutDir%\%Crt0%.rel %LibList%
+
+rem ***************************************************************************
+rem * MODULES                                                                 *
+rem ***************************************************************************
+
+rem  Add crt0 source to build list (it must be the first in the list)
+set SrcList=%LibDir%\src\crt0\%Crt0%.asm
+set LibList=%OutDir%\%Crt0%.rel 
+
+rem  Add project source to build list
+set SrcList= %SrcList%,%ProjName%.c
+set LibList=%LibList% %OutDir%\%ProjName%.rel
+
+rem  Add modules sources to build list
+for %%G in (%ModuleList%) do (
+	set SrcList=!SrcList!,%LibDir%\src\%%G.c
+	set LibList=!LibList! %OutDir%\%%~nG.rel
+)
 
 rem ***************************************************************************
 if %DoClean%==0 goto :NoClean
@@ -74,7 +92,7 @@ echo [94mMaking %ProjName% using SDCC...[0m
 if %Optim%==Speed (set LinkOpt=%LinkOpt% --opt-code-speed)
 if %Optim%==Size (set LinkOpt=%LinkOpt% --opt-code-size)
 
-set SDCCParam=-mz80 --no-std-crt0 --code-loc 0x%CodeAddr% --data-loc 0x%DataAddr% --vc %LinkOpt% %LibList% -o %OutDir%\
+set SDCCParam=-mz80 --no-std-crt0 --code-loc 0x%CodeAddr% --data-loc 0x%DataAddr% --constseg RODATA --vc %LinkOpt% %LibList% -o %OutDir%\
 echo SDCC %SDCCParam%
 %SDCC% %SDCCParam%
 if errorlevel 1 goto :Error
