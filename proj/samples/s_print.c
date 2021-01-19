@@ -268,7 +268,7 @@ void PrintEffect()
 #if (USE_PRINT_SPRITE)
 	Print_DrawText("Loading...");
 	VDP_EnableSprite(true);
-	VDP_SetSpriteTables(0x0C000, 0x0CA00);
+	VDP_SetSpriteTables(0x1C000, 0x1CA00);
 	VDP_SetSpriteFlag(VDP_SPRITE_SCALE_2);
 	#if (PRINT_COLOR_NUM > 1)
 		Print_SetColorShade(g_Modes[g_ModeIndex].ColorShade);

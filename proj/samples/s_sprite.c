@@ -176,7 +176,7 @@ void main()
 	g_Frame = T.a + T.b + T.c;
 	
 	// Setup screen
-	VDP_SetScreen(VDP_MODE_SCREEN5);
+	VDP_SetMode(VDP_MODE_SCREEN5);
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 	VDP_CommandHMMV(0, 212, 256, 1024, 0); // Clear VRAM
@@ -184,8 +184,8 @@ void main()
 	
 	// Setup sprite
 	VDP_EnableSprite(true);
-	VDP_SetSpritePatternTable(0x07000);
-	VDP_SetSpriteAttributeTable(0x07A00);
+	VDP_SetSpritePatternTable(0x17000);
+	VDP_SetSpriteAttributeTable(0x17A00);
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 /*+ VDP_SPRITE_SCALE_2*/);
 
 	// Load 8x8 sprites (Pattern 0~95)
@@ -249,7 +249,7 @@ void main()
 	VDP_HideSpriteFrom(SPRITE_16_1ST + 7);
 
 	// Setup print
-	Print_Initialize(VDP_MODE_SCREEN5, g_Font_CMSX_Std0);
+	Print_Initialize(g_Font_CMSX_Std0);
 	Print_SetColor(0xF, 0x4);
 	Print_SetPosition(4, 2);
 	Print_DrawText("VDP SPRITE SAMPLE (G4)");

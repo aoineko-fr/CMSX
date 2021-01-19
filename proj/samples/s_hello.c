@@ -18,17 +18,17 @@ const c8 TestString[] = "ABCDEFG";
 
 __at(0x7000) const u8 TestData[] = { 13, 24, 75, 96 };
 
-__at(0xC000) u8 TestRAM[4];
+__at(0xE000) u8 TestRAM[4];
 
 //-----------------------------------------------------------------------------
 // Program entry point
 void main()
 {
-	VDP_SetScreen(VDP_MODE_SCREEN5);
+	VDP_SetMode(VDP_MODE_SCREEN5);
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 
-	Print_Initialize(VDP_MODE_SCREEN5, g_Font_CMSX_Std0);
+	Print_Initialize(g_Font_CMSX_Std0);
 	Print_SetPosition(3, 2);
 	Print_DrawText("HELLO WORLD");
 	Draw_Box(0, 0, 255, 16, 0, 0x0F);

@@ -133,7 +133,7 @@ void DisplayPage()
 	//-------------------------------------------------------------------------
 	// Init
 	
-	VDP_SetScreen(src->Mode);
+	VDP_SetMode(src->Mode);
 	VDP_SetColor(src->Black);
 	VDP_CommandHMMV(0, 0, src->Width, 212, src->Background);
 	
@@ -141,7 +141,7 @@ void DisplayPage()
 	VDP_SetPaletteEntry(2, RGB16(1, 1, 4));
 	VDP_SetPaletteEntry(3, RGB16(2, 2, 7));
 
-	Print_Initialize(src->Mode, src->Font);
+	Print_Initialize(src->Font);
 	Print_SetColor(src->Text, src->Background);
 	
 	Print_SetPosition(4, 2);
