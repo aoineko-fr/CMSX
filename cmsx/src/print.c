@@ -573,7 +573,7 @@ void DrawChar_Trans(u8 chr) __FASTCALL
 			g_VDP_Command.NY = 3;
 			g_VDP_Command.CLR = g_PrintData.OutlineColor;
 			g_VDP_Command.ARG = 0;
-			g_VDP_Command.CMD = VDP_CMD_LMMV + 0;
+			g_VDP_Command.CMD = (u8)(VDP_CMD_LMMV + 0);
 			for(u8 j = 0; j < PRINT_H(g_PrintData.PatternY); ++j)
 			{
 				g_VDP_Command.DX = g_PrintData.CursorX - 1;

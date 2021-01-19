@@ -1408,7 +1408,7 @@ void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 /// @param		addr		VRAM address (only the lowest 17 bits are used)
 void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL
 {
-	g_SpriteAtributeHigh = addr >> 8;
+	g_SpriteAtributeHigh = addr >> 16;
 	g_SpriteAtributeLow = (u16)addr;
 	
 #if ((VDP_VRAM_ADDR == VDP_VRAM_ADDR_16) || (MSX_VERSION == MSX_1))
@@ -1424,7 +1424,7 @@ void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL
 #endif
 
 	addr -= 0x200;
-	g_SpriteColorHigh = addr >> 8;
+	g_SpriteColorHigh = addr >> 16;
 	g_SpriteColorLow = (u16)addr;
 }
 
