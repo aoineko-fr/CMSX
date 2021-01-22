@@ -6,9 +6,9 @@
  * @file Features to manage the VDP - Defines, structures and functions header
  *
  * References:
- * - V9938 Technical Data Book Programmer's Guide
- * - https://www.msx.org/wiki/Category:VDP_Registers
- * - http://map.grauw.nl/articles/
+ *  - V9938 Technical Data Book Programmer's Guide
+ *  - https://www.msx.org/wiki/Category:VDP_Registers
+ *  - http://map.grauw.nl/articles/
  */
 #pragma once
 #pragma sdcc_hash +

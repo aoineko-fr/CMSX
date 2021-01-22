@@ -6,9 +6,9 @@
  * @file Features to manage the VDP - Source code
  *
  * References:
- * - V9938 Technical Data Book Programmer's Guide
- * - https://www.msx.org/wiki/Category:VDP_Registers
- * - http://map.grauw.nl/articles/
+ *  - V9938 Technical Data Book Programmer's Guide
+ *  - https://www.msx.org/wiki/Category:VDP_Registers
+ *  - http://map.grauw.nl/articles/
  */
 
 //-----------------------------------------------------------------------------

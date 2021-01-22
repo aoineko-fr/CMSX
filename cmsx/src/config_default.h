@@ -95,6 +95,11 @@
 	#warning USE_PRINT_FX_OUTLINE is not defined in "cmsx_config.h"! Default value will be used: 0
 	#define USE_PRINT_FX_OUTLINE		0
 #endif
+// USE_PRINT_UNIT
+#ifndef USE_PRINT_UNIT
+	#warning USE_PRINT_UNIT is not defined in "cmsx_config.h"! Default value will be used: 0
+	#define USE_PRINT_UNIT				0
+#endif
 // PRINT_WIDTH
 #ifndef PRINT_WIDTH
 	#warning PRINT_WIDTH is not defined in "cmsx_config.h"! Default value will be used: PRINT_WIDTH_8

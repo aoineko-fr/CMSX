@@ -76,7 +76,7 @@ struct Print_Data
 #if (USE_PRINT_VRAM)
 	// VRAM
 	UY FontVRAMY;				///< Y position of the font in VRAM
-	// u16 FormsPerLine;			///< Pre-compute number of characters per line
+	u8 CharPerLine;
 #endif
 #if (USE_PRINT_SPRITE)
 	// Sprites

@@ -23,27 +23,26 @@
 	#define DATA_LEN 8
 #endif
 
-// 8-bits colors
-#if (USE_VDP_MODE_G7)
+//-----------------------------------------------------------------------------
+// PROTOTYPE
+
+// Draw character from RAM - 8-bits colors
 void DrawChar_8B(u8 chr) __FASTCALL;
-#endif
-
-// 4-bits colors
-#if (USE_VDP_MODE_G4 || USE_VDP_MODE_G6)
+// Draw character from RAM - 4-bits colors
 void DrawChar_4B(u8 chr) __FASTCALL;
-#endif
-
-// 2-bits colors
-#if (USE_VDP_MODE_G5)
+// Draw character from RAM - 2-bits colors
 void DrawChar_2B(u8 chr) __FASTCALL;
-#endif
+// Draw character from RAM - 1-bit color
 
-// 1-bit color
-#if (USE_VDP_MODE_T1 || USE_VDP_MODE_T2 || USE_VDP_MODE_G1 || USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
-#endif
-
+// Draw character from RAM - Multi-mode transparent 
 void DrawChar_Trans(u8 chr) __FASTCALL;
-void DrawChar_VRAM(u8 chr) __FASTCALL;
+
+// Draw character from VRAM - 256 pixel screen
+void DrawChar_VRAM256(u8 chr) __FASTCALL;
+// Draw character from VRAM - 512 pixel screen
+void DrawChar_VRAM512(u8 chr) __FASTCALL;
+
+// Draw character from Sprites
 void DrawChar_Sprite(u8 chr) __FASTCALL;
 
 //-----------------------------------------------------------------------------
@@ -208,7 +207,21 @@ void Print_SetMode(u8 mode) __FASTCALL
 #if (USE_PRINT_VRAM)
 	else if(g_PrintData.SourceMode == PRINT_MODE_VRAM)
 	{
-		g_PrintData.DrawChar = DrawChar_VRAM;
+		switch(VDP_GetMode()) // Screen mode specific initialization
+		{
+		#if ((USE_VDP_MODE_G4) || (USE_VDP_MODE_G7))
+			case VDP_MODE_GRAPHIC4:
+			case VDP_MODE_GRAPHIC7:
+				g_PrintData.DrawChar = DrawChar_VRAM256;
+				break;
+		#endif
+		#if ((USE_VDP_MODE_G5) || (USE_VDP_MODE_G6))
+			case VDP_MODE_GRAPHIC5:
+			case VDP_MODE_GRAPHIC6:
+				g_PrintData.DrawChar = DrawChar_VRAM512;
+				break;
+		#endif
+		};
 	}
 #endif
 #if (USE_PRINT_SPRITE)
@@ -635,8 +648,7 @@ void Print_SetFontVRAM(const u8* font, UY y)
 	UX cx = g_PrintData.CursorX;
 	UY cy = g_PrintData.CursorY;
 
-	// Load font to VRAM
-	
+	// Load font to VRAM	
 	Print_SetMode(PRINT_MODE_TRANSPARENT); // Activate default mode to write font data into VRAM
 	g_PrintData.FontVRAMY = y;
 	// @todo To optimize (pre-compute + fixed width/height cases
@@ -654,24 +666,60 @@ void Print_SetFontVRAM(const u8* font, UY y)
 	g_PrintData.CursorX = cx;
 	g_PrintData.CursorY = cy;
 	
+	g_PrintData.CharPerLine = g_PrintData.ScreenWidth / PRINT_W(g_PrintData.UnitX);
+	
 	Print_SetMode(PRINT_MODE_VRAM);
 }
 
+#if (USE_VDP_MODE_G4 || USE_VDP_MODE_G7)
 //-----------------------------------------------------------------------------
 /// 
 /// @param		chr			The character to draw
-void DrawChar_VRAM(u8 chr) __FASTCALL
+void DrawChar_VRAM256(u8 chr) __FASTCALL
 {
 	#if (USE_PRINT_VALIDATOR)
 		Print_ValidateChar(&chr);
 	#endif
-	u16 idx = chr - g_PrintData.FontFirst;
-	// @todo To optimize (pre-compute + fixed width/height cases
-	u8 nx = g_PrintData.ScreenWidth / PRINT_W(g_PrintData.UnitX);
-	u16 sx = (idx % nx) * PRINT_W(g_PrintData.UnitX);		
-	u16 sy = (idx / nx) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
+	u8 idx = chr - g_PrintData.FontFirst;
+	#if (PRINT_WIDTH == PRINT_WIDTH_6)
+		u16 sx = (idx % 42) * PRINT_W(g_PrintData.UnitX);		
+		u16 sy = (idx / 42) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
+	#elif (PRINT_WIDTH == PRINT_WIDTH_8)
+		u16 sx = (idx % 32) * PRINT_W(g_PrintData.UnitX);		
+		u16 sy = (idx / 32) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
+	#else
+		u16 sx = (idx % g_PrintData.CharPerLine) * PRINT_W(g_PrintData.UnitX);		
+		u16 sy = (idx / g_PrintData.CharPerLine) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
+	#endif
+
 	VDP_CommandHMMM(sx, sy, g_PrintData.CursorX, g_PrintData.CursorY, PRINT_W(g_PrintData.UnitX), PRINT_H(g_PrintData.PatternY));
 }
+#endif // (USE_VDP_MODE_G4 || USE_VDP_MODE_G7)
+
+#if (USE_VDP_MODE_G5 || USE_VDP_MODE_G6)
+//-----------------------------------------------------------------------------
+/// 
+/// @param		chr			The character to draw
+void DrawChar_VRAM512(u8 chr) __FASTCALL
+{
+	#if (USE_PRINT_VALIDATOR)
+		Print_ValidateChar(&chr);
+	#endif
+	u8 idx = chr - g_PrintData.FontFirst;
+	#if (PRINT_WIDTH == PRINT_WIDTH_6)
+		u16 sx = (idx % 85) * PRINT_W(g_PrintData.UnitX);		
+		u16 sy = (idx / 85) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
+	#elif (PRINT_WIDTH == PRINT_WIDTH_8)
+		u16 sx = (idx % 64) * PRINT_W(g_PrintData.UnitX);		
+		u16 sy = (idx / 64) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
+	#else
+		u16 sx = (idx % g_PrintData.CharPerLine) * PRINT_W(g_PrintData.UnitX);		
+		u16 sy = (idx / g_PrintData.CharPerLine) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
+	#endif
+
+	VDP_CommandHMMM(sx, sy, g_PrintData.CursorX, g_PrintData.CursorY, PRINT_W(g_PrintData.UnitX), PRINT_H(g_PrintData.PatternY));
+}
+#endif // (USE_VDP_MODE_G5 || USE_VDP_MODE_G6)
 
 #endif // (USE_PRINT_VRAM)
 
@@ -811,7 +859,9 @@ void Print_DrawBin8(u8 value) __FASTCALL
 		else
 			Print_DrawChar('0');
 	}
-	Print_DrawChar('b');
+	#if (USE_PRINT_UNIT)
+		Print_DrawChar('b');
+	#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -821,7 +871,9 @@ void Print_DrawHex8(u8 value) __FASTCALL
 {
 	Print_DrawChar(hexChar[(value >> 4) & 0x000F]);
 	Print_DrawChar(hexChar[value & 0x000F]);
-	Print_DrawChar('h');
+	#if (USE_PRINT_UNIT)
+		Print_DrawChar('h');
+	#endif
 }
 
 //-----------------------------------------------------------------------------
