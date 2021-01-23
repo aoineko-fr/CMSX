@@ -109,8 +109,14 @@
 #define USE_PRINT_SPRITE			1	// Allow use of Sprite font
 #define USE_PRINT_FX_SHADOW			1	// Allow use of text shadow
 #define USE_PRINT_FX_OUTLINE		1	// Allow use of text outline
+#define USE_PRINT_UNIT				1	// Display integer type (h: hexadecimal, b: binary)
 #define PRINT_COLOR_NUM				12	// 1 color per line
+// - PRINT_WIDTH_6
+// - PRINT_WIDTH_8
+// - PRINT_WIDTH_X
 #define PRINT_WIDTH					PRINT_WIDTH_X
+// - PRINT_HEIGHT_8
+// - PRINT_HEIGHT_X
 #define PRINT_HEIGHT				PRINT_HEIGHT_X
 
 //-----------------------------------------------------------------------------

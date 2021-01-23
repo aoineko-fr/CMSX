@@ -20,10 +20,26 @@ __at(0x7000) const u8 TestData[] = { 13, 24, 75, 96 };
 
 __at(0xE000) u8 TestRAM[4];
 
+void TestFunc();
+
+void DummyFunc() __naked
+{
+	__asm
+		.area	_MYAREA(ABS)
+		.org	0x7800
+	_TestFunc::
+		ld		HL, #_TestData
+		inc		(HL)
+		.area	_CODE
+	__endasm;
+}
+
 //-----------------------------------------------------------------------------
 // Program entry point
 void main()
 {
+	TestFunc();
+	
 	VDP_SetMode(VDP_MODE_SCREEN5);
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);

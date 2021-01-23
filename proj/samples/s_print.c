@@ -289,6 +289,44 @@ void PrintEffect()
 }
 
 //-----------------------------------------------------------------------------
+void PrintBenchmark()
+{
+	PrintHeader();
+
+	Print_SetPosition(0, 24);
+	Print_DrawText("Font: ");
+	Print_DrawText(g_Fonts[g_FontIndex].Name);
+	
+	////////////////////////
+    static const char text1[]="BONJOUR LE FUTUR\n";
+    static const char text2[]="ICI LE MSX QUI VOUS PARLE\n";
+    static const char text3[]="DEPUIS L'ANNEE 1985\n";
+    static const char text4[]="IL PARAIT QUE LES VIEUX\n";
+    static const char text5[]="JOUENT ENCORE AVEC MOI\n";
+    static const char text6[]="DANS LES ANNEES 2020 ?\n";
+    static const char text7[]="Incroyable !\n";
+
+	Print_DrawText("\n\nLoading...");
+	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
+	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212);
+	Print_Backspace(String_GetLength("Loading..."));
+	u8 startTime = g_JIFFY;
+	Print_DrawText(text1);
+	Print_DrawText(text2);
+	Print_DrawText(text3);
+	Print_DrawText(text4);
+	Print_DrawText(text5);
+	Print_DrawText(text6);
+	Print_DrawText(text7);
+	u8 elapsedTime = g_JIFFY - startTime;
+	Print_DrawInt(elapsedTime);
+	////////////////////////
+	
+	Print_SetMode(PRINT_MODE_DEFAULT);
+	PrintFooter();
+}
+
+//-----------------------------------------------------------------------------
 // Program entry point
 void main()
 {
@@ -319,6 +357,11 @@ void main()
 			cb = PrintEffect;
 			cb();
 		}
+		else if(IS_KEY_PRESSED(row, KEY_CODE))
+		{
+			cb = PrintBenchmark;
+			cb();
+		}		
 
 		row = Keyboard_Read(KEY_ROW(KEY_RIGHT));
 
@@ -359,11 +402,13 @@ void main()
 		static const u8 chrAnim[] = { '|', '\\', '-', '/' };
 		Print_DrawChar(chrAnim[count & 0x03]);
 		
-		for(u8 i = 0; i < String_GetLength(g_SpriteText); ++i)
+		if(cb == PrintEffect)
 		{
-			VDP_SetSpritePositionY(i, 155 + ((i16)(g_Sinus32[((count >> 2) + i) % 32]) >> 8));
+			for(u8 i = 0; i < String_GetLength(g_SpriteText); ++i)
+			{
+				VDP_SetSpritePositionY(i, 155 + ((i16)(g_Sinus32[((count >> 2) + i) % 32]) >> 8));
+			}
 		}
-		
 		count++;
 	}
 
