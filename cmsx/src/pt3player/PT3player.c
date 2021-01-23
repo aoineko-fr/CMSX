@@ -56,9 +56,9 @@ mvac7 version:
 #include "PT3player.h"
 
 //VARS:
-u8  ChanA[29]; // CHNPRM_Size
-u8  ChanB[29];
-u8  ChanC[29];			
+u8  ChanA[CHNPRM_Size];
+u8  ChanB[CHNPRM_Size];
+u8  ChanC[CHNPRM_Size];			
 
 u8  DelyCnt;
 u16 CurESld;		
@@ -74,19 +74,23 @@ u16 EnvBase;
 u8  VAR0END[240];
 
 u8  PT3_State;			// Before called PT3_SETUP
+//	x	x	LR	LE	MC	MB	MA	PLY
 //	7	6	5	4	3	2	1	0	
-//	│			│			└────── Play Enable
-//	│			└────────────────── Loop Enable
-//	└────────────────────────────── Loop Reached
+//			│	│	│	│	│	└── Play Enable
+//			│	│	│	│	└────── Mute Channel A [EXTRA]
+//			│	│	│	└────────── Mute Channel B [EXTRA]
+//			│	│	└────────────── Mute Channel C [EXTRA]
+//			│	└────────────────── Loop Enable
+//			└────────────────────── Loop Reached [EXTRA]
          
 u16 PT3_ModAddr;		// Song data address
 u16 PT3_CrPsPtr;		// Cursor position in pattern
 u16 PT3_SamPtrs;		// Sample info?
 u16 PT3_OrnPtrs;		// Ornament pattern
 
-u16 PT3_PDSP;			// pilasave
-u16 PT3_CSP;			// pilsave2
-u16 PT3_PSP;			// pilsave3
+u16 PT3_PDSP;			// Stack pointer backup
+u16 PT3_CSP;			// Stack pointer backup
+u16 PT3_PSP;			// Stack pointer backup
   
 u8  PT3_PrNote;			//
 u16 PT3_PrSlide;		//
@@ -111,19 +115,15 @@ u16 PT3_SrtCrPsPtr;  	// Cursor position in pattern at start
 
 #endif // (PT3_EXTRA)
 
-
 	
+//-----------------------------------------------------------------------------
+//
+// FUNCTIONS PROTOTYPE
+//
+//-----------------------------------------------------------------------------
 
-// ================================== REPLAYER =================================
-
-
-
-/* =============================================================================
- PT3_Init
- Description: Initialize the Player
- Input:       -
- Output:      -
-============================================================================= */
+//-----------------------------------------------------------------------------
+/// Initialize the PT3 player
 void PT3_Init()
 {
 // Create Volume Table for Vortex Tracker II/PT3.5
@@ -132,7 +132,7 @@ __asm
 	ld		HL, #0x11
 	ld		D, H
 	ld		E, H
-	ld		IX, #_VAR0END  ;_VT_ + 16
+	ld		IY, #_VAR0END  ;_VT_ + 16
 	ld		B, #15
 INITV1:	
 	push	HL
@@ -146,8 +146,8 @@ INITV2:
 	rla
 	ld		A, H
 	adc		A, #0
-	ld		(IX), A
-	inc		IX
+	ld		(IY), A
+	inc		IY
 	add		HL, DE
 	djnz	INITV2
 	pop		HL
@@ -159,117 +159,26 @@ INITV3:
 	ld		B, C
 	djnz	INITV1
 
-
-CLEAR_REGS: 
+InitClearRegs: 
 	xor		A  
-	ld		(#_PT3_State), A
+	ld		(#_PT3_State), A		// Reset PT3_State
 	ld		HL, #_PT3_Regs
 	ld		DE, #_PT3_Regs + 1
 	ld		BC, #13
 	ld		(HL), A
-	ldir  
+	ldir							// Reset PT3_Regs
 
 __endasm;
 }
 
-
-
-
-
-/* =============================================================================
- PT3_Mute
- Description: Silence the PSG
- Input:       -
- Output:      -
-============================================================================= */
-void PT3_Mute() __naked
-{
-__asm
-MUTE:	
-	xor		A
-	ld		(#_PT3_Regs + PSG_REG_AMP_A), A
-	ld		(#_PT3_Regs + PSG_REG_AMP_B), A
-	ld		(#_PT3_Regs + PSG_REG_AMP_C), A
-	
-	jp		_PT3_UpdatePSG                ;ROUT_A0
-  
-__endasm;
-}
-// ----------------------------------------------------------------------------- END PT3_Mute
-
-
-
-/* =============================================================================
- PT3_Pause
- Description: Pause song playback
- Input:       -
- Output:      -
-============================================================================= */
-void PT3_Pause() __naked
-{
-__asm
-	ld		HL, #_PT3_State       
-	res		1, (HL)
-
-	jp		MUTE
-__endasm;
-}
-// ----------------------------------------------------------------------------- <<< END PT3_Pause
-
-
-
-/* =============================================================================
- PT3_Resume
- Description: Resume song playback
- Input:       -
- Output:      -
-============================================================================= */  	
-void PT3_Resume()
-{
-__asm
-	ld		HL, #_PT3_State       
-	set		1, (HL)      ;PLAYER ON
-__endasm;
-}
-// ----------------------------------------------------------------------------- <<< END PT3_Resume
-
-
-
-
-/* =============================================================================
- PT3_Loop
- Description: Change state of loop
- Input:       - 0=off ; 1=on  (false = 0, true = 1)
- Output:      -
-============================================================================= */
-void PT3_SetLoop(u8 loop) __z88dk_fastcall
-{
-loop;
-__asm
-
-	ld		A, L			; Fastcall parameter
-	ld		HL, #_PT3_State
-	or		A
-	jr		NZ, LoopON
-	res		4, (HL)			; not loop
-	ret
-  
-LoopON:  
-	set		4, (HL)			; loop
-
-__endasm;
-}
-
-/* -----------------------------------------------------------------------------
-PT3_InitSong
-(u16) Song data address
-(char) Loop - 0=off ; 1=on  (false = 0, true = 1));
------------------------------------------------------------------------------ */
+//-----------------------------------------------------------------------------
+/// Initialize a given song to make it ready to playback
+/// @param		songAddr	Start address of the data
+///							If PT3_SKIP_HEADER is set, this address must be header address + 100 (if the data are not troncated)
 void PT3_InitSong(const void* songAddr) __z88dk_fastcall
 {
 	songAddr;
 __asm
-	//push	IX
 									// HL = songAddr
 #if (PT3_SKIP_HEADER)
 	ld		DE, #-100
@@ -299,22 +208,22 @@ __asm
 	ld		(#_PT3_SrtCrPsPtr), HL	// Backup startup value
 #endif
 
-	ld		IX, (#_PT3_ModAddr)		// IX = songAddr
+	ld		IY, (#_PT3_ModAddr)		// IY = songAddr
 
 	ld		B, #0
-	ld		C, 102(IX)				// BC = [songAddr + 102]
+	ld		C, 102(IY)				// BC = [songAddr + 102]
 	ld		HL, #201
 	add		HL, DE
 	add		HL, BC
 	ld		(#_PT3_LPosPtr), HL		// _PT3_LPosPtr = songAddr + 201 + BC
 
-	ld		B, 104(IX)
-	ld		C, 103(IX)				// BC = [songAddr + 104 | songAddr + 103]
+	ld		B, 104(IY)
+	ld		C, 103(IY)				// BC = [songAddr + 104 | songAddr + 103]
 	ex		DE, HL					// HL = songAddr
 	add		HL, BC
 	ld		(#_PT3_PatsPtr), HL		// _PT3_PatsPtr  = songAddr + BC
 
-; --- INITIALIZE PT3 VARIABLES -------------------------------------------------  
+	// Initialize PT3 Variables
 	xor		A	
 	ld		HL, #_ChanA				; VARS
 	ld		(HL), A
@@ -325,9 +234,9 @@ __asm
 	inc		A
 	ld		(#_DelyCnt), A
 	ld		HL, #0xF001				; H - CHNPRM_Volume, L - CHNPRM_NtSkCn
-	ld		(#_ChanA + CHNPRM_NtSkCn),HL
-	ld		(#_ChanB + CHNPRM_NtSkCn),HL
-	ld		(#_ChanC + CHNPRM_NtSkCn),HL
+	ld		(#_ChanA + CHNPRM_NtSkCn), HL
+	ld		(#_ChanB + CHNPRM_NtSkCn), HL
+	ld		(#_ChanC + CHNPRM_NtSkCn), HL
 
 	ld		HL, #EMPTYSAMORN
 	ld		(#_PT3_AdInPtA), HL		; ptr to zero  ; # chg
@@ -342,32 +251,105 @@ __asm
 
 // Autoplay
 #if (PT3_AUTOPLAY)
-	xor		A
-	ld		HL, #_PT3_State
-	ld		(HL), A
-	SET		1, (HL)      ;PLAYER ON  
+	jp		_PT3_Resume
+	
+	// xor		A
+	// ld		HL, #_PT3_State
+	// ld		(HL), A
+	// set		0, (HL)
 #endif
-
-	//pop		IX
 
 __endasm;
 }
-// ----------------------------------------------------------------------------- END playerINIT
 
+//-----------------------------------------------------------------------------
+/// Pause song playback
+void PT3_Pause() __naked
+{
+__asm
+	ld		HL, #_PT3_State       
+	res		0, (HL)					// Reset Play flag (stop the music)
+	
+	jp		_PT3_Silence
+__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// Resume song playback
+void PT3_Resume()
+{
+__asm
+	ld		HL, #_PT3_State       
+	set		0, (HL)					// Set Play flag (play the music)
+__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// Change state of playback loop
+/// @param		loop		Either loop or not (true: do loop; false: don't loop)
+void PT3_SetLoop(u8 loop) __z88dk_fastcall
+{
+loop;
+__asm
+
+	ld		A, L					// Fastcall parameter
+	ld		HL, #_PT3_State
+	or		A
+	jr		NZ, LoopON
+	res		4, (HL)					// Reset Loop flag
+	ret
   
+LoopON:  
+	set		4, (HL)					// Set Loop flag
 
+__endasm;
+}
 
+//-----------------------------------------------------------------------------
+/// Silence the PSG
+void PT3_Silence() __naked
+{
+__asm
+	xor		A
+	ld		(#_PT3_Regs + PSG_REG_AMP_A), A
+	ld		(#_PT3_Regs + PSG_REG_AMP_B), A
+	ld		(#_PT3_Regs + PSG_REG_AMP_C), A
 
+	jp		_PT3_UpdatePSG                ;ROUT_A0
+__endasm;
+}
 
-/* -----------------------------------------------------------------------------
-PT3PlayAY
-Play Song. 
-Send data to AY registers
-Execute on each interruption of VBLANK
------------------------------------------------------------------------------ */
+//-----------------------------------------------------------------------------
+/// Send data to PSG registers
+/// @note					Must be executed on each V-Blank interruption
 void PT3_UpdatePSG()
 {
-__asm  
+__asm
+
+#if (PT3_EXTRA)
+
+	// Handle mute flags
+	ld		HL, #_PT3_State
+	xor		A
+
+UpdatePSGMuteA:
+	bit		1, (HL)
+	jp		z, UpdatePSGMuteB
+	ld		(#_PT3_Regs + PSG_REG_AMP_A), A
+
+UpdatePSGMuteB:
+	bit		2, (HL)
+	jp		z, UpdatePSGMuteC
+	ld		(#_PT3_Regs + PSG_REG_AMP_B), A
+
+UpdatePSGMuteC:
+	bit		3, (HL)
+	jp		z, UpdatePSGMuteEnd
+	ld		(#_PT3_Regs + PSG_REG_AMP_C), A
+
+UpdatePSGMuteEnd:
+
+#endif
 
 	// Update mixer register wanted value with I/O 2-bits from the current mixer register value
 	ld		A, (#_PT3_Regs + PSG_REG_MIXER)
@@ -399,22 +381,15 @@ __asm
 
 __endasm;
 }
-// ----------------------------------------------------------------------------- END PT3PlayAY
 
-
-
-
-
-/* -----------------------------------------------------------------------------
-PT3Decode
-Decode a frame from PT3 song
------------------------------------------------------------------------------ */
+//-----------------------------------------------------------------------------
+/// Decode a frame from PT3 song
 void PT3_Decode() __naked
 {
 __asm   
  
 	ld		HL, #_PT3_State							// Check bit #1 of PT3_State to know if music is playing
-	bit		1, (HL)
+	bit		0, (HL)
 	ret		Z
 
 	xor		A
@@ -444,7 +419,7 @@ __asm
 	INC  A
 	JR   NZ,PLNLP
 
-	CALL CHECKLP
+	CALL DecodeCheckLoop
 
 	ld   HL,(#_PT3_LPosPtr)
 	LD   A,(HL)
@@ -474,7 +449,7 @@ PLNLP:
 	ld   SP,(#_PT3_PSP)
   
 PL1A:	
-	LD   IX,#_ChanA + 12
+	LD   IY,#_ChanA + 12
 	CALL PTDECOD
 	LD   (#_PT3_AdInPtA),BC
   
@@ -482,7 +457,7 @@ PL1B:
 	LD   HL,#_ChanB + CHNPRM_NtSkCn
 	DEC  (HL)
 	JR   NZ,PL1C
-	LD   IX,#_ChanB + 12
+	LD   IY,#_ChanB + 12
 	ld   BC,(#_PT3_AdInPtB)
 	CALL PTDECOD
 	LD   (#_PT3_AdInPtB),BC
@@ -491,7 +466,7 @@ PL1C:
 	LD   HL,#_ChanC + CHNPRM_NtSkCn
 	DEC  (HL)
 	JR   NZ,PL1D
-	LD   IX,#_ChanC + 12
+	LD   IY,#_ChanC + 12
 	ld   BC,(#_PT3_AdInPtC)
 	CALL PTDECOD
 	LD   (#_PT3_AdInPtC),BC
@@ -501,19 +476,19 @@ PL1D:
 	ld   (#_DelyCnt),A
 
 PL2:	
-	LD   IX,#_ChanA
+	LD   IY,#_ChanA
 	LD   HL,(#_PT3_Regs + PSG_REG_TONE_A)
 	CALL CHREGS
 	LD   (#_PT3_Regs + PSG_REG_TONE_A),HL			// Set Tone A
 	LD   A,(#_PT3_Regs + PSG_REG_AMP_C)
 	LD   (#_PT3_Regs + PSG_REG_AMP_A),A				// Set Volume A
-	LD   IX,#_ChanB
+	LD   IY,#_ChanB
 	LD   HL,(#_PT3_Regs + PSG_REG_TONE_B)
 	CALL CHREGS
 	LD   (#_PT3_Regs + PSG_REG_TONE_B),HL			// Set Tone B
 	LD   A,(#_PT3_Regs + PSG_REG_AMP_C)
 	LD   (#_PT3_Regs + PSG_REG_AMP_B),A				// Set Volume B
-	LD   IX,#_ChanC
+	LD   IY,#_ChanC
 	LD   HL,(#_PT3_Regs + PSG_REG_TONE_C)
 	CALL CHREGS
 	LD   (#_PT3_Regs + PSG_REG_TONE_C),HL			// Set Tone C
@@ -549,36 +524,33 @@ PL2:
 
   
 ;  LD   HL,#_PT3_State
-;  BIT  1,(HL)   ; pause mode
-;  JP   Z,MUTE
+;  BIT  0,(HL)   ; pause mode
+;  JP   Z,_PT3_Silence
   
 	RET
 
+// Check if loop flag is set or stop the music
+DecodeCheckLoop:	
+	ld		HL, #_PT3_State
+#if (PT3_EXTRA)
+	set		5, (HL)					// Set the loop control flag (bit #5)
+#endif
+	bit		4, (HL)					// Check Loop flag (bit #4) 
+	ret		NZ
 
-;Check Loop
-CHECKLP:	
-	LD   HL,#_PT3_State
-	;SET  7,(HL)   ;loop control
-	BIT  4,(HL)   ;loop bit 
-	RET  NZ
-  
-;=0 - No loop
+// No loop: stop the song
+// remove the lock if finished the song. Bug #11
 
-;remove the lock if finished the song. Bug #11
-	RES  1,(HL) ;set pause mode
+	POP		HL
+	LD		HL,#_DelyCnt
+	INC		(HL)
+	LD		HL,#_ChanA + CHNPRM_NtSkCn
+	INC		(HL)
 
-	POP  HL
-	LD   HL,#_DelyCnt
-	INC  (HL)
-;  LD   HL,#_ChanA + CHNPRM_NtSkCn
-;  INC  (HL)
-    
-	JP   MUTE
-
-
+	jp		_PT3_Pause
 
 PD_OrSm:	
-	LD   -12 + CHNPRM_Env_En(IX),#0
+	LD   -12 + CHNPRM_Env_En(IY),#0
 	CALL SETORN
 	LD   A,(BC)
 	INC  BC
@@ -596,8 +568,8 @@ PD_SAM_:
 	LD   D,(HL)
 	ld	 HL,(#_PT3_ModAddr)
 	ADD  HL,DE
-	LD   -12 + CHNPRM_SamPtr(IX),L
-	LD   -12 + CHNPRM_SamPtr + 1(IX),H
+	LD   -12 + CHNPRM_SamPtr(IY),L
+	LD   -12 + CHNPRM_SamPtr + 1(IY),H
 	JR   PD_LOOP
 
 PD_VOL:	
@@ -605,12 +577,12 @@ PD_VOL:
 	RLCA
 	RLCA
 	RLCA
-	LD   -12 + CHNPRM_Volume(IX),A
+	LD   -12 + CHNPRM_Volume(IY),A
 	JR   PD_LP2
 	
 PD_EOff:	
-	LD   -12 + CHNPRM_Env_En(IX),A
-	LD   -12 + CHNPRM_PsInOr(IX),A
+	LD   -12 + CHNPRM_Env_En(IY),A
+	LD   -12 + CHNPRM_PsInOr(IY),A
 	JR   PD_LP2
 
 PD_SorE:	
@@ -618,7 +590,7 @@ PD_SorE:
 	JR   NZ,PD_ENV
 	LD   A,(BC)
 	INC  BC
-	LD   -12 + CHNPRM_NNtSkp(IX),A
+	LD   -12 + CHNPRM_NNtSkp(IY),A
 	JR   PD_LP2
 
 PD_ENV:	
@@ -630,18 +602,18 @@ PD_ORN:
 	JR   PD_LOOP
        
 PD_ESAM:	
-	LD   -12 + CHNPRM_Env_En(IX),A
-	LD   -12 + CHNPRM_PsInOr(IX),A
+	LD   -12 + CHNPRM_Env_En(IY),A
+	LD   -12 + CHNPRM_PsInOr(IY),A
 	CALL NZ,SETENV
 	LD   A,(BC)
 	INC  BC
 	JR   PD_SAM_
 
 PTDECOD: 
-	LD   A,-12 + CHNPRM_Note(IX)
+	LD   A,-12 + CHNPRM_Note(IY)
 	LD   (#_PT3_PrNote),A           ;LD   (#PrNote + 1),A
-	LD   L,CHNPRM_CrTnSl-12(IX)
-	LD   H,CHNPRM_CrTnSl + 1-12(IX)
+	LD   L,CHNPRM_CrTnSl-12(IY)
+	LD   H,CHNPRM_CrTnSl + 1-12(IY)
 	LD  (#_PT3_PrSlide),HL
 
 PD_LOOP:	
@@ -691,17 +663,17 @@ PD_NOIS:
 	JR   PD_LP2
 
 PD_REL:	
-	RES  0,-12 + CHNPRM_Flags(IX)
+	RES  0,-12 + CHNPRM_Flags(IY)
 	JR   PD_RES
 	
 PD_NOTE:	
-	ld   -12 + CHNPRM_Note(IX),A
-	SET  0,-12 + CHNPRM_Flags(IX)
+	ld   -12 + CHNPRM_Note(IY),A
+	SET  0,-12 + CHNPRM_Flags(IY)
 	XOR  A
 
 PD_RES:	
 	LD   (#_PT3_PDSP),SP
-	LD   SP,IX
+	LD   SP,IY
 	LD   H,A
 	LD   L,A
 	PUSH HL
@@ -713,12 +685,12 @@ PD_RES:
 	LD   SP,(#_PT3_PDSP)
 
 PD_FIN:	
-	ld   A,-12 + CHNPRM_NNtSkp(IX)
-	ld   -12 + CHNPRM_NtSkCn(IX),A
+	ld   A,-12 + CHNPRM_NNtSkp(IY)
+	ld   -12 + CHNPRM_NtSkCn(IY),A
 	ret
 
 C_PORTM: 
-	RES  2,-12 + CHNPRM_Flags(IX)
+	RES  2,-12 + CHNPRM_Flags(IY)
 	LD   A,(BC)
 	INC  BC
   
@@ -726,11 +698,11 @@ C_PORTM:
 ;CANNOT BE RIGHT AFTER PT3 COMPILATION)
 	INC  BC
 	INC  BC
-	LD   -12 + CHNPRM_TnSlDl(IX),A
-	LD   -12 + CHNPRM_TSlCnt(IX),A
+	LD   -12 + CHNPRM_TnSlDl(IY),A
+	LD   -12 + CHNPRM_TSlCnt(IY),A
 	LD   DE,(#_PT3_NoteTable)
-	LD   A,-12 + CHNPRM_Note(IX)
-	LD   -12 + CHNPRM_SlToNt(IX),A
+	LD   A,-12 + CHNPRM_Note(IY)
+	LD   -12 + CHNPRM_SlToNt(IY),A
 	ADD  A,A
 	LD   L,A
 	LD   H,#0
@@ -741,7 +713,7 @@ C_PORTM:
 	LD   L,A
 	PUSH HL
 	LD   A,(#_PT3_PrNote)            ;<--- LD   A,#0x3E
-	LD   -12 + CHNPRM_Note(IX),A
+	LD   -12 + CHNPRM_Note(IY),A
 	ADD  A,A
 	LD   L,A
 	LD   H,#0
@@ -751,11 +723,11 @@ C_PORTM:
 	LD   D,(HL)
 	POP  HL
 	SBC  HL,DE
-	LD   -12 + CHNPRM_TnDelt(IX),L
-	LD   -12 + CHNPRM_TnDelt + 1(IX),H
+	LD   -12 + CHNPRM_TnDelt(IY),L
+	LD   -12 + CHNPRM_TnDelt + 1(IY),H
 	LD   DE,(#_PT3_PrSlide)             ;<--- change to Kun version
-	LD   -12 + CHNPRM_CrTnSl(IX),E       ;<---
-	LD   -12 + CHNPRM_CrTnSl + 1(IX),D     ;<---
+	LD   -12 + CHNPRM_CrTnSl(IY),E       ;<---
+	LD   -12 + CHNPRM_CrTnSl + 1(IY),D     ;<---
 	LD   A,(BC) ;SIGNED TONE STEP
 	INC  BC
 	EX   AF,AF
@@ -772,18 +744,18 @@ NOSIG:
 	NEG
 	EX   AF,AF
 SET_STP:	
-	LD   -12 + CHNPRM_TSlStp + 1(IX),A
+	LD   -12 + CHNPRM_TSlStp + 1(IY),A
 	EX   AF,AF
-	ld   -12 + CHNPRM_TSlStp(IX),A
-	ld   -12 + CHNPRM_COnOff(IX),#0
+	ld   -12 + CHNPRM_TSlStp(IY),A
+	ld   -12 + CHNPRM_COnOff(IY),#0
 	ret
 
 C_GLISS:	
-	SET  2,-12 + CHNPRM_Flags(IX)
+	SET  2,-12 + CHNPRM_Flags(IY)
 	LD   A,(BC)
 	INC  BC
-	LD  -12 + CHNPRM_TnSlDl(IX),A
-	LD  -12 + CHNPRM_TSlCnt(IX),A
+	LD  -12 + CHNPRM_TnSlDl(IY),A
+	LD  -12 + CHNPRM_TSlCnt(IY),A
 	LD   A,(BC)
 	INC  BC
 	EX   AF,AF
@@ -794,27 +766,27 @@ C_GLISS:
 C_SMPOS:	
 	LD   A,(BC)
 	INC  BC
-	LD   -12 + CHNPRM_PsInSm(IX),A
+	LD   -12 + CHNPRM_PsInSm(IY),A
 	RET
 
 C_ORPOS:	
 	LD   A,(BC)
 	INC  BC
-	LD   -12 + CHNPRM_PsInOr(IX),A
+	LD   -12 + CHNPRM_PsInOr(IY),A
 	RET
 
 C_VIBRT:
 	LD   A,(BC)
 	INC  BC
-	LD   -12 + CHNPRM_OnOffD(IX),A
-	LD   -12 + CHNPRM_COnOff(IX),A
+	LD   -12 + CHNPRM_OnOffD(IY),A
+	LD   -12 + CHNPRM_COnOff(IY),A
 	LD   A,(BC)
 	INC  BC
-	LD   -12 + CHNPRM_OffOnD(IX),A
+	LD   -12 + CHNPRM_OffOnD(IY),A
 	XOR  A
-	LD   -12 + CHNPRM_TSlCnt(IX),A
-	LD   -12 + CHNPRM_CrTnSl(IX),A
-	LD   -12 + CHNPRM_CrTnSl + 1(IX),A
+	LD   -12 + CHNPRM_TSlCnt(IY),A
+	LD   -12 + CHNPRM_CrTnSl(IY),A
+	LD   -12 + CHNPRM_CrTnSl + 1(IY),A
 	RET
 
 C_ENGLS:
@@ -838,7 +810,7 @@ C_DELAY:
 	RET
 	
 SETENV:
-	LD   -12 + CHNPRM_Env_En(IX),E
+	LD   -12 + CHNPRM_Env_En(IY),E
 	LD   (#_PT3_Regs + PSG_REG_SHAPE),A
 	LD   A,(BC)
 	INC  BC
@@ -848,7 +820,7 @@ SETENV:
 	LD   L,A
 	LD   (#_EnvBase),HL
 	XOR  A
-	LD   -12 + CHNPRM_PsInOr(IX),A
+	LD   -12 + CHNPRM_PsInOr(IY),A
 	LD   (#_CurEDel),A
 	LD   H,A
 	LD   L,A
@@ -861,7 +833,7 @@ SETORN:
 	ADD  A,A
 	LD   E,A
 	LD   D,#0
-	LD   -12 + CHNPRM_PsInOr(IX),D
+	LD   -12 + CHNPRM_PsInOr(IY),D
 	ld	 HL,(#_PT3_OrnPtrs) 
 	ADD  HL,DE
 	LD   E,(HL)
@@ -869,8 +841,8 @@ SETORN:
 	LD   D,(HL)
 	ld   HL,(#_PT3_ModAddr) 
 	ADD  HL,DE
-	LD   -12 + CHNPRM_OrnPtr(IX),L
-	LD   -12 + CHNPRM_OrnPtr + 1(IX),H
+	LD   -12 + CHNPRM_OrnPtr(IY),L
+	LD   -12 + CHNPRM_OrnPtr + 1(IY),H
 	RET
 
 
@@ -878,11 +850,11 @@ SETORN:
 
 
 ;-------------------------------------------------------------------------------
-;ALL 16 ADDRESSES TO PROTECT FROM BROKEN PT3 MODULES 
+; ALL 16 ADDRESSES TO PROTECT FROM BROKEN PT3 MODULES 
 
 SPCCOMS: 
-.dw C_NOP			  ; ## COMPROBAR Q NO SEA AUTOMODIF
-.dw C_GLISS			; (parece que no lo toca nada)
+.dw C_NOP			  ; ## CHECK THAT IT IS NOT AUTOMODIF
+.dw C_GLISS			; (nothing seems to touch it)
 .dw C_PORTM
 .dw C_SMPOS
 .dw C_ORPOS
@@ -902,16 +874,16 @@ SPCCOMS:
 CHREGS:	
 	XOR  A
 	LD   (#_PT3_Regs + PSG_REG_AMP_C),A				// Set Volume C
-	BIT   0,CHNPRM_Flags(IX)
+	BIT   0,CHNPRM_Flags(IY)
 	PUSH  HL
 	JP    Z,CH_EXIT
 	ld	 (#_PT3_CSP),sp
-	LD   L,CHNPRM_OrnPtr(IX)
-	LD   H,CHNPRM_OrnPtr + 1(IX)
+	LD   L,CHNPRM_OrnPtr(IY)
+	LD   H,CHNPRM_OrnPtr + 1(IY)
 	LD   SP,HL
 	POP  DE
 	LD   H,A
-	LD   A,CHNPRM_PsInOr(IX)
+	LD   A,CHNPRM_PsInOr(IY)
 	LD   L,A
 	ADD  HL,SP
 	INC  A
@@ -919,8 +891,8 @@ CHREGS:
 	JR   C,CH_ORPS
 	LD   A,E
 CH_ORPS:	
-	LD   CHNPRM_PsInOr(IX),A
-	LD   A,CHNPRM_Note(IX)
+	LD   CHNPRM_PsInOr(IY),A
+	LD   A,CHNPRM_Note(IY)
 	ADD  A,(HL)
 	JP   P,CH_NTP
 	XOR  A
@@ -931,12 +903,12 @@ CH_NTP:
 CH_NOK:	
 	ADD  A,A
 	EX   AF,AF
-	LD   L,CHNPRM_SamPtr(IX)
-	LD   H,CHNPRM_SamPtr + 1(IX)
+	LD   L,CHNPRM_SamPtr(IY)
+	LD   H,CHNPRM_SamPtr + 1(IY)
 	LD   SP,HL
 	POP  DE
 	LD   H,#0
-	LD   A,CHNPRM_PsInSm(IX)
+	LD   A,CHNPRM_PsInSm(IY)
 	LD   B,A
 	ADD  A,A
 	ADD  A,A
@@ -949,16 +921,16 @@ CH_NOK:
 	JR   C,CH_SMPS
 	LD   A,E
 CH_SMPS:	
-	LD   CHNPRM_PsInSm(IX),A
+	LD   CHNPRM_PsInSm(IY),A
 	POP  BC
 	POP  HL
-	LD   E,CHNPRM_TnAcc(IX)
-	LD   D,CHNPRM_TnAcc + 1(IX)
+	LD   E,CHNPRM_TnAcc(IY)
+	LD   D,CHNPRM_TnAcc + 1(IY)
 	ADD  HL,DE
 	BIT  6,B
 	JR   Z,CH_NOAC
-	LD   CHNPRM_TnAcc(IX),L
-	LD   CHNPRM_TnAcc + 1(IX),H
+	LD   CHNPRM_TnAcc(IY),L
+	LD   CHNPRM_TnAcc + 1(IY),H
 CH_NOAC: 
 	EX   DE,HL
 	EX   AF,AF
@@ -969,42 +941,42 @@ CH_NOAC:
 	LD   SP,HL
 	POP  HL
 	ADD  HL,DE
-	LD   E,CHNPRM_CrTnSl(IX)
-	LD   D,CHNPRM_CrTnSl + 1(IX)
+	LD   E,CHNPRM_CrTnSl(IY)
+	LD   D,CHNPRM_CrTnSl + 1(IY)
 	ADD  HL,DE
 	ld	 SP,(#_PT3_CSP)
 	EX   (SP),HL
 	XOR  A
-	OR   CHNPRM_TSlCnt(IX)
+	OR   CHNPRM_TSlCnt(IY)
 	JR   Z,CH_AMP
-	DEC  CHNPRM_TSlCnt(IX)
+	DEC  CHNPRM_TSlCnt(IY)
 	JR   NZ,CH_AMP
-	LD   A,CHNPRM_TnSlDl(IX)
-	LD   CHNPRM_TSlCnt(IX),A
-	LD   L,CHNPRM_TSlStp(IX)
-	LD   H,CHNPRM_TSlStp + 1(IX)
+	LD   A,CHNPRM_TnSlDl(IY)
+	LD   CHNPRM_TSlCnt(IY),A
+	LD   L,CHNPRM_TSlStp(IY)
+	LD   H,CHNPRM_TSlStp + 1(IY)
 	LD   A,H
 	ADD  HL,DE
-	LD   CHNPRM_CrTnSl(IX),L
-	LD   CHNPRM_CrTnSl + 1(IX),H
-	BIT  2,CHNPRM_Flags(IX)
+	LD   CHNPRM_CrTnSl(IY),L
+	LD   CHNPRM_CrTnSl + 1(IY),H
+	BIT  2,CHNPRM_Flags(IY)
 	JR   NZ,CH_AMP
-	LD   E,CHNPRM_TnDelt(IX)
-	LD   D,CHNPRM_TnDelt + 1(IX)
+	LD   E,CHNPRM_TnDelt(IY)
+	LD   D,CHNPRM_TnDelt + 1(IY)
 	AND  A
 	JR   Z,CH_STPP
 	EX   DE,HL
 CH_STPP: 
 	SBC  HL,DE
 	JP   M,CH_AMP
-	LD   A,CHNPRM_SlToNt(IX)
-	LD   CHNPRM_Note(IX),A
+	LD   A,CHNPRM_SlToNt(IY)
+	LD   CHNPRM_Note(IY),A
 	XOR  A
-	LD   CHNPRM_TSlCnt(IX),A
-	LD   CHNPRM_CrTnSl(IX),A
-	LD   CHNPRM_CrTnSl + 1(IX),A
+	LD   CHNPRM_TSlCnt(IY),A
+	LD   CHNPRM_CrTnSl(IY),A
+	LD   CHNPRM_CrTnSl + 1(IY),A
 CH_AMP:	
-	LD   A,CHNPRM_CrAmSl(IX)
+	LD   A,CHNPRM_CrAmSl(IY)
 	BIT  7,C
 	JR   Z,CH_NOAM
 	BIT  6,C
@@ -1018,7 +990,7 @@ CH_AMIN:
 	JR   Z,CH_NOAM
 	DEC  A
 CH_SVAM:	
-	LD   CHNPRM_CrAmSl(IX),A
+	LD   CHNPRM_CrAmSl(IY),A
 CH_NOAM:	
 	LD   L,A
 	LD   A,B
@@ -1031,7 +1003,7 @@ CH_APOS:
 	JR   C,CH_VOL
 	LD   A,#15
 CH_VOL:	
-	OR   CHNPRM_Volume(IX)
+	OR   CHNPRM_Volume(IY)
 	LD   L,A
 	LD   H,#0
 	LD   DE,#_PT3_Regs  ;_VT_
@@ -1040,7 +1012,7 @@ CH_VOL:
 CH_ENV:	
 	BIT  0,C
 	JR   NZ,CH_NOEN
-	OR   CHNPRM_Env_En(IX)
+	OR   CHNPRM_Env_En(IY)
 CH_NOEN:	
 	LD   (#_PT3_Regs + PSG_REG_AMP_C),A				// Set volume C
 	BIT  7,B
@@ -1051,10 +1023,10 @@ CH_NOEN:
 	SRA  A
 	SRA  A
 	SRA  A
-	ADD  A,CHNPRM_CrEnSl(IX) ;SEE COMMENT BELOW
+	ADD  A,CHNPRM_CrEnSl(IY) ;SEE COMMENT BELOW
 	BIT  5,B
 	JR   Z,NO_ENAC
-	LD   CHNPRM_CrEnSl(IX),A
+	LD   CHNPRM_CrEnSl(IY),A
 NO_ENAC:	
 	ld	 HL,#_PT3_AddToEn 
 	ADD  A,(HL) ;BUG IN PT3 - NEED WORD HERE.
@@ -1063,11 +1035,11 @@ NO_ENAC:
 	JR   CH_MIX
 NO_ENSL: 
 	RRA
-	ADD  A,CHNPRM_CrNsSl(IX)
+	ADD  A,CHNPRM_CrNsSl(IY)
 	LD   (#_AddToNs),A
 	BIT  5,B
 	JR   Z,CH_MIX
-	LD   CHNPRM_CrNsSl(IX),A
+	LD   CHNPRM_CrNsSl(IY),A
 CH_MIX:	
 	LD   A,B
 	RRA
@@ -1079,18 +1051,18 @@ CH_EXIT:
 	LD   (HL),A
 	POP  HL
 	XOR  A
-	OR   CHNPRM_COnOff(IX)
+	OR   CHNPRM_COnOff(IY)
 	RET  Z
-	DEC  CHNPRM_COnOff(IX)
+	DEC  CHNPRM_COnOff(IY)
 	RET  NZ
-	XOR  CHNPRM_Flags(IX)
-	LD   CHNPRM_Flags(IX),A
+	XOR  CHNPRM_Flags(IY)
+	LD   CHNPRM_Flags(IY),A
 	RRA
-	LD   A,CHNPRM_OnOffD(IX)
+	LD   A,CHNPRM_OnOffD(IY)
 	JR   C,CH_ONDL
-	LD   A,CHNPRM_OffOnD(IX)
+	LD   A,CHNPRM_OffOnD(IY)
 CH_ONDL:	
-	LD   CHNPRM_COnOff(IX),A
+	LD   CHNPRM_COnOff(IY),A
 	RET
 
 
