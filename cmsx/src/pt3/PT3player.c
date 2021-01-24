@@ -51,8 +51,6 @@ mvac7 version:
  Adaptation to C (SDCC) of the SapphiRe version.
 
 ============================================================================= */
-
-
 #include "PT3player.h"
 
 //VARS:
