@@ -109,7 +109,14 @@ const void* PT3_NoteTable;    // note table memory address
 
 #if (PT3_EXTRA)
 
-u16 PT3_SrtCrPsPtr;  	// Cursor position in pattern at start
+/// Cursor position in pattern at start
+u16 PT3_SrtCrPsPtr;
+
+void EmptyCB() {}
+
+/// Finish callback
+callback PT3_Finish = EmptyCB;
+
 
 #endif // (PT3_EXTRA)
 
@@ -528,7 +535,13 @@ PL2:
 	RET
 
 // Check if loop flag is set or stop the music
-DecodeCheckLoop:	
+DecodeCheckLoop:
+
+#if (PT3_EXTRA)
+	ld		HL, (_PT3_Finish)
+	call	PT3_CALL_HL
+#endif
+
 	ld		HL, #_PT3_State
 #if (PT3_EXTRA)
 	set		5, (HL)					// Set the loop control flag (bit #5)
@@ -1063,7 +1076,8 @@ CH_ONDL:
 	LD   CHNPRM_COnOff(IY),A
 	RET
 
-
+PT3_CALL_HL:
+	jp		(hl)
 
 ;------------------------------------------------------------------------------- DATAS
 

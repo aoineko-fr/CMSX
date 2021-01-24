@@ -17,57 +17,82 @@
 //-----------------------------------------------------------------------------
 #include "ayFXplayer.h"
 
-u8  ayFX_Mode;		// 1	ayFX mode
-//	x	x	x	x	x	x	SP	SU
+/// ayFX mode
+u8  ayFX_Mode = AYFX_MODE_FIXED;
+//	x	x	x	x	x	x	PS	FS
 //	7	6	5	4	3	2	1	0	
-//							│	└── Update channel switch mode (inc channel at each update)
-//							└────── Play channel switch mode (inc channel at each play)
+//							│	└── Channel frame-switch mode (inc channel at each update)
+//							└────── Channel play-switch mode (inc channel at each play)
 
-u16 ayFX_Bank;		// 2	Current ayFX Bank
-u8  ayFX_Priority;	// 1	Current ayFX stream priotity
-u16 ayFX_Pointer;	// 2	Pointer to the current ayFX stream
-u16 ayFX_Tone;		// 2	Current tone of the ayFX stream
-u8  ayFX_Noise;		// 1	Current noise of the ayFX stream
-u8  ayFX_Volume;	// 1	Current volume of the ayFX stream
-u8  ayFX_Channel;	// 1	PSG channel to play the ayFX stream
+/// Current ayFX Bank
+u16 ayFX_Bank;
+
+/// Current ayFX stream priotity
+u8  ayFX_Priority = 0xFF;
+//	M	x	x	x	P3	P2	P1	P0
+//	7	6	5	4	3	2	1	0	
+//	│				└───┴───┴───┴──	Priority (0-15)
+//	└────────────────────────────── Mute (stop playback)
+
+// Pointer to the current ayFX stream
+u16 ayFX_Pointer;
+
+// Current tone of the ayFX stream
+u16 ayFX_Tone;
+
+// Current noise of the ayFX stream
+u8  ayFX_Noise;
+
+// Current volume of the ayFX stream
+u8  ayFX_Volume;
+
+// PSG channel to play the ayFX stream
+u8  ayFX_Channel = 3 - PSG_CHANNEL_C;
+
 #if (AYFX_RELATIVE)
-u16 ayFX_VT;		// 2	ayFX relative volume table pointer
+// ayFX relative volume table pointer
+u16 ayFX_VT;
 #endif
+
+/// Finish callback
+/// @note Can be:	ayFX_Stop to only stop the sound playback
+///					ayFX_Mute to stop the sound playback and mute the ayFX current channel
+///					Any custom callback from application (must handle playback termination and mute as needed)
+callback ayFX_Finish = ayFX_Mute;
 
 #define AYREGS _PT3_Regs
 
 //-----------------------------------------------------------------------------
-///
-void ayFX_Init(void* bank) __FASTCALL
+/// Setup the ayFX replayer
+/// @param		bank		Pointer to the ayFX bank
+void ayFX_InitBank(void* bank) __FASTCALL
 {
 	__asm
-	ayFX_SETUP::
-		// ---          ayFX replayer setup          ---
 		// --- INPUT: HL -> pointer to the ayFX bank ---
 		ld		(_ayFX_Bank), hl	// Current ayFX bank
-		xor		a					// a:=0
-		ld		(_ayFX_Mode), a		// Initial mode: fixed channel
-		inc		a					// Starting channel (=1)
-		ld		(_ayFX_Channel), a	// Updated
-	ayFX_END::
-		// --- End of an ayFX stream ---
-		ld		a, #255				// Lowest ayFX priority
-		ld		(_ayFX_Priority), a	// Priority saved (not playing ayFX stream)
+		// xor		a					// a:=0
+		// ld		(_ayFX_Mode), a		// Initial mode: fixed channel
+		// inc		a					// Starting channel (=1)
+		// ld		(_ayFX_Channel), a	// Updated
+		// // --- End of an ayFX stream ---
+		// ld		a, #255				// Lowest ayFX priority
+		// ld		(_ayFX_Priority), a	// Priority saved (not playing ayFX stream)
 	__endasm;
-}
+}	
 
 //-----------------------------------------------------------------------------
-///
-void ayFX_Play(u16 snd_prio) __FASTCALL __naked
+/// Play a ayFX sound
+/// @param		id		Sound index in the bank
+/// @param		prio	Priority of the sound (0-15). 0 is the highest priority.
+/// @return				Error number (if any) @see AYFX_ERROR
+u8 ayFX_PlayBankFC(u16 snd_prio) __FASTCALL __naked
 {
 	__asm
-	ayFX_INIT::
 		// Fastcall init
 		ld		a, l
 		ld		c, h
-		// ---     INIT A NEW ayFX STREAM     ---
-		// --- INPUT: A -> sound to be played ---
-		// ---        C -> sound priority     ---
+		// --- INPUT: L -> sound to be played ---
+		// ---        H -> sound priority     ---
 		push	bc					// Store bc in stack
 		push	de					// Store de in stack
 		push	hl					// Store hl in stack
@@ -76,13 +101,14 @@ void ayFX_Play(u16 snd_prio) __FASTCALL __naked
 		ld		hl, (_ayFX_Bank)	// Current ayFX BANK
 		ld		a, (hl)				// Number of samples in the bank
 		or		a					// If zero (means 256 samples)...
-		jr		z, CHECK_PRI		// ...goto CHECK_PRI
+		jr		z, CHECK_PRIO		// ...goto CHECK_PRIO
 		// The bank has less than 256 samples
+	CHECK_INDEX:	
 		ld		a, b				// a:=b (new ayFX stream index)
 		cp		(hl)				// If new index is not in the bank...
 		ld		a, #2				// a:=2 (error 2: Sample not in the bank)
 		jr		nc, INIT_END		// ...we can't init it
-	CHECK_PRI:	
+	CHECK_PRIO:	
 		// --- Check if the new priority is lower than the current one ---
 		// ---   Remember: 0 = highest priority, 15 = lowest priority  ---
 		ld		a, b				// a:=b (new ayFX stream index)
@@ -125,14 +151,16 @@ void ayFX_Play(u16 snd_prio) __FASTCALL __naked
 		add		hl, de				// hl:=hl+de (hl points to the new ayFX stream)
 		ld		(_ayFX_Pointer), hl	// Pointer saved in RAM
 		xor		a					// a:=0 (no errors)
-	INIT_END:	
+	INIT_END:
 		pop		hl					// Retrieve hl from stack
 		pop		de					// Retrieve de from stack
 		pop		bc					// Retrieve bc from stack
+		ld		l, a				// Set return value
 		ret							// Return
 
 	#if (AYFX_RELATIVE)
-	INIT_NOSOUND:	// --- Init a sample with relative volume zero -> no sound output ---
+	INIT_NOSOUND:	
+		// --- Init a sample with relative volume zero -> no sound output ---
 		ld		a, #255				// Lowest ayFX priority
 		ld		(_ayFX_Priority), a	// Priority saved (not playing ayFX stream)
 		jr		INIT_END			// Jumps to INIT_END
@@ -141,24 +169,39 @@ void ayFX_Play(u16 snd_prio) __FASTCALL __naked
 }
 
 //-----------------------------------------------------------------------------
-///
+/// Play a SFX directly from data pointer
+/// @param		file	Pointer to AFX file data
+u8 ayFX_Play(void* data) __FASTCALL
+{
+	__asm
+
+		ld		(_ayFX_Pointer), hl	// 
+		xor		a					// 
+		ld		(_ayFX_Priority), a	// 
+	
+	__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// Play a frame of an ayFX stream
 void ayFX_Update()
 {
 	__asm
-	ayFX_PLAY::
 		// --- PLAY A FRAME OF AN ayFX STREAM ---
 		ld		a, (_ayFX_Priority)	// a:=Current ayFX stream priority
-		or		a					// If priority has bit 7 on...
-		ret		m					// ...return
+		or		a					// If priority has bit 7 on  (priority < 0)...
+		ret		m					// ...then return
 		// --- Calculate next ayFX channel (if needed) ---
 		ld		a, (_ayFX_Mode)		// ayFX mode
 		and		#1					// If bit0=0 (fixed channel)...
 		jr		z, TAKECB			// ...skip channel changing
+	CHANNEL_SWITCH:
 		ld		hl, #_ayFX_Channel	// Old ayFX playing channel
 		dec		(hl)				// New ayFX playing channel
 		jr		nz, TAKECB			// If not zero jump to TAKECB
 		ld		(hl), #3			// If zero -> set channel 3
-	TAKECB:	// --- Extract control byte from stream ---
+	TAKECB:	
+		// --- Extract control byte from stream ---
 		ld		hl, (_ayFX_Pointer)	// Pointer to the current ayFX stream
 		ld		c, (hl)				// c:=Control byte
 		inc		hl					// Increment pointer
@@ -171,16 +214,25 @@ void ayFX_Update()
 		ld		d, (hl)				// d:=higher byte of new tone
 		inc		hl					// Increment pointer
 		ld		(_ayFX_Tone), de	// ayFX tone updated
-	CHECK_NN:	// --- Check if there's new noise on stream ---
+	CHECK_NN:	
+		// --- Check if there's new noise on stream ---
 		bit		6, c				// if bit 6 c is off...
 		jr		z, SETPOINTER		// ...jump to SETPOINTER (no new noise)
 		// --- Extract new noise from stream ---
 		ld		a, (hl)				// a:=New noise
 		inc		hl					// Increment pointer
 		cp		#0x20				// If it's an illegal value of noise (used to mark end of stream)...
+#if (0)
 		jr		z, ayFX_END			// ...jump to ayFX_END
+#else
+		jr		nz, CONTINUE
+		ld		hl, (_ayFX_Finish)
+		jp		(hl)
+	CONTINUE:
+#endif
 		ld		(_ayFX_Noise), a	// ayFX noise updated
-	SETPOINTER:	// --- Update ayFX pointer ---
+	SETPOINTER:	
+		// --- Update ayFX pointer ---
 		ld		(_ayFX_Pointer), hl	// Update ayFX stream pointer
 		// --- Extract volume ---
 		ld		a, c				// a:=Control byte
@@ -266,3 +318,45 @@ void ayFX_Update()
 #endif
 __endasm;
 }
+
+//-----------------------------------------------------------------------------
+/// Stop the sound playback and mute the channel
+void ayFX_Mute()
+{
+	__asm
+		// --- End of an ayFX stream ---
+		ld		a, #255				// Lowest ayFX priority
+		ld		(_ayFX_Priority), a	// Priority saved (not playing ayFX stream)
+
+		// Silence the current ayFX channel
+		ld		hl, #_ayFX_Channel	// Next ayFX playing channel
+		ld		b, (hl)				// Channel counter
+		xor		a
+	StopCheck1:
+		// If playing channel was 1, silence channel C
+		djnz	StopCheck2			// Decrement and jump if channel was not 1
+		ld		(AYREGS+10), a		// Volume copied in to AYREGS (channel C volume)
+		ret
+	StopCheck2:
+		// If playing channel was 2, silence channel B
+		djnz	StopCheck3			// Decrement and jump if channel was not 2
+		ld		(AYREGS+9), a		// Volume copied in to AYREGS (channel B volume)
+		ret
+	StopCheck3:
+		// If playing channel was 3, silence channel A
+		ld		(AYREGS+8), a		// Volume copied in to AYREGS (channel A volume)
+
+	__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// Stop the sound playback
+void ayFX_Stop()
+{
+	__asm
+		// --- End of an ayFX stream ---
+		ld		a, #255				// Lowest ayFX priority
+		ld		(_ayFX_Priority), a	// Priority saved (not playing ayFX stream)
+	__endasm;
+}
+

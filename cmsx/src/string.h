@@ -5,7 +5,7 @@
 
 //-----------------------------------------------------------------------------
 ///
-u8 String_GetLength(const c8* str)
+inline u8 String_Length(const c8* str)
 {
 	u8 ret = 0;
 	while(*str++)

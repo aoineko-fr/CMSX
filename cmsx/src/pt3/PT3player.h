@@ -66,9 +66,10 @@
 //-----------------------------------------------------------------------------
 // DEFINES
 
-#define PT3_SKIP_HEADER	1
-#define PT3_AUTOPLAY	0
-#define PT3_EXTRA		1
+#define PT3_SKIP_HEADER		1
+#define PT3_AUTOPLAY		0
+#define PT3_EXTRA			1
+#define PT3_USE_CALLBACK	0
 
 
 //ChannelsVars
@@ -170,6 +171,8 @@ extern const void* PT3_NoteTable;   // Note table memory address
 extern u16 PT3_SrtCrPsPtr;	// Cursor position in pattern at start
 
 #endif // (PT3_EXTRA)
+
+extern callback PT3_Finish; // Finish callback
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS PROTOTYPE
@@ -290,6 +293,13 @@ inline void PT3_Mute(u8 chan, bool mute)
 		PT3_State |= 1 << (chan + 1);
 	else
 		PT3_State &= ~(1 << (chan + 1));
+}
+
+//-----------------------------------------------------------------------------
+/// Set the function to be call when the music ended
+inline u8 PT3_SetFinishCB(callback cb)
+{
+	PT3_Finish = cb; 
 }
 
 #endif // (PT3_EXTRA)
