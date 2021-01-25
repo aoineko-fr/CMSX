@@ -3,7 +3,7 @@
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
 #include "cmsx.h"
-#include "PT3player/PT3player.h"
+#include "PT3/PT3player.h"
 
 //-----------------------------------------------------------------------------
 // DEFINE
@@ -40,7 +40,7 @@ typedef struct {
 #include "font\font_cmsx_symbol1.h"
 
 // Note table
-#include "PT3player/PT3player_NoteTable2.h"
+#include "PT3/PT3player_NoteTable2.h"
 
 // Music
 #include "data\pt3\!ndiffer.h"
@@ -84,7 +84,7 @@ void VBlankHook()
 	g_VBlank = 1;
 	g_Frame++;
 
-	// PT3_Decode(); 
+	PT3_Decode(); 
 	PT3_UpdatePSG();
 }
 
@@ -103,13 +103,13 @@ void main()
 	// INIT SCREEN
 
 	VDP_SetMode(VDP_MODE_SCREEN5);
-	VDP_SetFrequency(VDP_FREQ_50HZ);
+	// VDP_SetFrequency(VDP_FREQ_50HZ);
 	VDP_EnableSprite(false);
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 
 	Print_Initialize(null);
-	Print_SetFontVRAM(g_Font_CMSX_Std0, 212);
+	Print_SetFont(g_Font_CMSX_Std0);
 	Print_SetPosition(4, 4);
 	Print_DrawText("PT3 PLAYER SAMPLE");
 	Draw_Box(0, 0, 255, 14, 0x0F, 0);
@@ -152,6 +152,7 @@ void main()
 	PT3_Init();
 	PT3_SetNoteTable(NT);
 	PT3_SetLoop(true);
+	PT3_SetFinishCB(Stop);
 
 	SetSong(1);
 	Loop(true);
@@ -169,10 +170,10 @@ void main()
 		// Display Vumeter
 		DrawVUMeter();
 
-		// VRAM FONT ----------------------------------------------------------
+		// DEFAULT FONT ----------------------------------------------------------
 
 		Print_SetFont(g_Font_CMSX_Std0);
-		Print_SetMode(PRINT_MODE_VRAM);
+		Print_SetColor(0xF, 0x4);
 
 		Print_SetPosition(255-8, 4);
 		u8 chr = g_Frame & 0x03;
@@ -188,7 +189,6 @@ void main()
 		}
 		prevPattern = pattern;
 
-		// RAM FONT -----------------------------------------------------------
 
 		// Read keyboard matrix row #8
 		u8 row8 = g_NEWKEY[KEY_ROW(KEY_SPACE)];
@@ -208,7 +208,10 @@ void main()
 				g_CurrentSong = numberof(g_SongData) - 1;
 			SetSong(g_CurrentSong);
 		}
-		else if((IS_KEY_PRESSED(row8, KEY_SPACE)) && (IS_KEY_RELEASED(prevRow8, KEY_SPACE))) // Pause / Resume
+
+		// PLAYER FONT -----------------------------------------------------------
+		
+		if((IS_KEY_PRESSED(row8, KEY_SPACE)) && (IS_KEY_RELEASED(prevRow8, KEY_SPACE))) // Pause / Resume
 		{
 			if(PT3_IsPlaying())
 				Pause();
@@ -237,7 +240,7 @@ void main()
 		}
 		prevRow0 = row0;
 
-		PT3_Decode(); 
+		// PT3_Decode(); 
 	}
 }
 
@@ -245,13 +248,11 @@ void main()
 void SetSong(u8 songId) __FASTCALL
 {
 	g_CurrentSong = songId;
+	
 	PT3_InitSong(g_SongData[songId].Raw);
-	// PT3_Play();
-	VDP_CommandHMMV(64, 56, 6*8, 8, 0x44);
 
 	Print_SetFont(g_Font_CMSX_Std0);
-	Print_SetMode(PRINT_MODE_VRAM);
-
+	VDP_CommandHMMV(64, 56, 6*8, 8, 0x44);
 	Print_SetPosition(64, 56);
 	Print_DrawText(g_SongData[songId].Name);
 }

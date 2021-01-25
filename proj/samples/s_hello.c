@@ -38,8 +38,8 @@ void DummyFunc() __naked
 // Program entry point
 void main()
 {
-	TestFunc();
-	
+//	TestFunc();
+
 	VDP_SetMode(VDP_MODE_SCREEN5);
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);

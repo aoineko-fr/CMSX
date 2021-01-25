@@ -23,7 +23,7 @@ rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=%1
-SET ModuleList=bios,vdp,print,input,memory,math,draw,pt3player\pt3player
+SET ModuleList=bios,vdp,print,input,memory,math,draw,PT3\PT3player,ayFX\ayFXplayer
 REM SET ModuleList=vdp,print,pt3player\pt3player
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
