@@ -20,8 +20,8 @@ const unsigned char g_Font_CMSX_Symbol1[] =
 // Font header data
 	0x88, // Data size [x|y]
 	0x88, // Font size [x|y]
-	0x00, // First character ASCII code
-	0xDF, // Last character ASCII code
+	0x00, // First character ASCII code (
+	0xE0, // Last character ASCII code (à)
 // Sprite[0] (offset:4)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 

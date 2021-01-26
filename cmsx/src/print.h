@@ -13,13 +13,13 @@
 /// Character display sources
 enum PRINT_MODE
 {
-	PRINT_MODE_DEFAULT,			///< Draw characters from RAM (R-T unpack font data and draw it)
-	PRINT_MODE_TRANSPARENT,		///< Draw characters from RAM (R-T unpack font data and draw it)
+	PRINT_MODE_DEFAULT     = 0,	///< Draw characters from RAM (R-T unpack font data and draw it)
+	PRINT_MODE_TRANSPARENT = 1,	///< Draw characters from RAM (R-T unpack font data and draw it)
 #if (USE_PRINT_VRAM)
-	PRINT_MODE_VRAM,			///< Draw characters from VRAM (font data is upack once in VRAM thne drawing is done by VRAM copy)
+	PRINT_MODE_VRAM        = 2,	///< Draw characters from VRAM (font data is upack once in VRAM thne drawing is done by VRAM copy)
 #endif
 #if (USE_PRINT_SPRITE)
-	PRINT_MODE_SPRITE,			///< Draw characters from sprites (load font data as sprite pattern in VRAM then display characters using sprite system)
+	PRINT_MODE_SPRITE      = 3,	///< Draw characters from sprites (load font data as sprite pattern in VRAM then display characters using sprite system)
 #endif
 };
 
@@ -117,6 +117,16 @@ void Print_SetFontVRAM(const u8* font, UY y);
 #if (USE_PRINT_SPRITE)
 /// Set the current font and upload to Sprite Pattern Table
 void Print_SetFontSprite(const u8* font, u8 patIdx, u8 sprtIdx);
+
+/// Get pattern index of the 1st sprite character
+inline u8 Print_GetSpritePattern() { return g_PrintData.SpritePattern; }
+
+/// Get the next sprite index
+inline u8 Print_GetSpriteID() { return g_PrintData.SpriteID; }
+
+/// Set the next sprite index
+inline void Print_SetSpriteID(u8 id) { g_PrintData.SpriteID = id; }
+
 #endif
 
 /// Clear screen

@@ -15,7 +15,7 @@
 //  - v1.0f		Bug fixed (error when using noise)
 //  - v1.0		Initial release
 //-----------------------------------------------------------------------------
-#include "ayFXplayer.h"
+#include "ayfx_player.h"
 
 /// ayFX mode
 u8  ayFX_Mode = AYFX_MODE_FIXED;

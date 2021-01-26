@@ -10,6 +10,10 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
+#include "core.h"
+
+extern u8 g_PSG_Regs[16];
+
 // Ports
 #define PSG_PORT_REG		0xA0   ///< Used to select a specific register by writing its number (0 to 15)
 #define PSG_PORT_WRITE		0xA1   ///< Used to write to any register once it has been selected by the Address Port.	

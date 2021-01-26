@@ -135,7 +135,10 @@ bool Print_Initialize(const u8* font)
 	Print_SetPosition(0, 0);
 	Print_SetTabSize(32);
 	#if (USE_PRINT_FX_SHADOW)
-		Print_SetShadow(false, 0, 0, 0);
+		Print_EnableShadow(false);
+	#endif
+	#if (USE_PRINT_FX_OUTLINE)
+		Print_EnableOutline(false);
 	#endif
 
 	switch(VDP_GetMode()) // Screen mode specific initialization

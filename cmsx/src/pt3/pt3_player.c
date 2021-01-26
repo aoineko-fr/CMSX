@@ -51,7 +51,7 @@ mvac7 version:
  Adaptation to C (SDCC) of the SapphiRe version.
 
 ============================================================================= */
-#include "PT3player.h"
+#include "pt3_player.h"
 
 //VARS:
 u8  ChanA[CHNPRM_Size];
@@ -68,6 +68,7 @@ u8  AddToNs;
 
 //AYREGS::
 u8  PT3_Regs[14];
+#define AYREGS _PT3_Regs
 u16 EnvBase;
 u8  VAR0END[240];
 
@@ -167,8 +168,8 @@ INITV3:
 InitClearRegs: 
 	xor		A  
 	ld		(#_PT3_State), A		// Reset PT3_State
-	ld		HL, #_PT3_Regs
-	ld		DE, #_PT3_Regs + 1
+	ld		HL, #AYREGS
+	ld		DE, #AYREGS + 1
 	ld		BC, #13
 	ld		(HL), A
 	ldir							// Reset PT3_Regs
@@ -233,7 +234,7 @@ __asm
 	ld		HL, #_ChanA				; VARS
 	ld		(HL), A
 	ld		DE, #_ChanA + 1			; VARS+1
-	ld		BC, #_VAR0END - _ChanA -1    ;_PT3_Regs - _ChanA -1
+	ld		BC, #_VAR0END - _ChanA -1    ;AYREGS - _ChanA -1
 	ldir
 
 	inc		A
@@ -316,9 +317,9 @@ void PT3_Silence() __naked
 {
 __asm
 	xor		A
-	ld		(#_PT3_Regs + PSG_REG_AMP_A), A
-	ld		(#_PT3_Regs + PSG_REG_AMP_B), A
-	ld		(#_PT3_Regs + PSG_REG_AMP_C), A
+	ld		(#AYREGS + PSG_REG_AMP_A), A
+	ld		(#AYREGS + PSG_REG_AMP_B), A
+	ld		(#AYREGS + PSG_REG_AMP_C), A
 
 	jp		_PT3_UpdatePSG                ;ROUT_A0
 __endasm;
@@ -340,24 +341,24 @@ __asm
 UpdatePSGMuteA:
 	bit		1, (HL)
 	jp		z, UpdatePSGMuteB
-	ld		(#_PT3_Regs + PSG_REG_AMP_A), A
+	ld		(#AYREGS + PSG_REG_AMP_A), A
 
 UpdatePSGMuteB:
 	bit		2, (HL)
 	jp		z, UpdatePSGMuteC
-	ld		(#_PT3_Regs + PSG_REG_AMP_B), A
+	ld		(#AYREGS + PSG_REG_AMP_B), A
 
 UpdatePSGMuteC:
 	bit		3, (HL)
 	jp		z, UpdatePSGMuteEnd
-	ld		(#_PT3_Regs + PSG_REG_AMP_C), A
+	ld		(#AYREGS + PSG_REG_AMP_C), A
 
 UpdatePSGMuteEnd:
 
 #endif
 
 	// Update mixer register wanted value with I/O 2-bits from the current mixer register value
-	ld		A, (#_PT3_Regs + PSG_REG_MIXER)
+	ld		A, (#AYREGS + PSG_REG_MIXER)
 	and		#0b00111111
 	ld		B, A
 	ld		A, #PSG_REG_MIXER
@@ -365,10 +366,10 @@ UpdatePSGMuteEnd:
 	in		A, (#PSG_PORT_READ)  
 	and		#0b11000000
 	or		B
-	ld		(#_PT3_Regs + PSG_REG_MIXER), A
+	ld		(#AYREGS + PSG_REG_MIXER), A
 
 	// Registers value copy loop (528 T-States)
-	ld		HL, #_PT3_Regs	// 11	Data to copy to PSG registers
+	ld		HL, #AYREGS	// 11	Data to copy to PSG registers
 	ld		C, #PSG_PORT_WRITE		// 8	Setup outi register
 	xor		A						// 5	Initialize register number
 	// R#0-12
@@ -399,9 +400,9 @@ __asm
 
 	xor		A
 	ld		(#_PT3_AddToEn), A						// PT3_AddToEn = 0
-	ld		(#_PT3_Regs + PSG_REG_MIXER), A			// PSG_REG_MIXER = 0
+	ld		(#AYREGS + PSG_REG_MIXER), A			// PSG_REG_MIXER = 0
 	dec		A
-	ld		(#_PT3_Regs + PSG_REG_SHAPE), A			// PSG_REG_SHAPE = 0xFF
+	ld		(#AYREGS + PSG_REG_SHAPE), A			// PSG_REG_SHAPE = 0xFF
 
 	LD   HL,#_DelyCnt
 	DEC  (HL)
@@ -482,26 +483,26 @@ PL1D:
 
 PL2:	
 	LD   IY,#_ChanA
-	LD   HL,(#_PT3_Regs + PSG_REG_TONE_A)
+	LD   HL,(#AYREGS + PSG_REG_TONE_A)
 	CALL CHREGS
-	LD   (#_PT3_Regs + PSG_REG_TONE_A),HL			// Set Tone A
-	LD   A,(#_PT3_Regs + PSG_REG_AMP_C)
-	LD   (#_PT3_Regs + PSG_REG_AMP_A),A				// Set Volume A
+	LD   (#AYREGS + PSG_REG_TONE_A),HL			// Set Tone A
+	LD   A,(#AYREGS + PSG_REG_AMP_C)
+	LD   (#AYREGS + PSG_REG_AMP_A),A				// Set Volume A
 	LD   IY,#_ChanB
-	LD   HL,(#_PT3_Regs + PSG_REG_TONE_B)
+	LD   HL,(#AYREGS + PSG_REG_TONE_B)
 	CALL CHREGS
-	LD   (#_PT3_Regs + PSG_REG_TONE_B),HL			// Set Tone B
-	LD   A,(#_PT3_Regs + PSG_REG_AMP_C)
-	LD   (#_PT3_Regs + PSG_REG_AMP_B),A				// Set Volume B
+	LD   (#AYREGS + PSG_REG_TONE_B),HL			// Set Tone B
+	LD   A,(#AYREGS + PSG_REG_AMP_C)
+	LD   (#AYREGS + PSG_REG_AMP_B),A				// Set Volume B
 	LD   IY,#_ChanC
-	LD   HL,(#_PT3_Regs + PSG_REG_TONE_C)
+	LD   HL,(#AYREGS + PSG_REG_TONE_C)
 	CALL CHREGS
-	LD   (#_PT3_Regs + PSG_REG_TONE_C),HL			// Set Tone C
+	LD   (#AYREGS + PSG_REG_TONE_C),HL			// Set Tone C
 
 	LD   HL,(#_Ns_Base)    ;Ns_Base_AddToNs
 	LD   A,H
 	ADD  A,L
-	LD   (#_PT3_Regs + PSG_REG_NOISE),A				// Set Noise
+	LD   (#AYREGS + PSG_REG_NOISE),A				// Set Noise
 
 	ld   A,(#_PT3_AddToEn)
 	LD   E,A
@@ -512,7 +513,7 @@ PL2:
 	ADD  HL,DE
 	LD   DE,(#_CurESld)
 	ADD  HL,DE
-	LD  (#_PT3_Regs + PSG_REG_ENV),HL
+	LD  (#AYREGS + PSG_REG_ENV),HL
 
 	XOR  A
 	LD   HL,#_CurEDel
@@ -822,7 +823,7 @@ C_DELAY:
 	
 SETENV:
 	LD   -12 + CHNPRM_Env_En(IY),E
-	LD   (#_PT3_Regs + PSG_REG_SHAPE),A
+	LD   (#AYREGS + PSG_REG_SHAPE),A
 	LD   A,(BC)
 	INC  BC
 	LD   H,A
@@ -884,7 +885,7 @@ SPCCOMS:
 
 CHREGS:	
 	XOR  A
-	LD   (#_PT3_Regs + PSG_REG_AMP_C),A				// Set Volume C
+	LD   (#AYREGS + PSG_REG_AMP_C),A				// Set Volume C
 	BIT   0,CHNPRM_Flags(IY)
 	PUSH  HL
 	JP    Z,CH_EXIT
@@ -1017,7 +1018,7 @@ CH_VOL:
 	OR   CHNPRM_Volume(IY)
 	LD   L,A
 	LD   H,#0
-	LD   DE,#_PT3_Regs  ;_VT_
+	LD   DE,#AYREGS  ;_VT_
 	ADD  HL,DE
 	LD   A,(HL)
 CH_ENV:	
@@ -1025,7 +1026,7 @@ CH_ENV:
 	JR   NZ,CH_NOEN
 	OR   CHNPRM_Env_En(IY)
 CH_NOEN:	
-	LD   (#_PT3_Regs + PSG_REG_AMP_C),A				// Set volume C
+	LD   (#AYREGS + PSG_REG_AMP_C),A				// Set volume C
 	BIT  7,B
 	LD   A,C
 	JR   Z,NO_ENSL
@@ -1056,7 +1057,7 @@ CH_MIX:
 	RRA
 	AND  #0x48
 CH_EXIT:	
-	LD   HL,#_PT3_Regs + PSG_REG_MIXER
+	LD   HL,#AYREGS + PSG_REG_MIXER
 	OR   (HL)
 	RRCA
 	LD   (HL),A
