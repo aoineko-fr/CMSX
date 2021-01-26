@@ -23,8 +23,8 @@ rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=%1
-SET ModuleList=bios,vdp,print,input,memory,math,draw,PT3\PT3player,ayFX\ayFXplayer
-REM SET ModuleList=vdp,print,pt3player\pt3player
+SET ModuleList=bios,vdp,print,input,memory,math,draw,pt3\pt3_player,ayfx\ayfx_player
+REM SET ModuleList=wyz\wyz_player,psg
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
 rem  - ROM16	.rom	16KB ROM in page 1 (4000h ~ 7FFFh)

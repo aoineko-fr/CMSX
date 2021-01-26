@@ -4,8 +4,8 @@
 //-----------------------------------------------------------------------------
 #include "cmsx.h"
 #include "string.h"
-#include "PT3/PT3player.h"
-#include "ayFX/ayFXplayer.h"
+#include "pt3/pt3_player.h"
+#include "ayfx/ayfx_player.h"
 
 //-----------------------------------------------------------------------------
 // DEFINE
@@ -41,7 +41,7 @@ typedef struct {
 #include "font\font_cmsx_symbol1.h"
 
 // Note table
-#include "PT3/PT3player_NoteTable2.h"
+#include "pt3\pt3_notetable2.h"
 
 // Music
 #include "data\pt3\Beg!nsum.h"

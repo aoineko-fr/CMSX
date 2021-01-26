@@ -3,7 +3,7 @@
 //  █▄▄ █ ▀ █ ▄█ █ █ v0.2
 //-----------------------------------------------------------------------------
 #include "cmsx.h"
-#include "PT3/PT3player.h"
+#include "pt3/pt3_player.h"
 
 //-----------------------------------------------------------------------------
 // DEFINE
@@ -40,7 +40,7 @@ typedef struct {
 #include "font\font_cmsx_symbol1.h"
 
 // Note table
-#include "PT3/PT3player_NoteTable2.h"
+#include "pt3/pt3_notetable2.h"
 
 // Music
 #include "data\pt3\!ndiffer.h"
@@ -121,6 +121,7 @@ void main()
 	Print_DrawText("Chan. B\n");		
 	Print_DrawText("Chan. C\n");		
 
+	Print_SetColor(0x5, 0x4);
 	Print_SetPosition(0, 204);
 	Print_DrawText("<>:Song  Space:Pause  123:Mute  Del:Loop");		
 
@@ -152,7 +153,7 @@ void main()
 	PT3_Init();
 	PT3_SetNoteTable(NT);
 	PT3_SetLoop(true);
-	PT3_SetFinishCB(Stop);
+	//PT3_SetFinishCB(Stop);
 
 	SetSong(1);
 	Loop(true);
