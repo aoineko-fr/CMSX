@@ -11,26 +11,20 @@
 #include "msxi/msxi_unpack.h"
 #include "bios.h"
 #include "math.h"
+#include "print.h"
+#include "pt3/pt3_player.h"
+#include "ayfx/ayfx_player.h"
 
 
 //=============================================================================
 //
-//   C O D E
+//   D E F I N E S
 //
 //=============================================================================
-
-void MainLoop();
-
-//-----------------------------------------------------------------------------
-/// Program entry point
-void main()
-{
-	MainLoop();
-}
 
 //-----------------------------------------------------------------------------
 // DEFINES
-#define VERSION "V0.2.0"
+#define VERSION			"V0.3.0"
 
 #define PLAYER_NB 		14
 
@@ -45,11 +39,11 @@ void main()
 #define MIN_DIFF		8
 
 #if (TARGET_TYPE == TARGET_TYPE_BIN)
-	#define HBLANK_LINE		255-9
+	#define HBLANK_LINE		(u8)(255-9)
 #elif (TARGET_TYPE == TARGET_TYPE_ROM)
-	#define HBLANK_LINE		255-5
+	#define HBLANK_LINE		(u8)(255-5)
 #elif (TARGET_TYPE == TARGET_TYPE_DOS)
-	#define HBLANK_LINE		255-10
+	#define HBLANK_LINE		(u8)(255-10)
 #endif
 
 /// Player action ID
@@ -64,6 +58,10 @@ enum ACTION_ID
 	ACTION_JUMP,
 	ACTION_MAX = 15,
 };
+
+// 
+#define V8(a) (*((u8*)(&a)))
+#define V16(a) (*((u16*)(&a)))
 
 //-----------------------------------------------------------------------------
 // TYPES
@@ -122,26 +120,32 @@ typedef struct
 	
 } PlyInfo;
 
-//-----------------------------------------------------------------------------
-// DATA
-//#define D_g_PlayerSprite __at(0x0000)
-#include "data/player.data.h"
 
-u8 Cursor[] =
-{
-	0b11111000,
-	0b01110000,
-	0b00100000,
-};
+//=============================================================================
+//
+//   D A T A
+//
+//=============================================================================
 
-/// Index of the current VDP display page (will be switch after V-Blank)
-u8 g_DisplayPage = 0;
-/// Index of the current VDP work page (will be switch after V-Blank)
-u8 g_WritePage = 1;
-/// Flag to inform game thread that a V-Blank occured
-u8 g_VBlank = 0;
-/// Frame counter
-u8 g_Frame = 0;
+// Bitmap Sprites
+#include "data\player.data.h"
+// HW Sprites
+#include "data\sprite.data.h"
+#include "font\font_carwar.h"
+// Music
+#include "pt3\pt3_notetable2.h"
+#include "data\music00.h"
+// SFX
+#include "data\ayfx_bank.h"
+
+
+u8 g_DisplayPage = 0;	///< Index of the current VDP display page (will be switch after V-Blank)
+u8 g_WritePage = 1;		///< Index of the current VDP work page (will be switch after V-Blank)
+u8 g_VBlank = 0;		///< Flag to inform game thread that a V-Blank occured
+u8 g_Frame = 0;			///< Frame counter
+
+u8 g_PlayerChara = 6;
+
 /// Players information
 PlyInfo g_Player[2][PLAYER_NB];
 
@@ -207,11 +211,21 @@ static const Vector816 FormationAtt[] =
 // u8 HookBackup_KEYI[5];
 // u8 HookBackup_TIMI[5];
 
-//-----------------------------------------------------------------------------
-// FUNCTIONS
+//=============================================================================
+//
+//   C O D E
+//
+//=============================================================================
 
-#define V8(a) (*((u8*)(&a)))
-#define V16(a) (*((u16*)(&a)))
+void MainLoop();
+
+
+//-----------------------------------------------------------------------------
+/// Program entry point
+void main()
+{
+	MainLoop();
+}
 
 /// H-Blank interrupt hook
 void HBlankHook()
@@ -245,14 +259,18 @@ void InterruptHook()
 }
 
 /// H_TIMI interrupt hook
-void VBlankHook() //__preserves_regs(a)
+void VBlankHook()
 {
-	__asm__("push	af");
 	VDP_SetPage(V8(g_DisplayPage) * 2);
 	g_VBlank = 1;
-	__asm__("pop	af");
 	
 	// Call((u16)HookBackup_KEYI);
+	PlyInfo* p = &g_Player[g_DisplayPage][g_PlayerChara];			
+	VDP_SetSpritePosition(16, p->pos.x - 2, p->pos.y - 19);
+	
+	PT3_Decode();
+	ayFX_Update();
+	PT3_UpdatePSG();
 }
 
 /// Wait for V-Blank period
@@ -404,11 +422,11 @@ u16 GetSqrDistance(const Vector816* from, const Vector816* to)
 /// Main loop
 void MainLoop()
 {
-	VDP_SetScreen(VDP_MODE_SCREEN5);
+	VDP_SetMode(VDP_MODE_SCREEN5);
+	VDP_SetSpriteTables(0x1C000, 0x1CA00);
 	VDP_SetFrequency(VDP_FREQ_50HZ);
 	VDP_SetLineCount(LINE_NB == 192 ? VDP_LINE_192 : VDP_LINE_212);
 	VDP_SetColor(0x00);
-	VDP_SetSpriteTables(VRAM16b(0x1C000), VRAM16b(0x1C600));
 	VDP_SetPage(0);
 
 	// Speed-up VDP setup
@@ -494,7 +512,6 @@ void MainLoop()
 	VDP_SetHBlankLine(HBLANK_LINE);
 	u8 ballArea = 0;
 	Vector816 ballPosition;
-	u8 playerChara = 6;
 
 	PlyInfo* p;			
 	u8 dir;
@@ -506,10 +523,45 @@ void MainLoop()
 	
 	VDP_EnableSprite(true);
 	VDP_EnableDisplay(true);
+	
+
+	VDP_LoadSpritePattern(g_UISprite, 0, 48);
+	VDP_SetSpriteExUniColor(16, 0, 0, 32, 3);
+
+	
+	// VDP_SetSpriteFlag(VDP_SPRITE_SCALE_2);
+	Print_SetColor(9, 0);
+	Print_SetFontSprite(g_Font_Carwar, 48, 0);
+	Print_SetSpriteID(0);
+	Print_SetPosition(4, 4);
+	Print_DrawText("03-01");
+	Print_SetPosition(256-4-5*8, LINE_NB - 4 - 8);
+	Print_DrawText("43:25");
+	// hide >> Print_GetSpriteID();
+	// Print_SetCharSize(g_PrintData.UnitX*2, g_PrintData.UnitY*2);
+
+	// INIT PT3
+
+	PT3_Init();
+	PT3_SetNoteTable(NT);
+	PT3_SetLoop(true);
+	PT3_InitSong(g_Music00);
+	PT3_Play();
+
+	// INIT ayFX
+
+	ayFX_InitBank(g_ayfx_bank);
+	ayFX_SetChannel(PSG_CHANNEL_C);
+	ayFX_SetMode(AYFX_MODE_FIXED);
+	ayFX_PlayBank(0, 0);
 
 	while(1)
 	{
-		ballPosition = g_Player[g_DisplayPage][playerChara].pos;
+		//---------------------------------------------------------------------
+		g_VBlank = 0;
+		WaitVBlank();
+
+		ballPosition = g_Player[g_DisplayPage][g_PlayerChara].pos;
 		ballArea = ballPosition.y >> 6;
 		
 		//---------------------------------------------------------------------
@@ -530,6 +582,21 @@ void MainLoop()
 			VDP_EnableHBlank(false);
 		// Set the screen scrolling offset
 		VDP_SetVerticalOffset(scrollOffset);
+		
+		if(scrollOffset != scrollPrevious)
+		{
+			// Score
+			for(u8 is=0; is<5; ++is)
+			{
+				VDP_SetSpritePositionY(is, 4 + scrollOffset);				
+			}
+			// Timer
+			for(u8 it=5; it<10; ++it)
+			{
+				VDP_SetSpritePositionY(it, LINE_NB - 4 - 8 + scrollOffset);				
+			}
+		}
+		
 		// Backup previous scrolling offset
 		scrollPrevious = scrollOffset;
 
@@ -579,8 +646,10 @@ void MainLoop()
 		p = &g_Player[g_WritePage][0];			
 		for(i = 0; i < PLAYER_NB; ++i)
 		{
-			if(i == playerChara) // controller 1
+			if(i == g_PlayerChara) // controller 1
 			{
+				VDP_SetSpritePosition(16, p->pos.x - 2, p->pos.y - 18);
+				
 				// Move & tackle
 				u8 row = Keyboard_Read(KEY_ROW(KEY_DOWN));
 				dir = 0;
@@ -603,7 +672,7 @@ void MainLoop()
 					p->pos.y += RunMove[p->dir].y - 1;
 				}
 				else
-					p->action = ACTION_IDLE;	
+					p->action = ACTION_IDLE;
 			}
 			else // AI
 			{
@@ -664,7 +733,7 @@ void MainLoop()
 			if(p->action == ACTION_IDLE)
 				p->sprtIdX = 0;
 			else //if(p->action == ACTION_RUN)
-				p->sprtIdX = Anim_RunFrames[(g_Frame >> 2) & 0x03];
+				p->sprtIdX = Anim_RunFrames[(g_Frame >> 1) & 0x03];
 			p->sprtIdY = p->dir;
 
 			const u8* ptr = g_PlayerSprite + g_PlayerSprite_index[p->sprtIdX + (p->sprtIdY << 3)];
@@ -701,7 +770,8 @@ void MainLoop()
 		u8 row = Keyboard_Read(KEY_ROW(KEY_GRAPH));
 		if((row & KEY_FLAG(KEY_GRAPH)) == 0)
 		{
-			playerChara = (playerChara + 1) % (PLAYER_NB / 2);
+			g_PlayerChara = (g_PlayerChara + 1) % (PLAYER_NB / 2);
+			ayFX_PlayBank(0, 0);
 		}
 			
 		//---------------------------------------------------------------------
@@ -726,9 +796,5 @@ void MainLoop()
 			}
 			p++;
 		}	
-
-		//---------------------------------------------------------------------
-		g_VBlank = 0;
-		WaitVBlank();
 	}
 }

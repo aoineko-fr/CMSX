@@ -23,8 +23,7 @@ rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=gos
-set SrcList=%ProjName%.c,%LibDir%\src\memory.c,%LibDir%\src\math.c,%LibDir%\src\bios.c,%LibDir%\src\vdp.c,%LibDir%\src\print.c,%LibDir%\src\msxi\msxi_unpack.c,%LibDir%\src\input.c
-set LibList=%OutDir%\%ProjName%.rel %OutDir%\memory.rel %OutDir%\math.rel %OutDir%\bios.rel %OutDir%\vdp.rel %OutDir%\print.rel %OutDir%\msxi_unpack.rel %OutDir%\input.rel
+SET ModuleList=bios,vdp,print,input,memory,math,draw,msxi\msxi_unpack,pt3\pt3_player,ayfx\ayfx_player
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
 rem  - ROM16	.rom	16KB ROM in page 1 (4000h ~ 7FFFh)
