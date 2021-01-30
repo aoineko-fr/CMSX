@@ -1,2 +1,0 @@
-..\..\..\tools\MSXImage\MSXImage.exe -in player.png -out player.data.h -pos 0 0 -size 16 16 -num 8 8 -name g_PlayerSprite -trans 0x336600 -bpc 4 -pal custom -compress crop16 -idx
-..\..\..\tools\MSXImage\MSXImage.exe -in sprite.png -out sprite.data.h -pos 0 0 -size 8 8   -num 16 3  -trans 0x000000  -bpc 1  -name g_UISprite
