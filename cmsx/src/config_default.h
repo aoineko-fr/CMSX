@@ -1,7 +1,8 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
+//_____________________________________________________________________________
+//   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
+//  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
+//  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
+//_____________________________________________________________________________
 // Default defines configuration
 //-----------------------------------------------------------------------------
 #pragma once
@@ -126,3 +127,18 @@
 	#define RANDOM_METHOD			RANDOM_XORSHIFT
 #endif
 
+//-----------------------------------------------------------------------------
+// MISC
+//-----------------------------------------------------------------------------
+
+// PROFILE_MODE
+#if !defined(PROFILE_MODE)
+	#warning PROFILE_MODE is not defined in "cmsx_config.h"! Default value will be used: PROFILE_DISABLE
+	#define PROFILE_MODE				PROFILE_DISABLE
+#endif
+
+// PROFILE_LEVEL
+#if !defined(PROFILE_LEVEL)
+	#warning PROFILE_LEVEL is not defined in "cmsx_config.h"! Default value will be used: 10
+	#define PROFILE_LEVEL				10
+#endif

@@ -1,14 +1,15 @@
-;------------------------------------------------------------------------------
-;  █▀▀ █▀▄▀█ █▀ ▀▄▀
-;  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-;------------------------------------------------------------------------------
+;_____________________________________________________________________________
+;   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
+;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
+;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
+;_____________________________________________________________________________
 ; crt0 header for Basic binary
 ; 
 ; Credit: Konamiman 1/2018
 ; https://github.com/Konamiman/MSX/blob/master/SRC/SDCC/crt0_msxbasic.asm
 ; 
-; Code address: 0x8020
-; Data address: (after code)
+; Code address: 0x8007 (right after the header)
+; Data address: 0      (right after code)
 ;------------------------------------------------------------------------------
 .module crt0
 
@@ -21,16 +22,20 @@
 HIMEM = #0xFC4A
 
 ;------------------------------------------------------------------------------
+; BASIC binary header
 .area _HEADER (ABS)
 	.org    0x8000
 
 	; Binary program header
-	.db 	0xFE	; ID byte
-	.dw 	init	; Start address
-	.dw		end		; End address
-	.dw 	init	; Execution address
+	.db 	0xFE		; ID byte
+	.dw 	crt0_init	; Start address
+	.dw		crt0_end	; End address
+	.dw 	crt0_init	; Execution address
 
-init:
+;------------------------------------------------------------------------------
+.area	_HOME
+.area	_CODE
+crt0_init:
 	di
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
@@ -39,20 +44,18 @@ init:
     ld		bc, #l__INITIALIZER
 	ld		a, b
 	or		a, c
-	jp		z, start	
+	jp		z, crt0_start
 	ld		de, #s__INITIALIZED
 	ld		hl, #s__INITIALIZER
 	ldir
 
-start:
+crt0_start:
 	; start main() function
 	ei
 	jp		_main
 
 ;------------------------------------------------------------------------------
-; Ordering of segments for the linker
-.area	_HOME
-.area	_CODE
+; Ordering other segments for the linker
 .area	_RODATA
 .area	_INITIALIZER
 .area   _GSINIT
@@ -66,4 +69,4 @@ _g_HeapStartAddress::
 .area   _BSS
 .area   _HEAP
 
-end:
+crt0_end:

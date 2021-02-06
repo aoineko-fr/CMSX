@@ -1,7 +1,8 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
+//_____________________________________________________________________________
+//   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
+//  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
+//  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
+//_____________________________________________________________________________
 #pragma once
 // Library configuration
 #include "config_option.h"		// Configuration options
@@ -53,6 +54,8 @@ typedef void (*callback)(void);	///< Callback default signature
 
 /// Get the number of elements of a static initialized structure
 #define numberof(tab)	sizeof(tab) / sizeof(tab[0])
+
+#define loop(a, b)		for(u8 a = 0; a < b; ++a)
 
 //-----------------------------------------------------------------------------
 // Helper inline functions

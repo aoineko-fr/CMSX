@@ -1,7 +1,8 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
+//_____________________________________________________________________________
+//   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
+//  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
+//  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
+//_____________________________________________________________________________
 /**
  * @file Features to manage the VDP - Source code
  *
@@ -771,6 +772,14 @@ void VDP_SetHBlankLine(u8 line) __FASTCALL
 void VDP_SetVerticalOffset(u8 offset) __FASTCALL
 {
 	VDP_RegWrite(23, offset);
+}
+
+//-----------------------------------------------------------------------------
+/// Adjustment of the display location on the screen [MSX2/2+/TR]
+void VDP_SetAdjustOffset(u8 offset) __FASTCALL
+{
+	VDP_CommandWait(); // @todo Check if it's really needed. Cf. https://www.msx.org/wiki/VDP_Display_Registers#Control_Register_18
+	VDP_RegWrite(18, offset);
 }
 
 //-----------------------------------------------------------------------------

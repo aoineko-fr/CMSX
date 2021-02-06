@@ -3,17 +3,17 @@
 //  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
 //  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
 //_____________________________________________________________________________
+// Real-time clock module (RP-5C01)
 //
-// Default header file including all modules
-//-----------------------------------------------------------------------------
+// Réferences:
+//  - Ricoh RP/RF5C01A application manual
+//  - https://www.msx.org/wiki/Ricoh_RP-5C01
+
 #pragma once
 
-#include "core.h"
-#include "bios.h"
-#include "vdp.h"
-#include "draw.h"
-#include "print.h"
-#include "input.h"
-#include "memory.h"
-#include "math.h"
-#include "color.h"
+#define RTC_PORT_ADDR	0xB4
+#define RTC_PORT_DATA	0xB5
+
+__sfr __at(RTC_PORT_ADDR) g_RTC_AddrPort;
+__sfr __at(RTC_PORT_DATA) g_RTC_DataPort;
+

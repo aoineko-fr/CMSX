@@ -5,7 +5,7 @@ if /I %Target%==BIN (
 	set Crt0=crt0_basic
 	set LinkOpt=
 	set StartAddr=8000
-	set CodeAddr=8020
+	set CodeAddr=8007
 	set DataAddr=0
 	set Ext=bin
 	set FillSize=0

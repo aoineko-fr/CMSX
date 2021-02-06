@@ -1,7 +1,8 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
+//_____________________________________________________________________________
+//   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
+//  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
+//  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
+//_____________________________________________________________________________
 /**
  * @file Features to manage the VDP - Defines, structures and functions header
  *
@@ -233,6 +234,9 @@ void VDP_SetHBlankLine(u8 line) __FASTCALL;
 
 /// Set the vertical rendeing offset (in pixel) [MSX2/2+/TR]
 void VDP_SetVerticalOffset(u8 offset) __FASTCALL;
+
+/// Adjustment of the display location on the screen [MSX2/2+/TR]
+void VDP_SetAdjustOffset(u8 offset) __FASTCALL;
 
 /// Enable/disable vertical interruption
 void VDP_EnableVBlank(bool enable) __FASTCALL;
