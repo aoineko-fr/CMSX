@@ -124,7 +124,7 @@
 // RANDOM_METHOD
 #ifndef RANDOM_METHOD
 	#warning RANDOM_METHOD is not defined in "cmsx_config.h"! Default value will be used: RANDOM_XORSHIFT
-	#define RANDOM_METHOD			RANDOM_XORSHIFT
+	#define RANDOM_METHOD				RANDOM_XORSHIFT
 #endif
 
 //-----------------------------------------------------------------------------

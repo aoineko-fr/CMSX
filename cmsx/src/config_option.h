@@ -93,5 +93,5 @@
 
 // PROFILE_MODE
 #define PROFILE_DISABLE		0 // No profiler
-#define PROFILE_OM_GRAUW	1 // Grauw profile script for OpenMSX
-#define PROFILE_OM_SALUTTE	2 // Salutte profile script for OpenMSX
+#define PROFILE_OPENMSX_G	1 // Grauw profile script for OpenMSX
+#define PROFILE_OPENMSX_S	2 // Salutte profile script for OpenMSX
