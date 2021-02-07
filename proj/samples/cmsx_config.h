@@ -144,3 +144,14 @@
 // - RANDOM_LFSR_LCG_32 ........... Combined LFSR/LCG (32-bit seeds)
 // - RANDOM_XORSHIFT .............. Xorshift RNGs (16-bit seeds)
 #define RANDOM_METHOD				RANDOM_XORSHIFT
+
+//-----------------------------------------------------------------------------
+// MISC
+//-----------------------------------------------------------------------------
+
+// Profiler method
+// - PROFILE_DISABLE .............. No profiler
+// - PROFILE_OPENMSX_G ............ Grauw profile script for OpenMSX
+// - PROFILE_OPENMSX_S ............ Salutte profile script for OpenMSX
+#define PROFILE_MODE				PROFILE_OPENMSX_G
+#define PROFILE_LEVEL				10 

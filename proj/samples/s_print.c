@@ -18,24 +18,24 @@
 //-----------------------------------------------------------------------------
 
 // Inclide font data
-#include "font/font_carwar.h"
 #include "font/font_cmsx_std0.h"
-#include "font/font_cmsx_std2.h"
-#include "font/font_cmsx_std3.h"
-#include "font/font_cmsx_big1.h"
-#include "font/font_cmsx_curs1b.h"
-#include "font/font_cmsx_rune2b.h"
 #include "font/font_cmsx_symbol1.h"
-#include "font/font_cmsx_mini1.h"
 #if (TARGET_TYPE != TARGET_TYPE_BIN)
+	#include "font/font_carwar.h"
+	#include "font/font_cmsx_mini1.h"
+	#include "font/font_cmsx_big1.h"
+	#include "font/font_cmsx_curs1b.h"
+	#include "font/font_cmsx_rune2b.h"
+	#include "font/font_cmsx_std2.h"
+	#include "font/font_cmsx_std3.h"
 	#include "font/font_cmsx_mini2.h"
 	#include "font/font_cmsx_mini3.h"
 	#include "font/font_cmsx_neon1b.h"
 	#include "font/font_acme.h"
+	#include "font/font_darkrose.h"
+	#include "font/font_oxygene.h"
+	#include "font/font_tsm9900.h"
 #endif
-#include "font/font_darkrose.h"
-#include "font/font_oxygene.h"
-#include "font/font_tsm9900.h"
 #include "font/font_ibm.h"
 
 // Trigo
@@ -65,24 +65,24 @@ struct FontEntry
 struct FontEntry g_Fonts[] =
 {
 	{ "Main-ROM [6*8]",			null },
-	{ "CARWAR [8*8]",			g_Font_Carwar },
 	{ "C-MSX Standard 0 [6*8]",	g_Font_CMSX_Std0 },
-	{ "C-MSX Standard 2 [6*8]",	g_Font_CMSX_Std2 },
-	{ "C-MSX Standard 3 [6*8]",	g_Font_CMSX_Std3 },
+	{ "C-MSX Symbol 1 [8*8]",	g_Font_CMSX_Symbol1 },	
+#if (TARGET_TYPE != TARGET_TYPE_BIN) // No enough free RAM in Basic to load all fonts
+	{ "CARWAR [8*8]",			g_Font_Carwar },
+	{ "C-MSX Mini 1 [4*6]",		g_Font_CMSX_Mini1 },
 	{ "C-MSX Big 1 [8*11]",		g_Font_CMSX_Big1 },
 	{ "C-MSX Cursive 1B [8*8]",	g_Font_CMSX_Curs1B },
 	{ "C-MSX Rune 2B [8*8]",	g_Font_CMSX_Rune2B },
-	{ "C-MSX Symbol 1 [8*8]",	g_Font_CMSX_Symbol1 },	
-	{ "C-MSX Mini 1 [4*6]",		g_Font_CMSX_Mini1 },
-#if (TARGET_TYPE != TARGET_TYPE_BIN) // No enough free RAM in Basic to load all fonts
+	{ "C-MSX Standard 2 [6*8]",	g_Font_CMSX_Std2 },
+	{ "C-MSX Standard 3 [6*8]",	g_Font_CMSX_Std3 },
 	{ "C-MSX Mini 2 [5*6]",		g_Font_CMSX_Mini2 },
 	{ "C-MSX Mini 3 [5*6]",		g_Font_CMSX_Mini3 },
 	{ "C-MSX Neon 1B [8*8]",	g_Font_CMSX_Neon1B },
 	{ "ACME [8*8]",				g_Font_Acme },
-#endif
 	{ "Darkrose [8*8]",			g_Font_Darkrose },
 	{ "OXYGENE [8*8]",			g_Font_Oxygene },
 	{ "TMS9900 [6*8]",			g_Font_TMS9900 },
+#endif
 	{ "IBM VGA [8*8]",			g_Font_IBM },
 };
 static u8 g_FontIndex = 0;
@@ -252,7 +252,7 @@ void PrintEffect()
 	Print_DrawText("Loading...");
 	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
 	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212);
-	Print_Backspace(String_GetLength("Loading..."));
+	Print_Backspace(String_Length("Loading..."));
 	Print_DrawText(g_SampleTextShort);
 #else
 	Print_DrawText("Disabled! (see config)");
@@ -276,7 +276,7 @@ void PrintEffect()
 		Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
 	#endif
 	Print_SetFontSprite(g_Fonts[g_FontIndex].Font, 0, 0);
-	Print_Backspace(String_GetLength("Loading..."));
+	Print_Backspace(String_Length("Loading..."));
 	Print_SetCharSize(g_PrintData.UnitX*2, g_PrintData.UnitY*2);
 	Print_SetPosition(64, 180);
 	Print_DrawText(g_SpriteText);
@@ -309,7 +309,7 @@ void PrintBenchmark()
 	Print_DrawText("\n\nLoading...");
 	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
 	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212);
-	Print_Backspace(String_GetLength("Loading..."));
+	Print_Backspace(String_Length("Loading..."));
 	u8 startTime = g_JIFFY;
 	Print_DrawText(text1);
 	Print_DrawText(text2);
@@ -404,7 +404,7 @@ void main()
 		
 		if(cb == PrintEffect)
 		{
-			for(u8 i = 0; i < String_GetLength(g_SpriteText); ++i)
+			for(u8 i = 0; i < String_Length(g_SpriteText); ++i)
 			{
 				VDP_SetSpritePositionY(i, 155 + ((i16)(g_Sinus32[((count >> 2) + i) % 32]) >> 8));
 			}
