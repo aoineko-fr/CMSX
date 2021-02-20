@@ -46,6 +46,9 @@ void DrawChar_VRAM512(u8 chr) __FASTCALL;
 // Draw character from Sprites
 void DrawChar_Sprite(u8 chr) __FASTCALL;
 
+// Draw characters as pattern name
+void DrawChar_Name(u8 chr) __FASTCALL;
+
 //-----------------------------------------------------------------------------
 //
 // DATA
@@ -130,11 +133,10 @@ u8 Print_MergeColor(u8 color) __FASTCALL
 /// @param		font		Pointer to font data to use (null=use Main-ROM font)
 bool Print_Initialize(const u8* font)
 {
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(VDP_IsBitmapMode(VDP_GetMode()) ? PRINT_MODE_DEFAULT : PRINT_MODE_TEXT);
 	Print_SetFont(font);
 	Print_SetColor(0xF, 0x0);
 	Print_SetPosition(0, 0);
-	Print_SetTabSize(32);
 	#if (USE_PRINT_FX_SHADOW)
 		Print_EnableShadow(false);
 	#endif
@@ -144,28 +146,66 @@ bool Print_Initialize(const u8* font)
 
 	switch(VDP_GetMode()) // Screen mode specific initialization
 	{
+	#if (USE_VDP_MODE_T1)
+		case VDP_MODE_TEXT1:		// 40 characters per line of text, one colour for each character
+			Print_SetTabSize(3);
+			g_PrintData.ScreenWidth = 40;
+			break;
+	#endif
+	#if (USE_VDP_MODE_MC)
+		case VDP_MODE_MULTICOLOR:	// pseudo-graphic, one character divided into four block
+			break;
+	#endif
+	#if (USE_VDP_MODE_G1)
+		case VDP_MODE_GRAPHIC1:		// 32 characters per one line of text, the COLOURed character available
+			Print_SetTabSize(3);
+			g_PrintData.ScreenWidth = 32;
+			break;
+	#endif
+	#if (USE_VDP_MODE_G2)
+		case VDP_MODE_GRAPHIC2:		// 256 x 192, the colour is specififed for each 8 dots
+			Print_SetTabSize(3);
+			g_PrintData.ScreenWidth = 32;
+			break;
+	#endif
+	#if (USE_VDP_MODE_T2)
+		case VDP_MODE_TEXT2:		// 80 characters per line of text, character blinkable selection
+			Print_SetTabSize(3);
+			g_PrintData.ScreenWidth = 80;
+			break;
+	#endif
+	#if (USE_VDP_MODE_G3)
+		case VDP_MODE_GRAPHIC3:		// GRAPHIC 2 which can use sprite mode 2
+			Print_SetTabSize(3);
+			g_PrintData.ScreenWidth = 32;
+			break;
+	#endif
 	#if (USE_VDP_MODE_G4)
 		case VDP_MODE_GRAPHIC4:		// 256 x 212; 16 colours are available for each dot
+			Print_SetTabSize(PRINT_TAB_SIZE);
 			g_PrintData.ScreenWidth = 256;
 			break;
-	#endif // USE_VDP_MODE_G4
+	#endif
 	#if (USE_VDP_MODE_G5)
 		case VDP_MODE_GRAPHIC5:		// 512 x 212; 4 colours are available for each dot
+			Print_SetTabSize(PRINT_TAB_SIZE);
 			Print_SetColor(0x03, 0x0);
 			g_PrintData.ScreenWidth = 512;
 			break;
-	#endif // USE_VDP_MODE_G5
+	#endif
 	#if (USE_VDP_MODE_G6)
 		case VDP_MODE_GRAPHIC6:		// 512 x 212; 16 colours are available for each dot
+			Print_SetTabSize(PRINT_TAB_SIZE);
 			g_PrintData.ScreenWidth = 512;
 			break;
-	#endif // USE_VDP_MODE_G6
+	#endif
 	#if (USE_VDP_MODE_G7)
 		case VDP_MODE_GRAPHIC7:		// 256 x 212; 256 colours are available for each dot
+			Print_SetTabSize(PRINT_TAB_SIZE);
 			Print_SetColor(0xFF, 0x0);
 			g_PrintData.ScreenWidth = 256;
 			break;
-	#endif // USE_VDP_MODE_G7
+	#endif
 	default:
 		// Screen mode not (yet) supported!
 		return false;
@@ -634,6 +674,26 @@ void DrawChar_Trans(u8 chr) __FASTCALL
 		g_VDP_Command.DY++;
 	}
 }
+
+//-----------------------------------------------------------------------------
+//
+// PATTERN NAMES FONT
+//
+//-----------------------------------------------------------------------------
+
+#if (VDP_MODE_TEXT1 | VDP_MODE_MULTICOLOR | VDP_MODE_GRAPHIC1 | VDP_MODE_GRAPHIC2 | VDP_MODE_TEXT2 | VDP_MODE_GRAPHIC3)
+
+//-----------------------------------------------------------------------------
+/// Draw characters as pattern name
+/// @param		chr			The character to draw
+void DrawChar_Name(u8 chr) __FASTCALL
+{
+	// u8 name = chr - g_PrintData.FontFirst + g_PrintData.TextPattern;
+	// u16 vram = g_PrintData.TextPattern + g_PrintData.CursorX + g_PrintData.CursorY * g_PrintData.ScreenWidth;
+	// VDP_FillVRAM(&name, vram, g_SpritePatternHigh, 1);
+}
+#endif
+
 
 //-----------------------------------------------------------------------------
 //

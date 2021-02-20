@@ -44,6 +44,9 @@
 //-----------------------------------------------------------------------------
 #elif (PROFILE_MODE == PROFILE_OPENMSX_S)
 
+	#define P_PROFILE_START		#0x2C
+	#define P_PROFILE_END		#0x2D
+
 	__sfr __at 0x2C g_PortStartProfile;
 	__sfr __at 0x2D g_PortEndProfile;
 

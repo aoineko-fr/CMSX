@@ -8,6 +8,12 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
+//
+// D E F A U L T
+//
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
 // BUILD
 //-----------------------------------------------------------------------------
 
@@ -141,4 +147,16 @@
 #if !defined(PROFILE_LEVEL)
 	#warning PROFILE_LEVEL is not defined in "cmsx_config.h"! Default value will be used: 10
 	#define PROFILE_LEVEL				10
+#endif
+
+
+//-----------------------------------------------------------------------------
+//
+// V A L I D A T I O N
+//
+//-----------------------------------------------------------------------------
+#if ((MSX_VERSION == MSX_1) && (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17))
+	#warning VDP_VRAM_ADDR cant be equal to VDP_VRAM_ADDR_17 when MSX1 machine is selected! VDP_VRAM_ADDR_16 will be select instead
+	#undef  VDP_VRAM_ADDR
+	#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_16
 #endif

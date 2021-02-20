@@ -82,18 +82,21 @@ u8 g_VDP_STASAV[10];
 struct VDP_Data    g_VDP_Data;
 struct VDP_Command g_VDP_Command;
 struct VDP_Sprite  g_VDP_Sprite;
-u8  g_ScreenLayoutHigh;		///< Address of the Pattern Layout Table (Name)
-u16 g_ScreenLayoutLow;		///< Address of the Pattern Layout Table (Name)
-u8  g_ScreenColorHigh;		///< Address of the Color Table
-u16 g_ScreenColorLow;		///< Address of the Color Table
-u8  g_ScreenPatternHigh;	///< Address of the Pattern Generator Table
-u16 g_ScreenPatternLow;		///< Address of the Pattern Generator Table
-u8  g_SpriteAtributeHigh;	///< Address of the Sprite Attribute Table
-u16 g_SpriteAtributeLow;	///< Address of the Sprite Attribute Table
-u8  g_SpritePatternHigh;	///< Address of the Sprite Pattern Generator Table
-u16 g_SpritePatternLow;		///< Address of the Sprite Pattern Generator Table
-u8  g_SpriteColorHigh;		///< Address of the Sprite Color Table
-u16 g_SpriteColorLow;		///< Address of the Sprite Color Table
+
+u16 g_ScreenLayoutLow;			///< Address of the Pattern Layout Table (Name)
+u16 g_ScreenColorLow;			///< Address of the Color Table
+u16 g_ScreenPatternLow;			///< Address of the Pattern Generator Table
+u16 g_SpriteAtributeLow;		///< Address of the Sprite Attribute Table
+u16 g_SpritePatternLow;			///< Address of the Sprite Pattern Generator Table
+u16 g_SpriteColorLow;			///< Address of the Sprite Color Table
+#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+	u8  g_ScreenLayoutHigh;		///< Address of the Pattern Layout Table (Name)
+	u8  g_ScreenColorHigh;		///< Address of the Color Table
+	u8  g_ScreenPatternHigh;	///< Address of the Pattern Generator Table
+	u8  g_SpriteAtributeHigh;	///< Address of the Sprite Attribute Table
+	u8  g_SpritePatternHigh;	///< Address of the Sprite Pattern Generator Table
+	u8  g_SpriteColorHigh;		///< Address of the Sprite Color Table
+#endif
 
 //=============================================================================
 //
@@ -248,7 +251,7 @@ void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count)
 		add		ix, sp
 		// Setup address register 
 		ld		a, 6 (ix)
-		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF)
 		ld		a, 7 (ix)
 		and		a, #0x3f
@@ -1268,6 +1271,17 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
+/// Tell if the given screen mode is a bitmap mode (text mode otherwise)
+bool VDP_IsBitmapMode(const u8 mode) __FASTCALL
+{
+#if (MSX_VERSION == MSX_1)
+	return false;
+#else
+	return mode >= VDP_MODE_GRAPHIC4;
+#endif
+}
+
+//-----------------------------------------------------------------------------
 void VDP_RegWriteFC(u16 reg_value) __FASTCALL
 {
 	reg_value;
@@ -1379,6 +1393,89 @@ void VDP_SetColor(u8 color) __FASTCALL
 	VDP_RegWrite(7, color);
 }
 
+//-----------------------------------------------------------------------------
+/// Set layout table VRAM address
+void VDP_SetLayoutTable(VADDR addr) __FASTCALL
+{
+	g_ScreenLayoutLow = (u16)addr;
+
+	u8 reg;
+	reg = (u8)(addr >> 10);
+	#if (MSX_VERSION >= MSX_2)
+		switch(g_VDP_Data.Mode)
+		{
+		case VDP_MODE_TEXT2:
+			reg |= 0b11;
+			break;
+		case VDP_MODE_GRAPHIC6:
+		case VDP_MODE_GRAPHIC7:
+			reg >>= 1;
+		case VDP_MODE_GRAPHIC4:
+		case VDP_MODE_GRAPHIC5:
+			reg |= 0b11111;
+			break;
+		};	
+	#endif
+	VDP_RegWrite(2, reg);
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenLayoutHigh = addr >> 16;
+	#endif
+}
+
+//-----------------------------------------------------------------------------
+/// Set color table VRAM address
+void VDP_SetColorTable(VADDR addr) __FASTCALL
+{
+	g_ScreenColorLow = (u16)addr;
+	
+	u8 reg;
+	reg = (u8)(addr >> 6);
+	switch(g_VDP_Data.Mode)
+	{
+	#if (MSX_VERSION >= MSX_2)
+	case VDP_MODE_TEXT2:
+		reg |= 0b111;
+		break;
+	case VDP_MODE_GRAPHIC3:
+	#endif
+	case VDP_MODE_GRAPHIC2:
+		reg |= 0b1111111;
+		break;
+	};	
+	VDP_RegWrite(3, reg);
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		reg = (u8)(addr >> 14);
+		VDP_RegWrite(10, reg);
+
+		g_ScreenColorHigh = addr >> 16;
+	#endif
+}
+
+//-----------------------------------------------------------------------------
+/// Set pattern table VRAM address
+void VDP_SetPaternTable(VADDR addr) __FASTCALL
+{
+	g_ScreenPatternLow = (u16)addr;
+
+	u8 reg;
+	reg = (u8)(addr >> 11);
+	switch(g_VDP_Data.Mode)
+	{
+	#if (MSX_VERSION >= MSX_2)
+	case VDP_MODE_GRAPHIC3:
+	#endif
+	case VDP_MODE_GRAPHIC2:
+		reg |= 0b11;
+	};	
+	VDP_RegWrite(4, reg);
+	
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenPatternHigh = addr >> 16;
+	#endif
+}
+
 
 //-----------------------------------------------------------------------------
 //
@@ -1413,56 +1510,56 @@ void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-/// Set sprite attribute table address (bit#16 to bit#1)
-/// @param		addr		VRAM address (only the lowest 17 bits are used)
+/// Set sprite attribute table address
+/// @param		addr		VRAM address where to place the table (16 or 17-bits long depending on VDP_VRAM_ADDR definition)
+///							Address must be a multiple of 80h for MSX1 screen modes and  multiple of 200h for MSX2 ones.
 void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL
 {
-	g_SpriteAtributeHigh = addr >> 16;
 	g_SpriteAtributeLow = (u16)addr;
 	
-#if ((VDP_VRAM_ADDR == VDP_VRAM_ADDR_16) || (MSX_VERSION == MSX_1))
 	u8 reg;
 	reg = (u8)(addr >> 7);
+	#if (MSX_VERSION >= MSX_2)
+		switch(g_VDP_Data.Mode)
+		{
+		case VDP_MODE_GRAPHIC4:
+		case VDP_MODE_GRAPHIC5:
+		case VDP_MODE_GRAPHIC6:
+		case VDP_MODE_GRAPHIC7:
+			reg |= 0b111;
+			break;
+		};
+	#endif
 	VDP_RegWrite(5, reg);
-#else // ((VDP_VRAM_ADDR == VDP_VRAM_ADDR_17) && (MSX_VERSION >= MSX_2))
-	u8 reg;
-	reg = (u8)(addr >> 7) | 0b111;
-	VDP_RegWrite(5, reg);
-	reg = (u8)(addr >> 15);
-	VDP_RegWrite(11, reg);
-#endif
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		reg = (u8)(addr >> 15);
+		VDP_RegWrite(11, reg);
+
+		g_SpriteAtributeHigh = addr >> 16;
+	#endif
 
 	addr -= 0x200;
-	g_SpriteColorHigh = addr >> 16;
 	g_SpriteColorLow = (u16)addr;
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_SpriteColorHigh = addr >> 16;
+	#endif
 }
 
 //-----------------------------------------------------------------------------
 /// Set sprite pattern table address
-/// @param		addr		1-bit right shifted VRAM address (bit#16 to bit#1)
-void VDP_SetSpritePatternTable(VADDR addr) __FASTCALL __naked
+/// @param		addr		VRAM address where to place the table (16 or 17-bits long depending on VDP_VRAM_ADDR definition)
+///							Address must be a multiple of 800h.
+void VDP_SetSpritePatternTable(VADDR addr) __FASTCALL
 {
-	__asm
-//		ld		de, addr.hi				// FastCall
-//		ld		hl, addr.lo
-		ld		(#_g_SpritePatternLow), hl	// g_SpritePatternLow = (u16)addr;
-		ld		a, h
-		ld		hl, #_g_SpritePatternHigh	// g_SpritePatternHigh = addr >> 8;
-		ld		(hl), e
-		sra		e						// put bit#0 in carry
-		rra								// shift right and get carry to bit#7
-		sra		a						// shift right
-		sra		a						// shift right
-		ld		l, a					// set register value
-		ld		a, #0x06
-		ld		h, a					// set register id
-		jp		_VDP_RegWriteFC
-	__endasm;
-
-	/*g_SpritePatternHigh = addr >> 8;
 	g_SpritePatternLow  = (u16)addr;
-	u8 reg = addr >> 11;
-	VDP_RegWrite(6, reg);*/
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_SpritePatternHigh = addr >> 16;
+	#endif
+	
+	u8 reg = (u8)(addr >> 11);
+	VDP_RegWrite(6, reg);
+
 }
 
 //-----------------------------------------------------------------------------

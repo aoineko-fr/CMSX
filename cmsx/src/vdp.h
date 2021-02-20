@@ -190,6 +190,9 @@ enum VDP_MODE
 /// Set screen mode. @see VDP_MODE
 void VDP_SetMode(const u8 mode) __FASTCALL;
 
+/// Tell if the given screen mode is a bitmap mode (text mode otherwise)
+bool VDP_IsBitmapMode(const u8 mode) __FASTCALL;
+
 /// Read default S#0 register
 u8 VDP_ReadDefaultStatus();
 
@@ -254,6 +257,15 @@ void VDP_SetFrequency(u8 freq) __FASTCALL;
 
 /// Set current VRAM page
 void VDP_SetPage(u8 page) __FASTCALL;
+
+/// Set layout table VRAM address
+void VDP_SetLayoutTable(VADDR addr) __FASTCALL;
+
+/// Set color table VRAM address
+void VDP_SetColorTable(VADDR addr) __FASTCALL;
+
+/// Set pattern table VRAM address
+void VDP_SetPaternTable(VADDR addr) __FASTCALL;
 
 /// Set text and border default color (format: [TXT:4|BG:4])
 void VDP_SetColor(u8 color) __FASTCALL;

@@ -22,6 +22,7 @@ enum PRINT_MODE
 #if (USE_PRINT_SPRITE)
 	PRINT_MODE_SPRITE      = 3,	///< Draw characters from sprites (load font data as sprite pattern in VRAM then display characters using sprite system)
 #endif
+	PRINT_MODE_TEXT        = 4,	///< Draw characters as pattern names (text mode)
 };
 
 // Handle fixed of variables character width
@@ -39,6 +40,8 @@ enum PRINT_MODE
 #else // (PRINT_HEIGHT == PRINT_HEIGHT_X)
 	#define PRINT_H(a) a
 #endif
+
+#define PRINT_TAB_SIZE	24
 
 // Functions
 typedef void (*print_drawchar)(u8) __FASTCALL; ///< Draw char callback signature
