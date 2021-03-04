@@ -1455,7 +1455,7 @@ void VDP_SetColorTable(VADDR addr) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Set pattern table VRAM address
-void VDP_SetPaternTable(VADDR addr) __FASTCALL
+void VDP_SetPatternTable(VADDR addr) __FASTCALL
 {
 	g_ScreenPatternLow = (u16)addr;
 

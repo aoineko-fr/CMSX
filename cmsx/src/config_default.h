@@ -124,6 +124,34 @@
 #endif
 
 //-----------------------------------------------------------------------------
+// GAME MODULE
+//-----------------------------------------------------------------------------
+
+// USE_GAME_STATE
+#ifndef USE_GAME_STATE
+	#warning USE_GAME_STATE is not defined in "cmsx_config.h"! Default value will be used: 1
+	#define USE_GAME_STATE				1
+#endif
+
+// USE_GAME_STATE_TRANSITION
+#ifndef USE_GAME_STATE_TRANSITION
+	#warning USE_GAME_STATE_TRANSITION is not defined in "cmsx_config.h"! Default value will be used: 1
+	#define USE_GAME_STATE_TRANSITION	1
+#endif
+
+// USE_GAME_VSYNC
+#ifndef USE_GAME_VSYNC
+	#warning USE_GAME_VSYNC is not defined in "cmsx_config.h"! Default value will be used: 1
+	#define USE_GAME_VSYNC				1
+#endif
+
+// USE_GAME_LOOP
+#ifndef USE_GAME_LOOP
+	#warning USE_GAME_LOOP is not defined in "cmsx_config.h"! Default value will be used: 1
+	#define USE_GAME_LOOP				1
+#endif
+
+//-----------------------------------------------------------------------------
 // MATH MODULE
 //-----------------------------------------------------------------------------
 

@@ -3,18 +3,14 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// -----------------------------------------------------------------------------
-//   █▀▀ █▀▄▀█ █▀ ▀▄▀
-//   █▄▄ █ ▀ █ ▄█ █ █ v0.2
-// -----------------------------------------------------------------------------
-//  Author: Texas Isntruments (from the TMS9900 VDP documentation)
-//  License: Unknown (assume All right reserved)
-// -----------------------------------------------------------------------------
+// Author: Texas Isntruments (from the TMS9900 VDP documentation)
+// License: Unknown (assume All right reserved)
 // _____________________________________________________________________________
-// Data generated using CMSXimg 1.9.1 on Sun Feb  7 19:17:19 2021
+// Data generated using CMSXimg 1.11.0 on Fri Feb 26 20:17:03 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     font\font_tsm9900.png
+//  - Mode:           Bitmap
 //  - Start position: 0, 16
 //  - Sprite size:    8, 8 (gap: 0, 0)
 //  - Sprite count:   16, 6

@@ -28,6 +28,9 @@
 #define JOY_INPUT_TRIGGER_A			(1 << 4)
 #define JOY_INPUT_TRIGGER_B			(1 << 5)
 
+#define IS_JOY_PRESSED(stat, input) ((stat & input) == 0)
+#define IS_JOY_RELEASED(stat, input) ((stat & input) != 0)
+
 // Get the current joystick information (bit=0: pressed)
 // Input  : JOY_PORT_1 or JOY_PORT_2
 // Output : xxBARLDU

@@ -1,3 +1,2 @@
- Author: Guillaume "Aoineko" Blanchard, for MGL (MSX Game library)
- License: CC-BY-SA
-_____________________________________________________________________________
+Author: Guillaume "Aoineko" Blanchard, for MGL (MSX Game library)
+License: CC-BY-SA

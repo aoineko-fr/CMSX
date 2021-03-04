@@ -67,6 +67,20 @@ if /I %Target%==ROM48 (
 	set FillSize=49152
 	set EmulParam=-carta .\emul\%ProjName%.rom
 )
+if /I %Target%==ROM48_ISR (
+
+	echo » Target: 48KB ROM in page 0-2 ^(0000h ~ BFFFh^) with ISR replacement
+
+	set Crt0=crt0_rom48_isr
+	set LinkOpt=
+	set StartAddr=0000
+	set ROMSize=C000
+	set CodeAddr=4000
+	set DataAddr=C000
+	set Ext=rom
+	set FillSize=49152
+	set EmulParam=-carta .\emul\%ProjName%.rom
+)
 if /I %Target%==DOS (
 
 	echo » Target: MSX-DOS program ^(starting at 0100h^)

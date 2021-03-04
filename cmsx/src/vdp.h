@@ -265,7 +265,7 @@ void VDP_SetLayoutTable(VADDR addr) __FASTCALL;
 void VDP_SetColorTable(VADDR addr) __FASTCALL;
 
 /// Set pattern table VRAM address
-void VDP_SetPaternTable(VADDR addr) __FASTCALL;
+void VDP_SetPatternTable(VADDR addr) __FASTCALL;
 
 /// Set text and border default color (format: [TXT:4|BG:4])
 void VDP_SetColor(u8 color) __FASTCALL;
@@ -349,6 +349,8 @@ void VDP_SetSpriteMultiColor(u8 index, const u8* ram);
 void VDP_SetSpriteData(u8 index, const u8* data);
 
 ///
+#define VDP_SPRITE_DISABLE_SM1	208			///> This sprite and all lower priority sprites will be disabled (Sprite Mode 1)
+#define VDP_SPRITE_DISABLE_SM2	216			///> This sprite and all lower priority sprites will be disabled (Sprite Mode 1)
 void VDP_HideSpriteFrom(u8 index) __FASTCALL;
 
 //-----------------------------------------------------------------------------

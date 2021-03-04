@@ -27,6 +27,11 @@ REM %CMSXimg% -in font\font_darkrose.png	-out font_darkrose.h    -pos 0 16 -size
 REM %CMSXimg% -in font\IBMFont.bmp			-out font_ibm.h         -pos 0 0  -size 8 8  -gap 0 0 -num 16 16 -trans 0x040404 -bpc 1 -name g_Font_IBM			-skip -font 8 8 0x01 0xFE
 REM %CMSXimg% -in font\oxygene.png			-out font_oxygene.h     -pos 0 16 -size 8 8  -gap 0 0 -num 16 6  -trans 0x000000 -bpc 1 -name g_Font_Oxygene		-skip -font 8 8 ! _
 
+%CMSXimg% font\typo\Apple2.png        -out ..\src\font\font_apple2.h        -pos 0 0   -size 7 8  -gap 1 0  -num 32 3  -trans 0x000000  -bpc 1  -name g_Font_Apple2        -copy -skip -font 8 8 ! 0x7F
+%CMSXimg% font\typo\Atari.png         -out ..\src\font\font_atari.h         -pos 0 0   -size 8 8  -gap 0 0  -num 32 3  -trans 0x005D8E  -bpc 1  -name g_Font_Atari         -copy -skip -font 8 8 ! 0x7C
+
+
+
 echo ---- BUILD CURSOR DATA ----
 %CMSXimg% cursor\cur_cmsx1.png        -out ..\src\cursor\cur_cmsx1.h        -pos 0 0   -size 8 8  -gap 0 0  -num 16 2  -trans 0x000000  -bpc 1  -name g_Cursor_CMSX1       -copy cmsx.txt 
 
