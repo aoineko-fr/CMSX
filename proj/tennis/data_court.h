@@ -3,11 +3,11 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.10.0 on Fri Feb 12 18:43:23 2021
+// Data generated using CMSXimg 1.11.0 on Thu Mar  4 17:58:17 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     court.png
-//  - Mode:           Graphic2
+//  - Mode:           Graphic Mode 2
 //  - Start position: 0, 0
 //  - Sprite size:    256, 192 (gap: 0, 0)
 //  - Sprite count:   32, 24
@@ -15,8 +15,11 @@
 //  - Compressor:     None
 //  - Skip empty:     FALSE
 
+#ifndef D_g_DataCourt_Names
+	#define D_g_DataCourt_Names
+#endif
 // Names Table
-const unsigned char g_Court_Names[] =
+D_g_DataCourt_Names const unsigned char g_DataCourt_Names[] =
 {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -45,8 +48,11 @@ const unsigned char g_Court_Names[] =
 };
 // Names size: 768 Bytes
 
+#ifndef D_g_DataCourt_Patterns
+	#define D_g_DataCourt_Patterns
+#endif
 // Patterns Table
-const unsigned char g_Court_Patterns[] =
+D_g_DataCourt_Patterns const unsigned char g_DataCourt_Patterns[] =
 {
 // Sprite[0] (offset:768)
 	0x00, /* ........ */ 
@@ -492,8 +498,11 @@ const unsigned char g_Court_Patterns[] =
 };
 // Patterns size: 392 Bytes
 
+#ifndef D_g_DataCourt_Colors
+	#define D_g_DataCourt_Colors
+#endif
 // Colors Table
-const unsigned char g_Court_Colors[] =
+D_g_DataCourt_Colors const unsigned char g_DataCourt_Colors[] =
 {
 // Sprite[0] (offset:1160)
 	0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 
