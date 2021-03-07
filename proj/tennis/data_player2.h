@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.11.0 on Thu Mar  4 17:58:17 2021
+// Data generated using CMSXimg 1.11.0 on Sat Mar  6 18:41:45 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     players.png
@@ -15,8 +15,11 @@
 //  - Compressor:     None
 //  - Skip empty:     FALSE
 
+#ifndef D_g_DataPlayer2
+	#define D_g_DataPlayer2
+#endif
 // Sprites table
-const unsigned char g_DataPlayer2[] =
+D_g_DataPlayer2 const unsigned char g_DataPlayer2[] =
 {
 // ======== Frame[0]
 // ---- Layer[0] (8x8 0,0 2,1 inc 1)

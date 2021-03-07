@@ -105,7 +105,6 @@ enum SPRITE
 
 	SPRITE_BALL_BODY,
 	SPRITE_BALL_SHADOW,
-	SPRITE_BALL_TARGET,
 
 	SPRITE_MAX,
 };
@@ -164,6 +163,7 @@ typedef struct
 	i16			velZ;   // Ball vertical velocity (Q10.6 format)
 	u8          coolDown;
 	u8			lastPly;
+	u8			bounce;
 } Ball;
 
 /// Animation strcture
@@ -205,33 +205,49 @@ void StateTrain_Update();
 //=============================================================================
 
 //-----------------------------------------------------------------------------
-// ROM DATA
+// ROM DATA - PAGE 0
 
-// Fonts
-#include "font\font_carwar.h"
-
-// Menu
-#define D_g_DataLogo_Names		__at(0x0200)
-#define D_g_DataLogo_Patterns	__at(0x0500)
-#define D_g_DataLogo_Colors		__at(0x0E00)
+// Menu title (GM2 tables)
+#define ADDR_DATALOGO_NAMES		(0x0200)
+#define ADDR_DATALOGO_PATTERNS	(ADDR_DATALOGO_NAMES + sizeof(g_DataLogo_Names))
+#define ADDR_DATALOGO_COLORS	(ADDR_DATALOGO_PATTERNS + sizeof(g_DataLogo_Patterns))
+#define D_g_DataLogo_Names		__at(ADDR_DATALOGO_NAMES)
+#define D_g_DataLogo_Patterns	__at(ADDR_DATALOGO_PATTERNS)
+#define D_g_DataLogo_Colors		__at(ADDR_DATALOGO_COLORS)
 #include "data_logo.h"
+
+// Menu title ball
+#define ADDR_DATALOGOBALL		(ADDR_DATALOGO_COLORS + sizeof(g_DataLogo_Colors))
+#define D_g_DataLogoBall		__at(ADDR_DATALOGOBALL)
 #include "data_logo_ball.h"
 
-// Math
-#include "mathtable\mt_trigo_Q10.6_64.inc"
-
-// HW Sprites
-#include "data_player1.h" // Player 1
-#include "data_player2.h" // Player 2
-#include "data_racket.h"
-#include "data_score.h"
-#include "data_ball.h"
-
-// Court GM2 data tables
-#define D_g_DataCourt_Names		__at(0x1700)
-#define D_g_DataCourt_Patterns  __at(0x1A00)
-#define D_g_DataCourt_Colors    __at(0x2300)
+// Court background (GM2 tables)
+#define ADDR_DATACOURT_NAMES	(ADDR_DATALOGOBALL + sizeof(g_DataLogoBall))
+#define ADDR_DATACOURT_PATTERNS	(ADDR_DATACOURT_NAMES + sizeof(g_DataCourt_Names))
+#define ADDR_DATACOURT_COLORS	(ADDR_DATACOURT_PATTERNS + sizeof(g_DataCourt_Patterns))
+#define D_g_DataCourt_Names		__at(ADDR_DATACOURT_NAMES)
+#define D_g_DataCourt_Patterns  __at(ADDR_DATACOURT_PATTERNS)
+#define D_g_DataCourt_Colors    __at(ADDR_DATACOURT_COLORS)
 #include "data_court.h"
+
+// Player 1 Sprites
+#define ADDR_DATAPLAYER1		(ADDR_DATACOURT_COLORS + sizeof(g_DataCourt_Colors))
+#define D_g_DataPlayer1			__at(ADDR_DATAPLAYER1)
+#include "data_player1.h"
+
+//-----------------------------------------------------------------------------
+// ROM DATA - PAGE 1-2
+
+// Player 2 Sprites
+#include "data_player2.h" 
+// Racket sprites
+#include "data_racket.h"
+// Score sprites
+#include "data_score.h"
+// Ball sprites
+#include "data_ball.h"
+// Fonts
+#include "data_font.h"
 
 // SFX
 #include "data_sfx.h"
@@ -239,6 +255,9 @@ void StateTrain_Update();
 // Music
 #include "data_music.h"
 #include "pt3\pt3_notetable2.h"
+
+// Math
+#include "mathtable\mt_trigo_Q10.6_64.inc"
 
 // Animation
 const Anim g_FramesIdle[] = 
@@ -439,11 +458,11 @@ void CheckShoot(Player* ply)
 
 	// Set strength
 	if(ply->inUp())
-		g_Ball.velXY = 4;
+		g_Ball.velXY = PX_TO_UNIT(4);
 	else if(ply->inDown())
-		g_Ball.velXY = 2;
+		g_Ball.velXY = PX_TO_UNIT(2);
 	else
-		g_Ball.velXY = 3;
+		g_Ball.velXY = PX_TO_UNIT(3);
 
 	if(event == EVENT_SMASH)
 		g_Ball.velZ = 0;
@@ -453,7 +472,48 @@ void CheckShoot(Player* ply)
 	// Misc
 	g_Ball.lastPly = ply->id;
 	g_Ball.coolDown = 10;
+	g_Ball.bounce = 0;
 }
+
+///
+void ShootBallRandom()
+{
+	// Position
+	g_Ball.pos.x = PX_TO_UNIT(128);
+	g_Ball.pos.y = PX_TO_UNIT(16);
+	g_Ball.height = PX_TO_UNIT(28);
+
+	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
+	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
+
+	u16 rnd = Math_GetRandom();
+
+	// Direction
+	g_Ball.dir = rnd;
+	// g_Ball.dir %= 5;
+	// g_Ball.dir *= 2;
+	// g_Ball.dir += 44;
+	g_Ball.dir %= 9;
+	g_Ball.dir += 44;
+
+	// Velocity
+	if(rnd & BIT_8) // top spine
+	{
+		g_Ball.velZ = PX_TO_UNIT(2.5);
+		g_Ball.velXY = PX_TO_UNIT(3);
+	}
+	else // lob
+	{
+		g_Ball.velZ = PX_TO_UNIT(4);
+		g_Ball.velXY = PX_TO_UNIT(2);
+	}
+
+	// Misc
+	g_Ball.lastPly = 0xFF;
+	g_Ball.coolDown = 0;
+	g_Ball.bounce = 0;
+}
+
 
 /// 
 void SetAction(Player* ply, u8 id)
@@ -833,59 +893,63 @@ void PrepareBall()
 }
 
 ///
-void ShootBallRandom()
-{
-	u16 rnd = Math_GetRandom();
-
-	g_Ball.coolDown = 0;
-	g_Ball.lastPly = 0xFF;
-	g_Ball.pos.x = PX_TO_UNIT(128);
-	g_Ball.pos.y = PX_TO_UNIT(16);
-	// g_Ball.pos.y = PX_TO_UNIT(192-16);
-	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
-	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
-	g_Ball.height= PX_TO_UNIT(28);
-
-	if(rnd & BIT_8) // top spine
-	{
-		g_Ball.velZ = PX_TO_UNIT(2);
-		g_Ball.velXY = 3;
-	}
-	else // lob
-	{
-		g_Ball.velZ = PX_TO_UNIT(4);
-		g_Ball.velXY = 2;
-	}
-
-	g_Ball.dir = rnd;
-	g_Ball.dir %= 5;
-	g_Ball.dir *= 2;
-	g_Ball.dir += 44;
-	// g_Ball.dir += 12;
-}
-
-///
 void UpdateBall()
 {
-	g_Ball.pos.x += g_Ball.velXY * g_Cosinus64[g_Ball.dir];
-	g_Ball.pos.y -= g_Ball.velXY * g_Sinus64[g_Ball.dir];
+	// Horizontal force
+	i16 dx = g_Ball.velXY * (i16)g_Cosinus64[g_Ball.dir];
+	dx /= 64;
+	g_Ball.pos.x += dx;
+	
+	i16 prevY = g_Ball.pos.y;
+	i16 dy = g_Ball.velXY * (i16)g_Sinus64[g_Ball.dir];
+	dy /= 64;
+	g_Ball.pos.y -= dy;
 	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
 	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
+	
+	// Vertical force - Gravity
 	g_Ball.velZ -= GRAVITY;	
 	g_Ball.height += g_Ball.velZ;
+
+	// Bounce
 	if(g_Ball.height < 0)
 	{
 		g_Ball.height = 0;
+		g_Ball.bounce++;
 		g_Ball.velZ = -g_Ball.velZ * 2 / 3;
-		//g_Ball.velXY = g_Ball.velXY * 2 / 3;
-		ayFX_PlayBank(12, 0);
+		if(g_Ball.bounce == 1)
+		{
+			// g_Ball.velXY = g_Ball.velXY * 3 / 4;
+			ayFX_PlayBank(12, 0);
+		}
+		else if(g_Ball.bounce == 2)
+		{
+			ayFX_PlayBank(12, 0);
+			// Check point
+		}
+		else if(g_Ball.bounce == 5)
+		{
+			ShootBallRandom();
+		}
 	}
+	
 	if(g_Ball.coolDown > 0)
 		g_Ball.coolDown--;
 	
+	// Check out of screen
 	if((g_Ball.pos.y < 0) || (g_Ball.pos.y > PX_TO_UNIT(192)) || (g_Ball.pos.x < 0) || (g_Ball.pos.x > PX_TO_UNIT(256)))
 	{
 		ShootBallRandom();
+	}
+	// Check net collision
+	else if(g_Ball.height < PX_TO_UNIT(14))
+	{
+		if(((prevY < PX_TO_UNIT(96)) && (g_Ball.pos.y >= PX_TO_UNIT(96))) || (prevY > PX_TO_UNIT(96)) && (g_Ball.pos.y <= PX_TO_UNIT(96)))
+		{
+			g_Ball.velXY = 0;			
+			if(g_Ball.velZ > 0)
+				g_Ball.velZ = 0;
+		}
 	}
 
 	u8  x = g_Ball.srcPos.x - 3;
@@ -1160,6 +1224,7 @@ void StateGame_Start()
 	VDP_SetSpriteSM1(SPRITE_NET_LEFT,   0, 193, 120, COLOR_WHITE);			// Net 1
 	VDP_SetSpriteSM1(SPRITE_NET_RIGHT,  0, 193, 124, COLOR_WHITE);			// Net 2
 
+	VDP_SetSpritePositionY(SPRITE_MAX, VDP_SPRITE_DISABLE_SM1);
 
 	// VDP_EnableVBlank(true);
 	// Bios_SetHookCallback(H_TIMI, VBlankHook);

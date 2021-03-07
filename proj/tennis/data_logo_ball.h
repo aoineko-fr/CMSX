@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.11.0 on Thu Mar  4 17:58:17 2021
+// Data generated using CMSXimg 1.11.0 on Sat Mar  6 18:41:44 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     logo_ball.png
@@ -15,8 +15,11 @@
 //  - Compressor:     None
 //  - Skip empty:     FALSE
 
+#ifndef D_g_DataLogoBall
+	#define D_g_DataLogoBall
+#endif
 // Sprites table
-const unsigned char g_DataLogoBall[] =
+D_g_DataLogoBall const unsigned char g_DataLogoBall[] =
 {
 // ======== Frame[0]
 // ---- Layer[0] (16x16 0,0 1,1 inc 1)

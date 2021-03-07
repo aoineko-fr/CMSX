@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.11.0 on Thu Mar  4 17:58:17 2021
+// Data generated using CMSXimg 1.11.0 on Sat Mar  6 18:41:44 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     players.png
@@ -15,8 +15,11 @@
 //  - Compressor:     None
 //  - Skip empty:     FALSE
 
+#ifndef D_g_DataRacket
+	#define D_g_DataRacket
+#endif
 // Data table
-const unsigned char g_DataRacket[] =
+D_g_DataRacket const unsigned char g_DataRacket[] =
 {
 // Sprite[0] (offset:0)
 	0x38, /* ..###... */ 
