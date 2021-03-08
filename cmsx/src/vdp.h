@@ -93,6 +93,21 @@ extern struct VDP_Data    g_VDP_Data;
 extern struct VDP_Command g_VDP_Command;
 extern struct VDP_Sprite  g_VDP_Sprite;
 
+extern u16 g_ScreenLayoutLow;		///< Address of the Pattern Layout Table (Name)
+extern u16 g_ScreenColorLow;		///< Address of the Color Table
+extern u16 g_ScreenPatternLow;		///< Address of the Pattern Generator Table
+extern u16 g_SpriteAtributeLow;		///< Address of the Sprite Attribute Table
+extern u16 g_SpritePatternLow;		///< Address of the Sprite Pattern Generator Table
+extern u16 g_SpriteColorLow;		///< Address of the Sprite Color Table
+#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+	extern u8 g_ScreenLayoutHigh;	///< Address of the Pattern Layout Table (Name)
+	extern u8 g_ScreenColorHigh;	///< Address of the Color Table
+	extern u8 g_ScreenPatternHigh;	///< Address of the Pattern Generator Table
+	extern u8 g_SpriteAtributeHigh;	///< Address of the Sprite Attribute Table
+	extern u8 g_SpritePatternHigh;	///< Address of the Sprite Pattern Generator Table
+	extern u8 g_SpriteColorHigh;	///< Address of the Sprite Color Table
+#endif
+
 //-----------------------------------------------------------------------------
 // DEFINES
 //-----------------------------------------------------------------------------
@@ -201,20 +216,20 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
 
 /// Write data from RAM to VRAM
-void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count);
+void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count);
 
 /// Fill VRAM area with a given value
-void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count);
+void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count);
 
 /// Read data from VRAM to RAM
-void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count);
+void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count);
 
 //-----------------------------------------------------------------------------
-#if (MSX_VERSION == MSX_1)
+#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_16)
 
-	#define VDP_WriteVRAM(src, destLow, destHigh, count)	VDP_WriteVRAM_16K(src, destLow, count)
-	#define VDP_FillVRAM(value, destLow, destHigh, count)	VDP_FillVRAM_16K(value, destLow, count)
-	#define VDP_ReadVRAM(srcLow, srcHigh, dest, count)		VDP_ReadVRAM_16K(srcLow, dest, count)
+	#define VDP_WriteVRAM(src, destLow, destHigh, count)	VDP_WriteVRAM_64K(src, destLow, count)
+	#define VDP_FillVRAM(value, destLow, destHigh, count)	VDP_FillVRAM_64K(value, destLow, count)
+	#define VDP_ReadVRAM(srcLow, srcHigh, dest, count)		VDP_ReadVRAM_64K(srcLow, dest, count)
 
 #else // (MSX_VERSION >= MSX_2)
 

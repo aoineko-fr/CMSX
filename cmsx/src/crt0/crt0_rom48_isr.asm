@@ -3,7 +3,7 @@
 ;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
 ;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
 ;_____________________________________________________________________________
-; crt0 header for 48KB ROM
+; crt0 header for 48KB ROM with ISR replacement
 ; 
 ; Code address: 0x4000
 ; Data address: 0xC000

@@ -14,15 +14,23 @@
 /// Character display sources
 enum PRINT_MODE
 {
-	PRINT_MODE_DEFAULT     = 0,	///< Draw characters from RAM (R-T unpack font data and draw it)
-	PRINT_MODE_TRANSPARENT = 1,	///< Draw characters from RAM (R-T unpack font data and draw it)
+	// Bitmap modes (from RAM)
+#if (USE_PRINT_BITMAP)
+	PRINT_MODE_BITMAP		= 0,	///< Draw characters from RAM (R-T unpack font data and draw it)
+	PRINT_MODE_BITMAP_TRANS	= 1,	///< Draw characters from RAM with transparency (R-T unpack font data and draw it)
+#endif
+	// Bitmap mode (from VRAM)
 #if (USE_PRINT_VRAM)
-	PRINT_MODE_VRAM        = 2,	///< Draw characters from VRAM (font data is upack once in VRAM thne drawing is done by VRAM copy)
+	PRINT_MODE_BITMAP_VRAM	= 2,	///< Draw characters from VRAM (font data is upack once in VRAM thne drawing is done by VRAM copy)
 #endif
+	// Sprite mode
 #if (USE_PRINT_SPRITE)
-	PRINT_MODE_SPRITE      = 3,	///< Draw characters from sprites (load font data as sprite pattern in VRAM then display characters using sprite system)
+	PRINT_MODE_SPRITE		= 3,	///< Draw characters from sprites (load font data as sprite pattern in VRAM then display characters using sprite system)
 #endif
-	PRINT_MODE_TEXT        = 4,	///< Draw characters as pattern names (text mode)
+	// Text mode
+#if (USE_PRINT_TEXT)
+	PRINT_MODE_TEXT			= 4,	///< Draw characters as pattern names (text mode)
+#endif
 };
 
 // Handle fixed of variables character width
@@ -73,12 +81,14 @@ struct Print_Data
 	u8 FontLast;				///< ASCII code of the last character of the current font
 	print_drawchar DrawChar;	///< Default function to draw a character (depend of the current mode)
 	u8 SourceMode       : 4;	///< Character display mode : RAM, VRAM or Sprite (@see PRINT_MODE)
-	// RAM
+	u16 ScreenWidth;			///< Screen width
+	// Bitmap from RAM
+// #if (USE_PRINT_)
 	const u8* FontPatterns;		///< Forms of the font
 	const u8* FontAddr;			///< Address of the virtual index 0 character (used to quick drawing in DrawChar_GX functions)
-	u16 ScreenWidth;			///< Screen width
+// #endif
 #if (USE_PRINT_VRAM)
-	// VRAM
+	// Bitmap from VRAM
 	UY FontVRAMY;				///< Y position of the font in VRAM
 	u8 CharPerLine;
 #endif
@@ -86,6 +96,10 @@ struct Print_Data
 	// Sprites
 	u8 SpritePattern;			///< Pattern index of the 1st sprite character
 	u8 SpriteID;				///< Index of the current sprite
+#endif
+#if (USE_PRINT_TEXT)
+	// Text mode
+	u8 PatternOffset;
 #endif
 #if (USE_PRINT_FX_SHADOW)
 	u8 Shadow			: 1;	///< Is shadow render active
@@ -104,18 +118,28 @@ struct Print_Data
 // INITIALIZATION
 //-----------------------------------------------------------------------------
 
-/// Initialize print module and set a font in RAM
-bool Print_Initialize(const u8* font);
+/// Initialize print module. Must be called after VDP_SetMode()
+bool Print_Initialize();
 
-///
+/// Change current print mode
 void Print_SetMode(u8 src) __FASTCALL;
 
 /// Set the current font (and set mode to RAM)
 void Print_SetFont(const u8* font) __FASTCALL;
 
+#if (USE_PRINT_BITMAP)
+/// Initialize print module and set a font in RAM
+bool Print_SetBitmapFont(const u8* font) __FASTCALL;
+#endif
+
 #if (USE_PRINT_VRAM)
 /// Set the current font and upload data to VRAM 
 void Print_SetFontVRAM(const u8* font, UY y);
+#endif
+
+#if (USE_PRINT_TEXT)
+/// Initialize print module and set a font in RAM
+void Print_SetTextFont(const u8* font, u8 offset);
 #endif
 
 #if (USE_PRINT_SPRITE)
@@ -137,7 +161,7 @@ inline void Print_SetSpriteID(u8 id) { g_PrintData.SpriteID = id; }
 void Print_Clear();
 
 /// Clear X character back from current cursor position
-void Print_Backspace(u8 num);
+void Print_Backspace(u8 num) __FASTCALL;
 
 /// Set the draw color
 void Print_SetColor(u8 text, u8 bg);

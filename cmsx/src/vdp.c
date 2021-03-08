@@ -120,7 +120,7 @@ static const u8 modeT1[] =
 	0xD0, VDP_REG(1), // 16K, Enable Disp., Disable Int.
 	0x02, VDP_REG(2), // Address of Name Table in VRAM = 0800h
 	//    VDP_REG(3), // (not used) Color is defined in Reg. 7
-	0x00, VDP_REG(4), // Address of Patern Table in VRAM = 0000h
+	0x00, VDP_REG(4), // Address of Pattern Table in VRAM = 0000h
 	//    VDP_REG(5), // (not used)
 	//    VDP_REG(6), // (not used)
 	0xF5, VDP_REG(7), // White Text on Light Blue Background
@@ -138,6 +138,14 @@ void VDP_SetModeText1()
 		ld		bc, #(10 * 0x100 + P_VDP_ADDR) // [num|0x99]
 		otir
 	__endasm;
+
+	g_ScreenLayoutLow   = 0x0800;
+	g_ScreenPatternLow  = 0x0000;
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenLayoutHigh   = 0x00;
+		g_ScreenPatternHigh  = 0x00;
+	#endif
 }
 #endif // USE_VDP_MODE_T1
 
@@ -150,7 +158,7 @@ static const u8 modeMC[] =
 	0xCB, VDP_REG(1), // 16K, Enable Disp., Disable Int., 16x16 Sprites, Mag. On
 	0x05, VDP_REG(2), // Address of Name Table in VRAM = 1400h
 	//    VDP_REG(3), // (not used)
-	0x01, VDP_REG(4), // Address of Patern Table in VRAM = 0800h
+	0x01, VDP_REG(4), // Address of Pattern Table in VRAM = 0800h
 	0x20, VDP_REG(5), // Address of Sprite Attribute Table in VRAM = 1000h
 	0x00, VDP_REG(6), // Address of Sprite Pattern Table in VRAM = 0000h
 	0x04, VDP_REG(7), // Backdrop Color = Dark Blue
@@ -168,6 +176,18 @@ void VDP_SetModeMultiColor()
 		ld		bc, #(14 * 0x100 + P_VDP_ADDR) // [num|0x99]
 		otir
 	__endasm;
+
+	g_ScreenLayoutLow   = 0x1400;
+	g_ScreenPatternLow  = 0x0800;
+	g_SpriteAtributeLow = 0x1000;
+	g_SpritePatternLow  = 0x0000;
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenLayoutHigh   = 0x00;
+		g_ScreenPatternHigh  = 0x00;
+		g_SpriteAtributeHigh = 0x00;
+		g_SpritePatternHigh  = 0x00;
+	#endif
 }
 #endif // USE_VDP_MODE_MC
 
@@ -180,7 +200,7 @@ static const u8 modeG1[] =
 	0xC0, VDP_REG(1), // 16K, Enable display, Disable Int, 8x8 Srpites, Mag. off
 	0x05, VDP_REG(2), // Address of Name Table in VRAM = 1400h
 	0x80, VDP_REG(3), // Address of Color Table in VRAM = 2000h
-	0x01, VDP_REG(4), // Address of Patern Table in VRAM = 0800h
+	0x01, VDP_REG(4), // Address of Pattern Table in VRAM = 0800h
 	0x20, VDP_REG(5), // Address of Sprite Attribute Table in VRAM = 1000h
 	0x00, VDP_REG(6), // Address of Sprite Pattern Table in VRAM = 0000h
 	0x01, VDP_REG(7), // Backdrop Color = Black
@@ -198,6 +218,20 @@ void VDP_SetModeGraphic1()
 		ld		bc, #(16 * 0x100 + P_VDP_ADDR) // [num|0x99]
 		otir
 	__endasm;
+
+	g_ScreenLayoutLow   = 0x1400;
+	g_ScreenColorLow    = 0x2000;
+	g_ScreenPatternLow  = 0x0800;
+	g_SpriteAtributeLow = 0x1000;
+	g_SpritePatternLow  = 0x0000;
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenLayoutHigh   = 0x00;
+		g_ScreenColorHigh    = 0x00;
+		g_ScreenPatternHigh  = 0x00;
+		g_SpriteAtributeHigh = 0x00;
+		g_SpritePatternHigh  = 0x00;
+	#endif
 }
 #endif // USE_VDP_MODE_G1
 
@@ -210,7 +244,7 @@ static const u8 modeG2[] =
 	0xC2, VDP_REG(1), // 16K, Enable Disp., Disable Int., 16x16 Sprites, Mag. Off
 	0x0E, VDP_REG(2), // Address of Name Table in VRAM = 3800h
 	0xFF, VDP_REG(3), // Address of Color Table in VRAM = 2000h
-	0x03, VDP_REG(4), // Address of Patern Table in VRAM = 0000h
+	0x03, VDP_REG(4), // Address of Pattern Table in VRAM = 0000h
 	0x76, VDP_REG(5), // Address of Sprite Attribute Table in VRAM = 3B00h
 	0x03, VDP_REG(6), // Address of Sprite Pattern Table in VRAM = 1800h
 	0x0F, VDP_REG(7), // Backdrop Color = White
@@ -228,6 +262,20 @@ void VDP_SetModeGraphic2()
 		ld		bc, #(16 * 0x100 + P_VDP_ADDR) // [num|0x99]
 		otir
 	__endasm;
+
+	g_ScreenLayoutLow   = 0x3800;
+	g_ScreenColorLow    = 0x2000;
+	g_ScreenPatternLow  = 0x0000;
+	g_SpriteAtributeLow = 0x3B00;
+	g_SpritePatternLow  = 0x1800;
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenLayoutHigh   = 0x00;
+		g_ScreenColorHigh    = 0x00;
+		g_ScreenPatternHigh  = 0x00;
+		g_SpriteAtributeHigh = 0x00;
+		g_SpritePatternHigh  = 0x00;
+	#endif
 }
 #endif // USE_VDP_MODE_G2
 
@@ -242,7 +290,7 @@ void VDP_SetModeGraphic2()
 /// @param		src			Source data address in RAM
 /// @param		dest		Destiation address in VRAM (14bits address form 16KB VRAM)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count)
+void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count)
 {
 	src, dest, count;
 	__asm
@@ -312,7 +360,7 @@ void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count)
 /// @param		value		Byte value to copy in VRAM
 /// @param		dest		Destiation address in VRAM (14bits address form 16KB VRAM)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count)
+void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count)
 {
 	dest, value, count;
 	__asm
@@ -351,7 +399,7 @@ void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count)
 /// @param		src			Source address in VRAM (14bits address form 16KB VRAM)
 /// @param		dst			Desitation data address in RAM
 /// @param		count		Nomber of byte to copy from VRAM
-void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count)
+void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count)
 {
 	src, dest, count;
 	__asm
@@ -578,6 +626,18 @@ static const u8 modeT2[] =
 void VDP_SetModeText2()
 {
 	ASM_REG_WRITE_INC_BK(modeT2, 0, 10);
+
+	g_ScreenLayoutLow   = 0x0000;
+	g_ScreenPatternLow  = 0x1000;
+	g_SpriteAtributeLow = 0x1B00;
+	g_SpritePatternLow  = 0x3800;
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenLayoutHigh   = 0x00;
+		g_ScreenPatternHigh  = 0x00;
+		g_SpriteAtributeHigh = 0x00;
+		g_SpritePatternHigh  = 0x00;
+	#endif
 }
 #endif // USE_VDP_MODE_T2
 
@@ -601,6 +661,20 @@ static const u8 modeG3[] =
 void VDP_SetModeGraphic3()
 {
 	ASM_REG_WRITE_INC_BK(modeG3, 0, 10);
+
+	g_ScreenLayoutLow   = 0x1800;
+	g_ScreenColorLow    = 0x2000;
+	g_ScreenPatternLow  = 0x0000;
+	g_SpriteAtributeLow = 0x1E00;
+	g_SpritePatternLow  = 0x3800;
+
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		g_ScreenLayoutHigh   = 0x00;
+		g_ScreenColorHigh    = 0x00;
+		g_ScreenPatternHigh  = 0x00;
+		g_SpriteAtributeHigh = 0x00;
+		g_SpritePatternHigh  = 0x00;
+	#endif
 }
 #endif // USE_VDP_MODE_G3
 
@@ -861,6 +935,7 @@ void VDP_SetPageAlternance(bool enable) __FASTCALL
 // VRAM ACCESS FUNCTIONS
 //
 //-----------------------------------------------------------------------------
+#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
 
 //-----------------------------------------------------------------------------
 /// Write data from RAM to VRAM
@@ -1033,6 +1108,8 @@ void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count)
 		pop	ix
 	__endasm;
 }
+
+#endif // (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
 
 #endif // (MSX_VERSION >= MSX_2)
 

@@ -188,3 +188,37 @@
 	#undef  VDP_VRAM_ADDR
 	#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_16
 #endif
+
+
+#if (MSX_VERSION < MSX_2)
+	#if (USE_VDP_MODE_T2)
+		#warning USE_VDP_MODE_T2 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#undef  USE_VDP_MODE_T2
+		#define USE_VDP_MODE_T2			0
+	#endif
+	#if (USE_VDP_MODE_G3)
+		#warning USE_VDP_MODE_G3 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#undef  USE_VDP_MODE_G3
+		#define USE_VDP_MODE_G3			0
+	#endif
+	#if (USE_VDP_MODE_G4)
+		#warning USE_VDP_MODE_G4 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#undef  USE_VDP_MODE_G4
+		#define USE_VDP_MODE_G4			0
+	#endif
+	#if (USE_VDP_MODE_G5)
+		#warning USE_VDP_MODE_G5 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#undef  USE_VDP_MODE_G5
+		#define USE_VDP_MODE_G5			0
+	#endif
+	#if (USE_VDP_MODE_G6)
+		#warning USE_VDP_MODE_G6 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#undef  USE_VDP_MODE_G6
+		#define USE_VDP_MODE_G6			0
+	#endif
+	#if (USE_VDP_MODE_G7)
+		#warning USE_VDP_MODE_G7 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#undef  USE_VDP_MODE_G7
+		#define USE_VDP_MODE_G7			0
+	#endif
+#endif

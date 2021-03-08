@@ -10,8 +10,6 @@
 #include "memory.h"
 #include "math.h"
 
-#if (MSX_VERSION >= MSX_2)
-
 //-----------------------------------------------------------------------------
 //
 // DEFINE
@@ -27,27 +25,35 @@
 //-----------------------------------------------------------------------------
 // PROTOTYPE
 
+#if (USE_PRINT_BITMAP)
 // Draw character from RAM - 8-bits colors
 void DrawChar_8B(u8 chr) __FASTCALL;
 // Draw character from RAM - 4-bits colors
 void DrawChar_4B(u8 chr) __FASTCALL;
 // Draw character from RAM - 2-bits colors
 void DrawChar_2B(u8 chr) __FASTCALL;
-// Draw character from RAM - 1-bit color
 
 // Draw character from RAM - Multi-mode transparent 
 void DrawChar_Trans(u8 chr) __FASTCALL;
+#endif
 
+#if (USE_PRINT_VRAM)
 // Draw character from VRAM - 256 pixel screen
 void DrawChar_VRAM256(u8 chr) __FASTCALL;
 // Draw character from VRAM - 512 pixel screen
 void DrawChar_VRAM512(u8 chr) __FASTCALL;
+#endif
 
+#if (USE_PRINT_SPRITE)
 // Draw character from Sprites
 void DrawChar_Sprite(u8 chr) __FASTCALL;
+#endif
 
+#if (USE_PRINT_TEXT)
 // Draw characters as pattern name
-void DrawChar_Name(u8 chr) __FASTCALL;
+void DrawChar_Layout(u8 chr) __FASTCALL;
+#endif
+
 
 //-----------------------------------------------------------------------------
 //
@@ -55,10 +61,14 @@ void DrawChar_Name(u8 chr) __FASTCALL;
 //
 //-----------------------------------------------------------------------------
 
+/// Address of the heap top
 extern u16 g_HeapStartAddress;
 
 /// Allocate memory for Print module data structure
 struct Print_Data g_PrintData;
+
+/// Table use to quick decimal-to-hexadecimal conversion
+static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 #if (USE_PRINT_VALIDATOR)
 /// Character use by character validator to show invalid character
@@ -75,8 +85,6 @@ u8 g_PrintInvalid[] =
 };
 #endif
 
-/// Table use to quick decimal-to-hexadecimal conversion
-static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 //-----------------------------------------------------------------------------
 //
@@ -84,6 +92,7 @@ static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
 //
 //-----------------------------------------------------------------------------
 
+/// Slit color from merged colors
 u8 Print_SplitColor(u8 color) __FASTCALL
 {
 	switch(VDP_GetMode())
@@ -101,6 +110,7 @@ u8 Print_SplitColor(u8 color) __FASTCALL
 		case VDP_MODE_GRAPHIC7: return color;
 	#endif
 	}
+	return color;
 }
 
 u8 Print_MergeColor(u8 color) __FASTCALL
@@ -120,6 +130,7 @@ u8 Print_MergeColor(u8 color) __FASTCALL
 		case VDP_MODE_GRAPHIC7: return color;
 	#endif
 	}
+	return color;
 }
 
 //-----------------------------------------------------------------------------
@@ -130,11 +141,8 @@ u8 Print_MergeColor(u8 color) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Initialize print module. Must be called after VDP_SetMode()
-/// @param		font		Pointer to font data to use (null=use Main-ROM font)
-bool Print_Initialize(const u8* font)
+bool Print_Initialize()
 {
-	Print_SetMode(VDP_IsBitmapMode(VDP_GetMode()) ? PRINT_MODE_DEFAULT : PRINT_MODE_TEXT);
-	Print_SetFont(font);
 	Print_SetColor(0xF, 0x0);
 	Print_SetPosition(0, 0);
 	#if (USE_PRINT_FX_SHADOW)
@@ -222,58 +230,74 @@ void Print_SetMode(u8 mode) __FASTCALL
 {
 	g_PrintData.SourceMode = mode;
 
-	if(g_PrintData.SourceMode == PRINT_MODE_DEFAULT)
+	switch(g_PrintData.SourceMode)
 	{
-		switch(VDP_GetMode()) // Screen mode specific initialization
+	#if (USE_PRINT_BITMAP)
+		case PRINT_MODE_BITMAP:
 		{
-		#if (USE_VDP_MODE_G5)
-			case VDP_MODE_GRAPHIC5:
-				g_PrintData.DrawChar = DrawChar_2B;
-				break;
-		#endif
-		#if ((USE_VDP_MODE_G4) || (USE_VDP_MODE_G6))
-			case VDP_MODE_GRAPHIC4:
-			case VDP_MODE_GRAPHIC6:
-				g_PrintData.DrawChar = DrawChar_4B;
-				break;
-		#endif
-		#if (USE_VDP_MODE_G7)
-			case VDP_MODE_GRAPHIC7:
-				g_PrintData.DrawChar = DrawChar_8B; 
-				break;
-		#endif
+			switch(VDP_GetMode()) // Screen mode specific initialization
+			{
+			#if (USE_VDP_MODE_G5)
+				case VDP_MODE_GRAPHIC5:
+					g_PrintData.DrawChar = DrawChar_2B;
+					break;
+			#endif
+			#if (USE_VDP_MODE_G4 || USE_VDP_MODE_G6)
+				case VDP_MODE_GRAPHIC4:
+				case VDP_MODE_GRAPHIC6:
+					g_PrintData.DrawChar = DrawChar_4B;
+					break;
+			#endif
+			#if (USE_VDP_MODE_G7)
+				case VDP_MODE_GRAPHIC7:
+					g_PrintData.DrawChar = DrawChar_8B; 
+					break;
+			#endif
+			}
+			break;
 		}
-	}
-	else if(g_PrintData.SourceMode == PRINT_MODE_TRANSPARENT)
-	{
-		g_PrintData.DrawChar = DrawChar_Trans;
-	}
-#if (USE_PRINT_VRAM)
-	else if(g_PrintData.SourceMode == PRINT_MODE_VRAM)
-	{
-		switch(VDP_GetMode()) // Screen mode specific initialization
+		case PRINT_MODE_BITMAP_TRANS:
 		{
-		#if ((USE_VDP_MODE_G4) || (USE_VDP_MODE_G7))
-			case VDP_MODE_GRAPHIC4:
-			case VDP_MODE_GRAPHIC7:
-				g_PrintData.DrawChar = DrawChar_VRAM256;
-				break;
-		#endif
-		#if ((USE_VDP_MODE_G5) || (USE_VDP_MODE_G6))
-			case VDP_MODE_GRAPHIC5:
-			case VDP_MODE_GRAPHIC6:
-				g_PrintData.DrawChar = DrawChar_VRAM512;
-				break;
-		#endif
-		};
-	}
-#endif
-#if (USE_PRINT_SPRITE)
-	else if(g_PrintData.SourceMode == PRINT_MODE_SPRITE)
-	{
-		g_PrintData.DrawChar = DrawChar_Sprite;
-	}
-#endif
+			g_PrintData.DrawChar = DrawChar_Trans;
+			break;
+		}
+	#endif
+	#if (USE_PRINT_VRAM)
+		case PRINT_MODE_BITMAP_VRAM:
+		{
+			switch(VDP_GetMode()) // Screen mode specific initialization
+			{
+			#if (USE_VDP_MODE_G4 || USE_VDP_MODE_G7)
+				case VDP_MODE_GRAPHIC4:
+				case VDP_MODE_GRAPHIC7:
+					g_PrintData.DrawChar = DrawChar_VRAM256;
+					break;
+			#endif
+			#if (USE_VDP_MODE_G5 || USE_VDP_MODE_G6)
+				case VDP_MODE_GRAPHIC5:
+				case VDP_MODE_GRAPHIC6:
+					g_PrintData.DrawChar = DrawChar_VRAM512;
+					break;
+			#endif
+			};
+			break;
+		}
+	#endif
+	#if (USE_PRINT_SPRITE)
+		case PRINT_MODE_SPRITE:
+		{
+			g_PrintData.DrawChar = DrawChar_Sprite;
+			break;
+		}
+	#endif
+	#if (USE_PRINT_TEXT)
+		case PRINT_MODE_TEXT:
+		{
+			g_PrintData.DrawChar = DrawChar_Layout;
+			break;
+		}
+	#endif
+	};
 }
 
 //-----------------------------------------------------------------------------
@@ -285,31 +309,6 @@ void Print_SetFont(const u8* font) __FASTCALL
 		Print_SetFontEx(8, 8, 6, 8, 0, 255, (const u8*)g_CGTABL);
 	else
 		Print_SetFontEx(font[0] >> 4, font[0] & 0x0F, font[1] >> 4, font[1] & 0x0F, font[2], font[3], font+4);
-}
-
-//-----------------------------------------------------------------------------
-/// Clear screen on the current page
-void Print_Clear()
-{
-	u8 color = Print_MergeColor(g_PrintData.BGColor);
-	VDP_CommandHMMV(0, 0/*g_PrintData.Page * 256*/, g_PrintData.ScreenWidth, 212, color); // @todo Check the 192/212 lines parameter
-	VDP_CommandWait();
-}
-
-//-----------------------------------------------------------------------------
-/// Clear X character back from current cursor position
-void Print_Backspace(u8 num)
-{
-	u16 x = PRINT_W(g_PrintData.UnitX) * num;
-	if(x >  g_PrintData.CursorX)
-		x = 0;
-	else
-		x = g_PrintData.CursorX - x;
-
-	u8 color = Print_MergeColor(g_PrintData.BGColor);
-	VDP_CommandHMMV(x, g_PrintData.CursorY, x - g_PrintData.CursorX, PRINT_H(g_PrintData.UnitY), color); // @todo Check the 192/212 lines parameter
-	g_PrintData.CursorX = x;
-	VDP_CommandWait();	
 }
 
 //-----------------------------------------------------------------------------
@@ -373,26 +372,72 @@ void Print_InitColorBuffer(u8 t, u8 b)
 /// @param		bg			Background color (format depend of current screen mode)
 void Print_SetColor(u8 text, u8 bg)
 {
-	u8 t = text;
-	#if (USE_PRINT_VALIDATOR)
-		t = Print_SplitColor(t);
-	#endif
-	#if (PRINT_COLOR_NUM == 1)
-		g_PrintData.TextColor = t;
-	#else // if (PRINT_COLOR_NUM > 1)
-		for(u8 i = 0; i < PRINT_COLOR_NUM; ++i)
-		{
-			g_PrintData.TextColor[i] = t;
-		}
-	#endif
-	
-	u8 b = bg;
-	#if (USE_PRINT_VALIDATOR)
-		b = Print_SplitColor(b);
-	#endif
-	g_PrintData.BGColor = b;
+	if(VDP_IsBitmapMode(VDP_GetMode())) // Bitmap mode
+	{
+		#if (USE_PRINT_BITMAP)
+			u8 t = text;
+			#if (USE_PRINT_VALIDATOR)
+				t = Print_SplitColor(t);
+			#endif
+			#if (PRINT_COLOR_NUM == 1)
+				g_PrintData.TextColor = t;
+			#else // if (PRINT_COLOR_NUM > 1)
+				for(u8 i = 0; i < PRINT_COLOR_NUM; ++i)
+				{
+					g_PrintData.TextColor[i] = t;
+				}
+			#endif
+			
+			u8 b = bg;
+			#if (USE_PRINT_VALIDATOR)
+				b = Print_SplitColor(b);
+			#endif
+			g_PrintData.BGColor = b;
 
-	Print_InitColorBuffer(t, b);
+			Print_InitColorBuffer(t, b);
+		#endif
+	}
+	else // Text mode
+	{
+		#if (USE_PRINT_TEXT)
+			u8 col = text << 4 | bg;
+			switch(VDP_GetMode())
+			{
+			#if (USE_VDP_MODE_T1)
+				case VDP_MODE_TEXT1:		// 40 characters per line of text, one colour for each character
+			#endif
+			#if (USE_VDP_MODE_T2)
+				case VDP_MODE_TEXT2:		// 80 characters per line of text, character blinkable selection
+			#endif
+			#if (USE_VDP_MODE_T1 || USE_VDP_MODE_T2)
+					VDP_SetColor(col);
+					break;
+			#endif
+			#if (USE_VDP_MODE_G1)
+				case VDP_MODE_GRAPHIC1:		// 32 characters per one line of text, the COLOURed character available
+					VDP_FillVRAM_64K(col, g_ScreenColorLow, 32);
+					break;
+			#endif
+			#if (USE_VDP_MODE_G2)
+				case VDP_MODE_GRAPHIC2:		// 256 x 192, the colour is specififed for each 8 dots
+			#endif
+			#if (USE_VDP_MODE_G3)
+				case VDP_MODE_GRAPHIC3:		// GRAPHIC 2 which can use sprite mode 2
+			#endif
+			#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
+				{
+					u16 dst = (u16)g_ScreenColorLow + g_PrintData.PatternOffset * 8;
+					VDP_FillVRAM_64K(col, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+					dst += 256 * 8;
+					VDP_FillVRAM_64K(col, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+					dst += 256 * 8;
+					VDP_FillVRAM_64K(col, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+					break;
+				}
+			#endif
+			};
+		#endif
+	}
 }
 
 #if (PRINT_COLOR_NUM > 1)
@@ -412,54 +457,9 @@ void Print_SetColorShade(const u8* shade) __FASTCALL
 #endif
 
 
-#if (USE_PRINT_FX_SHADOW)
-//-----------------------------------------------------------------------------
-/// Set shadow effect
-/// @param		activate	Activate/deactivate shadow
-/// @param		offsetX		Shadow offset on X axis (can be from -3 to +4)
-/// @param		offsetY		Shadow offset on Y axis (can be from -3 to +4)
-/// @param		color		Shadow color (depend of the screen mode)
-void Print_SetShadow(bool enable, i8 offsetX, i8 offsetY, u8 color)
-{
-	Print_EnableShadow(enable);
-	g_PrintData.ShadowOffsetX = 3 + offsetX; // Math_Clamp(offsetX, (i8)-3, 4);
-	g_PrintData.ShadowOffsetY = 3 + offsetY; // Math_Clamp(offsetY, (i8)-3, 4);
-	g_PrintData.ShadowColor   = color;
-}
-
-//-----------------------------------------------------------------------------
-/// Activate/desactivate shadow effect
-/// @param		activate	Activate/deactivate shadow
-void Print_EnableShadow(bool enable) __FASTCALL
-{
-	g_PrintData.Shadow = enable;
-	Print_SetMode(enable ? PRINT_MODE_TRANSPARENT : PRINT_MODE_DEFAULT); // enable default mode to write font data into VRAM
-}
-#endif // USE_PRINT_FX_SHADOW	
-
-#if (USE_PRINT_FX_OUTLINE)	
-
-//-----------------------------------------------------------------------------
-/// Set shadow effect
-void Print_SetOutline(bool enable, u8 color)
-{
-	Print_EnableOutline(enable);
-	g_PrintData.OutlineColor = color;
-}
-
-//-----------------------------------------------------------------------------
-/// Activate/desactivate shadow effect
-void Print_EnableOutline(bool enable) __FASTCALL
-{
-	g_PrintData.Outline = enable;
-	Print_SetMode(enable ? PRINT_MODE_TRANSPARENT : PRINT_MODE_DEFAULT); // enable default mode to write font data into VRAM
-}
-
-#endif
-
 //-----------------------------------------------------------------------------
 //
-// SCREEN MODE FUNCTIONS
+// VALIDATOR
 //
 //-----------------------------------------------------------------------------
 
@@ -507,6 +507,23 @@ void Print_ValidatePattern(u8* chr, const c8** patterns)
 }
 #endif // USE_PRINT_VALIDATOR
 
+
+//-----------------------------------------------------------------------------
+//
+// BITMAP FONT RAM
+//
+//-----------------------------------------------------------------------------
+
+#if (USE_PRINT_BITMAP)
+//-----------------------------------------------------------------------------
+/// Initialize print module. Must be called after VDP_SetMode()
+/// @param		font		Pointer to font data to use (null=use Main-ROM font)
+bool Print_SetBitmapFont(const u8* font) __FASTCALL
+{
+	Print_Initialize();
+	Print_SetMode(PRINT_MODE_BITMAP);
+	Print_SetFont(font);
+}
 
 #if (USE_VDP_MODE_G7)
 //-----------------------------------------------------------------------------
@@ -675,34 +692,16 @@ void DrawChar_Trans(u8 chr) __FASTCALL
 	}
 }
 
-//-----------------------------------------------------------------------------
-//
-// PATTERN NAMES FONT
-//
-//-----------------------------------------------------------------------------
-
-#if (VDP_MODE_TEXT1 | VDP_MODE_MULTICOLOR | VDP_MODE_GRAPHIC1 | VDP_MODE_GRAPHIC2 | VDP_MODE_TEXT2 | VDP_MODE_GRAPHIC3)
-
-//-----------------------------------------------------------------------------
-/// Draw characters as pattern name
-/// @param		chr			The character to draw
-void DrawChar_Name(u8 chr) __FASTCALL
-{
-	// u8 name = chr - g_PrintData.FontFirst + g_PrintData.TextPattern;
-	// u16 vram = g_PrintData.TextPattern + g_PrintData.CursorX + g_PrintData.CursorY * g_PrintData.ScreenWidth;
-	// VDP_FillVRAM(&name, vram, g_SpritePatternHigh, 1);
-}
-#endif
+#endif // (USE_PRINT_BITMAP)
 
 
 //-----------------------------------------------------------------------------
 //
-// VRAM FONT
+// BITMAP FONT VRAM
 //
 //-----------------------------------------------------------------------------
 
 #if (USE_PRINT_VRAM)
-
 //-----------------------------------------------------------------------------
 /// Set the current font and upload it to VRAM
 void Print_SetFontVRAM(const u8* font, UY y)
@@ -713,7 +712,7 @@ void Print_SetFontVRAM(const u8* font, UY y)
 	UY cy = g_PrintData.CursorY;
 
 	// Load font to VRAM	
-	Print_SetMode(PRINT_MODE_TRANSPARENT); // Activate default mode to write font data into VRAM
+	Print_SetMode(PRINT_MODE_BITMAP_TRANS); // Activate default mode to write font data into VRAM
 	g_PrintData.FontVRAMY = y;
 	// @todo To optimize (pre-compute + fixed width/height cases
 	u8 nx = g_PrintData.ScreenWidth / PRINT_W(g_PrintData.UnitX);
@@ -732,7 +731,7 @@ void Print_SetFontVRAM(const u8* font, UY y)
 	
 	g_PrintData.CharPerLine = g_PrintData.ScreenWidth / PRINT_W(g_PrintData.UnitX);
 	
-	Print_SetMode(PRINT_MODE_VRAM);
+	Print_SetMode(PRINT_MODE_BITMAP_VRAM);
 }
 
 #if (USE_VDP_MODE_G4 || USE_VDP_MODE_G7)
@@ -786,6 +785,68 @@ void DrawChar_VRAM512(u8 chr) __FASTCALL
 #endif // (USE_VDP_MODE_G5 || USE_VDP_MODE_G6)
 
 #endif // (USE_PRINT_VRAM)
+
+
+//-----------------------------------------------------------------------------
+//
+// TEXT FONT
+//
+//-----------------------------------------------------------------------------
+
+#if (USE_PRINT_TEXT)
+#if (USE_VDP_MODE_T1 || USE_VDP_MODE_T2 || USE_VDP_MODE_G1 || USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
+
+//-----------------------------------------------------------------------------
+/// Set the current font and upload it to VRAM
+void Print_SetTextFont(const u8* font, u8 offset)
+{
+	// Initialize font attributes
+	Print_Initialize();
+	Print_SetMode(PRINT_MODE_TEXT);
+	Print_SetFont(font);
+	
+	g_PrintData.PatternOffset = offset;
+	g_PrintData.UnitX = 1;
+	g_PrintData.UnitY = 1;
+
+	// Load font data to VRAM
+	const u8* src = font + 4;
+	u16 dst = (u16)g_ScreenPatternLow + (offset * 8);
+	VDP_WriteVRAM_64K(src, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+	
+	switch(VDP_GetMode())
+	{
+	#if (USE_VDP_MODE_G2)
+		case VDP_MODE_GRAPHIC2:		// 256 x 192, the colour is specififed for each 8 dots
+	#endif
+	#if (USE_VDP_MODE_G3)
+		case VDP_MODE_GRAPHIC3:		// GRAPHIC 2 which can use sprite mode 2
+	#endif
+	#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
+		dst += 256 * 8;
+		VDP_WriteVRAM_64K(src, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+		dst += 256 * 8;
+		VDP_WriteVRAM_64K(src, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+		break;
+	#endif
+	};
+}
+
+//-----------------------------------------------------------------------------
+/// Draw characters as pattern name
+/// @param		chr			The character to draw
+void DrawChar_Layout(u8 chr) __FASTCALL
+{
+	#if (USE_PRINT_VALIDATOR)
+		Print_ValidateChar(&chr);
+	#endif
+	u8 shape = chr - g_PrintData.FontFirst + g_PrintData.PatternOffset;
+	u16 dst = (u16)g_ScreenLayoutLow + (g_PrintData.CursorY * g_PrintData.ScreenWidth) + g_PrintData.CursorX;
+	VDP_FillVRAM_64K(shape, dst, 1);
+}
+
+#endif
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -852,20 +913,120 @@ void DrawChar_Sprite(u8 chr) __FASTCALL
 
 //-----------------------------------------------------------------------------
 //
+// FX
+//
+//-----------------------------------------------------------------------------
+
+#if (USE_PRINT_FX_SHADOW)
+//-----------------------------------------------------------------------------
+/// Set shadow effect
+/// @param		activate	Activate/deactivate shadow
+/// @param		offsetX		Shadow offset on X axis (can be from -3 to +4)
+/// @param		offsetY		Shadow offset on Y axis (can be from -3 to +4)
+/// @param		color		Shadow color (depend of the screen mode)
+void Print_SetShadow(bool enable, i8 offsetX, i8 offsetY, u8 color)
+{
+	Print_EnableShadow(enable);
+	g_PrintData.ShadowOffsetX = 3 + offsetX; // Math_Clamp(offsetX, (i8)-3, 4);
+	g_PrintData.ShadowOffsetY = 3 + offsetY; // Math_Clamp(offsetY, (i8)-3, 4);
+	g_PrintData.ShadowColor   = color;
+}
+
+//-----------------------------------------------------------------------------
+/// Activate/desactivate shadow effect
+/// @param		activate	Activate/deactivate shadow
+void Print_EnableShadow(bool enable) __FASTCALL
+{
+	g_PrintData.Shadow = enable;
+	Print_SetMode(enable ? PRINT_MODE_BITMAP_TRANS : PRINT_MODE_BITMAP); // enable default mode to write font data into VRAM
+}
+#endif // USE_PRINT_FX_SHADOW	
+
+#if (USE_PRINT_FX_OUTLINE)	
+//-----------------------------------------------------------------------------
+/// Set shadow effect
+void Print_SetOutline(bool enable, u8 color)
+{
+	Print_EnableOutline(enable);
+	g_PrintData.OutlineColor = color;
+}
+
+//-----------------------------------------------------------------------------
+/// Activate/desactivate shadow effect
+void Print_EnableOutline(bool enable) __FASTCALL
+{
+	g_PrintData.Outline = enable;
+	Print_SetMode(enable ? PRINT_MODE_BITMAP_TRANS : PRINT_MODE_BITMAP); // enable default mode to write font data into VRAM
+}
+#endif // USE_PRINT_FX_OUTLINE
+
+
+//-----------------------------------------------------------------------------
+//
 // DRAW FUNCTION
 //
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
+/// Clear screen on the current page
+void Print_Clear()
+{
+	if(VDP_IsBitmapMode(VDP_GetMode())) // Bitmap mode
+	{
+		#if (USE_PRINT_BITMAP)
+			u8 color = Print_MergeColor(g_PrintData.BGColor);
+			VDP_CommandHMMV(0, 0/*g_PrintData.Page * 256*/, g_PrintData.ScreenWidth, 212, color); // @todo Check the 192/212 lines parameter
+			VDP_CommandWait();
+		#endif
+	}
+	else // Text mode
+	{
+		#if (USE_PRINT_TEXT)
+			VDP_FillVRAM(0, g_ScreenLayoutLow, g_ScreenLayoutHigh, 24 * g_PrintData.ScreenWidth);
+		#endif
+	}
+}
+
+//-----------------------------------------------------------------------------
+/// Clear X character back from current cursor position
+/// @param		num			Number of characters to remove
+void Print_Backspace(u8 num) __FASTCALL
+{
+	if(VDP_IsBitmapMode(VDP_GetMode())) // Bitmap mode
+	{
+		#if (USE_PRINT_BITMAP)
+			u16 x = PRINT_W(g_PrintData.UnitX) * num;
+			if(x >  g_PrintData.CursorX)
+				x = 0;
+			else
+				x = g_PrintData.CursorX - x;
+
+			u8 color = Print_MergeColor(g_PrintData.BGColor);
+			VDP_CommandHMMV(x, g_PrintData.CursorY, x - g_PrintData.CursorX, PRINT_H(g_PrintData.UnitY), color); // @todo Check the 192/212 lines parameter
+			g_PrintData.CursorX = x;
+			VDP_CommandWait();	
+		#endif
+	}
+	else // Text mode
+	{
+		#if (USE_PRINT_TEXT)
+			u16 dst = g_ScreenLayoutLow + (g_PrintData.CursorY * g_PrintData.ScreenWidth) + g_PrintData.CursorX - num;
+			VDP_FillVRAM(0, dst, g_ScreenLayoutHigh, num);
+		#endif
+	}
+}
+//-----------------------------------------------------------------------------
 /// Print a single character
 /// @param		chr			The character to draw
 void Print_DrawChar(u8 chr) __FASTCALL
 {
-#if (USE_PRINT_VALIDATOR)
-	if(g_PrintData.CursorX + PRINT_W(g_PrintData.UnitX) > g_PrintData.ScreenWidth) // Handle automatic new-line when 
-		Print_Return();
-	VDP_CommandWait();
-#endif
+	#if (USE_PRINT_VALIDATOR)
+		if(g_PrintData.CursorX + PRINT_W(g_PrintData.UnitX) > g_PrintData.ScreenWidth) // Handle automatic new-line when 
+			Print_Return();
+		#if (MSX_VERSION > MSX_1)
+			VDP_CommandWait();
+		#endif
+	#endif
 	g_PrintData.DrawChar(chr);
 
 	// g_PrintData.DrawChar(chr);
@@ -973,5 +1134,3 @@ void Print_DrawInt(i16 value) __FASTCALL
 	while(*ptr != 0)
 		Print_DrawChar(*ptr--);	
 }
-
-#endif // (MSX_VERSION >= MSX_2)
