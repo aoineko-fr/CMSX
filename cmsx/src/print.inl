@@ -20,11 +20,21 @@ inline void Print_SetFontEx(u8 patternX, u8 patternY, u8 sizeX, u8 sizeY, u8 fir
 	g_PrintData.PatternY     = patternY;
 	g_PrintData.UnitX        = sizeX;
 	g_PrintData.UnitY        = sizeY;
-	g_PrintData.FontFirst    = firstChr;
-	g_PrintData.FontLast     = lastChr;
+	g_PrintData.CharFirst    = firstChr;
+	g_PrintData.CharLast     = lastChr;
+	g_PrintData.CharCount    = lastChr - firstChr + 1;
 	g_PrintData.FontPatterns = patterns;
-	g_PrintData.FontAddr     = g_PrintData.FontPatterns - (g_PrintData.FontFirst * g_PrintData.PatternY); // pre-compute address of the virtual index 0 character (used to quick drawing in PutChar_GX functions)
+	g_PrintData.FontAddr     = g_PrintData.FontPatterns - (firstChr * g_PrintData.PatternY); // pre-compute address of the virtual index 0 character (used to quick drawing in PutChar_GX functions)
 }
+
+#if (USE_PRINT_TEXT)
+//-----------------------------------------------------------------------------
+/// Set cursor position
+inline void Print_SelectTextFont(u8 offset)
+{
+	g_PrintData.PatternOffset = offset;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 /// Set cursor position

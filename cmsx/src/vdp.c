@@ -111,7 +111,7 @@ u16 g_SpriteColorLow;			///< Address of the Sprite Color Table
 //
 //-----------------------------------------------------------------------------
 
-#if USE_VDP_MODE_T1
+#if (USE_VDP_MODE_T1)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Text 1 screen mode
 static const u8 modeT1[] = 
@@ -149,7 +149,7 @@ void VDP_SetModeText1()
 }
 #endif // USE_VDP_MODE_T1
 
-#if USE_VDP_MODE_MC
+#if (USE_VDP_MODE_MC)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Multi Color screen mode
 static const u8 modeMC[] = 
@@ -191,7 +191,7 @@ void VDP_SetModeMultiColor()
 }
 #endif // USE_VDP_MODE_MC
 
-#if USE_VDP_MODE_G1
+#if (USE_VDP_MODE_G1)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Graphic 1 screen mode
 static const u8 modeG1[] = 
@@ -235,7 +235,7 @@ void VDP_SetModeGraphic1()
 }
 #endif // USE_VDP_MODE_G1
 
-#if USE_VDP_MODE_G2
+#if (USE_VDP_MODE_G2)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Graphic 2 screen mode
 static const u8 modeG2[] = 
@@ -307,7 +307,7 @@ void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count)
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT
 
-#if (MSX_VERSION == MSX_1)
+#if (1)//(MSX_VERSION == MSX_1)
 
 		// Setup fast 16-bits loop
 		ld		l, 4 (ix)				// source address
@@ -416,7 +416,7 @@ void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count)
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// AddrPort = ((srcLow >> 8) & 0x3F) + F_VDP_READ
 		
-#if (MSX_VERSION == MSX_1)
+#if (1)//(MSX_VERSION == MSX_1)
 
 		// Setup fast 16-bits loop
 		ld		l, 6 (ix)				// source address
@@ -606,7 +606,7 @@ void VDP_RegIncWrite(u16 src, u8 count, u8 reg)
 //
 //-----------------------------------------------------------------------------
 
-#if USE_VDP_MODE_T2
+#if (USE_VDP_MODE_T2)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Text 2 screen mode
 static const u8 modeT2[] = 
@@ -641,7 +641,7 @@ void VDP_SetModeText2()
 }
 #endif // USE_VDP_MODE_T2
 
-#if USE_VDP_MODE_G3
+#if (USE_VDP_MODE_G3)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Graphic 3 screen mode
 static const u8 modeG3[] = 
@@ -678,7 +678,7 @@ void VDP_SetModeGraphic3()
 }
 #endif // USE_VDP_MODE_G3
 
-#if USE_VDP_MODE_G4
+#if (USE_VDP_MODE_G4)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Graphic 4 screen mode
 static const u8 modeG4[] = 
@@ -701,7 +701,7 @@ void VDP_SetModeGraphic4()
 }
 #endif // USE_VDP_MODE_G4
 
-#if USE_VDP_MODE_G5
+#if (USE_VDP_MODE_G5)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Graphic 5 screen mode
 static const u8 modeG5[] = 
@@ -724,7 +724,7 @@ void VDP_SetModeGraphic5()
 }
 #endif // USE_VDP_MODE_G5
 
-#if USE_VDP_MODE_G6
+#if (USE_VDP_MODE_G6)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Graphic 6 screen mode
 static const u8 modeG6[] = 
@@ -747,7 +747,7 @@ void VDP_SetModeGraphic6()
 }
 #endif // USE_VDP_MODE_G6
 
-#if USE_VDP_MODE_G7
+#if (USE_VDP_MODE_G7)
 //-----------------------------------------------------------------------------
 /// Data structure to initialize Graphic 7 screen mode
 static const u8 modeG7[] = 
@@ -1234,7 +1234,7 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 	g_VDP_Data.Mode = mode;
 	switch(mode)
 	{
-#if USE_VDP_MODE_T1
+#if (USE_VDP_MODE_T1)
 	// case VDP_MODE_SCREEN0:
 	// case VDP_MODE_SCREEN0_W40:
 	case VDP_MODE_TEXT1:
@@ -1242,21 +1242,21 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 		return;
 #endif // USE_VDP_MODE_T1
 	
-#if USE_VDP_MODE_MC
+#if (USE_VDP_MODE_MC)
 	// case VDP_MODE_SCREEN3:
 	case VDP_MODE_MULTICOLOR:
 		VDP_SetModeMultiColor();
 		return;
 #endif // USE_VDP_MODE_MC
 
-#if USE_VDP_MODE_G1
+#if (USE_VDP_MODE_G1)
 	// case VDP_MODE_SCREEN1:
 	case VDP_MODE_GRAPHIC1:
 		VDP_SetModeGraphic1();
 		return;
 #endif // USE_VDP_MODE_G1
 
-#if USE_VDP_MODE_G2
+#if (USE_VDP_MODE_G2)
 	// case VDP_MODE_SCREEN2:
 	case VDP_MODE_GRAPHIC2:
 		VDP_SetModeGraphic2();
@@ -1265,49 +1265,49 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 
 #if (MSX_VERSION >= MSX_2)
 
-#if USE_VDP_MODE_T2
+#if (USE_VDP_MODE_T2)
 	// case VDP_MODE_SCREEN0_W80:
 	case VDP_MODE_TEXT2:
 		VDP_SetModeText2();
 		return;
 #endif // USE_VDP_MODE_T2²
 
-#if USE_VDP_MODE_G3
+#if (USE_VDP_MODE_G3)
 	// case VDP_MODE_SCREEN4:
 	case VDP_MODE_GRAPHIC3:
 		VDP_SetModeGraphic3();
 		return;
 #endif // USE_VDP_MODE_G3
 	
-#if USE_VDP_MODE_G4
+#if (USE_VDP_MODE_G4)
 	// case VDP_MODE_SCREEN5:
 	case VDP_MODE_GRAPHIC4:
 		VDP_SetModeGraphic4();
 		return;
 #endif // USE_VDP_MODE_G4
 	
-#if USE_VDP_MODE_G5
+#if (USE_VDP_MODE_G5)
 	// case VDP_MODE_SCREEN6:
 	case VDP_MODE_GRAPHIC5:
 		VDP_SetModeGraphic5();
 		return;
 #endif // USE_VDP_MODE_G5
 	
-#if USE_VDP_MODE_G6
+#if (USE_VDP_MODE_G6)
 	// case VDP_MODE_SCREEN7:
 	case VDP_MODE_GRAPHIC6:
 		VDP_SetModeGraphic6();
 		return;
 #endif // USE_VDP_MODE_G6
 		
-#if USE_VDP_MODE_G7
+#if (USE_VDP_MODE_G7)
 	// case VDP_MODE_SCREEN8:
 	case VDP_MODE_GRAPHIC7:
 		VDP_SetModeGraphic7();
 		return;
 #endif // USE_VDP_MODE_G7
 		
-#if USE_VDP_MODE_G5
+#if (USE_VDP_MODE_G5)
 	// case VDP_MODE_SCREEN9:
 	case VDP_MODE_SCREEN9_40:
 		VDP_SetModeGraphic5();
@@ -1315,7 +1315,7 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 		return;
 #endif // USE_VDP_MODE_G5
 	
-#if USE_VDP_MODE_G4
+#if (USE_VDP_MODE_G4)
 	case VDP_MODE_SCREEN9_80:
 		VDP_SetModeGraphic4();
 		// @todo Further setting needed
@@ -1326,7 +1326,7 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 
 #if (MSX_VERSION >= MSX_2Plus)
 
-#if USE_VDP_MODE_G7
+#if (USE_VDP_MODE_G7)
 	case VDP_MODE_SCREEN10:
 		VDP_SetModeGraphic7();
 		// @todo Further setting needed
@@ -1356,6 +1356,81 @@ bool VDP_IsBitmapMode(const u8 mode) __FASTCALL
 #else
 	return mode >= VDP_MODE_GRAPHIC4;
 #endif
+}
+
+//-----------------------------------------------------------------------------
+/// Get VDP version
+///	@return					0: TMS9918A, 1: V9938, 2: V9958, x: VDP ID
+/// @note Code by Grauw (http://map.grauw.nl/sources/vdp_detection.php)
+u8 VDP_GetVersion() __naked
+{
+	__asm
+		call	VDP_GetVersionAsm
+		ld		l, a
+		ret
+	
+	; Detect VDP version
+	;
+	; a <- 0: TMS9918A, 1: V9938, 2: V9958, x: VDP ID
+	; f <- z: TMS9918A, nz: other
+	VDP_GetVersionAsm:
+		call	VDP_IsTMS9918A			// use a different way to detect TMS9918A
+		ret		z
+		ld		a, #1					// select s#1
+		di
+		out		(P_VDP_ADDR), a
+		ld		a, #VDP_REG(15)
+		out		(P_VDP_ADDR), a
+		in		a, (P_VDP_ADDR)			// read s#1
+		and		#0b00111110				// get VDP ID
+		rrca
+		ex		af, af'
+		xor		a						// select s#0 as required by BIOS
+		out		(P_VDP_ADDR), a
+		ld		a, #VDP_REG(15)
+		ei
+		out		(P_VDP_ADDR), a
+		ex		af, af'
+		ret		nz						// return VDP ID for V9958 or higher
+		inc		a						// return 1 for V9938
+		ret
+
+	; Test if the VDP is a TMS9918A.
+	;
+	; The VDP ID number was only introduced in the V9938, so we have to use a
+	; different method to detect the TMS9918A. We wait for the vertical blanking
+	; interrupt flag, and then quickly read status register 2 and expect bit 6
+	; (VR, vertical retrace flag) to be set as well. The TMS9918A has only one
+	; status register, so bit 6 (5S, 5th sprite flag) will return 0 in stead.
+	;
+	; f <- z: TMS9918A, nz: V99X8
+	VDP_IsTMS9918A:
+		in		a, (P_VDP_ADDR)			// read s#0, make sure interrupt flag is reset
+		di
+	VDP_IsTMS9918A_Wait:
+		in		a,(P_VDP_ADDR)			// read s#0
+		and		a						// wait until interrupt flag is set
+		jp		p, VDP_IsTMS9918A_Wait
+		ld		a, #2					// select s#2 on V9938
+		out		(P_VDP_ADDR), a
+		ld		a, #VDP_REG(15)			// (this mirrors to r#7 on TMS9918 VDPs)
+		out		(P_VDP_ADDR), a
+		in		a, (P_VDP_ADDR)			// read s#2 / s#0
+		ex		af, af'
+		xor		a						// select s#0 as required by BIOS
+		out		(P_VDP_ADDR), a
+		ld		a, #VDP_REG(15)
+		out		(P_VDP_ADDR), a
+		ld		a, (0xF3E6)
+		out		(P_VDP_ADDR), a			// restore r#7 if it mirrored (small flash visible)
+		ld		a, #VDP_REG(7)
+		ei
+		out		(P_VDP_ADDR), a
+		ex		af, af'
+		and		#0b01000000				// check if bit 6 was 0 (s#0 5S) or 1 (s#2 VR)
+		ret
+	
+	__endasm;
 }
 
 //-----------------------------------------------------------------------------
@@ -1599,6 +1674,7 @@ void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL
 	#if (MSX_VERSION >= MSX_2)
 		switch(g_VDP_Data.Mode)
 		{
+		case VDP_MODE_GRAPHIC3:
 		case VDP_MODE_GRAPHIC4:
 		case VDP_MODE_GRAPHIC5:
 		case VDP_MODE_GRAPHIC6:
@@ -1793,10 +1869,12 @@ void VDP_SetSpriteData(u8 index, const u8* data)
 ///
 void VDP_HideSpriteFrom(u8 index) __FASTCALL
 {
-	g_VDP_Sprite.Y = 216;
- 	u16 low = g_SpriteAtributeLow;
-	low += (index * 4);
-	VDP_WriteVRAM((u8*)&g_VDP_Sprite, low, g_SpriteAtributeHigh, 1);
+	u8 y = VDP_SPRITE_DISABLE_SM1;
+	#if (MSX_VERSION >= MSX_2)
+		if(g_VDP_Data.Mode >= VDP_MODE_TEXT2) // MSX2 modes
+			y = VDP_SPRITE_DISABLE_SM2;
+	#endif
+	VDP_SetSpritePositionY(index, y);
 }
 
 

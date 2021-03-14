@@ -3,10 +3,10 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Author: Guillaume "Aoineko" Blanchard, for MGL (MSX Game library)
+// Author: Guillaume "Aoineko" Blanchard, for CMSX (MSX Game library)
 // License: CC-BY-SA
 // _____________________________________________________________________________
-// Data generated using CMSXimg 1.11.0 on Fri Feb 26 20:17:02 2021
+// Data generated using CMSXimg 1.11.0 on Wed Mar 10 13:52:16 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     font\font_cmsx_std1.png

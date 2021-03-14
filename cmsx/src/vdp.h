@@ -186,6 +186,13 @@ enum VDP_MODE
 	VDP_MODE_MAX,
 };
 
+enum VDP_VERSION
+{
+	VDP_VERSION_TMS9918A = 0,	// MSX1
+	VDP_VERSION_V9938,			// MSX2
+	VDP_VERSION_V9958,			// MSX2+
+};
+
 //-----------------------------------------------------------------------------
 // MSX 1 FUNCTIONS
 //-----------------------------------------------------------------------------
@@ -207,6 +214,9 @@ void VDP_SetMode(const u8 mode) __FASTCALL;
 
 /// Tell if the given screen mode is a bitmap mode (text mode otherwise)
 bool VDP_IsBitmapMode(const u8 mode) __FASTCALL;
+
+/// Get VDP version
+u8 VDP_GetVersion() __naked;
 
 /// Read default S#0 register
 u8 VDP_ReadDefaultStatus();

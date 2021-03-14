@@ -77,8 +77,9 @@ struct Print_Data
 	u8 TextColor[PRINT_COLOR_NUM]; ///< Text colors (1 per line)
 #endif
 	u8 BGColor;					///< Background color
-	u8 FontFirst;				///< ASCII code of the first character of the current font
-	u8 FontLast;				///< ASCII code of the last character of the current font
+	u8 CharFirst;				///< ASCII code of the first character of the current font
+	u8 CharLast;				///< ASCII code of the last character of the current font
+	u8 CharCount;				///< Characters count
 	print_drawchar DrawChar;	///< Default function to draw a character (depend of the current mode)
 	u8 SourceMode       : 4;	///< Character display mode : RAM, VRAM or Sprite (@see PRINT_MODE)
 	u16 ScreenWidth;			///< Screen width

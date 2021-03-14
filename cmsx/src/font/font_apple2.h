@@ -12,7 +12,7 @@
 // License: All rights reserved?
 // Source:  https://damieng.com/blog/2011/02/20/typography-in-8-bits-system-fonts
 // _____________________________________________________________________________
-// Data generated using CMSXimg 1.11.0 on Fri Feb 26 20:17:03 2021
+// Data generated using CMSXimg 1.11.0 on Wed Mar 10 13:52:16 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     font\typo\Apple2.png
@@ -860,7 +860,7 @@ const unsigned char g_Font_Apple2[] =
 	0x44, /* .#...#.. */ 
 	0x3C, /* ..####.. */ 
 	0x00, /* ........ */ 
-	0xBE, /* #.#####. */ 
+	0xBC, /* #.####.. */ 
 // Sprite[93] (offset:740)
 	0x80, /* #....... */ 
 	0xF0, /* ####.... */ 
@@ -869,7 +869,7 @@ const unsigned char g_Font_Apple2[] =
 	0x88, /* #...#... */ 
 	0xF0, /* ####.... */ 
 	0x00, /* ........ */ 
-	0xFC, /* ######.. */ 
+	0xF0, /* ####.... */ 
 // Sprite[94] (offset:748)
 	0x00, /* ........ */ 
 	0xF0, /* ####.... */ 
@@ -878,7 +878,7 @@ const unsigned char g_Font_Apple2[] =
 	0x02, /* ......#. */ 
 	0xF0, /* ####.... */ 
 	0x00, /* ........ */ 
-	0x34, /* ..##.#.. */ 
+	0xE0, /* ###..... */ 
 // Sprite[95] (offset:756)
 	0x20, /* ..#..... */ 
 	0xE2, /* ###...#. */ 
@@ -887,6 +887,6 @@ const unsigned char g_Font_Apple2[] =
 	0x24, /* ..#..#.. */ 
 	0xE2, /* ###...#. */ 
 	0x00, /* ........ */ 
-	0x88, /* #...#... */ 
+	0x00, /* ........ */ 
 };
 // Total size :  764 bytes

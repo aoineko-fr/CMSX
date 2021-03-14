@@ -26,8 +26,9 @@
 #include "bios_subrom.h"
 #include "bios_discrom.h"
 
-//─────────────────────────────────────────────────────────────────────────────
-// Defines
+//=============================================================================
+// DEFINES
+//=============================================================================
 
 // Slot
 // ExxxSSPP
@@ -66,6 +67,14 @@
 
 // Files
 #define FILE(str) "\"" str "\""
+
+
+//-----------------------------------------------------------------------------
+// Input Macros
+
+#define KEYBOARD_HOLD(key)    ((g_NEWKEY[KEY_ROW(key)] & KEY_FLAG(key)) == 0)
+#define KEYBOARD_PRESS(key)   (((g_NEWKEY[KEY_ROW(key)] & KEY_FLAG(key)) == 0) && ((g_OLDKEY[KEY_ROW(key)] & KEY_FLAG(key)) != 0))
+#define KEYBOARD_RELEASE(key) (((g_NEWKEY[KEY_ROW(key)] & KEY_FLAG(key)) != 0) && ((g_OLDKEY[KEY_ROW(key)] & KEY_FLAG(key)) == 0))
 
 
 //-----------------------------------------------------------------------------

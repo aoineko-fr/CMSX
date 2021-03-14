@@ -427,11 +427,11 @@ void Print_SetColor(u8 text, u8 bg)
 			#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
 				{
 					u16 dst = (u16)g_ScreenColorLow + g_PrintData.PatternOffset * 8;
-					VDP_FillVRAM_64K(col, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+					VDP_FillVRAM_64K(col, dst, g_PrintData.CharCount * 8);
 					dst += 256 * 8;
-					VDP_FillVRAM_64K(col, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+					VDP_FillVRAM_64K(col, dst, g_PrintData.CharCount * 8);
 					dst += 256 * 8;
-					VDP_FillVRAM_64K(col, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+					VDP_FillVRAM_64K(col, dst, g_PrintData.CharCount * 8);
 					break;
 				}
 			#endif
@@ -445,13 +445,45 @@ void Print_SetColor(u8 text, u8 bg)
 /// Set color shade
 void Print_SetColorShade(const u8* shade) __FASTCALL
 {
-	for(u8 i = 0; i < PRINT_COLOR_NUM; ++i)
+	if(VDP_IsBitmapMode(VDP_GetMode())) // Bitmap mode
 	{
-		u8 t = shade[i];
-		#if (USE_PRINT_VALIDATOR)
-			t = Print_SplitColor(t);
+		#if (USE_PRINT_BITMAP)
+			for(u8 i = 0; i < PRINT_COLOR_NUM; ++i)
+			{
+				u8 t = shade[i];
+				#if (USE_PRINT_VALIDATOR)
+					t = Print_SplitColor(t);
+				#endif
+				g_PrintData.TextColor[i] = t;
+			}
 		#endif
-		g_PrintData.TextColor[i] = t;
+	}
+	else // Text mode
+	{
+		#if (USE_PRINT_TEXT)
+			switch(VDP_GetMode())
+			{
+			#if (USE_VDP_MODE_G2)
+				case VDP_MODE_GRAPHIC2:		// 256 x 192, the colour is specififed for each 8 dots
+			#endif
+			#if (USE_VDP_MODE_G3)
+				case VDP_MODE_GRAPHIC3:		// GRAPHIC 2 which can use sprite mode 2
+			#endif
+			#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
+				{
+					u16 dst = (u16)g_ScreenColorLow + g_PrintData.PatternOffset * 8;
+					for(u8 i = 0; i < g_PrintData.CharCount; ++i)
+					{
+						VDP_WriteVRAM_64K(shade, dst,           8);
+						VDP_WriteVRAM_64K(shade, dst + 256 * 8, 8);
+						VDP_WriteVRAM_64K(shade, dst + 512 * 8, 8);
+						dst += 8;
+					}
+					break;
+				}
+			#endif
+			};
+		#endif
 	}
 }
 #endif
@@ -469,18 +501,18 @@ void Print_SetColorShade(const u8* shade) __FASTCALL
 /// @param		chr			Address of the character to check
 void Print_ValidateChar(u8* chr)
 {
-	if((*chr < g_PrintData.FontFirst) || (*chr > g_PrintData.FontLast))
+	if((*chr < g_PrintData.CharFirst) || (*chr > g_PrintData.CharLast))
 	{
-		if((*chr >= 'a') && (*chr <= 'z') && (g_PrintData.FontFirst <= 'A') && (g_PrintData.FontLast >= 'Z')) // try to remap to upper case letter
+		if((*chr >= 'a') && (*chr <= 'z') && (g_PrintData.CharFirst <= 'A') && (g_PrintData.CharLast >= 'Z')) // try to remap to upper case letter
 		{
 			*chr = *chr - 'a' + 'A';
 		}
-		else if((*chr >= 'A') && (*chr <= 'Z') && (g_PrintData.FontFirst <= 'a') && (g_PrintData.FontLast >= 'z')) // try to remap to lower case letter
+		else if((*chr >= 'A') && (*chr <= 'Z') && (g_PrintData.CharFirst <= 'a') && (g_PrintData.CharLast >= 'z')) // try to remap to lower case letter
 		{
 			*chr = *chr - 'A' + 'a';
 		}
 		else
-			*chr = g_PrintData.FontFirst;
+			*chr = g_PrintData.CharFirst;
 	}
 }
 //-----------------------------------------------------------------------------
@@ -489,17 +521,17 @@ void Print_ValidateChar(u8* chr)
 /// @param		patterns	Address of the font data to check
 void Print_ValidatePattern(u8* chr, const c8** patterns)
 {
-	if((*chr < g_PrintData.FontFirst) || (*chr > g_PrintData.FontLast))
+	if((*chr < g_PrintData.CharFirst) || (*chr > g_PrintData.CharLast))
 	{
-		if((*chr >= 'a') && (*chr <= 'z') && (g_PrintData.FontFirst <= 'A') && (g_PrintData.FontLast >= 'Z')) // try to remap to upper case letter
+		if((*chr >= 'a') && (*chr <= 'z') && (g_PrintData.CharFirst <= 'A') && (g_PrintData.CharLast >= 'Z')) // try to remap to upper case letter
 		{
 			*chr = *chr - 'a' + 'A';
-			*patterns = g_PrintData.FontPatterns + g_PrintData.PatternY * (*chr - g_PrintData.FontFirst);
+			*patterns = g_PrintData.FontPatterns + g_PrintData.PatternY * (*chr - g_PrintData.CharFirst);
 		}
-		else if((*chr >= 'A') && (*chr <= 'Z') && (g_PrintData.FontFirst <= 'a') && (g_PrintData.FontLast >= 'z')) // try to remap to lower case letter
+		else if((*chr >= 'A') && (*chr <= 'Z') && (g_PrintData.CharFirst <= 'a') && (g_PrintData.CharLast >= 'z')) // try to remap to lower case letter
 		{
 			*chr = *chr - 'A' + 'a';
-			*patterns = g_PrintData.FontPatterns + g_PrintData.PatternY * (*chr - g_PrintData.FontFirst);
+			*patterns = g_PrintData.FontPatterns + g_PrintData.PatternY * (*chr - g_PrintData.CharFirst);
 		}
 		else
 			*patterns = g_PrintInvalid;
@@ -520,9 +552,9 @@ void Print_ValidatePattern(u8* chr, const c8** patterns)
 /// @param		font		Pointer to font data to use (null=use Main-ROM font)
 bool Print_SetBitmapFont(const u8* font) __FASTCALL
 {
-	Print_Initialize();
-	Print_SetMode(PRINT_MODE_BITMAP);
 	Print_SetFont(font);
+	Print_SetMode(PRINT_MODE_BITMAP);
+	Print_Initialize();
 }
 
 #if (USE_VDP_MODE_G7)
@@ -707,6 +739,7 @@ void DrawChar_Trans(u8 chr) __FASTCALL
 void Print_SetFontVRAM(const u8* font, UY y)
 {
 	Print_SetFont(font);
+	Print_Initialize();
 	
 	UX cx = g_PrintData.CursorX;
 	UY cy = g_PrintData.CursorY;
@@ -716,9 +749,9 @@ void Print_SetFontVRAM(const u8* font, UY y)
 	g_PrintData.FontVRAMY = y;
 	// @todo To optimize (pre-compute + fixed width/height cases
 	u8 nx = g_PrintData.ScreenWidth / PRINT_W(g_PrintData.UnitX);
-	for(u16 chr = g_PrintData.FontFirst; chr <= g_PrintData.FontLast; ++chr)
+	for(u16 chr = g_PrintData.CharFirst; chr <= g_PrintData.CharLast; ++chr)
 	{
-		u16 idx = chr - g_PrintData.FontFirst;
+		u16 idx = chr - g_PrintData.CharFirst;
 		// @todo To optimize (pre-compute + fixed width/height cases
 		g_PrintData.CursorX = (idx % nx) * PRINT_W(g_PrintData.UnitX);		
 		g_PrintData.CursorY = (idx / nx) * PRINT_H(g_PrintData.PatternY) + y;
@@ -743,7 +776,7 @@ void DrawChar_VRAM256(u8 chr) __FASTCALL
 	#if (USE_PRINT_VALIDATOR)
 		Print_ValidateChar(&chr);
 	#endif
-	u8 idx = chr - g_PrintData.FontFirst;
+	u8 idx = chr - g_PrintData.CharFirst;
 	#if (PRINT_WIDTH == PRINT_WIDTH_6)
 		u16 sx = (idx % 42) * PRINT_W(g_PrintData.UnitX);		
 		u16 sy = (idx / 42) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
@@ -768,7 +801,7 @@ void DrawChar_VRAM512(u8 chr) __FASTCALL
 	#if (USE_PRINT_VALIDATOR)
 		Print_ValidateChar(&chr);
 	#endif
-	u8 idx = chr - g_PrintData.FontFirst;
+	u8 idx = chr - g_PrintData.CharFirst;
 	#if (PRINT_WIDTH == PRINT_WIDTH_6)
 		u16 sx = (idx % 85) * PRINT_W(g_PrintData.UnitX);		
 		u16 sy = (idx / 85) * PRINT_H(g_PrintData.PatternY) + g_PrintData.FontVRAMY;
@@ -800,19 +833,17 @@ void DrawChar_VRAM512(u8 chr) __FASTCALL
 /// Set the current font and upload it to VRAM
 void Print_SetTextFont(const u8* font, u8 offset)
 {
+	g_PrintData.PatternOffset = offset;
+
 	// Initialize font attributes
+	Print_SetFontEx(8, 8, 1, 1, font[2], font[3], font+4);
 	Print_Initialize();
 	Print_SetMode(PRINT_MODE_TEXT);
-	Print_SetFont(font);
-	
-	g_PrintData.PatternOffset = offset;
-	g_PrintData.UnitX = 1;
-	g_PrintData.UnitY = 1;
 
 	// Load font data to VRAM
 	const u8* src = font + 4;
 	u16 dst = (u16)g_ScreenPatternLow + (offset * 8);
-	VDP_WriteVRAM_64K(src, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+	VDP_WriteVRAM_64K(src, dst, g_PrintData.CharCount * 8);
 	
 	switch(VDP_GetMode())
 	{
@@ -824,9 +855,9 @@ void Print_SetTextFont(const u8* font, u8 offset)
 	#endif
 	#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
 		dst += 256 * 8;
-		VDP_WriteVRAM_64K(src, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+		VDP_WriteVRAM_64K(src, dst, g_PrintData.CharCount * 8);
 		dst += 256 * 8;
-		VDP_WriteVRAM_64K(src, dst, (g_PrintData.FontLast - g_PrintData.FontFirst + 1) * 8);
+		VDP_WriteVRAM_64K(src, dst, g_PrintData.CharCount * 8);
 		break;
 	#endif
 	};
@@ -840,7 +871,7 @@ void DrawChar_Layout(u8 chr) __FASTCALL
 	#if (USE_PRINT_VALIDATOR)
 		Print_ValidateChar(&chr);
 	#endif
-	u8 shape = chr - g_PrintData.FontFirst + g_PrintData.PatternOffset;
+	u8 shape = chr - g_PrintData.CharFirst + g_PrintData.PatternOffset;
 	u16 dst = (u16)g_ScreenLayoutLow + (g_PrintData.CursorY * g_PrintData.ScreenWidth) + g_PrintData.CursorX;
 	VDP_FillVRAM_64K(shape, dst, 1);
 }
@@ -864,19 +895,21 @@ extern u8  g_SpritePatternHigh;
 /// 
 void Print_SetFontSprite(const u8* font, u8 patIdx, u8 sprtIdx)
 {
-	Print_SetFont(font);
-	Print_SetMode(PRINT_MODE_SPRITE);
 	g_PrintData.SpritePattern = patIdx;
 	g_PrintData.SpriteID = sprtIdx;
 
+	Print_SetFont(font);
+	Print_SetMode(PRINT_MODE_SPRITE);
+	Print_Initialize();
+
 	#if (PRINT_HEIGHT == PRINT_HEIGHT_8)
-		VDP_LoadSpritePattern(g_PrintData.FontPatterns, patIdx, g_PrintData.FontLast - g_PrintData.FontFirst + 1);
+		VDP_LoadSpritePattern(g_PrintData.FontPatterns, patIdx, g_PrintData.CharCount);
 	#else // (PRINT_HEIGHT == PRINT_HEIGHT_X)
 		u16 ram = (u16)g_PrintData.FontPatterns;
 		u16 vram = g_SpritePatternLow;
-		for(u16 chr = g_PrintData.FontFirst; chr <= g_PrintData.FontLast; ++chr)
+		for(u16 chr = g_PrintData.CharFirst; chr <= g_PrintData.CharLast; ++chr)
 		{
-			u16 idx = chr - g_PrintData.FontFirst;
+			u16 idx = chr - g_PrintData.CharFirst;
 			if(PRINT_H(g_PrintData.PatternY) < 8)
 			{
 				VDP_WriteVRAM((u8*)ram, vram, g_SpritePatternHigh, PRINT_H(g_PrintData.PatternY));
@@ -900,7 +933,7 @@ void Print_SetFontSprite(const u8* font, u8 patIdx, u8 sprtIdx)
 /// @param		chr			The character to draw
 void DrawChar_Sprite(u8 chr) __FASTCALL
 {
-	u16 shape = chr - g_PrintData.FontFirst + g_PrintData.SpritePattern;
+	u16 shape = chr - g_PrintData.CharFirst + g_PrintData.SpritePattern;
 	#if (PRINT_COLOR_NUM == 1)
 		VDP_SetSpriteExUniColor(g_PrintData.SpriteID++, g_PrintData.CursorX, g_PrintData.CursorY, shape, g_PrintData.TextColor);
 	#else // (PRINT_COLOR_NUM > 1)
