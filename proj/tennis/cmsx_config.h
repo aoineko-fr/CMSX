@@ -13,7 +13,6 @@
 // Target
 // - TARGET_BIN ...................	BASIC binary program
 // - TARGET_ROM16 ................. 16KB ROM in page 1
-// - TARGET_ROM16P0 ............... 16KB ROM in page 0
 // - TARGET_ROM16P2 ............... 16KB ROM in page 2
 // - TARGET_ROM32 ................. 32KB ROM in page 1-2
 // - TARGET_ROM32P0 ............... 32KB ROM in page 0-1
@@ -33,7 +32,7 @@
 // - MSX_2 ........................ MSX 2
 // - MSX_2Plus .................... MSX 2+
 // - MSX_TurboR ................... MSX Turbo-R
-#define MSX_VERSION					MSX_1
+#define MSX_VERSION					MSX_2
 
 //-----------------------------------------------------------------------------
 // BIOS MODULE
@@ -80,7 +79,7 @@
 #define USE_VDP_MODE_G1				0	// MSX1		Screen 1
 #define USE_VDP_MODE_G2				1	// MSX1		Screen 2
 #define USE_VDP_MODE_T2				0	// MSX2		Screen 0 Width 80
-#define USE_VDP_MODE_G3				0	// MSX2		Screen 4
+#define USE_VDP_MODE_G3				1	// MSX2		Screen 4
 #define USE_VDP_MODE_G4				0	// MSX2		Screen 5
 #define USE_VDP_MODE_G5				0	// MSX2		Screen 6
 #define USE_VDP_MODE_G6				0	// MSX2		Screen 7
@@ -104,20 +103,22 @@
 //-----------------------------------------------------------------------------
 
 // Print module setting
+#define USE_PRINT_BITMAP			0	// Allow use of Bitmap font (G4-G7)
+#define USE_PRINT_VRAM				0	// Allow use of VRAM stored font (G4-G7)
+#define USE_PRINT_SPRITE			0	// Allow use of Sprite font (G3-G7)
+#define USE_PRINT_TEXT				1	// Allow use of Text font (T1-T2, G1-G3)
+#define USE_PRINT_FX_SHADOW			0	// [Bitmap] Allow use of text shadow
+#define USE_PRINT_FX_OUTLINE		0	// [Bitmap] Allow use of text outline
 #define USE_PRINT_VALIDATOR			0	// Add validator character code
-#define USE_PRINT_VRAM				0	// Allow use of VRAM stored font
-#define USE_PRINT_SPRITE			1	// Allow use of Sprite font
-#define USE_PRINT_FX_SHADOW			0	// Allow use of text shadow
-#define USE_PRINT_FX_OUTLINE		0	// Allow use of text outline
 #define USE_PRINT_UNIT				0	// Display integer type (h: hexadecimal, b: binary)
-#define PRINT_COLOR_NUM				1	// 1 color per line
+#define PRINT_COLOR_NUM				8	// 1 color per line
 // - PRINT_WIDTH_6
 // - PRINT_WIDTH_8
 // - PRINT_WIDTH_X
-#define PRINT_WIDTH					PRINT_WIDTH_8
+#define PRINT_WIDTH					PRINT_WIDTH_X
 // - PRINT_HEIGHT_8
 // - PRINT_HEIGHT_X
-#define PRINT_HEIGHT				PRINT_HEIGHT_8
+#define PRINT_HEIGHT				PRINT_HEIGHT_X
 
 
 //-----------------------------------------------------------------------------
