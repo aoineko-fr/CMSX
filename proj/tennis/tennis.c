@@ -29,6 +29,7 @@
 // DEFINES
 #define VERSION						"V0.18.0"
 #define DEBUG						1
+#define MSX2_ENHANCE				0
 
 // VRAM Tables Address - MSX1
 #define MSX1_LAYOUT_TABLE			0x3C00
@@ -50,8 +51,8 @@
 #define UNIT_TO_PX(a)				(u8)((a) / 64)
 #define PX_TO_UNIT(a)				(i16)((a) * 64)
 
-#define MOVE_DIAG					PX_TO_UNIT(1.5f * 0.71f)
-#define MOVE_MAIN					PX_TO_UNIT(1.5f * 1.00f)
+#define MOVE_DIAG					PX_TO_UNIT(1.6 * 0.71)
+#define MOVE_MAIN					PX_TO_UNIT(1.6 * 1.00)
 #define GRAVITY						PX_TO_UNIT(0.2)
 
 #define PLY_MIN_X					PX_TO_UNIT(8)
@@ -60,6 +61,10 @@
 #define PLY_UP_MAX_X				PX_TO_UNIT(88)
 #define PLY_DOWN_MIN_X				PX_TO_UNIT(97 + 8)
 #define PLY_DOWN_MAX_X				PX_TO_UNIT(191 + 8)
+
+#define SHOT_DETECT_X				16
+#define SHOT_DETECT_Y				4
+#define SHOT_DETECT_SMASH			10
 
 // Menu layout
 #define MENU_ITEMS_X				12
@@ -595,7 +600,20 @@ const State g_State_Match = { StateMatch_Update, StateMatch_Start,  null };
 const State g_State_Training = { StateTraining_Update, StateTraining_Start, null };
 
 ///
-const u8 g_ColorShade[8] =
+const u8 g_ColorShadeDefault[8] =
+{ 
+	COLOR_MERGE(0xE, 0), 
+	COLOR_MERGE(0xF, 0), 
+	COLOR_MERGE(0xF, 0), 
+	COLOR_MERGE(0xF, 0), 
+	COLOR_MERGE(0xF, 0), 
+	COLOR_MERGE(0xE, 0), 
+	COLOR_MERGE(0xE, 0), 
+	COLOR_MERGE(0xE, 0)
+};
+
+///
+const u8 g_ColorShadeSelect[8] =
 { 
 	COLOR_MERGE(9, 0), 
 	COLOR_MERGE(9, 0), 
@@ -777,6 +795,7 @@ Ball		g_Ball;
 u8			g_Level = 1;			///< AI level (0=Easy, 1=Medium, 2=Hard)
 u8			g_Sets = 1;			///< Sets count (0=1 set, 1=3 sets, 2=5 sets)
 callback	g_ScoreFct = null;
+u8			g_Pause;
 
 // Configuration
 u8			g_FlickerShadow = true;
@@ -785,12 +804,15 @@ u8			g_PlaySFX = true;
 u8			g_InputBinding[2];
 
 // System
-u8			g_VersionVDP;
 u16			g_SpritePattern[2];
 u8			g_WriteBuffer = 0;
 u8			g_DisplayBuffer = 1;
-// u8			g_FontDefaultOffset;
-// u8			g_FontSelectOffset;
+#if (MSX2_ENHANCE)
+	u8		g_VersionVDP;
+#endif
+#if (DEBUG)
+	u8		g_Debug = 0;
+#endif
 
 // Input
 u8			g_PrevRow[9];
@@ -813,9 +835,6 @@ u8			g_TrainSide = SIDE_BOTTOM;
 u8			g_TrainShot = TRAIN_BOTH;
 u8			g_TrainSpin = SPIN_FLAT;
 
-#if (DEBUG)
-	u8		g_Debug = 0;
-#endif
 
 //_____________________________________________________________________________
 //   ▄▄   ▄▄  ▄▄▄  ▄▄▄▄
@@ -1412,30 +1431,21 @@ void Player_CheckShoot(Player* ply)
 			return;
 	}	
 	
-	u8 dir = 16;
 	// Check X coordinate
 	u8 minX, maxX;
 	switch(event)
 	{
 	case EVENT_SHOOT_R:
 		minX = UNIT_TO_PX(ply->pos.x);
-		maxX = minX + 16;
-		if(ply->id == SIDE_BOTTOM)
-			dir += 2;
-		else
-			dir -= 2;
+		maxX = minX + SHOT_DETECT_X;
 		break;
 	case EVENT_SHOOT_L:
 		maxX = UNIT_TO_PX(ply->pos.x);
-		minX = maxX - 16;
-		if(ply->id == SIDE_BOTTOM)
-			dir -= 2;
-		else
-			dir += 2;
+		minX = maxX - SHOT_DETECT_X;
 		break;
 	case EVENT_SMASH:
-		minX = UNIT_TO_PX(ply->pos.x) - 10;
-		maxX = minX + 20;
+		minX = UNIT_TO_PX(ply->pos.x) - SHOT_DETECT_SMASH;
+		maxX = minX + (2 * SHOT_DETECT_SMASH);
 		break;
 	default:
 		return;
@@ -1444,43 +1454,50 @@ void Player_CheckShoot(Player* ply)
 	u8 ballX = g_Ball.srcPos.x;
 	if((ballX < minX) || (ballX > maxX))
 		return;
-	
+
 	// Check Y coordinate
-	u8 minY, maxY;
-	if(ply->id == SIDE_BOTTOM)
-	{
-		maxY = ply->srcPos.y + 4;
-		minY = maxY - 8;
-	}
-	else
-	{
-		minY = ply->srcPos.y - 4;
-		maxY = minY + 8;
-		dir += 32;
-	}
+	u8 minY = ply->srcPos.y - SHOT_DETECT_Y;
+	u8 maxY = ply->srcPos.y + SHOT_DETECT_Y;
 	
 	u8 ballY = g_Ball.srcPos.y;
 	if((ballY < minY) || (ballY > maxY))
 		return;
+		
+	// Shoot Succed !!!
 	
 	ayFX_PlayBank(1, 0);
 
+	// Handle shot direction
 	ply->shotCnt = ply->counter;
 	//ply->shotCnt -= 4;
 	// if(ply->shotCnt > 6)
 		// ply->shotCnt = 6;
 
 	const Binding* bind = &g_Binding[ply->binding];
+	u8 dir = 16;
+
 	// Set shot direction
 	if(ply->id == SIDE_BOTTOM)
 	{
+		if(event == EVENT_SHOOT_R)
+			dir += 2;
+		else if(event == EVENT_SHOOT_L)
+			dir -= 2;
+
 		if(bind->inLeft())
 			dir += ply->shotCnt;
 		else if(bind->inRight())
 			dir -= ply->shotCnt;
 	}
-	else
+	else // if(ply->id == SIDE_TOP)
 	{
+		dir += 32;
+	
+		if(event == EVENT_SHOOT_R)
+			dir -= 2;
+		else if(event == EVENT_SHOOT_L)
+			dir += 2;
+
 		if(bind->inLeft())
 			dir -= ply->shotCnt;
 		else if(bind->inRight())
@@ -1519,9 +1536,6 @@ void Player_CheckShoot(Player* ply)
 
 
 
-
-
-
 //-----------------------------------------------------------------------------
 // GENERIC
 
@@ -1529,10 +1543,14 @@ void Player_CheckShoot(Player* ply)
 void SetSprite(u8 index, u8 x, u8 y, u8 shape, u8 color)
 {
 	// Initialize sprite attributes
-	if(g_VersionVDP == VDP_VERSION_TMS9918A)
+	#if (MSX2_ENHANCE)
+		if(g_VersionVDP == VDP_VERSION_TMS9918A)
+			VDP_SetSpriteSM1(index, x, y, shape, color);
+		else
+			VDP_SetSpriteExUniColor(index, x, y, shape, color);
+	#else
 		VDP_SetSpriteSM1(index, x, y, shape, color);
-	else
-		VDP_SetSpriteExUniColor(index, x, y, shape, color);
+	#endif
 }
 
 
@@ -1632,7 +1650,11 @@ void HandleInput(Player* ply) __FASTCALL
 				SetAction(ply, ACTION_SMASH);
 			else
 			{
-				i16 dY = ply->srcPos.y - g_Ball.srcPos.y;
+				i16 dY;
+				if(ply->id == SIDE_BOTTOM)
+					dY = ply->srcPos.y - g_Ball.srcPos.y;
+				else // if(ply->id == SIDE_TOP)
+					dY = g_Ball.srcPos.y - ply->srcPos.y;
 				i16 dX = dY * (i16)g_Cosinus64[g_Ball.dir]; // Q16.0 x Q2.6 => Q10.6
 				dX /= 64; // Q10.6  => Q16.0
 				if((g_Ball.srcPos.x + dX) > ply->srcPos.x)
@@ -2091,12 +2113,16 @@ void StateTitle_Start()
 	VDP_HideSpriteFrom(8);
 
 	// Initialize font
-	// g_FontDefaultOffset = sizeof(g_DataLogo_Patterns) / 8;
 	Print_SetTextFont(FONT, OFFSET_TITLE_FONT_DEF);
-	Print_SetColor(0xF, 0x0);
-	// g_FontSelectOffset = g_FontDefaultOffset + g_PrintData.CharCount;
+	// Print_SetColor(0xF, 0x0);
+	Print_SetColorShade(g_ColorShadeDefault);
+	u16 dst = (u16)g_ScreenPatternLow + ((OFFSET_TITLE_FONT_DEF - '!' + '_') * 8); // clear '_' character
+	VDP_FillVRAM_64K(0, dst + 0 * 256 * 8, 8);
+	VDP_FillVRAM_64K(0, dst + 1 * 256 * 8, 8);
+	VDP_FillVRAM_64K(0, dst + 2 * 256 * 8, 8);
+
 	Print_SetTextFont(FONT, OFFSET_TITLE_FONT_ALT);
-	Print_SetColorShade(g_ColorShade);
+	Print_SetColorShade(g_ColorShadeSelect);
 	
 	g_IntroFrame = 0;
 
@@ -2363,6 +2389,7 @@ void StateMatch_Start()
 	HideLauncher();
 	
 	g_ScoreFct = null;
+	g_Pause = false;
 
 	// Initialize ball
 	Ball_ShootRandom();
@@ -2392,12 +2419,32 @@ void StateMatch_Update()
 
 	UpdateInput();
 
+	if(KEY_PRESS(KEY_F1))
+	{
+		g_Pause = 1 - g_Pause;
+		if(g_Pause)
+		{
+			// Display Score board
+			VDP_FillScreen_GM2(0);
+			VDP_WriteLayout_GM2(g_DataScore_Names, 3, 6, 27, 10);
+			VDP_EnableSprite(false);
+		}
+		else
+		{
+			// Restore Court
+			VDP_FillScreen_GM2(0);
+			VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
+			VDP_EnableSprite(true);
+		}
+	}
+	if(g_Pause)
+		return;
 
 	if(KEY_PRESS(KEY_F2))
 		Ball_ShootRandom();
 	if(KEY_PRESS(KEY_F3)) // Activate/deactivate shadows
 		g_FlickerShadow = 1 - g_FlickerShadow;
-	if(KEY_PRESS(KEY_DEL)) // Return to main menu
+	if(KEY_PRESS(KEY_ESC)) // Return to main menu
 	{
 		VDP_HideSpriteFrom(0);
 		Game_SetState(&g_State_Title);
@@ -2508,7 +2555,7 @@ void StateTraining_Update()
 		Ball_ShootRandom();
 	if(KEY_PRESS(KEY_F3)) // Activate/deactivate shadows
 		g_FlickerShadow = 1 - g_FlickerShadow;
-	if(KEY_PRESS(KEY_DEL)) // Return to main menu
+	if(KEY_PRESS(KEY_ESC)) // Return to main menu
 	{
 		VDP_HideSpriteFrom(0);
 		Game_SetState(&g_State_Title);
@@ -2536,7 +2583,11 @@ void StateTraining_Update()
 			Print_DrawText("CNT:");
 
 			Print_SetPosition(1, 22);
-			Print_DrawText((g_VersionVDP == VDP_VERSION_TMS9918A) ? "MSX1" : "MSX2");
+			#if (MSX2_ENHANCE)
+				Print_DrawText((g_VersionVDP == VDP_VERSION_TMS9918A) ? "MSX1" : "MSX2");
+			#else
+				Print_DrawText("MSX1");
+			#endif
 		}
 
 		if(g_Debug)
@@ -2608,15 +2659,19 @@ void VSyncCallback()
 /// Main loop
 void main()
 {
+	#if (MSX2_ENHANCE)
 	g_KeyRow[0] = Keyboard_Read(0); // 0 1 2 3 4 5 6 7
 	if(IS_KEY_PRESSED(g_KeyRow[0], KEY_1))
 		g_VersionVDP = VDP_VERSION_TMS9918A;
 	else
 		g_VersionVDP = VDP_GetVersion();
+	#endif
 
 	// Initialize VDP
+	#if (MSX2_ENHANCE)
 	if(g_VersionVDP == VDP_VERSION_TMS9918A)
 	{
+	#endif
 		VDP_SetMode(VDP_MODE_GRAPHIC2);
 		VDP_SetLayoutTable(MSX1_LAYOUT_TABLE);
 		VDP_SetColorTable(MSX1_COLOR_TABLE);
@@ -2625,6 +2680,7 @@ void main()
 		VDP_SetSpriteAttributeTable(MSX1_SPRITE_ATTRIBUTE);
 		g_SpritePattern[0] = MSX1_SPRITE_PATTERN_0;
 		g_SpritePattern[1] = MSX1_SPRITE_PATTERN_1;
+	#if (MSX2_ENHANCE)
 	}
 	else // VDP_VERSION_V99xx
 	{
@@ -2637,6 +2693,7 @@ void main()
 		g_SpritePattern[0] = MSX2_SPRITE_PATTERN_0;
 		g_SpritePattern[1] = MSX2_SPRITE_PATTERN_1;
 	}
+	#endif
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 | VDP_SPRITE_SCALE_1);
 	VDP_EnableVBlank(true);
 	
