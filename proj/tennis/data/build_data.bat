@@ -1,13 +1,13 @@
 @echo -----------------------------------------------------------------------------
 @echo  CONVERT SC2 IMAGES
 
-..\..\..\tools\CMSXimg\CMSXimg.exe logo.png  -out ..\data_logo.h    -mode gm2   -def	-name g_DataLogo    -pos 32 16 -size 152 80
+..\..\..\tools\CMSXimg\CMSXimg.exe logo.png  -out ..\data_logo.h    -mode gm2   -def	-name g_DataLogo    -pos 32 16 -size 152 80  -offset 0
                                                                                                             
-..\..\..\tools\CMSXimg\CMSXimg.exe court.png -out ..\data_court.h   -mode gm2   -def	-name g_DataCourt   -pos 24 24 -size 216 144
+..\..\..\tools\CMSXimg\CMSXimg.exe court.png -out ..\data_court.h   -mode gm2   -def	-name g_DataCourt   -pos 24 24 -size 216 144 -offset 0
 
-..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_referee.h -mode gm2   -def	-name g_DataReferee -pos 0 0   -size 96  48
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_referee.h -mode gm2   -def	-name g_DataReferee -pos 0 0   -size 96  48  -offset 208
 
-..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_board.h   -mode gm2   -def	-name g_DataScore   -pos 0 56  -size 216 80
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_board.h   -mode gm2   -def	-name g_DataScore   -pos 0 56  -size 216 80  -offset 160
 
 @echo.
 @echo -----------------------------------------------------------------------------
@@ -50,13 +50,19 @@
 	-l i16 0 8 1 1 0xFFFFFF 0x7F7F7F ^
 	-l i16 0 8 1 1 0xFF897D 0x7F453F
 
-..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_launcher.h -mode sprt -def -name g_DataLauncher -pos 160 88 -size 16 40 -num 1 1 ^
+..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_launcher0.h -mode sprt -def -name g_DataLauncher0 -pos 160 88 -size 16 40 -num 1 1 ^
 	-l i16 0  0 1 2 0x010101 ^
-	-l i16 0  0 1 2 0x010101 0x706944 0x1F5C24 0x7F7F7F 0x7F453F ^
+	-l i16 0  0 1 2 0x010101 0x706944 0x1F5C24 0x7F7F7F ^
 	-l i16 0  0 1 1 0xDED087 0x706944 ^
 	-l i16 0  8 1 1 0x3EB849 0x1F5C24 ^
-	-l i16 0 16 1 1 0xFFFFFF 0x7F7F7F ^
-	-l i16 0 24 1 1 0xFF897D 0x7F453F
+	-l i16 0 16 1 1 0xFFFFFF 0x7F7F7F
+
+..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_launcher1.h -mode sprt -def -name g_DataLauncher1 -pos 176 88 -size 16 40 -num 1 1 ^
+	-l i16 0  8 1 2 0x010101 ^
+	-l i16 0  8 1 2 0x010101 0x706944 0x1F5C24 0x7F7F7F ^
+	-l i16 0  7 1 1 0xDED087 0x706944 ^
+	-l i16 0 11 1 1 0x3EB849 0x1F5C24 ^
+	-l i16 0 23 1 1 0xFFFFFF 0x7F7F7F
 
 @echo.
 @echo -----------------------------------------------------------------------------

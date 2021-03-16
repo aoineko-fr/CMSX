@@ -27,7 +27,7 @@
 
 //-----------------------------------------------------------------------------
 // DEFINES
-#define VERSION						"V0.16.0"
+#define VERSION						"V0.18.0"
 #define DEBUG						1
 
 // VRAM Tables Address - MSX1
@@ -66,18 +66,27 @@
 #define MENU_ITEMS_Y				14
 #define MENU_ITEMS_H				(24-MENU_ITEMS_Y)
 
+// Index offset
+#define OFFSET_TITLE_LOGO			0
+#define OFFSET_TITLE_FONT_DEF		112
+#define OFFSET_TITLE_FONT_ALT		176
+#define OFFSET_TITLE_MISC			240
+#define OFFSET_GAME_COURT			0
+#define OFFSET_GAME_FONT			96
+#define OFFSET_GAME_SCORE			160
+#define OFFSET_GAME_REFEREE			208
+
 #if (DEBUG)
 	#define DEBUG_CODE(code) code
 #else
 	#define DEBUG_CODE(code)
 #endif
 
-enum PLAYER_ID
-{
-	PLY1 = 0, 		// Bottom
-	PLY2,     		// Top
-	PLAYER_NUM,
-};
+// Input check macros
+#define KEY_PRESS(key)				(((g_KeyRow[KEY_ROW(key)] & KEY_FLAG(key)) == 0) && ((g_PrevRow[KEY_ROW(key)] & KEY_FLAG(key)) != 0))
+#define KEY_RELEASE(key)			(((g_KeyRow[KEY_ROW(key)] & KEY_FLAG(key)) != 0) && ((g_PrevRow[KEY_ROW(key)] & KEY_FLAG(key)) == 0))
+#define KEY_ON(key)					((g_KeyRow[KEY_ROW(key)] & KEY_FLAG(key)) == 0)
+#define KEY_OFF(key)				((g_KeyRow[KEY_ROW(key)] & KEY_FLAG(key)) != 0)
 
 enum SPIN
 {
@@ -146,10 +155,6 @@ enum SPRITE
 
 	SPRITE_BALL_OUTLINE,
 
-	SPRITE_PLY2_BLACK_H,
-	SPRITE_PLY2_BLACK_L,
-	SPRITE_PLY2_RACKET,
-
 	SPRITE_PLY1_CLOTH,
 	SPRITE_PLY1_WHITE_H,
 	SPRITE_PLY1_WHITE_L,
@@ -161,11 +166,21 @@ enum SPRITE
 	SPRITE_NET_LEFT, 
 	SPRITE_NET_RIGHT,
 
+	SPRITE_PLY2_BLACK_H,
+	SPRITE_PLY2_BLACK_L,
+	SPRITE_PLY2_RACKET,
+
 	SPRITE_PLY2_CLOTH,
 	SPRITE_PLY2_WHITE_H,
 	SPRITE_PLY2_WHITE_L,
 	SPRITE_PLY2_SKIN_H,
 	SPRITE_PLY2_SKIN_L,
+
+	SPRITE_LAUNCHER_1,
+	SPRITE_LAUNCHER_2,
+	SPRITE_LAUNCHER_3,
+	SPRITE_LAUNCHER_4,
+	SPRITE_LAUNCHER_5,
 
 	SPRITE_BALL_BODY,
 	SPRITE_BALL_SHADOW,
@@ -204,6 +219,22 @@ enum POINT_VALIDATION
 // }	EVENT_NET,
 // };
 
+enum SIDE
+{
+	SIDE_BOTTOM = 0,
+	SIDE_TOP,
+};
+
+enum BIND
+{
+	BIND_KB1A = 0,	// Up, Left, Down, Right + Space, N
+	BIND_KB1B,  	// Up, Left, Down, Right + Shift, Ctrl
+	BIND_KB1C,  	// Up, Left, Down, Right + Return, BS
+	BIND_KB2,   	// E, S, D, F + Shift, Ctrl
+	BIND_JOY1,  	// Joystick 1 stick + triggers
+	BIND_JOY2,  	// Joystick 2 stick + triggers
+	BIND_MAX,
+};
 
 //-----------------------------------------------------------------------------
 // TYPES
@@ -225,6 +256,17 @@ typedef struct
 	i16			y;	
 } Vector16;
 
+/// Binding
+typedef struct
+{
+	inputFct	inUp;
+	inputFct	inDown;
+	inputFct	inLeft;
+	inputFct	inRight;
+	inputFct	inButton1;
+	inputFct	inButton2;
+} Binding;
+
 /// Player structure
 typedef struct
 {
@@ -239,12 +281,15 @@ typedef struct
 	u8			step;
 	u8			anim;
 	u8			prevAnim[2]; // buffered animation frame
-	inputFct	inButton1;
-	inputFct	inButton2;
-	inputFct	inUp;
-	inputFct	inDown;
-	inputFct	inLeft;
-	inputFct	inRight;
+	u8			binding;
+	// inputFct	inUp;
+	// inputFct	inDown;
+	// inputFct	inLeft;
+	// inputFct	inRight;
+	// inputFct	inButton1;
+	// inputFct	inButton2;
+	inputFct	inLong;
+	inputFct	inShort;
 } Player;
 
 /// Player structure
@@ -295,6 +340,15 @@ typedef struct
 	u8			spin;
 } Shot;
 
+///
+typedef struct
+{
+	Vector8		pos;
+	u8			dir;
+	u8			y;
+	u8			pattern;
+} TrainSide;
+
 //-----------------------------------------------------------------------------
 // FUNCTIONS PROTOTYPE
 
@@ -315,7 +369,42 @@ const char* Menu_StartTrain(u8 op, i8 value);
 const char* Menu_SetAI(u8 op, i8 value);
 const char* Menu_SetSets(u8 op, i8 value);
 const char* Menu_SetShot(u8 op, i8 value);
+const char* Menu_SetSide(u8 op, i8 value);
 const char* Menu_CreditScroll(u8 op, i8 value);
+const char* Menu_SetInput(u8 op, i8 value);
+
+bool KB1_Up();
+bool KB1_Down();
+bool KB1_Left();
+bool KB1_Right();
+bool KB1A_Button1();
+bool KB1A_Button2();
+bool KB1B_Button1();
+bool KB1B_Button2();
+bool KB1C_Button1();
+bool KB1C_Button2();
+
+bool KB2_Up();
+bool KB2_Down();
+bool KB2_Left();
+bool KB2_Right();
+bool KB2_Button1();
+bool KB2_Button2();
+
+bool Joy1_Up();
+bool Joy1_Down();
+bool Joy1_Left();
+bool Joy1_Right();
+bool Joy1_Button1();
+bool Joy1_Button2();
+
+bool Joy2_Up();
+bool Joy2_Down();
+bool Joy2_Left();
+bool Joy2_Right();
+bool Joy2_Button1();
+bool Joy2_Button2();
+
 
 //_____________________________________________________________________________
 //  ▄▄▄   ▄▄  ▄▄▄▄  ▄▄ 
@@ -367,10 +456,10 @@ const char* Menu_CreditScroll(u8 op, i8 value);
 
 // Ball launcher sprites
 #if (TARGET_TYPE == TARGET_TYPE_ROM)
-	#define ADDR_DATALAUNCHER		(ADDR_DATAPLAYER1 + sizeof(g_DataPlayer1))
-	#define D_g_DataLauncher		__at(ADDR_DATALAUNCHER)
+	#define ADDR_DATALAUNCHER0		(ADDR_DATAPLAYER1 + sizeof(g_DataPlayer1))
+	#define D_g_DataLauncher0		__at(ADDR_DATALAUNCHER0)
 #endif
-#include "data_launcher.h"
+#include "data_launcher0.h"
 
 
 //=============================================================================
@@ -379,6 +468,7 @@ const char* Menu_CreditScroll(u8 op, i8 value);
 //
 //=============================================================================
 
+#include "data_launcher1.h"
 #include "data_board.h"
 #include "data_referee.h"
 
@@ -480,7 +570,7 @@ const Action g_Actions[] =
 // +---+---+---+
 
 ///
-const Field g_Field[PLAYER_NUM] =
+const Field g_Field[2] =
 {
 	{ { 55, 31 }, { 200, 95 } },	// Top field    (Player 1 target)
 	{ { 55, 96 }, { 200, 160 } },	// Bottom field (Player 2 target)
@@ -532,13 +622,13 @@ const MenuEntry g_MenuMain[] =
 	{ VERSION,   	MENU_ITEM_DISABLE, 0, 0 },
 };
 
-// Menu 1 - Match P1
-const MenuEntry g_MenuMatchP1[] =
+// Menu 1 - Match 1P
+const MenuEntry g_MenuMatch1P[] =
 {
 	{ "START>",		MENU_ITEM_ACTION, Menu_StartMatch, 0 },
 	{ "SETS",		MENU_ITEM_ACTION, Menu_SetSets, 0 },
 	{ "AI",			MENU_ITEM_ACTION, Menu_SetAI, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
+	{ "INPUT",		MENU_ITEM_ACTION, Menu_SetInput, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -547,13 +637,13 @@ const MenuEntry g_MenuMatchP1[] =
 	{ "<BACK",		MENU_ITEM_GOTO|MENU_MAIN, 0, 0 },
 };
 
-// Menu 2 - Match P2
-const MenuEntry g_MenuMatchP2[] =
+// Menu 2 - Match 2P
+const MenuEntry g_MenuMatch2P[] =
 {
 	{ "START>",		MENU_ITEM_ACTION, Menu_StartMatch, 0 },
 	{ "SETS",		MENU_ITEM_ACTION, Menu_SetSets, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
+	{ "P1 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 0 },
+	{ "P2 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 1 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -566,9 +656,9 @@ const MenuEntry g_MenuMatchP2[] =
 const MenuEntry g_MenuTraining[] =
 {
 	{ "START>",		MENU_ITEM_ACTION, Menu_StartTrain, 0 },
+	{ "SIDE",		MENU_ITEM_ACTION, Menu_SetSide, 0 },
 	{ "SHOT",		MENU_ITEM_ACTION, Menu_SetShot, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
+	{ "INPUT",		MENU_ITEM_ACTION, Menu_SetInput, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -583,8 +673,8 @@ const MenuEntry g_MenuOption[] =
 	{ "MUSIC",		MENU_ITEM_BOOL, &g_PlayMusic, 0 },
 	{ "SFX",		MENU_ITEM_BOOL, &g_PlaySFX, 0 },
 	{ "SHADE",		MENU_ITEM_BOOL, &g_FlickerShadow, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
+	{ "P1 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 0 },
+	{ "P2 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 1 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -607,16 +697,18 @@ const MenuEntry g_MenuCredits[] =
 	{ "<BACK",                     MENU_ITEM_GOTO|MENU_MAIN, 0, 0 },
 };
 
+///
 const Menu g_Menus[MENU_MAX] =
 {
 	{ "MAIN MENU",		g_MenuMain,			numberof(g_MenuMain) },
-	{ "MATCH P1",		g_MenuMatchP1,		numberof(g_MenuMatchP1) },
-	{ "MATCH P2",		g_MenuMatchP2,		numberof(g_MenuMatchP2) },
+	{ "MATCH 1P",		g_MenuMatch1P,		numberof(g_MenuMatch1P) },
+	{ "MATCH 2P",		g_MenuMatch2P,		numberof(g_MenuMatch2P) },
 	{ "TRAINING",  		g_MenuTraining,		numberof(g_MenuTraining) },
 	{ "OPTIONS",		g_MenuOption,		numberof(g_MenuOption) },
 	{ "CREDITS",		g_MenuCredits,		numberof(g_MenuCredits) },
 };
 
+///
 const Shot g_Shots[] =
 {
 	//	ZY				Z				Spin
@@ -649,6 +741,30 @@ const Shot g_Shots[] =
 	
 };
 
+///
+const TrainSide g_TrainSideData[] = 
+{
+	{ { 128, 24     }, 44, 0,   40 },
+	{ { 128, 192-24 }, 12, 144, 0 },
+};
+
+/// Input bindings
+const Binding g_Binding[BIND_MAX] =
+{
+	// BIND_KB1A - Up, Left, Down, Right + Space, N
+	{ KB1_Up,	KB1_Down,	KB1_Left,	KB1_Right,	KB1A_Button1,	KB1A_Button2 },
+	// BIND_KB1B - Up, Left, Down, Right + Shift, Ctrl
+	{ KB1_Up,	KB1_Down,	KB1_Left,	KB1_Right,	KB1B_Button1,	KB1B_Button2 },
+	// BIND_KB1C - Up, Left, Down, Right + Return, BS
+	{ KB1_Up,	KB1_Down,	KB1_Left,	KB1_Right,	KB1C_Button1,	KB1C_Button2 },
+	// BIND_KB2  - E, S, D, F + Shift, Ctrl
+	{ KB2_Up,	KB2_Down,	KB2_Left,	KB2_Right,	KB1B_Button1,	KB1B_Button2 },
+	// BIND_JOY1 - Joystick 1 stick + triggers
+	{ Joy1_Up,	Joy1_Down,	Joy1_Left,	Joy1_Right,	Joy1_Button1,	Joy1_Button2 },
+	// BIND_JOY2 - Joystick 2 stick + triggers
+	{ Joy2_Up,	Joy2_Down,	Joy2_Left,	Joy2_Right,	Joy2_Button1,	Joy2_Button2 },
+};
+
 //=============================================================================
 //
 //  RAM DATA - PAGE 3
@@ -656,7 +772,7 @@ const Shot g_Shots[] =
 //=============================================================================
 
 // Gameplay
-Player 		g_Player[PLAYER_NUM];
+Player 		g_Player[2];
 Ball		g_Ball;
 u8			g_Level = 1;			///< AI level (0=Easy, 1=Medium, 2=Hard)
 u8			g_Sets = 1;			///< Sets count (0=1 set, 1=3 sets, 2=5 sets)
@@ -666,22 +782,19 @@ callback	g_ScoreFct = null;
 u8			g_FlickerShadow = true;
 u8			g_PlayMusic = true;
 u8			g_PlaySFX = true;
+u8			g_InputBinding[2];
 
 // System
 u8			g_VersionVDP;
 u16			g_SpritePattern[2];
 u8			g_WriteBuffer = 0;
 u8			g_DisplayBuffer = 1;
-u8			g_FontDefaultOffset;
-u8			g_FontSelectOffset;
+// u8			g_FontDefaultOffset;
+// u8			g_FontSelectOffset;
 
 // Input
-u8			g_PrevRow4;
-u8			g_PrevRow6;
-u8			g_PrevRow8;
-u8			g_KeyRow4 = 0xFF; // K L M N O P Q R
-u8			g_KeyRow6 = 0xFF; // SHIFT CTRL GRAPH CAPS CODE F1 F2 F3
-u8			g_KeyRow8 = 0xFF; // SPACE HOME INS DEL LEFT UP DOWN RIGHT
+u8			g_PrevRow[9];
+u8			g_KeyRow[9] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 u8			g_PrevJoy1;
 u8			g_PrevJoy2;
 u8			g_Joy1 = 0xFF;
@@ -696,7 +809,9 @@ u8			g_MenuItem = 0;
 // Training
 u8			g_TrainScore;
 u8			g_TrainBest = 0;
+u8			g_TrainSide = SIDE_BOTTOM;
 u8			g_TrainShot = TRAIN_BOTH;
+u8			g_TrainSpin = SPIN_FLAT;
 
 #if (DEBUG)
 	u8		g_Debug = 0;
@@ -786,8 +901,47 @@ const char* Menu_SetShot(u8 op, i8 value)
 	};
 }
 
+//-----------------------------------------------------------------------------
+///
+const char* Menu_SetInput(u8 op, i8 value)
+{
+	switch(op)
+	{
+	case MENU_ACTION_INC: g_InputBinding[value] = (g_InputBinding[value] + 1) % BIND_MAX; break;
+	case MENU_ACTION_DEC: g_InputBinding[value] = (g_InputBinding[value] + (BIND_MAX-1)) % BIND_MAX; break;	
+	}
+
+	switch(g_InputBinding[value])
+	{
+	case BIND_KB1A:	return "PAD+SPACE";		// Up, Left, Down, Right + Space, N
+	case BIND_KB1B:	return "PAD+SHFT";  	// Up, Left, Down, Right + Shift, Ctrl
+	case BIND_KB1C:	return "PAD+RET";  	// Up, Left, Down, Right + Return, BS
+	case BIND_KB2:	return "ESDF+SHFT";   	// E, S, D, F + Shift, Ctrl
+	case BIND_JOY1:	return "JOY 1";  	// Joystick 1 stick + triggers
+	case BIND_JOY2:	return "JOY 2";  	// Joystick 2 stick + triggers
+	};
+}
+
+//-----------------------------------------------------------------------------
+///
+const char* Menu_SetSide(u8 op, i8 value)
+{
+	switch(op)
+	{
+	case MENU_ACTION_INC:
+	case MENU_ACTION_DEC:
+		 g_TrainSide = 1 - g_TrainSide; break;	
+	}
+	
+	if(g_TrainSide == SIDE_BOTTOM)
+		return "BOTTOM";
+	else
+		return "TOP";
+}
+
+
 #define SCROLL_BUF_SIZE 22
-const c8* g_CrediScroll = "______________________DEDICATED_TO_MY_WONDERFUL_WIFE_AND_SON_<3_THANKS_TO_ALL_MSX-VILLAGE_AND_MRC_MEMBERS_FOR_SUPPORT!_MSX_NEVER_DIE._PRAISE_THE_HOLY-BRIOCHE!_\\O/";
+const c8* g_CrediScroll = "______________________DEDICATED_TO_MY_WONDERFUL_WIFE_AND_SON_<3____THANKS_TO_ALL_MSX-VILLAGE_AND_MRC_MEMBERS_FOR_SUPPORT!____MSX_NEVER_DIE.____PRAISE_THE_HOLY-BRIOCHE!_\\O/";
 c8 g_CrediScrollBug[SCROLL_BUF_SIZE];
 u8 g_CrediScrollCnt = 0;
 
@@ -825,9 +979,9 @@ void Menu_DisplayItem(u8 item) __FASTCALL
 	{
 		MenuEntry* pCurEntry = &g_CurrentMenu->items[item];
 		if(g_MenuItem == item)
-			Print_SelectTextFont(g_FontSelectOffset);
+			Print_SelectTextFont(OFFSET_TITLE_FONT_ALT);
 		else
-			Print_SelectTextFont(g_FontDefaultOffset);
+			Print_SelectTextFont(OFFSET_TITLE_FONT_DEF);
 			
 		u8 x = MENU_ITEMS_X;
 		u8 y = MENU_ITEMS_Y;
@@ -907,7 +1061,7 @@ void Menu_Update()
 {
 	// Handle activation
 	MenuEntry* pCurEntry = &g_CurrentMenu->items[g_MenuItem];
-	if((IS_KEY_PRESSED(g_KeyRow8, KEY_SPACE) && !(IS_KEY_PRESSED(g_PrevRow8, KEY_SPACE))))
+	if(KEY_PRESS(KEY_SPACE))
 	{
 		if(pCurEntry->type == MENU_ITEM_ACTION)
 		{
@@ -923,7 +1077,7 @@ void Menu_Update()
 	}
 
 	// Handle change value
-	if((IS_KEY_PRESSED(g_KeyRow8, KEY_RIGHT) && !(IS_KEY_PRESSED(g_PrevRow8, KEY_RIGHT))))
+	if(KEY_PRESS(KEY_RIGHT))
 	{
 		if(pCurEntry->type == MENU_ITEM_ACTION)
 		{
@@ -942,7 +1096,7 @@ void Menu_Update()
 		}
 		Menu_DisplayItem(g_MenuItem);
 	}
-	else if((IS_KEY_PRESSED(g_KeyRow8, KEY_LEFT) && !(IS_KEY_PRESSED(g_PrevRow8, KEY_LEFT))))
+	else if(KEY_PRESS(KEY_LEFT))
 	{
 		if(pCurEntry->type == MENU_ITEM_ACTION)
 		{
@@ -963,7 +1117,7 @@ void Menu_Update()
 	}
 	
 	// Handle navigation
-	if((IS_KEY_PRESSED(g_KeyRow8, KEY_UP) && !(IS_KEY_PRESSED(g_PrevRow8, KEY_UP))))
+	if(KEY_PRESS(KEY_UP))
 	{
 		u8 i = g_MenuItem;
 		while(i > 0)
@@ -979,7 +1133,7 @@ void Menu_Update()
 			}
 		}			
 	}
-	else if((IS_KEY_PRESSED(g_KeyRow8, KEY_DOWN) && !(IS_KEY_PRESSED(g_PrevRow8, KEY_DOWN))))
+	else if(KEY_PRESS(KEY_DOWN))
 	{
 		u8 i = g_MenuItem;
 		while(i < g_CurrentMenu->itemNum-1)
@@ -999,7 +1153,7 @@ void Menu_Update()
 	// Update menu items
 	if((g_Frame & 0x07) == 0) // 8th frame
 	{
-		Print_SelectTextFont(g_FontDefaultOffset);
+		Print_SelectTextFont(OFFSET_TITLE_FONT_DEF);
 		for(u8 item = 0; item < g_CurrentMenu->itemNum; item++)
 		{
 			MenuEntry* pCurEntry = &g_CurrentMenu->items[item];
@@ -1030,10 +1184,10 @@ void Menu_Update()
 void Ball_ShootRandom()
 {
 	// Position
-	g_Ball.pos.x = PX_TO_UNIT(128);
-	g_Ball.pos.y = PX_TO_UNIT(24);
 	g_Ball.height = PX_TO_UNIT(10);
-
+	g_Ball.pos.x = PX_TO_UNIT(g_TrainSideData[g_TrainSide].pos.x);
+	g_Ball.pos.y = PX_TO_UNIT(g_TrainSideData[g_TrainSide].pos.y);
+	
 	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
 	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
 
@@ -1041,11 +1195,8 @@ void Ball_ShootRandom()
 
 	// Direction
 	g_Ball.dir = rnd;
-	// g_Ball.dir %= 5;
-	// g_Ball.dir *= 2;
-	// g_Ball.dir += 44;
 	g_Ball.dir %= 9;
-	g_Ball.dir += 44;
+	g_Ball.dir += g_TrainSideData[g_TrainSide].dir;
 
 	// Velocity
 	if(((g_TrainShot == TRAIN_FLAT)) || ((g_TrainShot == TRAIN_BOTH) && (rnd & BIT_8))) // top spine*/
@@ -1062,7 +1213,7 @@ void Ball_ShootRandom()
 	}
 
 	// Misc
-	g_Ball.lastPly = PLY2;
+	g_Ball.lastPly = SIDE_TOP;
 	g_Ball.coolDown = 0;
 	g_Ball.bounce = 0;
 	g_Ball.point = POINT_PENDING;
@@ -1088,10 +1239,10 @@ void Ball_Prepare()
 bool Ball_CheckField()
 {
 	const Field* field;
-	if(g_Ball.lastPly == PLY1)
-		field = &g_Field[PLY1];
+	if(g_Ball.lastPly == SIDE_BOTTOM)
+		field = &g_Field[SIDE_BOTTOM];
 	else
-		field = &g_Field[PLY2];
+		field = &g_Field[SIDE_TOP];
 
 	if(g_Ball.srcPos.x < field->min.x)
 		return false;
@@ -1269,7 +1420,7 @@ void Player_CheckShoot(Player* ply)
 	case EVENT_SHOOT_R:
 		minX = UNIT_TO_PX(ply->pos.x);
 		maxX = minX + 16;
-		if(ply->id == 0)
+		if(ply->id == SIDE_BOTTOM)
 			dir += 2;
 		else
 			dir -= 2;
@@ -1277,7 +1428,7 @@ void Player_CheckShoot(Player* ply)
 	case EVENT_SHOOT_L:
 		maxX = UNIT_TO_PX(ply->pos.x);
 		minX = maxX - 16;
-		if(ply->id == 0)
+		if(ply->id == SIDE_BOTTOM)
 			dir -= 2;
 		else
 			dir += 2;
@@ -1296,15 +1447,15 @@ void Player_CheckShoot(Player* ply)
 	
 	// Check Y coordinate
 	u8 minY, maxY;
-	if(ply->id == 0)
+	if(ply->id == SIDE_BOTTOM)
 	{
-		maxY = ply->srcPos.y + 2;
-		minY = maxY - 4;
+		maxY = ply->srcPos.y + 4;
+		minY = maxY - 8;
 	}
 	else
 	{
-		minY = ply->srcPos.y - 2;
-		maxY = minY + 4;
+		minY = ply->srcPos.y - 4;
+		maxY = minY + 8;
 		dir += 32;
 	}
 	
@@ -1319,19 +1470,20 @@ void Player_CheckShoot(Player* ply)
 	// if(ply->shotCnt > 6)
 		// ply->shotCnt = 6;
 
+	const Binding* bind = &g_Binding[ply->binding];
 	// Set shot direction
-	if(ply->id == 0)
+	if(ply->id == SIDE_BOTTOM)
 	{
-		if(ply->inLeft())
+		if(bind->inLeft())
 			dir += ply->shotCnt;
-		else if(ply->inRight())
+		else if(bind->inRight())
 			dir -= ply->shotCnt;
 	}
 	else
 	{
-		if(ply->inLeft())
+		if(bind->inLeft())
 			dir -= ply->shotCnt;
-		else if(ply->inRight())
+		else if(bind->inRight())
 			dir += ply->shotCnt;			
 	}
 	g_Ball.dir = dir;
@@ -1342,11 +1494,11 @@ void Player_CheckShoot(Player* ply)
 	{
 		shotId += 3;
 	}
-	else if(ply->inDown()) // Short shot
+	else if(ply->inShort()) // Short shot
 	{
 		shotId += 2;
 	}
-	else if(!ply->inUp()) // Med shot
+	else if(!ply->inLong()) // Med shot
 	{
 		shotId++;
 	}
@@ -1428,12 +1580,11 @@ void UpdateAction(Player* ply) __FASTCALL
 	// Handle current action's event
 	switch(act->animFrames[ply->step].event)
 	{
-	case EVENT_NONE:
-		break;
 	case EVENT_PREPARE:
 	case EVENT_SHOOT_R:
 	case EVENT_SHOOT_L:
 	case EVENT_SMASH:
+	{
 		/*if(ply->inRight())
 		{
 			if(ply->shotDir != DIR_RIGHT)
@@ -1452,10 +1603,14 @@ void UpdateAction(Player* ply) __FASTCALL
 			}
 			ply->shotCnt++;
 		}*/
-		if(ply->inButton1() && (ply->shot == SHOT_SLICE))
+		const Binding* bind = &g_Binding[ply->binding];
+		if(bind->inButton1() && (ply->shot == SHOT_SLICE))
 			ply->shot = SHOT_ATTACK;
-		if(ply->inButton2() && (ply->shot == SHOT_FLAT))
+		if(bind->inButton2() && (ply->shot == SHOT_FLAT))
 			ply->shot = SHOT_ATTACK;
+		break;
+	}
+	default:
 		break;
 	};
 
@@ -1468,9 +1623,10 @@ void UpdateAction(Player* ply) __FASTCALL
 ///
 void HandleInput(Player* ply) __FASTCALL
 {
+	const Binding* bind = &g_Binding[ply->binding];
 	if(g_Actions[ply->action].interrupt)
-	{			
-		if(ply->inButton1() || ply->inButton2())
+	{
+		if(bind->inButton1() || bind->inButton2())
 		{
 			if(g_Ball.height > PX_TO_UNIT(32))
 				SetAction(ply, ACTION_SMASH);
@@ -1484,22 +1640,22 @@ void HandleInput(Player* ply) __FASTCALL
 				else
 					SetAction(ply, ACTION_SHOOT_L);
 			}
-			if(ply->inButton1())
+			if(bind->inButton1())
 				ply->shot = SHOT_FLAT;
-			else // if(ply->inButton2())
+			else // if(bind->inButton2())
 				ply->shot = SHOT_SLICE;
 			//ply->shotCnt = 0;
 		}
 		else
 		{
 			u8 dir = 4;
-			if(ply->inUp())
+			if(bind->inUp())
 				dir--;
-			else if(ply->inDown())
+			else if(bind->inDown())
 				dir++;
-			if(ply->inLeft())
+			if(bind->inLeft())
 				dir -= 3;
-			else if(ply->inRight())
+			else if(bind->inRight())
 				dir += 3;	
 				
 			if(dir == 4) // No move
@@ -1522,7 +1678,7 @@ void HandleInput(Player* ply) __FASTCALL
 					ply->pos.x = PLY_MAX_X;
 				
 				// Validate new Y position
-				if(ply->id == 0)
+				if(ply->id == SIDE_BOTTOM)
 				{
 					if(ply->pos.y < PLY_DOWN_MIN_X)
 						ply->pos.y = PLY_DOWN_MIN_X;
@@ -1555,7 +1711,7 @@ void HandleInput(Player* ply) __FASTCALL
 
 //-----------------------------------------------------------------------------
 ///
-void PreparePlayer1()
+void PreparePlayerBottom()
 {
 	// Flicker Shadows
 	u8 pat = 0;
@@ -1569,11 +1725,11 @@ void PreparePlayer1()
 
 //-----------------------------------------------------------------------------
 ///
-void UpdatePlayer1()
+void UpdatePlayerBottom()
 {	
 	// Update sprite position
-	u8 x = g_Player[PLY1].srcPos.x - 8;
-	u8 y = g_Player[PLY1].srcPos.y - 24;
+	u8 x = g_Player[SIDE_BOTTOM].srcPos.x - 8;
+	u8 y = g_Player[SIDE_BOTTOM].srcPos.y - 24;
 	VDP_SetSpritePosition(SPRITE_PLY1_BLACK_H, x, y);
 	VDP_SetSpritePosition(SPRITE_PLY1_WHITE_H, x, y);
 	VDP_SetSpritePosition(SPRITE_PLY1_SKIN_H, x, y);
@@ -1585,19 +1741,19 @@ void UpdatePlayer1()
 	VDP_SetSpritePosition(SPRITE_PLY1_SKIN_L, x, y);
 
 	// Handle special event
-	u8 event = g_Actions[g_Player[PLY1].action].animFrames[g_Player[PLY1].step].event;
+	u8 event = g_Actions[g_Player[SIDE_BOTTOM].action].animFrames[g_Player[SIDE_BOTTOM].step].event;
 	switch(event)
 	{
 	case EVENT_SHOOT_R:
-		Player_CheckShoot(&g_Player[PLY1]);
+		Player_CheckShoot(&g_Player[SIDE_BOTTOM]);
 		VDP_SetSpritePosition(SPRITE_PLY1_RACKET, x+16, y-16);
 		break;
 	case EVENT_SHOOT_L:
-		Player_CheckShoot(&g_Player[PLY1]);
+		Player_CheckShoot(&g_Player[SIDE_BOTTOM]);
 		VDP_SetSpritePosition(SPRITE_PLY1_RACKET, x-8, y-16);
 		break;
 	case EVENT_SMASH:
-		Player_CheckShoot(&g_Player[PLY1]);
+		Player_CheckShoot(&g_Player[SIDE_BOTTOM]);
 		VDP_SetSpritePosition(SPRITE_PLY1_RACKET, x+8, y-32);
 		break;
 	default:
@@ -1608,13 +1764,13 @@ void UpdatePlayer1()
 
 //-----------------------------------------------------------------------------
 ///
-void DrawPlayer1()
+void DrawPlayerBottom()
 {
-	u8 frame = g_Player[PLY1].anim;
-	if(g_Player[PLY1].prevAnim[g_WriteBuffer] == frame)
+	u8 frame = g_Player[SIDE_BOTTOM].anim;
+	if(g_Player[SIDE_BOTTOM].prevAnim[g_WriteBuffer] == frame)
 		return;
 
-	g_Player[PLY1].prevAnim[g_WriteBuffer] = frame;
+	g_Player[SIDE_BOTTOM].prevAnim[g_WriteBuffer] = frame;
 
 	const u8* src;
 	u16 dst;
@@ -1651,7 +1807,7 @@ void DrawPlayer1()
 	dst += (2 * 8);  // Pattern #34
 	VDP_WriteVRAM_64K(src, dst, 8);
 
-	u8 event = g_Actions[g_Player[PLY1].action].animFrames[g_Player[PLY1].step].event;
+	u8 event = g_Actions[g_Player[SIDE_BOTTOM].action].animFrames[g_Player[SIDE_BOTTOM].step].event;
 	if(event != EVENT_NONE)
 	{
 		switch(event)
@@ -1673,7 +1829,7 @@ void DrawPlayer1()
 
 //-----------------------------------------------------------------------------
 ///
-void PreparePlayer2()
+void PreparePlayerTop()
 {
 	// Flicker Shadows
 	u8 pat = 40;
@@ -1687,11 +1843,11 @@ void PreparePlayer2()
 
 //-----------------------------------------------------------------------------
 ///
-void UpdatePlayer2()
+void UpdatePlayerTop()
 {	
 	// Update sprite position
-	u8 x = g_Player[PLY2].srcPos.x - 8;
-	u8 y = g_Player[PLY2].srcPos.y - 32;
+	u8 x = g_Player[SIDE_TOP].srcPos.x - 8;
+	u8 y = g_Player[SIDE_TOP].srcPos.y - 32;
 	VDP_SetSpritePosition(SPRITE_PLY2_BLACK_H, x, y);
 	VDP_SetSpritePosition(SPRITE_PLY2_WHITE_H, x, y);
 	VDP_SetSpritePosition(SPRITE_PLY2_SKIN_H, x, y);
@@ -1703,20 +1859,20 @@ void UpdatePlayer2()
 	VDP_SetSpritePosition(SPRITE_PLY2_SKIN_L, x, y);
 
 	// Handle special event
-	u8 event = g_Actions[g_Player[PLY2].action].animFrames[g_Player[PLY2].step].event;
+	u8 event = g_Actions[g_Player[SIDE_TOP].action].animFrames[g_Player[SIDE_TOP].step].event;
 	switch(event)
 	{
 	case EVENT_SHOOT_R:
-		Player_CheckShoot(&g_Player[PLY2]);
+		Player_CheckShoot(&g_Player[SIDE_TOP]);
 		VDP_SetSpritePosition(SPRITE_PLY2_RACKET, x+16, y-8);
 		break;                                    
 	case EVENT_SHOOT_L:                           
-		Player_CheckShoot(&g_Player[PLY2]);
+		Player_CheckShoot(&g_Player[SIDE_TOP]);
 		VDP_SetSpritePosition(SPRITE_PLY2_RACKET, x-8, y-8);
 		break;                                    
 	case EVENT_SMASH:                             
-		Player_CheckShoot(&g_Player[PLY2]);
-		VDP_SetSpritePosition(SPRITE_PLY2_RACKET, x+8, y-24);
+		Player_CheckShoot(&g_Player[SIDE_TOP]);
+		VDP_SetSpritePosition(SPRITE_PLY2_RACKET, x+0, y-24);
 		break;                                    
 	default:                                      
 		VDP_SetSpritePosition(SPRITE_PLY2_RACKET, 213, 213);
@@ -1726,13 +1882,13 @@ void UpdatePlayer2()
 
 //-----------------------------------------------------------------------------
 ///
-void DrawPlayer2() __FASTCALL
+void DrawPlayerTop() __FASTCALL
 {
-	u8 frame = g_Player[PLY2].anim;
-	if(g_Player[PLY2].prevAnim[g_WriteBuffer] == frame)
+	u8 frame = g_Player[SIDE_TOP].anim;
+	if(g_Player[SIDE_TOP].prevAnim[g_WriteBuffer] == frame)
 		return;
 
-	g_Player[PLY2].prevAnim[g_WriteBuffer] = frame;
+	g_Player[SIDE_TOP].prevAnim[g_WriteBuffer] = frame;
 
 	const u8* src;
 	u16 dst;
@@ -1769,7 +1925,7 @@ void DrawPlayer2() __FASTCALL
 	dst += (2 * 8);  // Pattern #55 - #75
 	VDP_WriteVRAM_64K(src, dst, 21 * 8);
 
-	u8 event = g_Actions[g_Player[PLY2].action].animFrames[g_Player[PLY2].step].event;
+	u8 event = g_Actions[g_Player[SIDE_TOP].action].animFrames[g_Player[SIDE_TOP].step].event;
 	if(event != EVENT_NONE)
 	{
 		switch(event)
@@ -1794,46 +1950,48 @@ void DrawPlayer2() __FASTCALL
 void PrepareLauncher()
 {
 	// Flicker Shadows
-	u8 pat = 40;
+	u8 pat = g_TrainSideData[g_TrainSide].pattern;
 	if(g_FlickerShadow && (g_Frame & 0x1))
 	{
 		pat += 8;
 	}
-	VDP_SetSpritePattern(SPRITE_PLY2_BLACK_H, pat);     // Pattern #40 / #48
-	VDP_SetSpritePattern(SPRITE_PLY2_BLACK_L, pat + 4); // Pattern #44 / #52
+	VDP_SetSpritePattern(SPRITE_LAUNCHER_1, pat);     // Pattern #40 / #48
+	VDP_SetSpritePattern(SPRITE_LAUNCHER_2, pat + 4); // Pattern #44 / #52
 }
 
 
 //-----------------------------------------------------------------------------
 // INPUT CALLBACK
 
-bool KB1_Button1()	{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_SPACE) && !(IS_KEY_PRESSED(g_PrevRow8, KEY_SPACE))); }	
-bool KB1_Button2()	{ return (IS_KEY_PRESSED(g_KeyRow4, KEY_N) && !(IS_KEY_PRESSED(g_PrevRow4, KEY_N))); }
-bool KB1_Up()		{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_UP)); }
-bool KB1_Down()		{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_DOWN)); }
-bool KB1_Left()		{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_LEFT)); }
-bool KB1_Right()	{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_RIGHT)); }
+bool KB1_Up()		{ return KEY_ON(KEY_UP); }
+bool KB1_Down()		{ return KEY_ON(KEY_DOWN); }
+bool KB1_Left()		{ return KEY_ON(KEY_LEFT); }
+bool KB1_Right()	{ return KEY_ON(KEY_RIGHT); }
+bool KB1A_Button1()	{ return KEY_PRESS(KEY_SPACE); }
+bool KB1A_Button2()	{ return KEY_PRESS(KEY_N); }
+bool KB1B_Button1()	{ return KEY_PRESS(KEY_SHIFT); }
+bool KB1B_Button2()	{ return KEY_PRESS(KEY_CTRL); }
+bool KB1C_Button1()	{ return KEY_PRESS(KEY_RET); }
+bool KB1C_Button2()	{ return KEY_PRESS(KEY_BS); }
 
-bool KB2_Button1()	{ return (IS_KEY_PRESSED(g_KeyRow6, KEY_SHIFT) && !(IS_KEY_PRESSED(g_PrevRow6, KEY_SHIFT))); }	
-bool KB2_Button2()	{ return (IS_KEY_PRESSED(g_KeyRow6, KEY_CTRL) && !(IS_KEY_PRESSED(g_PrevRow6, KEY_CTRL))); }
-bool KB2_Up()		{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_UP)); }
-bool KB2_Down()		{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_DOWN)); }
-bool KB2_Left()		{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_LEFT)); }
-bool KB2_Right()	{ return (IS_KEY_PRESSED(g_KeyRow8, KEY_RIGHT)); }
+bool KB2_Up()		{ return KEY_ON(KEY_E); }
+bool KB2_Down()		{ return KEY_ON(KEY_D); }
+bool KB2_Left()		{ return KEY_ON(KEY_S); }
+bool KB2_Right()	{ return KEY_ON(KEY_F); }
 
-bool Joy1_Button1()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_A))); }	
-bool Joy1_Button2()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_B))); }
 bool Joy1_Up()		{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_UP)); }
 bool Joy1_Down()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_DOWN)); }
 bool Joy1_Left()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_LEFT)); }
 bool Joy1_Right()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_RIGHT)); }
+bool Joy1_Button1()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_A))); }	
+bool Joy1_Button2()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_B))); }
 
-bool Joy2_Button1()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_A))); }	
-bool Joy2_Button2()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_B))); }
 bool Joy2_Up()		{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_UP)); }
 bool Joy2_Down()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_DOWN)); }
 bool Joy2_Left()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_LEFT)); }
 bool Joy2_Right()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_RIGHT)); }
+bool Joy2_Button1()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_A))); }	
+bool Joy2_Button2()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_B))); }
 
 //=============================================================================
 //
@@ -1846,12 +2004,11 @@ bool Joy2_Right()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_RIGHT)); }
 void UpdateInput()
 {
 	// Keyboard
-	g_PrevRow4 = g_KeyRow4;	
-	g_PrevRow6 = g_KeyRow6;	
-	g_PrevRow8 = g_KeyRow8;	
-	g_KeyRow4 = Keyboard_Read(4); // K L M N O P Q R
-	g_KeyRow6 = Keyboard_Read(6); // SHIFT CTRL GRAPH CAPS CODE F1 F2 F3
-	g_KeyRow8 = Keyboard_Read(8); // SPACE HOME INS DEL LEFT UP DOWN RIGHT
+	for(u8 i = 0; i < 9; ++i)
+	{
+		g_PrevRow[i] = g_KeyRow[i];	
+		g_KeyRow[i] = Keyboard_Read(i);
+	}
 	// Joystick
 	g_PrevJoy1 = g_Joy1;
 	g_PrevJoy2 = g_Joy2;
@@ -1884,13 +2041,23 @@ void VDP_LoadColor_GM2(const u8* src, u8 count, u8 offset)
 	VDP_WriteVRAM_64K(src, dst, count * 8);
 }
 
-void VDP_DrawLayout_GM2(const u8* src, u8 dx, u8 dy, u8 nx, u8 ny)
+void VDP_WriteLayout_GM2(const u8* src, u8 dx, u8 dy, u8 nx, u8 ny)
 {
 	u16 dst = g_ScreenLayoutLow + (dy * 32) + dx;
 	for(u8 y = 0; y < ny; ++y)
 	{
 		VDP_WriteVRAM_64K(src, dst, nx);
 		src += nx;
+		dst += 32;
+	}
+}
+
+void VDP_FillLayout_GM2(u8 value, u8 dx, u8 dy, u8 nx, u8 ny)
+{
+	u16 dst = g_ScreenLayoutLow + (dy * 32) + dx;
+	for(u8 y = 0; y < ny; ++y)
+	{
+		VDP_FillVRAM_64K(value, dst, nx);
 		dst += 32;
 	}
 }
@@ -1906,8 +2073,8 @@ void StateTitle_Start()
 
 	// Load screen data
 	VDP_FillScreen_GM2(0); // Don't set the Layout table yet
-	VDP_LoadPattern_GM2(g_DataLogo_Patterns, sizeof(g_DataLogo_Patterns)/8, 0);
-	VDP_LoadColor_GM2(g_DataLogo_Colors, sizeof(g_DataLogo_Colors)/8, 0);
+	VDP_LoadPattern_GM2(g_DataLogo_Patterns, sizeof(g_DataLogo_Patterns)/8, OFFSET_TITLE_LOGO);
+	VDP_LoadColor_GM2(g_DataLogo_Colors, sizeof(g_DataLogo_Colors)/8, OFFSET_TITLE_LOGO);
 
 	// Load sprites data
 	VDP_WriteVRAM_64K(g_DataLogoBall, g_SpritePatternLow, 8 * 32);
@@ -1924,11 +2091,11 @@ void StateTitle_Start()
 	VDP_HideSpriteFrom(8);
 
 	// Initialize font
-	g_FontDefaultOffset = sizeof(g_DataLogo_Patterns) / 8;
-	Print_SetTextFont(FONT, g_FontDefaultOffset);
+	// g_FontDefaultOffset = sizeof(g_DataLogo_Patterns) / 8;
+	Print_SetTextFont(FONT, OFFSET_TITLE_FONT_DEF);
 	Print_SetColor(0xF, 0x0);
-	g_FontSelectOffset = g_FontDefaultOffset + g_PrintData.CharCount;
-	Print_SetTextFont(FONT, g_FontSelectOffset);
+	// g_FontSelectOffset = g_FontDefaultOffset + g_PrintData.CharCount;
+	Print_SetTextFont(FONT, OFFSET_TITLE_FONT_ALT);
 	Print_SetColorShade(g_ColorShade);
 	
 	g_IntroFrame = 0;
@@ -1967,13 +2134,13 @@ void StateTitle_Update()
 		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (0 * 0x800),  8);
 		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (1 * 0x800),  8);
 		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (2 * 0x800),  8);
-		VDP_DrawLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
+		VDP_WriteLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
 	}
 	else if(g_IntroFrame == 64) // Title
 	{
 		PT3_Resume();
 
-		Print_SelectTextFont(g_FontDefaultOffset);
+		Print_SelectTextFont(OFFSET_TITLE_FONT_DEF);
 		Print_SetPosition(11, 18);
 		Print_DrawText("PRESS SPACE");
 	}
@@ -1988,7 +2155,7 @@ void StateTitle_Update()
 		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (0 * 0x800),  8);
 		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (1 * 0x800),  8);
 		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (2 * 0x800),  8);
-		VDP_DrawLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
+		VDP_WriteLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
 
 		g_IntroFrame = 25;
 		VDP_SetSpritePosition(0, g_IntroFrame * 8 +  0 - 4, 32 +  0);
@@ -2028,9 +2195,24 @@ void InitializeCourt()
 
 	// Load court data to VRAM
 	VDP_FillScreen_GM2(0);
-	VDP_DrawLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
-	VDP_LoadPattern_GM2(g_DataCourt_Patterns, sizeof(g_DataCourt_Patterns)/8, 0);
-	VDP_LoadColor_GM2(g_DataCourt_Colors, sizeof(g_DataCourt_Colors)/8, 0);
+	VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
+	VDP_LoadPattern_GM2(g_DataCourt_Patterns, sizeof(g_DataCourt_Patterns)/8, OFFSET_GAME_COURT);
+	VDP_LoadColor_GM2(g_DataCourt_Colors, sizeof(g_DataCourt_Colors)/8, OFFSET_GAME_COURT);
+
+	// Load Scrore Board data to VRAM
+	// VDP_WriteLayout_GM2(g_DataScore_Names, 2, 6, 27, 10);
+	VDP_LoadPattern_GM2(g_DataScore_Patterns, sizeof(g_DataScore_Patterns)/8, OFFSET_GAME_SCORE);
+	VDP_LoadColor_GM2(g_DataScore_Colors, sizeof(g_DataScore_Colors)/8, OFFSET_GAME_SCORE);
+
+	// Load Referee data to VRAM
+	// VDP_WriteLayout_GM2(g_DataReferee_Names, 0, 18, 12, 6);
+	VDP_LoadPattern_GM2(g_DataReferee_Patterns, sizeof(g_DataReferee_Patterns)/8, OFFSET_GAME_REFEREE);
+	VDP_LoadColor_GM2(g_DataReferee_Colors, sizeof(g_DataReferee_Colors)/8, OFFSET_GAME_REFEREE);
+
+	// Initialize font
+	// g_FontDefaultOffset = sizeof(g_DataCourt_Patterns) / 8;
+	Print_SetTextFont(FONT, OFFSET_GAME_FONT);
+	Print_SetColor(0xF, 0x9);
 
 	// Initialize sprites
 	VDP_FillVRAM(0x00, g_SpritePattern[0], 0, 128*8); // Clear sprite patterns table (only 128 entry used)
@@ -2054,7 +2236,7 @@ void InitializeCourt()
 
 //-----------------------------------------------------------------------------
 ///
-void InitializeSpriteP1()
+void InitializePlayerBottom(u8 controller) __FASTCALL
 {
 	// Setup player 1 sprites
 	SetSprite(SPRITE_PLY1_BLACK_H, 0, 193, 0,  COLOR_BLACK);			// Outline
@@ -2067,80 +2249,108 @@ void InitializeSpriteP1()
 	SetSprite(SPRITE_PLY1_SKIN_L,  0, 193, 32, COLOR_LIGHT_RED);		// Skin
 
 	// Initialize player 1
-	g_Player[PLY1].id = 0;
-	g_Player[PLY1].pos.x = PX_TO_UNIT(100);
-	g_Player[PLY1].pos.y = PX_TO_UNIT(130);
-	g_Player[PLY1].srcPos.x = UNIT_TO_PX(g_Player[PLY1].pos.x);
-	g_Player[PLY1].srcPos.y = UNIT_TO_PX(g_Player[PLY1].pos.y);
-	g_Player[PLY1].action = ACTION_IDLE;
-	g_Player[PLY1].counter = 0;
-	g_Player[PLY1].anim = 0;
-	g_Player[PLY1].prevAnim[0] = 0xFF;
-	g_Player[PLY1].prevAnim[1] = 0xFF;
-	g_Player[PLY1].step = 0;
-	g_Player[PLY1].inButton1 = KB2_Button1;
-	g_Player[PLY1].inButton2 = KB2_Button2;
-	g_Player[PLY1].inUp      = KB2_Up;
-	g_Player[PLY1].inDown    = KB2_Down;
-	g_Player[PLY1].inLeft    = KB2_Left;
-	g_Player[PLY1].inRight   = KB2_Right;
+	Player* ply = &g_Player[SIDE_BOTTOM];
+	ply->id = 0;
+	ply->pos.x = PX_TO_UNIT(128);
+	ply->pos.y = PX_TO_UNIT(192-32);
+	ply->srcPos.x = UNIT_TO_PX(ply->pos.x);
+	ply->srcPos.y = UNIT_TO_PX(ply->pos.y);
+	ply->action = ACTION_IDLE;
+	ply->counter = 0;
+	ply->anim = 0;
+	ply->prevAnim[0] = 0xFF;
+	ply->prevAnim[1] = 0xFF;
+	ply->step = 0;
+	ply->binding = g_InputBinding[controller];
+	const Binding* bind = &g_Binding[ply->binding];
+	ply->inLong  = bind->inUp;
+	ply->inShort = bind->inDown;
 }
 
 //-----------------------------------------------------------------------------
 ///
-void InitializeSpriteP2()
+void InitializePlayerTop(u8 controller) __FASTCALL
 {
 	// Setup player 2 sprites
 	SetSprite(SPRITE_PLY2_BLACK_H, 0, 193, 40, COLOR_BLACK);			// Outline
 	SetSprite(SPRITE_PLY2_BLACK_L, 0, 193, 56, COLOR_BLACK);			// Outline
 	SetSprite(SPRITE_PLY2_RACKET,  0, 193, 76, COLOR_BLACK);			// Racket
-	SetSprite(SPRITE_PLY2_CLOTH,   0, 193, 64, COLOR_MEDIUM_GREEN);	// Cloth
+	SetSprite(SPRITE_PLY2_CLOTH,   0, 193, 64, COLOR_MEDIUM_GREEN);		// Cloth
 	SetSprite(SPRITE_PLY2_WHITE_H, 0, 193, 48, COLOR_WHITE);			// White
 	SetSprite(SPRITE_PLY2_WHITE_L, 0, 193, 68, COLOR_WHITE);			// White
 	SetSprite(SPRITE_PLY2_SKIN_H,  0, 193, 52, COLOR_LIGHT_RED);		// Skin
 	SetSprite(SPRITE_PLY2_SKIN_L,  0, 193, 72, COLOR_LIGHT_RED);		// Skin
 
 	// Initialize player 2
-	g_Player[PLY2].id = 1;
-	g_Player[PLY2].pos.x = PX_TO_UNIT(150);
-	g_Player[PLY2].pos.y = PX_TO_UNIT(32);
-	g_Player[PLY2].srcPos.x = UNIT_TO_PX(g_Player[PLY2].pos.x);
-	g_Player[PLY2].srcPos.y = UNIT_TO_PX(g_Player[PLY2].pos.y);
-	g_Player[PLY2].action = ACTION_IDLE;
-	g_Player[PLY2].counter = 0;
-	g_Player[PLY2].anim = 0;
-	g_Player[PLY2].prevAnim[0] = 0xFF;
-	g_Player[PLY2].prevAnim[1] = 0xFF;
-	g_Player[PLY2].step = 0;
-	g_Player[PLY2].inButton1 = Joy2_Button1;
-	g_Player[PLY2].inButton2 = Joy2_Button2;
-	g_Player[PLY2].inUp      = Joy2_Up;
-	g_Player[PLY2].inDown    = Joy2_Down;
-	g_Player[PLY2].inLeft    = Joy2_Left;
-	g_Player[PLY2].inRight   = Joy2_Right;
+	Player* ply = &g_Player[SIDE_TOP];
+	ply->id = 1;
+	ply->pos.x = PX_TO_UNIT(128);
+	ply->pos.y = PX_TO_UNIT(32);
+	ply->srcPos.x = UNIT_TO_PX(g_Player[SIDE_TOP].pos.x);
+	ply->srcPos.y = UNIT_TO_PX(g_Player[SIDE_TOP].pos.y);
+	ply->action = ACTION_IDLE;
+	ply->counter = 0;
+	ply->anim = 0;
+	ply->prevAnim[0] = 0xFF;
+	ply->prevAnim[1] = 0xFF;
+	ply->step = 0;
+	ply->binding = g_InputBinding[controller];
+	const Binding* bind = &g_Binding[ply->binding];
+	ply->inLong  = bind->inDown;
+	ply->inShort = bind->inUp;
+
 }
 
 //-----------------------------------------------------------------------------
 ///
 void InitializeLauncher()
 {
-	// Load launcher pattern
-	u16 dst;
-	dst	= g_SpritePattern[g_WriteBuffer] + (40 * 8); // Pattern #40 - #71
-	VDP_WriteVRAM_64K(g_DataLauncher, dst, 8 * 8 *4);
-	dst	= g_SpritePattern[g_DisplayBuffer] + (40 * 8); // Pattern #40 - #71
-	VDP_WriteVRAM_64K(g_DataLauncher, dst, 8 * 8 *4);
-	
-	// Setup launcher sprites
-	SetSprite(SPRITE_PLY2_BLACK_H, 128-8, -4 +  0, 40, COLOR_BLACK);			// Black 1&2
-	SetSprite(SPRITE_PLY2_BLACK_L, 128-8, -4 + 16, 44, COLOR_BLACK);			// Black 1&2
-	SetSprite(SPRITE_PLY2_RACKET,  128-8, -4 +  0, 56, COLOR_LIGHT_YELLOW);	// Yellow
-	SetSprite(SPRITE_PLY2_CLOTH,   128-8, -4 +  8, 60, COLOR_MEDIUM_GREEN);	// Green
-	SetSprite(SPRITE_PLY2_WHITE_H, 128-8, -4 + 16, 64, COLOR_WHITE);			// White
-	SetSprite(SPRITE_PLY2_WHITE_L,     0,     193,  0, 0);					// Unused
-	SetSprite(SPRITE_PLY2_SKIN_H,      0,     193,  0, 0);					// Unused
-	SetSprite(SPRITE_PLY2_SKIN_L,      0,     193,  0, 0);					// Unused
+	if(g_TrainSide == SIDE_BOTTOM)
+	{
+		// Load launcher pattern
+		u16 dst;
+		dst	= g_SpritePattern[g_WriteBuffer] + (40 * 8); // Pattern #40 - #71
+		VDP_WriteVRAM_64K(g_DataLauncher0, dst, 8 * 8 *4);
+		dst	= g_SpritePattern[g_DisplayBuffer] + (40 * 8); // Pattern #40 - #71
+		VDP_WriteVRAM_64K(g_DataLauncher0, dst, 8 * 8 *4);
+
+		// Setup launcher sprites
+		SetSprite(SPRITE_LAUNCHER_1, 128-8, (u8)(-4 +  0), 40 +  0, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_2, 128-8, (u8)(-4 + 16), 40 +  4, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_3, 128-8, (u8)(-4 +  0), 40 + 16, COLOR_LIGHT_YELLOW);	// Yellow
+		SetSprite(SPRITE_LAUNCHER_4, 128-8, (u8)(-4 +  8), 40 + 20, COLOR_MEDIUM_GREEN);	// Green
+		SetSprite(SPRITE_LAUNCHER_5, 128-8, (u8)(-4 + 16), 40 + 24, COLOR_WHITE);			// White
+	}
+	else // if(g_TrainSide == SIDE_TOP)
+	{
+		// Load launcher pattern
+		u16 dst;
+		dst	= g_SpritePattern[g_WriteBuffer] + (0 * 8); // Pattern #40 - #71
+		VDP_WriteVRAM_64K(g_DataLauncher1, dst, 8 * 8 *4);
+		dst	= g_SpritePattern[g_DisplayBuffer] + (0 * 8); // Pattern #40 - #71
+		VDP_WriteVRAM_64K(g_DataLauncher1, dst, 8 * 8 *4);
+
+		// Setup launcher sprites
+		SetSprite(SPRITE_LAUNCHER_1, 128-8, (u8)(150 +  0), 0 +  0, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_2, 128-8, (u8)(150 + 16), 0 +  4, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_3, 128-8, (u8)(150 -  1), 0 + 16, COLOR_LIGHT_YELLOW);	// Yellow
+		SetSprite(SPRITE_LAUNCHER_4, 128-8, (u8)(150 +  3), 0 + 20, COLOR_MEDIUM_GREEN);	// Green
+		SetSprite(SPRITE_LAUNCHER_5, 128-8, (u8)(150 + 15), 0 + 24, COLOR_WHITE);			// White
+	}	
 }
+
+//-----------------------------------------------------------------------------
+///
+void HideLauncher()
+{
+	VDP_SetSpritePositionY(SPRITE_LAUNCHER_1, 193);	// Black 1&2
+	VDP_SetSpritePositionY(SPRITE_LAUNCHER_2, 193);	// Black 1&2
+	VDP_SetSpritePositionY(SPRITE_LAUNCHER_3, 193);	// Yellow
+	VDP_SetSpritePositionY(SPRITE_LAUNCHER_4, 193);	// Green
+	VDP_SetSpritePositionY(SPRITE_LAUNCHER_5, 193);	// White
+}
+
+
 //-----------------------------------------------------------------------------
 ///
 void StateMatch_Start()
@@ -2148,8 +2358,9 @@ void StateMatch_Start()
 	VDP_EnableDisplay(false);
 
 	InitializeCourt();
-	InitializeSpriteP1();
-	InitializeSpriteP2();
+	InitializePlayerBottom(0);
+	InitializePlayerTop(1);
+	HideLauncher();
 	
 	g_ScoreFct = null;
 
@@ -2170,8 +2381,8 @@ void StateMatch_Update()
 	g_WriteBuffer = 1 - g_WriteBuffer;
 	g_DisplayBuffer = 1 - g_DisplayBuffer;
 	VDP_SetSpritePatternTable(g_SpritePattern[g_DisplayBuffer]);
-	PreparePlayer1();
-	PreparePlayer2();
+	PreparePlayerBottom();
+	PreparePlayerTop();
 	Ball_Prepare();
 
 // VDP_SetColor(COLOR_LIGHT_BLUE);
@@ -2182,39 +2393,38 @@ void StateMatch_Update()
 	UpdateInput();
 
 
-	if(IS_KEY_PRESSED(g_KeyRow6, KEY_F2) && !(IS_KEY_PRESSED(g_PrevRow6, KEY_F2)))
+	if(KEY_PRESS(KEY_F2))
 		Ball_ShootRandom();
-	if(IS_KEY_PRESSED(g_KeyRow6, KEY_F3) && !(IS_KEY_PRESSED(g_PrevRow6, KEY_F3)))
+	if(KEY_PRESS(KEY_F3)) // Activate/deactivate shadows
 		g_FlickerShadow = 1 - g_FlickerShadow;
-	// Return to main menu
-	if(IS_KEY_PRESSED(g_KeyRow8, KEY_DEL))
+	if(KEY_PRESS(KEY_DEL)) // Return to main menu
 	{
 		VDP_HideSpriteFrom(0);
 		Game_SetState(&g_State_Title);
 	}
 	
-	HandleInput(&g_Player[PLY1]);
-	HandleInput(&g_Player[PLY2]);
+	HandleInput(&g_Player[SIDE_BOTTOM]);
+	HandleInput(&g_Player[SIDE_TOP]);
 
 // VDP_SetColor(COLOR_LIGHT_GREEN);
 	
 	//---------------------------------------------------------------------
 	// Update sprites position
 	
-	UpdatePlayer1();
-	UpdatePlayer2();
+	UpdatePlayerBottom();
+	UpdatePlayerTop();
 	Ball_Update();
 
-	UpdateAction(&g_Player[PLY1]);
-	UpdateAction(&g_Player[PLY2]);
+	UpdateAction(&g_Player[SIDE_BOTTOM]);
+	UpdateAction(&g_Player[SIDE_TOP]);
 
 // VDP_SetColor(COLOR_LIGHT_YELLOW);
 
 	//---------------------------------------------------------------------
 	// Draw anim
 	
-	DrawPlayer1();
-	DrawPlayer2();
+	DrawPlayerBottom();
+	DrawPlayerTop();
 	Ball_Draw();
 
 // VDP_SetColor(COLOR_DARK_RED);
@@ -2224,14 +2434,14 @@ void StateMatch_Update()
 ///
 void TrainingScore()
 {
-	if((g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly == PLY1))
+	if((g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly == SIDE_BOTTOM))
 	{
 		g_TrainScore++;
 		if(g_TrainScore > g_TrainBest)
 			g_TrainBest = g_TrainScore;
 	}
-	else if(((g_Ball.point == POINT_PENDING) && (g_Ball.lastPly == PLY1))
-		|| ((g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly == PLY2)))
+	else if(((g_Ball.point == POINT_PENDING) && (g_Ball.lastPly == SIDE_BOTTOM))
+		|| ((g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly == SIDE_TOP)))
 	{
 		u16 dst = g_ScreenLayoutLow + (1 * 32) + 7;
 		VDP_FillVRAM_64K(0, dst, 4);
@@ -2250,14 +2460,10 @@ void StateTraining_Start()
 	VDP_EnableDisplay(false);
 
 	InitializeCourt();
-	InitializeSpriteP1();
+	InitializePlayerBottom(g_TrainSide);
+	InitializePlayerTop(1-g_TrainSide);
 	InitializeLauncher();
 	
-	// Initialize font
-	g_FontDefaultOffset = sizeof(g_DataCourt_Patterns) / 8;
-	Print_SetTextFont(FONT, g_FontDefaultOffset);
-	Print_SetColor(0xF, 0x9);
-
 	// Initialize scoring
 	Print_SetPosition(1, 1);
 	Print_DrawText("SCORE");
@@ -2285,7 +2491,11 @@ void StateTraining_Update()
 	g_DisplayBuffer = 1 - g_DisplayBuffer;
 	VDP_SetSpritePatternTable(g_SpritePattern[g_DisplayBuffer]);
 
-	PreparePlayer1();
+	// Prepare sprite objects
+	if(g_TrainSide == SIDE_BOTTOM)
+		PreparePlayerBottom();
+	else
+		PreparePlayerTop();
 	PrepareLauncher();
 	Ball_Prepare();
 
@@ -2294,14 +2504,19 @@ void StateTraining_Update()
 
 	UpdateInput();
 
-	if(IS_KEY_PRESSED(g_KeyRow6, KEY_F2) && !(IS_KEY_PRESSED(g_PrevRow6, KEY_F2)))
+	if(KEY_PRESS(KEY_F2))
 		Ball_ShootRandom();
-	if(IS_KEY_PRESSED(g_KeyRow6, KEY_F3) && !(IS_KEY_PRESSED(g_PrevRow6, KEY_F3)))
+	if(KEY_PRESS(KEY_F3)) // Activate/deactivate shadows
 		g_FlickerShadow = 1 - g_FlickerShadow;
+	if(KEY_PRESS(KEY_DEL)) // Return to main menu
+	{
+		VDP_HideSpriteFrom(0);
+		Game_SetState(&g_State_Title);
+	}
 
 	#if (DEBUG)
 
-		if(IS_KEY_PRESSED(g_KeyRow8, KEY_HOME) && !(IS_KEY_PRESSED(g_PrevRow8, KEY_HOME)))
+		if(KEY_PRESS(KEY_HOME))
 		{
 			g_Debug = 1 - g_Debug;
 
@@ -2342,28 +2557,28 @@ void StateTraining_Update()
 			Print_DrawHex8(g_Player[0].shotCnt);
 		}
 	#endif
-
-	// Return to main menu
-	if(IS_KEY_PRESSED(g_KeyRow8, KEY_DEL))
-	{
-		VDP_HideSpriteFrom(0);
-		Game_SetState(&g_State_Title);
-	}
 	
-	HandleInput(&g_Player[PLY1]);
+	HandleInput(&g_Player[g_TrainSide]);
 	
 	//---------------------------------------------------------------------
 	// Update sprites position
 	
-	UpdatePlayer1();
+	if(g_TrainSide == SIDE_BOTTOM)
+		UpdatePlayerBottom();
+	else
+		UpdatePlayerTop();
+		
 	Ball_Update();
 
-	UpdateAction(&g_Player[PLY1]);
+	UpdateAction(&g_Player[g_TrainSide]);
 
 	//---------------------------------------------------------------------
 	// Draw anim
 	
-	DrawPlayer1();
+	if(g_TrainSide == SIDE_BOTTOM)
+		DrawPlayerBottom();
+	else
+		DrawPlayerTop();
 	Ball_Draw();
 }
 
@@ -2393,7 +2608,11 @@ void VSyncCallback()
 /// Main loop
 void main()
 {
-	g_VersionVDP = VDP_GetVersion();
+	g_KeyRow[0] = Keyboard_Read(0); // 0 1 2 3 4 5 6 7
+	if(IS_KEY_PRESSED(g_KeyRow[0], KEY_1))
+		g_VersionVDP = VDP_VERSION_TMS9918A;
+	else
+		g_VersionVDP = VDP_GetVersion();
 
 	// Initialize VDP
 	if(g_VersionVDP == VDP_VERSION_TMS9918A)
@@ -2420,6 +2639,9 @@ void main()
 	}
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 | VDP_SPRITE_SCALE_1);
 	VDP_EnableVBlank(true);
+	
+	g_InputBinding[0] = BIND_KB1A;
+	g_InputBinding[1] = BIND_KB2;
 	
 	// Initialize PT3
 	PT3_Init();

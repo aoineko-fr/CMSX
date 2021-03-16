@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.11.0 on Sun Mar 14 01:16:11 2021
+// Data generated using CMSXimg 1.11.1 on Mon Mar 15 23:37:20 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     players.png
@@ -15,11 +15,11 @@
 //  - Compressor:     None
 //  - Skip empty:     FALSE
 
-#ifndef D_g_DataLauncher
-	#define D_g_DataLauncher
+#ifndef D_g_DataLauncher0
+	#define D_g_DataLauncher0
 #endif
 // Sprites table
-D_g_DataLauncher const unsigned char g_DataLauncher[] =
+D_g_DataLauncher0 const unsigned char g_DataLauncher0[] =
 {
 // ======== Frame[0]
 // ---- Layer[0] (16x16 0,0 1,2 inc 1)
@@ -54,8 +54,8 @@ D_g_DataLauncher const unsigned char g_DataLauncher[] =
 	0xFC, /* ######.. */ 
 	0x5A, /* .#.##.#. */ 
 	0x25, /* ..#..#.# */ 
-	0xC3, /* ##....## */ 
-	0x33, /* ..##..## */ 
+	0xC1, /* ##.....# */ 
+	0x31, /* ..##...# */ 
 	0x4D, /* .#..##.# */ 
 	0x85, /* #....#.# */ 
 	0x45, /* .#...#.# */ 
@@ -95,7 +95,7 @@ D_g_DataLauncher const unsigned char g_DataLauncher[] =
 	0x7D, /* .#####.# */ 
 	0xFD, /* ######.# */ 
 	0xFE, /* #######. */ 
-// ---- Layer[1] (16x16 0,0 1,2 inc 5)
+// ---- Layer[1] (16x16 0,0 1,2 inc 4)
 // Sprite[8] (offset:64)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -125,11 +125,11 @@ D_g_DataLauncher const unsigned char g_DataLauncher[] =
 	0x00, /* ........ */ 
 // Sprite[11] (offset:88)
 	0xFC, /* ######.. */ 
-	0x5E, /* .#.####. */ 
-	0x67, /* .##..### */ 
+	0x5A, /* .#.##.#. */ 
+	0x65, /* .##..#.# */ 
 	0xC3, /* ##....## */ 
 	0x7F, /* .####### */ 
-	0x4F, /* .#..#### */ 
+	0x4D, /* .#..##.# */ 
 	0x87, /* #....### */ 
 	0xDF, /* ##.##### */ 
 // Sprite[12] (offset:96)
@@ -148,7 +148,7 @@ D_g_DataLauncher const unsigned char g_DataLauncher[] =
 	0xB4, /* #.##.#.. */ 
 	0xA4, /* #.#..#.. */ 
 	0xBE, /* #.#####. */ 
-	0xFF, /* ######## */ 
+	0xBF, /* #.###### */ 
 	0x7F, /* .####### */ 
 // Sprite[14] (offset:112)
 	0xFD, /* ######.# */ 
@@ -166,7 +166,7 @@ D_g_DataLauncher const unsigned char g_DataLauncher[] =
 	0x6D, /* .##.##.# */ 
 	0x65, /* .##..#.# */ 
 	0xFD, /* ######.# */ 
-	0xFF, /* ######## */ 
+	0xFD, /* ######.# */ 
 	0xFE, /* #######. */ 
 // ---- Layer[2] (16x16 0,0 1,1 inc 2)
 // Sprite[16] (offset:128)
@@ -228,8 +228,8 @@ D_g_DataLauncher const unsigned char g_DataLauncher[] =
 	0x00, /* ........ */ 
 	0x24, /* ..#..#.. */ 
 	0x02, /* ......#. */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
+	0x02, /* ......#. */ 
+	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
@@ -279,42 +279,5 @@ D_g_DataLauncher const unsigned char g_DataLauncher[] =
 	0x80, /* #....... */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// ---- Layer[5] (16x16 0,24 1,1 inc 2)
-// Sprite[28] (offset:224)
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x40, /* .#...... */ 
-	0x40, /* .#...... */ 
-	0x40, /* .#...... */ 
-	0x00, /* ........ */ 
-// Sprite[29] (offset:232)
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-// Sprite[30] (offset:240)
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x02, /* ......#. */ 
-	0x02, /* ......#. */ 
-	0x02, /* ......#. */ 
-	0x00, /* ........ */ 
-// Sprite[31] (offset:248)
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
 };
-// Names size: 256 Bytes
+// Names size: 224 Bytes
