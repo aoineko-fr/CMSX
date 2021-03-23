@@ -127,7 +127,6 @@
 
 // Game state setting
 #define USE_GAME_STATE				1
-#define USE_GAME_STATE_TRANSITION	1
 #define USE_GAME_VSYNC				1
 #define USE_GAME_LOOP				0
 

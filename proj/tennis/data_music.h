@@ -4,10 +4,18 @@
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██▄▀ ██ ██ █
 // _____________________________________________________________________________
 // CMSXbin 1.1.0 by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
-// File generated on Mon Mar 15 23:37:20 2021
+// File generated on Mon Mar 22 18:09:15 2021
 // Soure file: intro.pt3
 
-const unsigned char g_intro[] = {
+// Version:    ProTracker 3.7
+// Module:      /3AKOC NOD NIK-O___fixed by AC/
+// Author:     /Firestarter+HDS___o6.o1.2oo4_/.
+// Freq type:  (2) ASM/PSC
+
+#ifndef D_g_DataMusic
+	#define D_g_DataMusic
+#endif
+D_g_DataMusic const unsigned char g_DataMusic[] = {
 	0x05, 0x16, 0x00, 0xE0, 0x00, 0x00, 0x00, 0x4F, 0x05, 0x00, 0x00, 0x00, 0x00, 0x75, 0x05, 0x00, //      0
 	0x00, 0x7B, 0x05, 0x91, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA7, 0x05, 0x00, 0x00, 0x00, //     16
 	0x00, 0xF1, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //     32

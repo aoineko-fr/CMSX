@@ -43,6 +43,7 @@ rem  - Default
 rem  - Speed
 rem  - Size
 set Optim=Speed
+set ForceDataAddr=E000
 
 rem ***************************************************************************
 rem * BUILD STEPS                                                             *

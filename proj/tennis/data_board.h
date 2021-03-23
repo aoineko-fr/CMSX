@@ -3,14 +3,14 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.11.1 on Mon Mar 15 23:37:20 2021
+// Data generated using CMSXimg 1.11.2 on Mon Mar 22 18:09:14 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
-//  - Input file:     misc.png
+//  - Input file:     score.png
 //  - Mode:           Graphic Mode 2
-//  - Start position: 0, 56
+//  - Start position: 0, 0
 //  - Sprite size:    216, 80 (gap: 0, 0)
-//  - Sprite count:   27, 10
+//  - Sprite count:   1, 1
 //  - Color count:    256 (Transparent: #0000)
 //  - Compressor:     None
 //  - Skip empty:     FALSE
@@ -33,7 +33,69 @@ D_g_DataScore_Names const unsigned char g_DataScore_Names[] =
 	0xBE, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xC0, 0xAE, 
 	0xA0, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC2, 
 };
-// Names size: 270 Bytes
+
+#ifndef D_g_DataScoreL1_Names
+	#define D_g_DataScoreL1_Names
+#endif
+// Names Table
+D_g_DataScoreL1_Names const unsigned char g_DataScoreL1_Names[] =
+{
+	0xA1, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA3, 0xA0, 
+	0xA4, 0xB6, 0xB7, 0xBA, 0xB7, 0xB6, 0xA6, 0xBC, 0xBC, 0xB8, 0xBC, 0xBC, 0xAD, 0xAE, 
+	0xA4, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xAD, 0xAE, 
+	0xA4, 0xB1, 0xC3, 0xC4, 0xC5, 0xB7, 0xA6, 0xBC, 0xBC, 0xB8, 0xBC, 0xBC, 0xAD, 0xAE, 
+	0xA4, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xB8, 0xA6, 0xA6, 0xAD, 0xAE, 
+	0xA4, 0xBA, 0xC6, 0xB3, 0xA6, 0xA6, 0xA6, 0xBC, 0xBC, 0xB8, 0xBC, 0xBC, 0xAD, 0xAE, 
+	0xA4, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xB8, 0xA6, 0xA6, 0xAD, 0xAE, 
+	0xA4, 0xB6, 0xB3, 0xB2, 0xB4, 0xB3, 0xA6, 0xBC, 0xBC, 0xB8, 0xBC, 0xBC, 0xAD, 0xAE, 
+	0xA4, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xB8, 0xA6, 0xA6, 0xAD, 0xAE, 
+	0xA4, 0xC7, 0xC7, 0xC7, 0xA6, 0xA6, 0xA6, 0xBC, 0xBC, 0xB8, 0xBC, 0xBC, 0xAD, 0xAE, 
+	0xBE, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xC0, 0xAE, 
+	0xA0, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC2, 
+};
+
+#ifndef D_g_DataScoreL2_Names
+	#define D_g_DataScoreL2_Names
+#endif
+// Names Table
+D_g_DataScoreL2_Names const unsigned char g_DataScoreL2_Names[] =
+{
+	0xA6, 0xBC, 0xBC, 0xB8, 0xB1, 0xB7, 0xB6, 0xAD, 0xAE, 
+	0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xC0, 0xAE, 
+	0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC2, 
+};
+
+#ifndef D_g_DataScoreL3_Names
+	#define D_g_DataScoreL3_Names
+#endif
+// Names Table
+D_g_DataScoreL3_Names const unsigned char g_DataScoreL3_Names[] =
+{
+	0xA4, 0xC8, 0xB3, 0xB6, 0xB7, 0xB8, 0xBC, 0xBC, 0xA6, 
+	0xBE, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 0xBF, 
+	0xA0, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 0xC1, 
+};
+
+#ifndef D_g_DataScoreL4_Names
+	#define D_g_DataScoreL4_Names
+#endif
+// Names Table
+D_g_DataScoreL4_Names const unsigned char g_DataScoreL4_Names[] =
+{
+	0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA3, 0xA0, 
+	0xA6, 0xBC, 0xBC, 0xB8, 0xB1, 0xB7, 0xB6, 0xAD, 0xAE, 
+};
+
+#ifndef D_g_DataScoreL5_Names
+	#define D_g_DataScoreL5_Names
+#endif
+// Names Table
+D_g_DataScoreL5_Names const unsigned char g_DataScoreL5_Names[] =
+{
+	0xA1, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 0xA2, 
+	0xA4, 0xC8, 0xB3, 0xB6, 0xB7, 0xB8, 0xBC, 0xBC, 0xA6, 
+};
+// Names size: 528 Bytes
 
 #ifndef D_g_DataScore_Patterns
 	#define D_g_DataScore_Patterns
@@ -41,7 +103,7 @@ D_g_DataScore_Names const unsigned char g_DataScore_Names[] =
 // Patterns Table
 D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 {
-// Sprite[160] (offset:270)
+// Sprite[160] (offset:528)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -50,7 +112,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[161] (offset:278)
+// Sprite[161] (offset:536)
 	0x00, /* ........ */ 
 	0x7F, /* .####### */ 
 	0x7F, /* .####### */ 
@@ -59,7 +121,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x78, /* .####... */ 
 	0x70, /* .###.... */ 
 	0x60, /* .##..... */ 
-// Sprite[162] (offset:286)
+// Sprite[162] (offset:544)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -68,7 +130,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[163] (offset:294)
+// Sprite[163] (offset:552)
 	0x00, /* ........ */ 
 	0x01, /* .......# */ 
 	0x01, /* .......# */ 
@@ -77,7 +139,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x1E, /* ...####. */ 
 	0x0E, /* ....###. */ 
 	0x06, /* .....##. */ 
-// Sprite[164] (offset:302)
+// Sprite[164] (offset:560)
 	0x40, /* .#...... */ 
 	0x40, /* .#...... */ 
 	0x40, /* .#...... */ 
@@ -86,7 +148,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x40, /* .#...... */ 
 	0x40, /* .#...... */ 
 	0x40, /* .#...... */ 
-// Sprite[165] (offset:310)
+// Sprite[165] (offset:568)
 	0x0E, /* ....###. */ 
 	0x15, /* ...#.#.# */ 
 	0x2B, /* ..#.#.## */ 
@@ -95,7 +157,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x3C, /* ..####.. */ 
 	0x40, /* .#...... */ 
 	0x7F, /* .####### */ 
-// Sprite[166] (offset:318)
+// Sprite[166] (offset:576)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -104,7 +166,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[167] (offset:326)
+// Sprite[167] (offset:584)
 	0x3C, /* ..####.. */ 
 	0x62, /* .##...#. */ 
 	0x60, /* .##..... */ 
@@ -113,7 +175,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x06, /* .....##. */ 
 	0x79, /* .####..# */ 
 	0x7C, /* .#####.. */ 
-// Sprite[168] (offset:334)
+// Sprite[168] (offset:592)
 	0x38, /* ..###... */ 
 	0x64, /* .##..#.. */ 
 	0x3F, /* ..###### */ 
@@ -122,7 +184,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x3D, /* ..####.# */ 
 	0x64, /* .##..#.. */ 
 	0x47, /* .#...### */ 
-// Sprite[169] (offset:342)
+// Sprite[169] (offset:600)
 	0x38, /* ..###... */ 
 	0x4C, /* .#..##.. */ 
 	0x66, /* .##..##. */ 
@@ -131,7 +193,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x79, /* .####..# */ 
 	0x4C, /* .#..##.. */ 
 	0x38, /* ..###... */ 
-// Sprite[170] (offset:350)
+// Sprite[170] (offset:608)
 	0x7C, /* .#####.. */ 
 	0x4D, /* .#..##.# */ 
 	0x32, /* ..##..#. */ 
@@ -140,7 +202,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x34, /* ..##.#.. */ 
 	0x34, /* ..##.#.. */ 
 	0x62, /* .##...#. */ 
-// Sprite[171] (offset:358)
+// Sprite[171] (offset:616)
 	0x38, /* ..###... */ 
 	0x64, /* .##..#.. */ 
 	0x3F, /* ..###### */ 
@@ -149,7 +211,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x3D, /* ..####.# */ 
 	0x3B, /* ..###.## */ 
 	0x78, /* .####... */ 
-// Sprite[172] (offset:366)
+// Sprite[172] (offset:624)
 	0x70, /* .###.... */ 
 	0x57, /* .#.#.### */ 
 	0x2B, /* ..#.#.## */ 
@@ -158,7 +220,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x3C, /* ..####.. */ 
 	0x02, /* ......#. */ 
 	0x01, /* .......# */ 
-// Sprite[173] (offset:374)
+// Sprite[173] (offset:632)
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
@@ -167,7 +229,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
-// Sprite[174] (offset:382)
+// Sprite[174] (offset:640)
 	0x1F, /* ...##### */ 
 	0x1F, /* ...##### */ 
 	0x1F, /* ...##### */ 
@@ -176,7 +238,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x1F, /* ...##### */ 
 	0x1F, /* ...##### */ 
 	0x1F, /* ...##### */ 
-// Sprite[175] (offset:390)
+// Sprite[175] (offset:648)
 	0x40, /* .#...... */ 
 	0x40, /* .#...... */ 
 	0x3F, /* ..###### */ 
@@ -185,7 +247,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[176] (offset:398)
+// Sprite[176] (offset:656)
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
 	0x03, /* ......## */ 
@@ -194,7 +256,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[177] (offset:406)
+// Sprite[177] (offset:664)
 	0x00, /* ........ */ 
 	0x3E, /* ..#####. */ 
 	0x22, /* ..#...#. */ 
@@ -203,7 +265,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x20, /* ..#..... */ 
 	0x20, /* ..#..... */ 
 	0x20, /* ..#..... */ 
-// Sprite[178] (offset:414)
+// Sprite[178] (offset:672)
 	0x00, /* ........ */ 
 	0x3E, /* ..#####. */ 
 	0x22, /* ..#...#. */ 
@@ -212,7 +274,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x22, /* ..#...#. */ 
 	0x22, /* ..#...#. */ 
 	0x22, /* ..#...#. */ 
-// Sprite[179] (offset:422)
+// Sprite[179] (offset:680)
 	0x00, /* ........ */ 
 	0x3E, /* ..#####. */ 
 	0x20, /* ..#..... */ 
@@ -221,7 +283,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x20, /* ..#..... */ 
 	0x20, /* ..#..... */ 
 	0x3E, /* ..#####. */ 
-// Sprite[180] (offset:430)
+// Sprite[180] (offset:688)
 	0x00, /* ........ */ 
 	0x22, /* ..#...#. */ 
 	0x22, /* ..#...#. */ 
@@ -230,7 +292,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x14, /* ...#.#.. */ 
 	0x14, /* ...#.#.. */ 
 	0x1C, /* ...###.. */ 
-// Sprite[181] (offset:438)
+// Sprite[181] (offset:696)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -239,7 +301,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x10, /* ...#.... */ 
-// Sprite[182] (offset:446)
+// Sprite[182] (offset:704)
 	0x00, /* ........ */ 
 	0x3E, /* ..#####. */ 
 	0x20, /* ..#..... */ 
@@ -248,7 +310,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x02, /* ......#. */ 
 	0x02, /* ......#. */ 
 	0x3E, /* ..#####. */ 
-// Sprite[183] (offset:454)
+// Sprite[183] (offset:712)
 	0x00, /* ........ */ 
 	0x3E, /* ..#####. */ 
 	0x08, /* ....#... */ 
@@ -257,7 +319,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x08, /* ....#... */ 
 	0x08, /* ....#... */ 
 	0x08, /* ....#... */ 
-// Sprite[184] (offset:462)
+// Sprite[184] (offset:720)
 	0x08, /* ....#... */ 
 	0x08, /* ....#... */ 
 	0x08, /* ....#... */ 
@@ -266,7 +328,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x08, /* ....#... */ 
 	0x08, /* ....#... */ 
 	0x08, /* ....#... */ 
-// Sprite[185] (offset:470)
+// Sprite[185] (offset:728)
 	0x00, /* ........ */ 
 	0x3E, /* ..#####. */ 
 	0x20, /* ..#..... */ 
@@ -275,7 +337,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x22, /* ..#...#. */ 
 	0x22, /* ..#...#. */ 
 	0x3E, /* ..#####. */ 
-// Sprite[186] (offset:478)
+// Sprite[186] (offset:736)
 	0x00, /* ........ */ 
 	0x3E, /* ..#####. */ 
 	0x22, /* ..#...#. */ 
@@ -284,7 +346,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x22, /* ..#...#. */ 
 	0x22, /* ..#...#. */ 
 	0x22, /* ..#...#. */ 
-// Sprite[187] (offset:486)
+// Sprite[187] (offset:744)
 	0x00, /* ........ */ 
 	0x33, /* ..##..## */ 
 	0x2D, /* ..#.##.# */ 
@@ -293,7 +355,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x21, /* ..#....# */ 
 	0x21, /* ..#....# */ 
 	0x21, /* ..#....# */ 
-// Sprite[188] (offset:494)
+// Sprite[188] (offset:752)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -302,7 +364,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[189] (offset:502)
+// Sprite[189] (offset:760)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -311,7 +373,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[190] (offset:510)
+// Sprite[190] (offset:768)
 	0x60, /* .##..... */ 
 	0x70, /* .###.... */ 
 	0x78, /* .####... */ 
@@ -320,7 +382,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x7F, /* .####### */ 
 	0x7F, /* .####### */ 
 	0x00, /* ........ */ 
-// Sprite[191] (offset:518)
+// Sprite[191] (offset:776)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -329,7 +391,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[192] (offset:526)
+// Sprite[192] (offset:784)
 	0x06, /* .....##. */ 
 	0x0E, /* ....###. */ 
 	0x1E, /* ...####. */ 
@@ -338,7 +400,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x01, /* .......# */ 
 	0x01, /* .......# */ 
 	0x00, /* ........ */ 
-// Sprite[193] (offset:534)
+// Sprite[193] (offset:792)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
@@ -347,7 +409,7 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-// Sprite[194] (offset:542)
+// Sprite[194] (offset:800)
 	0x1F, /* ...##### */ 
 	0x1F, /* ...##### */ 
 	0x1F, /* ...##### */ 
@@ -356,8 +418,62 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
+// Sprite[195] (offset:808)
+	0x00, /* ........ */ 
+	0x3E, /* ..#####. */ 
+	0x22, /* ..#...#. */ 
+	0x22, /* ..#...#. */ 
+	0x22, /* ..#...#. */ 
+	0x22, /* ..#...#. */ 
+	0x22, /* ..#...#. */ 
+	0x3E, /* ..#####. */ 
+// Sprite[196] (offset:816)
+	0x00, /* ........ */ 
+	0x08, /* ....#... */ 
+	0x08, /* ....#... */ 
+	0x08, /* ....#... */ 
+	0x08, /* ....#... */ 
+	0x08, /* ....#... */ 
+	0x08, /* ....#... */ 
+	0x08, /* ....#... */ 
+// Sprite[197] (offset:824)
+	0x00, /* ........ */ 
+	0x22, /* ..#...#. */ 
+	0x32, /* ..##..#. */ 
+	0x2A, /* ..#.#.#. */ 
+	0x26, /* ..#..##. */ 
+	0x22, /* ..#...#. */ 
+	0x22, /* ..#...#. */ 
+	0x22, /* ..#...#. */ 
+// Sprite[198] (offset:832)
+	0x00, /* ........ */ 
+	0x3E, /* ..#####. */ 
+	0x20, /* ..#..... */ 
+	0x20, /* ..#..... */ 
+	0x20, /* ..#..... */ 
+	0x20, /* ..#..... */ 
+	0x20, /* ..#..... */ 
+	0x3E, /* ..#####. */ 
+// Sprite[199] (offset:840)
+	0x00, /* ........ */ 
+	0x3E, /* ..#####. */ 
+	0x22, /* ..#...#. */ 
+	0x02, /* ......#. */ 
+	0x0E, /* ....###. */ 
+	0x08, /* ....#... */ 
+	0x00, /* ........ */ 
+	0x08, /* ....#... */ 
+// Sprite[200] (offset:848)
+	0x00, /* ........ */ 
+	0x3C, /* ..####.. */ 
+	0x24, /* ..#..#.. */ 
+	0x24, /* ..#..#.. */ 
+	0x3E, /* ..#####. */ 
+	0x22, /* ..#...#. */ 
+	0x22, /* ..#...#. */ 
+	0x3E, /* ..#####. */ 
 };
-// Patterns size: 280 Bytes
+// Patterns size: 328 Bytes
 
 #ifndef D_g_DataScore_Colors
 	#define D_g_DataScore_Colors
@@ -365,77 +481,89 @@ D_g_DataScore_Patterns const unsigned char g_DataScore_Patterns[] =
 // Colors Table
 D_g_DataScore_Colors const unsigned char g_DataScore_Colors[] =
 {
-// Sprite[160] (offset:550)
+// Sprite[160] (offset:856)
 	0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 
-// Sprite[161] (offset:558)
+// Sprite[161] (offset:864)
 	0xCC, 0xFC, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 
-// Sprite[162] (offset:566)
+// Sprite[162] (offset:872)
 	0xCC, 0xFF, 0x33, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 
-// Sprite[163] (offset:574)
+// Sprite[163] (offset:880)
 	0xCC, 0xCF, 0xC3, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 
-// Sprite[164] (offset:582)
+// Sprite[164] (offset:888)
 	0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 
-// Sprite[165] (offset:590)
+// Sprite[165] (offset:896)
 	0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xCF, 
-// Sprite[166] (offset:598)
+// Sprite[166] (offset:904)
 	0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 
-// Sprite[167] (offset:606)
+// Sprite[167] (offset:912)
 	0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xCF, 0xFC, 
-// Sprite[168] (offset:614)
+// Sprite[168] (offset:920)
 	0xFC, 0xFC, 0xCF, 0xCF, 0xCF, 0xCF, 0xFC, 0xCF, 
-// Sprite[169] (offset:622)
+// Sprite[169] (offset:928)
 	0xFC, 0xFC, 0xFC, 0xCF, 0xCF, 0xCF, 0xFC, 0xFC, 
-// Sprite[170] (offset:630)
+// Sprite[170] (offset:936)
 	0xFC, 0xCF, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[171] (offset:638)
+// Sprite[171] (offset:944)
 	0xFC, 0xFC, 0xCF, 0xCF, 0xFC, 0xCF, 0xCF, 0xFC, 
-// Sprite[172] (offset:646)
+// Sprite[172] (offset:952)
 	0xFC, 0xCF, 0xCF, 0xCF, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[173] (offset:654)
+// Sprite[173] (offset:960)
 	0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 
-// Sprite[174] (offset:662)
+// Sprite[174] (offset:968)
 	0x91, 0x91, 0x91, 0x91, 0x91, 0x91, 0x91, 0x91, 
-// Sprite[175] (offset:670)
+// Sprite[175] (offset:976)
 	0x3C, 0x3C, 0xC3, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 
-// Sprite[176] (offset:678)
+// Sprite[176] (offset:984)
 	0x3C, 0x3C, 0x3C, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 
-// Sprite[177] (offset:686)
+// Sprite[177] (offset:992)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[178] (offset:694)
+// Sprite[178] (offset:1000)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[179] (offset:702)
+// Sprite[179] (offset:1008)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[180] (offset:710)
+// Sprite[180] (offset:1016)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[181] (offset:718)
+// Sprite[181] (offset:1024)
 	0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xFC, 
-// Sprite[182] (offset:726)
+// Sprite[182] (offset:1032)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[183] (offset:734)
+// Sprite[183] (offset:1040)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[184] (offset:742)
+// Sprite[184] (offset:1048)
 	0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 
-// Sprite[185] (offset:750)
+// Sprite[185] (offset:1056)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[186] (offset:758)
+// Sprite[186] (offset:1064)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[187] (offset:766)
+// Sprite[187] (offset:1072)
 	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
-// Sprite[188] (offset:774)
+// Sprite[188] (offset:1080)
 	0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 
-// Sprite[189] (offset:782)
-	0xCC, 0xCC, 0xCC, 0x22, 0xCC, 0xCC, 0xCC, 0xCC, 
-// Sprite[190] (offset:790)
+// Sprite[189] (offset:1088)
+	0xCC, 0xCC, 0xCC, 0xCC, 0x22, 0xCC, 0xCC, 0xCC, 
+// Sprite[190] (offset:1096)
 	0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0xFC, 0x11, 
-// Sprite[191] (offset:798)
+// Sprite[191] (offset:1104)
 	0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0x33, 0xFF, 0x11, 
-// Sprite[192] (offset:806)
+// Sprite[192] (offset:1112)
 	0x3C, 0x3C, 0x3C, 0x3C, 0x3C, 0xC3, 0xCF, 0x11, 
-// Sprite[193] (offset:814)
+// Sprite[193] (offset:1120)
 	0x11, 0x11, 0x11, 0x99, 0x99, 0x99, 0x99, 0x99, 
-// Sprite[194] (offset:822)
+// Sprite[194] (offset:1128)
 	0x91, 0x91, 0x91, 0x99, 0x99, 0x99, 0x99, 0x99, 
+// Sprite[195] (offset:1136)
+	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
+// Sprite[196] (offset:1144)
+	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
+// Sprite[197] (offset:1152)
+	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
+// Sprite[198] (offset:1160)
+	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
+// Sprite[199] (offset:1168)
+	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xCC, 0xFC, 
+// Sprite[200] (offset:1176)
+	0xCC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 
 };
-// Colors size: 280 Bytes
+// Colors size: 328 Bytes
 
-// Total size: 830 Bytes
+// Total size: 1184 Bytes

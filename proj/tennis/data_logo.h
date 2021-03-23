@@ -3,14 +3,14 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.11.1 on Mon Mar 15 23:37:20 2021
+// Data generated using CMSXimg 1.11.2 on Mon Mar 22 18:09:14 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     logo.png
 //  - Mode:           Graphic Mode 2
 //  - Start position: 32, 16
 //  - Sprite size:    152, 80 (gap: 0, 0)
-//  - Sprite count:   19, 10
+//  - Sprite count:   1, 1
 //  - Color count:    256 (Transparent: #0000)
 //  - Compressor:     None
 //  - Skip empty:     FALSE

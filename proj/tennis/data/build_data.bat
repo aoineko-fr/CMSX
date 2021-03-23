@@ -7,7 +7,21 @@
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_referee.h -mode gm2   -def	-name g_DataReferee -pos 0 0   -size 96  48  -offset 208
 
-..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_board.h   -mode gm2   -def	-name g_DataScore   -pos 0 56  -size 216 80  -offset 160
+REM ..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm2   -def	-name g_DataScore   -pos 0 0   -size 216 80  -offset 160
+..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm2   -def    -name g_DataScore   -pos 0 0   -size 216 80  -offset 160 ^
+	-l gm2 0 88 112 96 ^
+	-l gm2 112 80 72 24 ^
+	-l gm2 184 80 72 24 ^
+	-l gm2 112 104 72 16 ^
+	-l gm2 184 104 72 16
+
+@echo.
+@echo -----------------------------------------------------------------------------
+@echo  CONVERT FONTs
+
+..\..\..\tools\CMSXimg\CMSXimg.exe font.png -out ..\data_font.h    -pos 0 0   -size 8 8 -gap 0 0 -num 16 4 -trans 0x000000 -bpc 1 -def -name g_DataFont    -font 8 8 ! _ -skip
+
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png -out ..\data_scrfont.h -pos 0 136 -size 8 8 -gap 0 0 -num 15 1 -trans 0x000000 -bpc 1 -def -name g_DataSrcFont -font 8 8 0 0x3E
 
 @echo.
 @echo -----------------------------------------------------------------------------
@@ -16,6 +30,8 @@
 ..\..\..\tools\CMSXimg\CMSXimg.exe logo_ball.png -out ..\data_logo_ball.h -mode sprt -def -name g_DataLogoBall -pos 164 41 -size 16 16 -num 2 2 ^
 	-l i16 0 0 1 1 0xDED087 ^
 	-l i16 0 0 1 1 0xB95E51
+
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_net.h     -mode sprt -def -name g_DataNet     -pos 0 200 -size 16 16 -num 7 1 -l i16 0 0 1 1 0xFFFFFF 0xCCCCCC
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_racket.h  -mode bmp  -def -name g_DataRacket  -pos 0 192 -size 8 8 -num 16 1 -bpc 1 -trans 0xFF00FF
 
@@ -68,18 +84,12 @@
 @echo -----------------------------------------------------------------------------
 @echo  CONVERT SFX
 
-..\..\..\tools\CMSXbin\CMSXbin.exe ayfx_bank.afb -o ..\data_sfx.h -ad
+..\..\..\tools\CMSXbin\CMSXbin.exe ayfx_bank.afb -o ..\data_sfx.h -t g_DataSFX -ad -def
 
 @echo.
 @echo -----------------------------------------------------------------------------
 @echo  CONVERT MUSIC
 
-..\..\..\tools\CMSXbin\CMSXbin.exe intro.pt3 -o ..\data_music.h -skip 0 100 -ad
-
-@echo.
-@echo -----------------------------------------------------------------------------
-@echo  CONVERT MUSIC
-
-..\..\..\tools\CMSXimg\CMSXimg.exe fs_font_gfx.png -out ..\data_font.h -pos 0 0 -size 8 8 -gap 0 0 -num 16 4 -trans 0x000000 -bpc 1 -def -name g_Font_FS -skip -font 8 8 ! _
+..\..\..\tools\CMSXbin\CMSXbin.exe intro.pt3 -o ..\data_music.h -t g_DataMusic -skip 0 100 -ad -pt3 -def
 
 pause
