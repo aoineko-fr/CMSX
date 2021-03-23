@@ -30,9 +30,12 @@ inline void Print_SetFontEx(u8 patternX, u8 patternY, u8 sizeX, u8 sizeY, u8 fir
 #if (USE_PRINT_TEXT)
 //-----------------------------------------------------------------------------
 /// Set cursor position
-inline void Print_SelectTextFont(u8 offset)
+inline void Print_SelectTextFont(const u8* font, u8 offset)
 {
 	g_PrintData.PatternOffset = offset;
+	Print_SetFontEx(8, 8, 1, 1, font[2], font[3], font+4);
+	// Print_Initialize();
+	// Print_SetMode(PRINT_MODE_TEXT);
 }
 #endif
 

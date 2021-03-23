@@ -17,9 +17,11 @@
 .globl  s__INITIALIZER
 .globl  s__HEAP
 
-HIMEM = #0xFC4A
-PPI_A = #0xA8
-VDP_S = #0x99
+HIMEM  = #0xFC4A
+ROMVER = #0x002B
+MSXVER = #0x002D
+PPI_A  = #0xA8
+VDP_S  = #0x99
 
 ;------------------------------------------------------------------------------
 .area	_HEADER (ABS)
@@ -90,7 +92,13 @@ init:
 	di
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
-	
+
+	; Backup Page 0 (Main-ROM) information
+	ld		a, (ROMVER)
+	ld		(#_g_VersionROM), a
+	ld		a, (MSXVER)
+	ld		(#_g_VersionMSX), a
+
 	; Set Page 0 & 2 slot equal to Page 1 slot
 	in		a, (PPI_A)				; Get primary slots info [P3|P2|P1|P0]
 	ld		b, a					; Backup full slots info
@@ -146,6 +154,10 @@ start:
 .area	_DATA
 _g_HeapStartAddress::
 	.ds 2
+_g_VersionROM::
+	.ds 1
+_g_VersionMSX::
+	.ds 1
 
 .area	_INITIALIZED
 .area	_BSEG

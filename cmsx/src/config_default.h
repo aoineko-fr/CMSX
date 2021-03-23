@@ -133,12 +133,6 @@
 	#define USE_GAME_STATE				1
 #endif
 
-// USE_GAME_STATE_TRANSITION
-#ifndef USE_GAME_STATE_TRANSITION
-	#warning USE_GAME_STATE_TRANSITION is not defined in "cmsx_config.h"! Default value will be used: 1
-	#define USE_GAME_STATE_TRANSITION	1
-#endif
-
 // USE_GAME_VSYNC
 #ifndef USE_GAME_VSYNC
 	#warning USE_GAME_VSYNC is not defined in "cmsx_config.h"! Default value will be used: 1

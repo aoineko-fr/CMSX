@@ -186,11 +186,12 @@ enum VDP_MODE
 	VDP_MODE_MAX,
 };
 
+/// VDP version enumaration
 enum VDP_VERSION
 {
-	VDP_VERSION_TMS9918A = 0,	// MSX1
-	VDP_VERSION_V9938,			// MSX2
-	VDP_VERSION_V9958,			// MSX2+
+	VDP_VERSION_TMS9918A = 0,	// MSX1 VDP
+	VDP_VERSION_V9938,			// MSX2 VDP
+	VDP_VERSION_V9958,			// MSX2+/tR VDP
 };
 
 //-----------------------------------------------------------------------------
@@ -376,7 +377,24 @@ void VDP_SetSpriteData(u8 index, const u8* data);
 ///
 #define VDP_SPRITE_DISABLE_SM1	208			///> This sprite and all lower priority sprites will be disabled (Sprite Mode 1)
 #define VDP_SPRITE_DISABLE_SM2	216			///> This sprite and all lower priority sprites will be disabled (Sprite Mode 1)
+#define VDP_SPRITE_HIDE			213			///> 
 void VDP_HideSpriteFrom(u8 index) __FASTCALL;
+
+//-----------------------------------------------------------------------------
+// GRAPH MODE 2
+//-----------------------------------------------------------------------------
+#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
+///
+void VDP_FillScreen_GM2(u8 value) __FASTCALL;
+///
+void VDP_LoadPattern_GM2(const u8* src, u8 count, u8 offset);
+///
+void VDP_LoadColor_GM2(const u8* src, u8 count, u8 offset);
+///
+void VDP_WriteLayout_GM2(const u8* src, u8 dx, u8 dy, u8 nx, u8 ny);
+///
+void VDP_FillLayout_GM2(u8 value, u8 dx, u8 dy, u8 nx, u8 ny);
+#endif
 
 //-----------------------------------------------------------------------------
 // VDP REGISTERS

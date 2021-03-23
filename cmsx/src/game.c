@@ -82,10 +82,8 @@ void Game_MainLoop()
 //-----------------------------------------------------------------------------
 // RAM DATA
 
-State* g_CurrentState = null;
-#if (USE_GAME_STATE_TRANSITION)
-State* g_NextState = null;
-#endif
+State g_State = null;
+State g_PrevState = null;
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
@@ -93,35 +91,30 @@ State* g_NextState = null;
 //-----------------------------------------------------------------------------
 /// Set the next state (change will be effective at the next state update)
 /// @param		newState	The new state to start (can be NULL to desactivate state-machine)
-void Game_SetState(State* newState) __FASTCALL
+void Game_SetState(State newState) __FASTCALL
 {
-	#if (USE_GAME_STATE_TRANSITION)
-		g_NextState = newState;
-	#else
-		g_CurrentState = newState;
-	#endif
+	g_PrevState = g_State;
+	g_State = newState;
+}
+
+//-----------------------------------------------------------------------------
+/// Restore the previous state
+void Game_RestoreState()
+{
+	State prev = g_PrevState;
+	g_PrevState = g_State;
+	g_State = prev;
 }
 
 //-----------------------------------------------------------------------------
 /// Check state transition and update current state
 void Game_UpdateState()
 {
-	if(g_CurrentState != null)
-		g_CurrentState->Update();	
-
-	#if (USE_GAME_STATE_TRANSITION)
-		if(g_NextState != g_CurrentState)
-		{
-			if(g_CurrentState != null)
-				if(g_CurrentState->Finish != null)
-					g_CurrentState->Finish();
-					
-			g_CurrentState = g_NextState;
-			if(g_CurrentState != null)
-				if(g_CurrentState->Start != null)
-					g_CurrentState->Start();	
-		}
-	#endif	
+	bool bFinish = false;
+	while((g_State != null) && !bFinish)
+	{
+		bFinish = g_State();
+	}	
 }
 
 #endif // (USE_GAME_STATE)

@@ -1907,3 +1907,70 @@ void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 	__endasm;
 }
 */
+
+
+//=============================================================================
+//
+//   G R A P H   M O D E   2
+//
+//=============================================================================
+
+#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
+
+//-----------------------------------------------------------------------------
+///
+void VDP_FillScreen_GM2(u8 value) __FASTCALL
+{
+	VDP_FillVRAM(value, g_ScreenLayoutLow, g_ScreenLayoutHigh, 32*24);
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_LoadPattern_GM2(const u8* src, u8 count, u8 offset)
+{
+	u16 dst = g_ScreenPatternLow + (offset * 8);
+	VDP_WriteVRAM(src, dst, g_ScreenPatternHigh, count * 8);
+	dst += 0x800;
+	VDP_WriteVRAM(src, dst, g_ScreenPatternHigh, count * 8);
+	dst += 0x800;
+	VDP_WriteVRAM(src, dst, g_ScreenPatternHigh, count * 8);
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_LoadColor_GM2(const u8* src, u8 count, u8 offset)
+{
+	u16 dst = g_ScreenColorLow + (offset * 8);
+	VDP_WriteVRAM(src, dst, g_ScreenColorHigh, count * 8);
+	dst += 0x800;
+	VDP_WriteVRAM(src, dst, g_ScreenColorHigh, count * 8);
+	dst += 0x800;
+	VDP_WriteVRAM(src, dst, g_ScreenColorHigh, count * 8);
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_WriteLayout_GM2(const u8* src, u8 dx, u8 dy, u8 nx, u8 ny)
+{
+	u16 dst = g_ScreenLayoutLow + (dy * 32) + dx;
+	for(u8 y = 0; y < ny; ++y)
+	{
+		VDP_WriteVRAM(src, dst, g_ScreenLayoutHigh, nx);
+		src += nx;
+		dst += 32;
+	}
+}
+
+//-----------------------------------------------------------------------------
+///
+void VDP_FillLayout_GM2(u8 value, u8 dx, u8 dy, u8 nx, u8 ny)
+{
+	u16 dst = g_ScreenLayoutLow + (dy * 32) + dx;
+	for(u8 y = 0; y < ny; ++y)
+	{
+		VDP_FillVRAM(value, dst, g_ScreenLayoutHigh, nx);
+		dst += 32;
+	}
+}
+
+#endif

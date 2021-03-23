@@ -18,6 +18,10 @@ rem * TARGET SETTINGS                                                         *
 rem ***************************************************************************
 call %LibDir%\script\target_config.cmd
 
+if defined %ForceDataAddr% do (
+	echo Force RAM address to %ForceDataAddr%
+	set DataAddr=%ForceDataAddr%
+)
 
 rem ***************************************************************************
 rem * MODULES                                                                 *

@@ -52,20 +52,16 @@ void Game_MainLoop();
 //-----------------------------------------------------------------------------
 // DFINES
 
-typedef struct
-{
-	callback Update;	// Function to be called on state update (mandatory: CAN'T be NULL)
-#if (USE_GAME_STATE_TRANSITION)
-	callback Start;		// Function to be called on state start (optional: can be NULL)
-	callback Finish;	// Function to be called on state finish (optional: can be NULL)
-#endif
-} State;
+// Functions
+typedef bool (*State)(void);	///< Callback default signature
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
 
 /// Set the next state (change will be effective at the next state update)
-void Game_SetState(State* newState) __FASTCALL;
+void Game_SetState(State newState) __FASTCALL;
+/// Restore the previous state
+void Game_RestoreState();
 /// Check state transition and update current state
 void Game_UpdateState();
 
