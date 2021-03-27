@@ -31,7 +31,11 @@ REM ..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm
 	-l i16 0 0 1 1 0xDED087 ^
 	-l i16 0 0 1 1 0xB95E51
 
-..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_net.h     -mode sprt -def -name g_DataNet     -pos 0 200 -size 16 16 -num 7 1 -l i16 0 0 1 1 0xFFFFFF 0xCCCCCC
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_net.h     -mode sprt -def -name g_DataNet     -pos 0 200 -size 16 16 -num 5 1 -l i16 0 0 1 1 0xFFFFFF 0xCCCCCC
+
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_points.h  -mode sprt -def -name g_DataPoints  -pos 0 232 -size 16 16 -num 8 1 -l i16 0 0 1 1 0xFFFFFF
+
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_event.h   -mode sprt -def -name g_DataEvent   -pos 0 248 -size 16 16 -num 6 3 -l i16 0 0 1 1 0xFFFFFF
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_racket.h  -mode bmp  -def -name g_DataRacket  -pos 0 192 -size 8 8 -num 16 1 -bpc 1 -trans 0xFF00FF
 
@@ -39,10 +43,6 @@ REM ..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm
 	-l i8 0 0 1 1 0x010101 ^
 	-l i8 0 0 1 1 0x010101 0x706944 ^
 	-l i8 0 0 1 1 0xDED087 0x706944
-
-..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_score.h   -mode sprt -def -name g_DataScore   -pos 0 200 -size 16 16 -num 2 3 ^
-	-l i16 0 0 1 1 0x010101 ^
-	-l i16 0 0 1 1 0xFFFFFF
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_player1.h -mode sprt -def -name g_DataPlayer1 -pos 0 0 -size 16 24 -num 9 3 ^
 	-l i16 0  0 1 1 0x010101 ^
