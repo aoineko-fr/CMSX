@@ -1,14 +1,14 @@
 @echo -----------------------------------------------------------------------------
 @echo  CONVERT SC2 IMAGES
 
-..\..\..\tools\CMSXimg\CMSXimg.exe logo.png  -out ..\data_logo.h    -mode gm2   -def	-name g_DataLogo    -pos 32 16 -size 152 80  -offset 0
+..\..\..\tools\CMSXimg\CMSXimg.exe logo.png  -out ..\data_logo.h    -mode gm2   -def	-compress rlep	-name g_DataLogo    -pos 32 16 -size 152 80  -offset 0
                                                                                                             
-..\..\..\tools\CMSXimg\CMSXimg.exe court.png -out ..\data_court.h   -mode gm2   -def	-name g_DataCourt   -pos 24 24 -size 216 144 -offset 0
+..\..\..\tools\CMSXimg\CMSXimg.exe court.png -out ..\data_court.h   -mode gm2   -def	-compress rlep	-name g_DataCourt   -pos 24 24 -size 216 144 -offset 0
 
-..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_referee.h -mode gm2   -def	-name g_DataReferee -pos 0 0   -size 96  48  -offset 208
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\data_referee.h -mode gm2   -def	-compress rlep	-name g_DataReferee -pos 0 0   -size 96  48  -offset 208
 
 REM ..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm2   -def	-name g_DataScore   -pos 0 0   -size 216 80  -offset 160
-..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm2   -def    -name g_DataScore   -pos 0 0   -size 216 80  -offset 160 ^
+..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm2   -def    -compress rlep	-name g_DataScore   -pos 0 0   -size 216 80  -offset 160 ^
 	-l gm2 0 88 112 96 ^
 	-l gm2 112 80 72 24 ^
 	-l gm2 184 80 72 24 ^
@@ -37,12 +37,9 @@ REM ..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\data_board.h   -mode gm
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_event.h   -mode sprt -def -name g_DataEvent   -pos 0 248 -size 16 16 -num 6 3 -l i16 0 0 1 1 0xFFFFFF
 
-..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_racket.h  -mode bmp  -def -name g_DataRacket  -pos 0 192 -size 8 8 -num 16 1 -bpc 1 -trans 0xFF00FF
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_racket.h  -mode bmp  -def -name g_DataRacket  -pos 128 200 -size 8 8 -num 3 1 -bpc 1 -trans 0xFF897D
 
-..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_ball.h    -mode sprt -def -name g_DataBall    -pos 144 0 -size 8 8 -gap 8 0 -num 5 1 ^
-	-l i8 0 0 1 1 0x010101 ^
-	-l i8 0 0 1 1 0x010101 0x706944 ^
-	-l i8 0 0 1 1 0xDED087 0x706944
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\data_ball.h    -mode bmp  -def -name g_DataBall    -pos 128 192 -size 8 8 -num 10 1 -bpc 1 -trans 0xFF897D
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\data_player1.h -mode sprt -def -name g_DataPlayer1 -pos 0 0 -size 16 24 -num 9 3 ^
 	-l i16 0  0 1 1 0x010101 ^

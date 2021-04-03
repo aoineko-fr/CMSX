@@ -1,0 +1,31 @@
++--+--+--+--+--+--+--+--+
+|  T  |        N        |
++--+--+--+--+--+--+--+--+
+
+T:	Type of pattern (2-bits)
+	0: N blocks of 0x00
+	1: N blocks of the following byte value
+	2: N blocks of the following 2 bytes values
+	3: N blocks of uncompressed data
+N:	Number of repetition of the blocks (6-bits: 1-64)
+
+0.2.09
+- Fixed bug with menu trigger than was not working with standard Bool and Int values
+- Update ball and racket sprites (and remove unused data)
+- Added score board ball sprite (to mark actual server)
+- Added score board stats (name + points)
+- Adjusted flat shot parameters
+- Removed per-frame ball sprites loading
+
+0.2.08
+- Added Pattern-based-RLE data uncompression
+- Fixed score sprite bug (glitch after returning to main menu during sprite display)
+- Removed unused lib (MSXi, Draw and Bios)
+
+0.2.07
+- Reduced event delay when referee is not displayed
+- Set the name of the winner of an event
+- Updated event graphics
+- Set default input from key pressed on press-a-key page
+- Allow any input on menu
+- Changed compile optim to file size

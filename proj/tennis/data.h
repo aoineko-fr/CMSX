@@ -42,6 +42,13 @@
 #endif
 #include "data_music.h"
 
+// Menu title ball
+#if (TARGET_TYPE == TARGET_TYPE_ROM)
+	#define ADDR_DATALOGOBALL		(ADDR_DATAMUSIC + sizeof(g_DataMusic))
+	#define D_g_DataLogoBall		__at(ADDR_DATALOGOBALL)
+#endif
+#include "data_logo_ball.h"
+
 //=============================================================================
 //
 //  ROM DATA - PAGE 1-2
@@ -51,21 +58,18 @@
 // Menu title (GM2 tables)
 #include "data_logo.h"
 
-// Menu title ball
-#include "data_logo_ball.h"
-
 // Court background (GM2 tables)
 #include "data_court.h"
-
-// Ball launcher sprites
-#include "data_launcher0.h"
-#include "data_launcher1.h"
 
 // Score board
 #include "data_board.h"
 
 // Pentaru referee
 #include "data_referee.h"
+
+// Ball launcher sprites
+#include "data_launcher0.h"
+#include "data_launcher1.h"
 
 // Fonts
 #include "data_font.h"

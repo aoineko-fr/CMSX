@@ -24,7 +24,7 @@ rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=tennis
-SET ModuleList=bios,vdp,print,input,memory,math,draw,game,msxi\msxi_unpack,pt3\pt3_player,ayfx\ayfx_player
+SET ModuleList=vdp,print,input,memory,math,game,pt3\pt3_player,ayfx\ayfx_player
 rem  Target:
 rem  - BIN			.bin	BASIC binary program (8000h~)
 rem  - ROM16		.rom	see ROM16P1

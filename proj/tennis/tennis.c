@@ -27,7 +27,7 @@
 
 //-----------------------------------------------------------------------------
 // DEFINES
-#define VERSION						"V0.2.07"
+#define VERSION						"V0.2.09"
 #define DEBUG						1
 #define MSX2_ENHANCE				0
 
@@ -156,6 +156,8 @@ enum ACTION
 	ACTION_SHOOT_R,
 	ACTION_SHOOT_L,
 	ACTION_SMASH,
+	ACTION_THROW,
+	ACTION_SERVE,
 	ACTION_MAX,
 };
 
@@ -167,47 +169,54 @@ enum FUNCT
 	FUNCT_SHOOT_R,
 	FUNCT_SHOOT_L,
 	FUNCT_SMASH,
+	FUNCT_THROW,
+	FUNCT_SERVE,
 	FUNCT_MAX,
 };
 
 /// Sprite list
 enum SPRITE
 {
-	SPRITE_PLY_BOT_BLACK_H = 0,
-	SPRITE_PLY_BOT_BLACK_L,
-	SPRITE_PLY_BOT_RACKET,
+	SPRITE_PLY_BOT_BLACK_H = 0,			// 0
+	SPRITE_PLY_BOT_BLACK_L,				// 1
+	SPRITE_PLY_BOT_RACKET,				// 2
 
-	SPRITE_BALL_OUTLINE,
+	SPRITE_BALL_OUTLINE,				// 3
 
-	SPRITE_PLY_BOT_CLOTH,
-	SPRITE_PLY_BOT_WHITE_H,
-	SPRITE_PLY_BOT_WHITE_L,
-	SPRITE_PLY_BOT_SKIN_H,
-	SPRITE_PLY_BOT_SKIN_L,
+	SPRITE_PLY_BOT_CLOTH,				// 4
+	SPRITE_PLY_BOT_WHITE_H,				// 5
+	SPRITE_PLY_BOT_WHITE_L,				// 6
+	SPRITE_PLY_BOT_SKIN_H,				// 7
+	SPRITE_PLY_BOT_SKIN_L,				// 8
 
-	SPRITE_NET_LEFT,
-	SPRITE_NET_RIGHT, 
-	SPRITE_NET_GRAY,
+	SPRITE_NET_LEFT,					// 9
+	SPRITE_NET_RIGHT, 					// 10
+	SPRITE_NET_GRAY,					// 11
 
-	SPRITE_PLY_TOP_BLACK_H,
-	SPRITE_PLY_TOP_BLACK_L,
-	SPRITE_PLY_TOP_RACKET,
+	SPRITE_PLY_TOP_BLACK_H,				// 12
+	SPRITE_PLY_TOP_BLACK_L,				// 13
+	SPRITE_PLY_TOP_RACKET,				// 14
 
-	SPRITE_PLY_TOP_CLOTH,
-	SPRITE_PLY_TOP_WHITE_H,
-	SPRITE_PLY_TOP_WHITE_L,
-	SPRITE_PLY_TOP_SKIN_H,
-	SPRITE_PLY_TOP_SKIN_L,
+	SPRITE_PLY_TOP_CLOTH,				// 15
+	SPRITE_PLY_TOP_WHITE_H,				// 16
+	SPRITE_PLY_TOP_WHITE_L,				// 17
+	SPRITE_PLY_TOP_SKIN_H,				// 18
+	SPRITE_PLY_TOP_SKIN_L,				// 19
 
-	SPRITE_BALL_BODY,
-	SPRITE_BALL_SHADOW,
+	SPRITE_BALL_BODY,					// 20
+	SPRITE_BALL_SHADOW,					// 21
 
-	SPRITE_SCORE_1,
-	SPRITE_SCORE_2,
-	SPRITE_SCORE_3,
-	SPRITE_SCORE_4,
-	SPRITE_SCORE_5,
-	SPRITE_SCORE_6,
+	SPRITE_SCORE_1,						// 22
+	SPRITE_SCORE_2,						// 23
+	SPRITE_SCORE_3,						// 24
+	SPRITE_SCORE_4,						// 25
+	SPRITE_SCORE_5,						// 26
+	SPRITE_SCORE_6,						// 27
+
+	SPRITE_SCORE_BALL_1,                // 28
+	SPRITE_SCORE_BALL_2,                // 29
+	SPRITE_SCORE_BALL_3,                // 30
+	SPRITE_SCORE_BALL_4,                // 31
 
 	SPRITE_MAX,
 
@@ -293,6 +302,21 @@ enum BIND
 	BIND_MAX,
 };
 
+enum CONTROL
+{
+	CONTROL_P1 = 0,
+	CONTROL_P2,
+	CONTROL_AI
+};
+
+enum MODE
+{
+	MODE_1P = 0,
+	MODE_2P,
+	MODE_TRAIN
+};
+
+
 //-----------------------------------------------------------------------------
 // TYPES
 
@@ -318,10 +342,14 @@ typedef struct
 typedef struct
 {
 	const c8*   name;
-	InputCB		inUp;
-	InputCB		inDown;
-	InputCB		inLeft;
-	InputCB		inRight;
+	InputCB		inHoldUp;
+	InputCB		inHoldDown;
+	InputCB		inHoldLeft;
+	InputCB		inHoldRight;
+	InputCB		inPressUp;
+	InputCB		inPressDown;
+	InputCB		inPressLeft;
+	InputCB		inPressRight;
 	InputCB		inButton1;
 	InputCB		inButton2;
 } Binding;
@@ -332,6 +360,7 @@ typedef struct
 	Vector16	pos;
 	Vector8		srcPos;	// Ball screen position (Q8.0 format)
 	u8			side;
+	u8			control;
 	u8			action;
 	u8			counter;
 	u8			shot;
@@ -432,32 +461,48 @@ const char* Menu_SetInput(u8 op, i8 value);
 const char* Menu_SetMusic(u8 op, i8 value);
 
 // Input callback
-bool KB1_Up();
-bool KB1_Down();
-bool KB1_Left();
-bool KB1_Right();
+bool KB1_Hold_Up();
+bool KB1_Hold_Down();
+bool KB1_Hold_Left();
+bool KB1_Hold_Right();
+bool KB1_Press_Up();
+bool KB1_Press_Down();
+bool KB1_Press_Left();
+bool KB1_Press_Right();
 bool KB1A_Button1();
 bool KB1A_Button2();
 bool KB1B_Button1();
 bool KB1B_Button2();
 bool KB1C_Button1();
 bool KB1C_Button2();
-bool KB2_Up();
-bool KB2_Down();
-bool KB2_Left();
-bool KB2_Right();
+bool KB2_Hold_Up();
+bool KB2_Hold_Down();
+bool KB2_Hold_Left();
+bool KB2_Hold_Right();
+bool KB2_Press_Up();
+bool KB2_Press_Down();
+bool KB2_Press_Left();
+bool KB2_Press_Right();
 bool KB2_Button1();
 bool KB2_Button2();
-bool Joy1_Up();
-bool Joy1_Down();
-bool Joy1_Left();
-bool Joy1_Right();
+bool Joy1_Hold_Up();
+bool Joy1_Hold_Down();
+bool Joy1_Hold_Left();
+bool Joy1_Hold_Right();
+bool Joy1_Press_Up();
+bool Joy1_Press_Down();
+bool Joy1_Press_Left();
+bool Joy1_Press_Right();
 bool Joy1_Button1();
 bool Joy1_Button2();
-bool Joy2_Up();
-bool Joy2_Down();
-bool Joy2_Left();
-bool Joy2_Right();
+bool Joy2_Hold_Up();
+bool Joy2_Hold_Down();
+bool Joy2_Hold_Left();
+bool Joy2_Hold_Right();
+bool Joy2_Press_Up();
+bool Joy2_Press_Down();
+bool Joy2_Press_Left();
+bool Joy2_Press_Right();
 bool Joy2_Button1();
 bool Joy2_Button2();
 
@@ -531,6 +576,17 @@ const Anim g_FramesSmash[] =
 	{ 13,  8, FUNCT_SMASH }, // do smash
 	{ 14, 16, FUNCT_NONE },
 };
+const Anim g_FramesThrow[] = 
+{
+	{ 19, 4,  FUNCT_NONE },
+	{ 12, 64, FUNCT_THROW }, // do throw
+};
+const Anim g_FramesServe[] = 
+{
+	{ 13,  8, FUNCT_SERVE }, // do serve
+	{ 14, 16, FUNCT_NONE },
+};
+
 
 // Actions list
 const Action g_Actions[] =
@@ -542,6 +598,8 @@ const Action g_Actions[] =
 	/* ACTION_SHOOT_R */ { g_FramesShootR, numberof(g_FramesShootR), 0, 0 },
 	/* ACTION_SHOOT_L */ { g_FramesShootL, numberof(g_FramesShootL), 0, 0 },
 	/* ACTION_SMASH   */ { g_FramesSmash,  numberof(g_FramesSmash),  0, 0 },
+	/* ACTION_THROW   */ { g_FramesThrow,  numberof(g_FramesThrow),  0, 0 },
+	/* ACTION_SERVE   */ { g_FramesServe,  numberof(g_FramesServe),  0, 0 },
 };
 
 // Direction index
@@ -617,7 +675,7 @@ const MenuEntry g_MenuMain[] =
 // Menu 1 - Match 1P
 const MenuEntry g_MenuMatch1P[] =
 {
-	{ "START>",		MENU_ITEM_ACTION, Menu_StartMatch, 0 },
+	{ "START>",		MENU_ITEM_ACTION, Menu_StartMatch, MODE_1P },
 	{ "SETS",		MENU_ITEM_ACTION, Menu_SetSets, 0 },
 	{ "AI",			MENU_ITEM_ACTION, Menu_SetAI, 0 },
 	{ "INPUT",		MENU_ITEM_ACTION, Menu_SetInput, 0 },
@@ -632,7 +690,7 @@ const MenuEntry g_MenuMatch1P[] =
 // Menu 2 - Match 2P
 const MenuEntry g_MenuMatch2P[] =
 {
-	{ "START>",		MENU_ITEM_ACTION, Menu_StartMatch, 0 },
+	{ "START>",		MENU_ITEM_ACTION, Menu_StartMatch, MODE_2P },
 	{ "SETS",		MENU_ITEM_ACTION, Menu_SetSets, 0 },
 	{ "P1 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 0 },
 	{ "P2 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 1 },
@@ -647,7 +705,7 @@ const MenuEntry g_MenuMatch2P[] =
 // Menu 3 - Training
 const MenuEntry g_MenuTraining[] =
 {
-	{ "START>",		MENU_ITEM_ACTION, Menu_StartTrain, 0 },
+	{ "START>",		MENU_ITEM_ACTION, Menu_StartTrain, MODE_TRAIN },
 	{ "SIDE",		MENU_ITEM_ACTION, Menu_SetSide, 0 },
 	{ "SHOT",		MENU_ITEM_ACTION, Menu_SetShot, 0 },
 	{ "INPUT",		MENU_ITEM_ACTION, Menu_SetInput, 0 },
@@ -707,7 +765,7 @@ const Shot g_Shots[] =
 	// Normal shot - Long
 	{ PX_TO_UNIT(3.5), PX_TO_UNIT(3.0), SPIN_FLAT },
 	// Normal shot - Med
-	{ PX_TO_UNIT(3.0), PX_TO_UNIT(2.7), SPIN_FLAT },
+	{ PX_TO_UNIT(2.7), PX_TO_UNIT(3.0), SPIN_FLAT },
 	// Normal shot - Short
 	{ PX_TO_UNIT(2.0), PX_TO_UNIT(3.0), SPIN_FLAT },
 	// Normal shot - Smash
@@ -744,17 +802,17 @@ const TrainSide g_TrainSideData[] =
 const Binding g_Binding[BIND_MAX] =
 {
 	// BIND_KB1A - Up, Left, Down, Right + Space, N
-	{ "[]SPACE",	KB1_Up,	KB1_Down,	KB1_Left,	KB1_Right,	KB1A_Button1,	KB1A_Button2 },
-	// BIND_KB1B - Up, Left, Down, Right + Shift, Ctrl
-	{ "[]SHFT",		KB1_Up,	KB1_Down,	KB1_Left,	KB1_Right,	KB1B_Button1,	KB1B_Button2 },
-	// BIND_KB1C - Up, Left, Down, Right + Return, BS
-	{ "[]RET",		KB1_Up,	KB1_Down,	KB1_Left,	KB1_Right,	KB1C_Button1,	KB1C_Button2 },
-	// BIND_KB2  - E, S, D, F + Shift, Ctrl
-	{ "ESDF+SHFT",	KB2_Up,	KB2_Down,	KB2_Left,	KB2_Right,	KB1B_Button1,	KB1B_Button2 },
+	{ "[]SPACE",	KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1A_Button1,	KB1A_Button2 },
+	// BIND_KB1B - Up, Left, Down, Right + Shift, Ctrl			
+	{ "[]SHFT",		KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1B_Button1,	KB1B_Button2 },
+	// BIND_KB1C - Up, Left, Down, Right + Return, BS			
+	{ "[]RET",		KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1C_Button1,	KB1C_Button2 },
+	// BIND_KB2  - E, S, D, F + Shift, Ctrl			
+	{ "ESDF+SHFT",	KB2_Hold_Up,	KB2_Hold_Down,	KB2_Hold_Left,	KB2_Hold_Right,		KB2_Press_Up,	KB2_Press_Down,		KB2_Press_Left,		KB2_Press_Right,	KB1B_Button1,	KB1B_Button2 },
 	// BIND_JOY1 - Joystick 1 stick + triggers
-	{ "^1",			Joy1_Up,	Joy1_Down,	Joy1_Left,	Joy1_Right,	Joy1_Button1,	Joy1_Button2 },
+	{ "^1",			Joy1_Hold_Up,	Joy1_Hold_Down,	Joy1_Hold_Left,	Joy1_Hold_Right,	Joy1_Press_Up,	Joy1_Press_Down,	Joy1_Press_Left,	Joy1_Press_Right,	Joy1_Button1,	Joy1_Button2 },
 	// BIND_JOY2 - Joystick 2 stick + triggers
-	{ "^2",			Joy2_Up,	Joy2_Down,	Joy2_Left,	Joy2_Right,	Joy2_Button1,	Joy2_Button2 },
+	{ "^2",			Joy2_Hold_Up,	Joy2_Hold_Down,	Joy2_Hold_Left,	Joy2_Hold_Right,	Joy2_Press_Up,	Joy2_Press_Down,	Joy2_Press_Left,	Joy2_Press_Right,	Joy2_Button1,	Joy2_Button2 },
 };
 
 ///
@@ -784,6 +842,7 @@ u8			g_FlickerShadow = true;
 u8			g_PlayMusic = false;
 u8			g_PlaySFX = false;
 u8			g_InputBinding[2];
+u8			g_GameMode;
 
 // System
 u16			g_SpritePattern[2];
@@ -816,11 +875,17 @@ u8			g_EventID;				///< Match event (@see EVENT enum)
 u8			g_EventSub;				///< Match event (@see EVENT enum)
 u8			g_EventTimer;			///< Match event timer (event start when timer is equal to 0)
 u8			g_EventFrame;
+u8			g_Winner;
 u8			g_Points[2];
 u8			g_Games[5][2];
 u8			g_Sets[2];
 u8			g_CurSet;
 u8			g_NumSet;
+u8			g_Server;
+bool		g_Serving;
+bool		g_OddPoint;
+u8			g_TotalPoints[2];
+u8			g_TotalFault[2];
 
 // Training
 u8			g_TrainScore;
@@ -850,7 +915,10 @@ u8			g_CrediScrollCnt = 0;
 const c8* Menu_StartMatch(u8 op, i8 value)
 {
 	if(op == MENU_ACTION_SET)
+	{
+		g_GameMode = value;
 		Game_SetState(State_MatchStart);
+	}
 	return ""; 
 }
 
@@ -869,6 +937,7 @@ const char* Menu_SetAI(u8 op, i8 value)
 {
 	switch(op)
 	{
+	case MENU_ACTION_SET:
 	case MENU_ACTION_INC: g_Level = (g_Level + 1) % 3; break;
 	case MENU_ACTION_DEC: g_Level = (g_Level + 2) % 3; break;	
 	}
@@ -887,6 +956,7 @@ const char* Menu_SetSets(u8 op, i8 value)
 {
 	switch(op)
 	{
+	case MENU_ACTION_SET:
 	case MENU_ACTION_INC: g_OptionSets = (g_OptionSets + 1) % 3; break;
 	case MENU_ACTION_DEC: g_OptionSets = (g_OptionSets + 2) % 3; break;	
 	}
@@ -905,6 +975,7 @@ const char* Menu_SetShot(u8 op, i8 value)
 {
 	switch(op)
 	{
+	case MENU_ACTION_SET:
 	case MENU_ACTION_INC: g_TrainShot = (g_TrainShot + 1) % TRAIN_MAX; break;
 	case MENU_ACTION_DEC: g_TrainShot = (g_TrainShot + (TRAIN_MAX-1)) % TRAIN_MAX; break;	
 	}
@@ -923,6 +994,7 @@ const char* Menu_SetMusic(u8 op, i8 value)
 {
 	switch(op)
 	{
+	case MENU_ACTION_SET:
 	case MENU_ACTION_INC:
 	case MENU_ACTION_DEC:
 		g_PlayMusic = 1 - g_PlayMusic;
@@ -943,6 +1015,7 @@ const char* Menu_SetInput(u8 op, i8 value)
 {
 	switch(op)
 	{
+	case MENU_ACTION_SET:
 	case MENU_ACTION_INC: g_InputBinding[value] = (g_InputBinding[value] + 1) % BIND_MAX; break;
 	case MENU_ACTION_DEC: g_InputBinding[value] = (g_InputBinding[value] + (BIND_MAX-1)) % BIND_MAX; break;	
 	}
@@ -956,6 +1029,7 @@ const char* Menu_SetSide(u8 op, i8 value)
 {
 	switch(op)
 	{
+	case MENU_ACTION_SET:
 	case MENU_ACTION_INC:
 	case MENU_ACTION_DEC:
 		 g_TrainSide = 1 - g_TrainSide; break;	
@@ -1081,18 +1155,83 @@ void Menu_Initialize(const Menu* menu) __FASTCALL
 
 //-----------------------------------------------------------------------------
 ///
+bool Menu_PressRight()
+{
+	for(u8 i = 0; i < BIND_MAX; ++i)
+		if(g_Binding[i].inPressRight())
+			return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+///
+bool Menu_PressLeft()
+{
+	for(u8 i = 0; i < BIND_MAX; ++i)
+		if(g_Binding[i].inPressLeft())
+			return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+///
+bool Menu_PressUp()
+{
+	for(u8 i = 0; i < BIND_MAX; ++i)
+		if(g_Binding[i].inPressUp())
+			return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+///
+bool Menu_PressDown()
+{
+	for(u8 i = 0; i < BIND_MAX; ++i)
+		if(g_Binding[i].inPressDown())
+			return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+///
+bool Menu_PressTrigger()
+{
+	for(u8 i = 0; i < BIND_MAX; ++i)
+		if(g_Binding[i].inButton1() || g_Binding[i].inButton2())
+			return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+///
 void Menu_Update()
 {
 	// Handle activation
 	MenuEntry* pCurEntry = &g_CurrentMenu->items[g_MenuItem];
-	if(KEY_PRESS(KEY_SPACE))
+	if(Menu_PressTrigger())
 	{
 		if(pCurEntry->type == MENU_ITEM_ACTION)
 		{
 			menuCallback cb = (menuCallback)pCurEntry->action;
 			cb(MENU_ACTION_SET, pCurEntry->value);
-			Menu_DisplayItem(g_MenuItem);
 		}
+		else if(pCurEntry->type == MENU_ITEM_INT)
+		{
+			i8* data = (u8*)pCurEntry->action;
+			*data++;
+		}
+		else if(pCurEntry->type == MENU_ITEM_BOOL)
+		{
+			u8* data = (u8*)pCurEntry->action;
+			*data = 1 - *data;
+		}
+		Menu_DisplayItem(g_MenuItem);
 		if((pCurEntry->type & MENU_ITEM_GOTO) != 0)
 		{
 			Menu_Initialize(&g_Menus[pCurEntry->type & 0x7F]);
@@ -1101,7 +1240,7 @@ void Menu_Update()
 	}
 
 	// Handle change value
-	if(KEY_PRESS(KEY_RIGHT))
+	if(Menu_PressRight())
 	{
 		if(pCurEntry->type == MENU_ITEM_ACTION)
 		{
@@ -1120,7 +1259,7 @@ void Menu_Update()
 		}
 		Menu_DisplayItem(g_MenuItem);
 	}
-	else if(KEY_PRESS(KEY_LEFT))
+	else if(Menu_PressLeft())
 	{
 		if(pCurEntry->type == MENU_ITEM_ACTION)
 		{
@@ -1141,7 +1280,7 @@ void Menu_Update()
 	}
 	
 	// Handle navigation
-	if(KEY_PRESS(KEY_UP))
+	if(Menu_PressUp())
 	{
 		u8 i = g_MenuItem;
 		while(i > 0)
@@ -1157,7 +1296,7 @@ void Menu_Update()
 			}
 		}			
 	}
-	else if(KEY_PRESS(KEY_DOWN))
+	else if(Menu_PressDown())
 	{
 		u8 i = g_MenuItem;
 		while(i < g_CurrentMenu->itemNum-1)
@@ -1241,8 +1380,7 @@ void Ball_ShootRandom()
 	g_Ball.bounce = 0;
 	g_Ball.point = POINT_PENDING;
 		
-	if(g_PlaySFX)
-		ayFX_PlayBank(1, 0);
+	ayFX_PlayBank(1, 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -1326,17 +1464,16 @@ void Ball_Update()
 		}
 		else*/ if(g_Ball.spin == SPIN_BACK)
 		{
-			g_Ball.velXY = g_Ball.velXY * 2 / 3;
+			g_Ball.velXY = g_Ball.velXY / 2;
 		}
 		else if(g_Ball.spin == SPIN_FLAT)
 		{
-			g_Ball.velXY = g_Ball.velXY * 3 / 4;
+			g_Ball.velXY = g_Ball.velXY * 2 / 3;
 		}
 
 		if(g_Ball.bounce == 1)
 		{
-			if(g_PlaySFX)
-				ayFX_PlayBank(12, 0);
+			ayFX_PlayBank(12, 0);
 
 			if(Ball_CheckField() && (g_Ball.point == POINT_PENDING))
 				g_Ball.point = POINT_VALIDATED;
@@ -1346,8 +1483,7 @@ void Ball_Update()
 		else if(g_Ball.bounce == 2)
 		{
 			g_ScoreFct(EVENT_IN);
-			if(g_PlaySFX)
-				ayFX_PlayBank(12, 0);
+			ayFX_PlayBank(12, 0);
 		}
 	}
 
@@ -1396,20 +1532,27 @@ void Ball_Update()
 }
 
 //-----------------------------------------------------------------------------
-///
-void Ball_Draw()
+/// Load ball sprites to VRAM
+void Ball_LoadSprites()
 {	
-	const u8* src = g_DataBall + (1 * 3 * 8);
-	u16 dst = g_SpritePattern[g_WriteBuffer] + (80 * 8); // Pattern #80
-	VDP_WriteVRAM_64K(src, dst, 8);
-	
-	src += (1 * 8);
-	dst += (4 * 8); // Pattern #84
-	VDP_WriteVRAM_64K(src, dst, 8);
+	for(u8 i = 0; i < 2; ++i)
+	{
+		const u8* src = g_DataBall;
+		u16 dst = g_SpritePattern[i] + (80 * 8); // Pattern #80
+		VDP_WriteVRAM_64K(src, dst, 8);
+		
+		src += (1 * 8);
+		dst += (4 * 8); // Pattern #84
+		VDP_WriteVRAM_64K(src, dst, 8);
 
-	src += (1 * 8);
-	dst += (4 * 8); // Pattern #88
-	VDP_WriteVRAM_64K(src, dst, 8);
+		src += (1 * 8);
+		dst += (4 * 8); // Pattern #88
+		VDP_WriteVRAM_64K(src, dst, 8);
+
+		src += (1 * 8);
+		dst += (4 * 8); // Pattern #88
+		VDP_WriteVRAM_64K(src, dst, 8);
+	}
 }
 
 
@@ -1469,8 +1612,7 @@ void Player_CheckShoot(Player* ply)
 		
 	// Shoot Succed !!!
 	
-	if(g_PlaySFX)
-		ayFX_PlayBank(1, 0);
+	ayFX_PlayBank(1, 0);
 
 	// Handle shot direction
 	ply->shotCnt = ply->counter;
@@ -1489,9 +1631,9 @@ void Player_CheckShoot(Player* ply)
 		else if(event == FUNCT_SHOOT_L)
 			dir -= 2;
 
-		if(bind->inLeft())
+		if(bind->inHoldLeft())
 			dir += ply->shotCnt;
-		else if(bind->inRight())
+		else if(bind->inHoldRight())
 			dir -= ply->shotCnt;
 	}
 	else // if(ply->side == SIDE_TOP)
@@ -1503,9 +1645,9 @@ void Player_CheckShoot(Player* ply)
 		else if(event == FUNCT_SHOOT_L)
 			dir += 2;
 
-		if(bind->inLeft())
+		if(bind->inHoldLeft())
 			dir -= ply->shotCnt;
-		else if(bind->inRight())
+		else if(bind->inHoldRight())
 			dir += ply->shotCnt;			
 	}
 	g_Ball.dir = dir;
@@ -1601,20 +1743,26 @@ void UpdateAction(Player* ply) __FASTCALL
 	}
 	
 	// Handle current action's event
+	const Binding* bind = ply->binding;
 	switch(act->animFrames[ply->step].event)
 	{
+	case FUNCT_THROW:
+		if(bind->inButton1() || bind->inButton2())
+		{
+			SetAction(ply, ACTION_SERVE);
+			g_Serving = false;
+		}
+		break;
+	
 	case FUNCT_PREPARE:
 	case FUNCT_SHOOT_R:
 	case FUNCT_SHOOT_L:
 	case FUNCT_SMASH:
-	{
-		const Binding* bind = ply->binding;
 		if(bind->inButton1() && (ply->shot == SHOT_SLICE))
 			ply->shot = SHOT_ATTACK;
 		if(bind->inButton2() && (ply->shot == SHOT_FLAT))
 			ply->shot = SHOT_ATTACK;
 		break;
-	}
 	default:
 		break;
 	};
@@ -1623,6 +1771,65 @@ void UpdateAction(Player* ply) __FASTCALL
 	ply->anim = act->animFrames[ply->step].frame;
 	ply->counter++;
 }
+
+//-----------------------------------------------------------------------------
+///
+void HandleService(Player* ply) __FASTCALL
+{
+	const Binding* bind = ply->binding;
+	if(g_Actions[ply->action].interrupt)
+	{
+		if(bind->inButton1() || bind->inButton2())
+		{
+			SetAction(ply, ACTION_THROW);
+		}
+		else
+		{
+			u8 dir = 4;
+			if(bind->inHoldLeft())
+				dir -= 3;
+			else if(bind->inHoldRight())
+				dir += 3;	
+				
+			if(dir == 4) // No move
+			{
+				ply->action = ACTION_IDLE;
+			}
+			else
+			{
+				if(dir > 3)
+					dir--;
+
+				// Update player position
+				ply->pos.x += g_Move[dir].x;
+				
+				// Validate new X position
+				if(ply->pos.x < PLY_MIN_X)
+					ply->pos.x = PLY_MIN_X;
+				else if(ply->pos.x > PLY_MAX_X)
+					ply->pos.x = PLY_MAX_X;
+				
+				// Validate new Y position
+				// if(ply->side == SIDE_BOTTOM)
+				// {
+				// }
+				// else
+				// {
+				// }
+
+				// Precompute screen position
+				ply->srcPos.x = UNIT_TO_PX(ply->pos.x);
+				
+				// Set movement action
+				if(dir < 3) // Left move
+					SetAction(ply, ACTION_WALK_L);
+				else // Right move
+					SetAction(ply, ACTION_WALK_R);				
+			}
+		}
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 ///
@@ -1658,13 +1865,13 @@ void HandleInput(Player* ply) __FASTCALL
 		else
 		{
 			u8 dir = 4;
-			if(bind->inUp())
+			if(bind->inHoldUp())
 				dir--;
-			else if(bind->inDown())
+			else if(bind->inHoldDown())
 				dir++;
-			if(bind->inLeft())
+			if(bind->inHoldLeft())
 				dir -= 3;
-			else if(bind->inRight())
+			else if(bind->inHoldRight())
 				dir += 3;	
 				
 			if(dir == 4) // No move
@@ -1822,10 +2029,10 @@ void DrawPlayerBottom()
 		switch(event)
 		{
 		case FUNCT_SHOOT_R:
-			src = g_DataRacket + (6 * 8);
+			src = g_DataRacket;
 			break;
 		case FUNCT_SHOOT_L:
-			src = g_DataRacket + (14 * 8);
+			src = g_DataRacket + (1 * 8);
 			break;
 		case FUNCT_SMASH:
 			src = g_DataRacket + (2 * 8);
@@ -1967,10 +2174,10 @@ void DrawPlayerTop() __FASTCALL
 		switch(event)
 		{
 		case FUNCT_SHOOT_R:
-			src = g_DataRacket + (6 * 8);
+			src = g_DataRacket;
 			break;
 		case FUNCT_SHOOT_L:
-			src = g_DataRacket + (14 * 8);
+			src = g_DataRacket + (1 * 8);
 			break;
 		case FUNCT_SMASH:
 			src = g_DataRacket + (2 * 8);
@@ -2022,24 +2229,56 @@ void InitializeNetSprites()
 
 //-----------------------------------------------------------------------------
 ///
+void UncompressGM2(const u8* src, u16 dst)
+{
+	while(*src != 0)
+	{
+		u8 type = *src >> 6;
+		u8 len = *src & 0x3F;
+		src++;
+		if(type == 0) // Chunk of zeros
+		{
+			VDP_FillVRAM_64K(0x00, dst + 0x0000, len);
+			VDP_FillVRAM_64K(0x00, dst + 0x0800, len);
+			VDP_FillVRAM_64K(0x00, dst + 0x1000, len);
+		}
+		else if(type == 1) // Chunk of same byte
+		{
+			VDP_FillVRAM_64K(*src, dst + 0x0000, len);
+			VDP_FillVRAM_64K(*src, dst + 0x0800, len);
+			VDP_FillVRAM_64K(*src, dst + 0x1000, len);
+			src++;
+		}
+		else // type == 3 // Chcunk of uncompressed data
+		{
+			VDP_WriteVRAM_64K(src, dst + 0x0000, len);
+			VDP_WriteVRAM_64K(src, dst + 0x0800, len);
+			VDP_WriteVRAM_64K(src, dst + 0x1000, len);
+			src += len;
+		}
+		dst += len;
+	}
+}
+
+//-----------------------------------------------------------------------------
+///
 void InitializeCourt()
 {
-	VDP_SetSpritePatternTable(g_SpritePattern[0]);	
-	VDP_SetColor(COLOR_DARK_RED);
+	VDP_SetSpritePatternTable(g_SpritePattern[0]);
 
 	// Load court data to VRAM
 	VDP_FillScreen_GM2(0);
 	VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
-	VDP_LoadPattern_GM2(g_DataCourt_Patterns, sizeof(g_DataCourt_Patterns)/8, OFFSET_GAME_COURT);
-	VDP_LoadColor_GM2(g_DataCourt_Colors, sizeof(g_DataCourt_Colors)/8, OFFSET_GAME_COURT);
+	UncompressGM2(g_DataCourt_Patterns, g_ScreenPatternLow + (OFFSET_GAME_COURT * 8));
+	UncompressGM2(g_DataCourt_Colors,   g_ScreenColorLow   + (OFFSET_GAME_COURT * 8));
 
 	// Load Scrore Board data to VRAM
-	VDP_LoadPattern_GM2(g_DataScore_Patterns, sizeof(g_DataScore_Patterns)/8, OFFSET_GAME_SCORE);
-	VDP_LoadColor_GM2(g_DataScore_Colors, sizeof(g_DataScore_Colors)/8, OFFSET_GAME_SCORE);
+	UncompressGM2(g_DataScore_Patterns, g_ScreenPatternLow + (OFFSET_GAME_SCORE * 8));
+	UncompressGM2(g_DataScore_Colors,   g_ScreenColorLow   + (OFFSET_GAME_SCORE * 8));
 
 	// Load Referee data to VRAM
-	VDP_LoadPattern_GM2(g_DataReferee_Patterns, sizeof(g_DataReferee_Patterns)/8, OFFSET_GAME_REFEREE);
-	VDP_LoadColor_GM2(g_DataReferee_Colors, sizeof(g_DataReferee_Colors)/8, OFFSET_GAME_REFEREE);
+	UncompressGM2(g_DataReferee_Patterns, g_ScreenPatternLow + (OFFSET_GAME_REFEREE * 8));
+	UncompressGM2(g_DataReferee_Colors,   g_ScreenColorLow   + (OFFSET_GAME_REFEREE * 8));
 
 	// Initialize font
 	Print_SetTextFont(g_DataFont, OFFSET_GAME_FONT);
@@ -2055,12 +2294,14 @@ void InitializeCourt()
 	// Setup ball sprites
 	SetSprite(SPRITE_BALL_OUTLINE, 0, 213, 80, COLOR_BLACK);			// Outline
 	SetSprite(SPRITE_BALL_BODY,    0, 213, 88, COLOR_LIGHT_YELLOW);		// Body
-	SetSprite(SPRITE_BALL_SHADOW,  0, 213, 88, COLOR_BLACK);			// Shadow
+	SetSprite(SPRITE_BALL_SHADOW,  0, 213, 92, COLOR_BLACK);			// Shadow
 
 	InitializeNetSprites();
-	VDP_HideSpriteFrom(SPRITE_MAX);
+	VDP_HideSpriteFrom(SPRITE_SCORE_BALL_1);
 
 	PT3_Pause();
+
+	VDP_SetColor(COLOR_DARK_RED);
 }
 
 //-----------------------------------------------------------------------------
@@ -2080,6 +2321,7 @@ void InitializePlayerBottom(u8 controller) __FASTCALL
 	// Initialize player 1
 	Player* ply = &g_Player[SIDE_BOTTOM];
 	ply->side = SIDE_BOTTOM;
+	ply->control = controller;
 	ply->pos.x = PX_TO_UNIT(128+32);
 	ply->pos.y = PX_TO_UNIT(192-32);
 	ply->srcPos.x = UNIT_TO_PX(ply->pos.x);
@@ -2092,8 +2334,8 @@ void InitializePlayerBottom(u8 controller) __FASTCALL
 	ply->step = 0;
 	ply->binding = &g_Binding[g_InputBinding[controller]];
 	const Binding* bind = ply->binding;
-	ply->inLong  = bind->inUp;
-	ply->inShort = bind->inDown;
+	ply->inLong  = bind->inHoldUp;
+	ply->inShort = bind->inHoldDown;
 }
 
 //-----------------------------------------------------------------------------
@@ -2113,6 +2355,7 @@ void InitializePlayerTop(u8 controller) __FASTCALL
 	// Initialize player 2
 	Player* ply = &g_Player[SIDE_TOP];
 	ply->side = SIDE_TOP;
+	ply->control = controller;
 	ply->pos.x = PX_TO_UNIT(128-32);
 	ply->pos.y = PX_TO_UNIT(32);
 	ply->srcPos.x = UNIT_TO_PX(ply->pos.x);
@@ -2125,8 +2368,8 @@ void InitializePlayerTop(u8 controller) __FASTCALL
 	ply->step = 0;
 	ply->binding = &g_Binding[g_InputBinding[controller]];
 	const Binding* bind = ply->binding;
-	ply->inLong  = bind->inDown;
-	ply->inShort = bind->inUp;
+	ply->inLong  = bind->inHoldDown;
+	ply->inShort = bind->inHoldUp;
 
 }
 
@@ -2238,43 +2481,64 @@ void TrainingScore(u8 subEvent)
 ///
 void DisplayScore()
 {
-	// Points
 	Print_SelectTextFont(g_DataSrcFont, OFFSET_GAME_SCRFONT);
 
-	Print_SetPosition(26, SCORE_TXT_Y);
-	Print_DrawText(g_ScoreString[g_Points[1]]);
-	Print_SetPosition(26, SCORE_TXT_Y+2);
-	Print_DrawText(g_ScoreString[g_Points[0]]);
-
-	// Current set
-	Print_SetPosition(23, SCORE_TXT_Y);
-	Print_DrawInt(g_Games[g_CurSet][1]);
-	Print_SetPosition(23, SCORE_TXT_Y+2);
-	Print_DrawInt(g_Games[g_CurSet][0]);
-
-	// Player name
-	Print_SetPosition(20, SCORE_TXT_Y);
-	Print_DrawText(g_PlayerString[2]);
-	Print_SetPosition(20, SCORE_TXT_Y+2);
-	Print_DrawText(g_PlayerString[0]);
-	
-	// Current set
-	Print_SetPosition(15, SCORE_TXT_Y);
-	Print_DrawInt(g_Sets[1]);
-	Print_SetPosition(15, SCORE_TXT_Y+2);
-	Print_DrawInt(g_Sets[0]);
-
-	// Previous sets
-	if(g_CurSet > 0)
+	//-------------------------------------------------------------------------
+	// SCORE BOARD
+	u8 y = SCORE_TXT_Y;
+	for(i8 p = 1; p >= 0; --p)
 	{
-		for(u8 i = 0; i < g_CurSet; i++)
+		// Current game
+		Print_SetPosition(26, y);
+		Print_DrawText(g_ScoreString[g_Points[p]]);
+
+		// Current set
+		Print_SetPosition(23, y);
+		Print_DrawInt(g_Games[g_CurSet][p]);
+
+		// Player name
+		Print_SetPosition(20, y);
+		Print_DrawText(g_PlayerString[g_Player[p].control]);
+
+		// Current set
+		Print_SetPosition(15, y);
+		Print_DrawInt(g_Sets[p]);
+
+		// Previous sets
+		if(g_CurSet > 0)
 		{
-			Print_SetPosition(5 + (i * 2), SCORE_TXT_Y);
-			Print_DrawInt(g_Games[i][1]);
-			Print_SetPosition(5 + (i * 2), SCORE_TXT_Y+2);
-			Print_DrawInt(g_Games[i][0]);
+			for(u8 i = 0; i < g_CurSet; i++)
+			{
+				Print_SetPosition(5 + (i * 2), y);
+				Print_DrawInt(g_Games[i][p]);
+			}
 		}
-	}	
+		
+		y += 2;
+	}
+	
+
+	//-------------------------------------------------------------------------
+	// STATISTICS
+
+	u8 x = 23;
+	for(u8 q = 0; q < 2; ++q)
+	{
+		// Player name
+		Print_SetPosition(x, 12);
+		Print_DrawText(g_PlayerString[g_Player[q].control]);
+		
+		// Points
+		u8 v = g_TotalPoints[q];
+		if(v > 99)
+			v = 99;
+		Print_SetPosition((v < 10) ? x + 1 : x, 14);
+		Print_DrawInt(v);
+		
+		x += 3;
+	}
+
+
 }
 
 //-----------------------------------------------------------------------------
@@ -2283,8 +2547,24 @@ void InitService(u8 side)
 {
 	InitializePlayerBottom(0);
 	InitializePlayerTop(1);
-	g_TrainSide = side;
-	Ball_ShootRandom();
+	g_Serving = true;
+	// g_TrainSide = 1 - g_Server;
+	// Ball_ShootRandom();
+	// SetAction(&g_Player[g_Server], ACTION_SERVICE);
+}
+
+//-----------------------------------------------------------------------------
+///
+void HideScoreSprites()
+{
+	// VDP_HideSpriteFrom(SPRITE_SCORE_1);
+
+	VDP_SetSpritePositionY(SPRITE_SCORE_1,  213);
+	VDP_SetSpritePositionY(SPRITE_SCORE_2,  213);
+	VDP_SetSpritePositionY(SPRITE_SCORE_3,  213);
+	VDP_SetSpritePositionY(SPRITE_SCORE_4,  213);
+	VDP_SetSpritePositionY(SPRITE_SCORE_5,  213);
+	VDP_SetSpritePositionY(SPRITE_SCORE_6,  213);
 }
 
 //-----------------------------------------------------------------------------
@@ -2362,17 +2642,12 @@ bool Event_WinPoint()
 	}
 	if(g_EventFrame == EVENT_DELAY+16)
 	{
-		if(g_PlaySFX)
-			ayFX_PlayBank(13, 0);
+		ayFX_PlayBank(13, 0);
 	}
 	if(g_EventFrame == EVENT_DELAY+50)
 	{
 		// Hide score sprites
-		VDP_SetSpritePositionY(SPRITE_SCORE_1, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_2, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_3, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_4, 213);
-		
+		HideScoreSprites();
 		InitializeNetSprites();
 		InitService(0);
 		g_EventID = EVENT_NONE;
@@ -2403,7 +2678,8 @@ bool Event_WinGame()
 		SetSprite(SPRITE_SCORE_4, 0, 213, 116, VDP_SPRITE_EC | SCORE_SHADE);
 		
 		// Player
-		src = g_DataPoints + (5 * 8 * 4); // 5: AI, 6: P1, 7: P2
+		u8 ctrl = g_Player[g_Winner].control;
+		src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: P1, 6: P2, 7: Ai
 		dst	= g_SpritePattern[g_WriteBuffer] + (120 * 8); // Pattern #116
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
 		dst	= g_SpritePattern[g_DisplayBuffer] + (120 * 8); // Pattern #116
@@ -2428,19 +2704,12 @@ bool Event_WinGame()
 	}
 	if(g_EventFrame == 16)
 	{
-		if(g_PlaySFX)
-			ayFX_PlayBank(13, 0);
+		ayFX_PlayBank(13, 0);
 	}
 	if(g_EventFrame == 50)
 	{
 		// Hide score sprites
-		VDP_SetSpritePositionY(SPRITE_SCORE_1, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_2, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_3, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_4, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_5, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_6, 213);
-		
+		HideScoreSprites();
 		InitializeNetSprites();
 		InitService(0);
 		g_EventID = EVENT_NONE;
@@ -2472,7 +2741,8 @@ bool Event_WinSet()
 		SetSprite(SPRITE_SCORE_4, 0, 213, 116, VDP_SPRITE_EC | SCORE_SHADE);
 		
 		// Player
-		src = g_DataPoints + (5 * 8 * 4); // 5: AI, 6: P1, 7: P2
+		u8 ctrl = g_Player[g_Winner].control;
+		src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: AI, 6: P1, 7: P2
 		dst	= g_SpritePattern[g_WriteBuffer] + (120 * 8); // Pattern #116
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
 		dst	= g_SpritePattern[g_DisplayBuffer] + (120 * 8); // Pattern #116
@@ -2497,19 +2767,11 @@ bool Event_WinSet()
 	}
 	if(g_EventFrame == 16)
 	{
-		if(g_PlaySFX)
-			ayFX_PlayBank(13, 0);
+		ayFX_PlayBank(13, 0);
 	}
 	if(g_EventFrame == 50)
 	{
-		// Hide score sprites
-		VDP_SetSpritePositionY(SPRITE_SCORE_1, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_2, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_3, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_4, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_5, 213);
-		VDP_SetSpritePositionY(SPRITE_SCORE_6, 213);
-		
+		HideScoreSprites();
 		InitializeNetSprites();
 		InitService(0);
 		g_EventID = EVENT_NONE;
@@ -2538,6 +2800,17 @@ bool HandleEvent()
 
 //-----------------------------------------------------------------------------
 ///
+void InitNewGame()
+{
+	g_Points[0] = 0;
+	g_Points[1] = 0;
+	g_Server = 1 - g_Server;
+	g_OddPoint = false;
+}
+
+
+//-----------------------------------------------------------------------------
+///
 void MatchScore(u8 subEvent)
 {
 	if(g_Ball.point == POINT_FINISHED)
@@ -2547,9 +2820,17 @@ void MatchScore(u8 subEvent)
 		
 	// Win the point
 	if(g_Ball.point == POINT_VALIDATED)
+	{
+		g_Winner = g_Ball.lastPly;
 		g_Points[g_Ball.lastPly]++;
+		g_TotalPoints[g_Ball.lastPly]++;
+	}
 	else
+	{
+		g_Winner = 1 - g_Ball.lastPly;
 		g_Points[1 - g_Ball.lastPly]++;
+		g_TotalPoints[1 - g_Ball.lastPly]++;
+	}
 
 	// Deuce
 	if((g_Points[0] == POINT_ADV) && (g_Points[1] == POINT_ADV))
@@ -2563,26 +2844,27 @@ void MatchScore(u8 subEvent)
 		// Win the current game
 		if((g_Points[i] == POINT_WIN) || ((g_Points[i] == POINT_ADV) && (g_Points[1-i] < POINT_40)))
 		{
+			g_Winner = i;
 			g_Games[g_CurSet][i]++;
-			g_Points[0] = 0;
-			g_Points[1] = 0;
 			event = EVENT_GAME;
+			InitNewGame();
 		}
 		
 		// Win the current set
 		if(((g_Games[g_CurSet][i] == 6) && (g_Games[g_CurSet][1-i] < 5))
 		|| ((g_Games[g_CurSet][i] > 6) && (g_Games[g_CurSet][i] > g_Games[g_CurSet][1-i] + 1)))
 		{
+			g_Winner = i;
 			g_Sets[i]++;
 			g_CurSet++;
-			g_Points[0] = 0;
-			g_Points[1] = 0;
 			event = EVENT_SET;
+			InitNewGame();
 		}
 
 		// Win the match!
 		if(g_Sets[i] >= g_OptionSets + 1)
 		{
+			g_Winner = i;
 			event = EVENT_MATCH;
 			// Game_SetState(State_TitleStart); // return to menu for the moment
 		}
@@ -2627,35 +2909,58 @@ void UpdateInput()
 //-----------------------------------------------------------------------------
 // INPUT CALLBACK
 
-bool KB1_Up()		{ return KEY_ON(KEY_UP); }
-bool KB1_Down()		{ return KEY_ON(KEY_DOWN); }
-bool KB1_Left()		{ return KEY_ON(KEY_LEFT); }
-bool KB1_Right()	{ return KEY_ON(KEY_RIGHT); }
-bool KB1A_Button1()	{ return KEY_PRESS(KEY_SPACE); }
-bool KB1A_Button2()	{ return KEY_PRESS(KEY_N); }
-bool KB1B_Button1()	{ return KEY_PRESS(KEY_SHIFT); }
-bool KB1B_Button2()	{ return KEY_PRESS(KEY_CTRL); }
-bool KB1C_Button1()	{ return KEY_PRESS(KEY_RET); }
-bool KB1C_Button2()	{ return KEY_PRESS(KEY_BS); }
+bool KB1_Hold_Up()		{ return KEY_ON(KEY_UP); }
+bool KB1_Hold_Down()	{ return KEY_ON(KEY_DOWN); }
+bool KB1_Hold_Left()	{ return KEY_ON(KEY_LEFT); }
+bool KB1_Hold_Right()	{ return KEY_ON(KEY_RIGHT); }
 
-bool KB2_Up()		{ return KEY_ON(KEY_E); }
-bool KB2_Down()		{ return KEY_ON(KEY_D); }
-bool KB2_Left()		{ return KEY_ON(KEY_S); }
-bool KB2_Right()	{ return KEY_ON(KEY_F); }
+bool KB1_Press_Up()		{ return KEY_PRESS(KEY_UP); }
+bool KB1_Press_Down()	{ return KEY_PRESS(KEY_DOWN); }
+bool KB1_Press_Left()	{ return KEY_PRESS(KEY_LEFT); }
+bool KB1_Press_Right()	{ return KEY_PRESS(KEY_RIGHT); }
 
-bool Joy1_Up()		{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_UP)); }
-bool Joy1_Down()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_DOWN)); }
-bool Joy1_Left()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_LEFT)); }
-bool Joy1_Right()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_RIGHT)); }
-bool Joy1_Button1()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_A))); }	
-bool Joy1_Button2()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_B))); }
+bool KB1A_Button1()		{ return KEY_PRESS(KEY_SPACE); }
+bool KB1A_Button2()		{ return KEY_PRESS(KEY_N); }
+bool KB1B_Button1()		{ return KEY_PRESS(KEY_SHIFT); }
+bool KB1B_Button2()		{ return KEY_PRESS(KEY_CTRL); }
+bool KB1C_Button1()		{ return KEY_PRESS(KEY_RET); }
+bool KB1C_Button2()		{ return KEY_PRESS(KEY_BS); }
 
-bool Joy2_Up()		{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_UP)); }
-bool Joy2_Down()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_DOWN)); }
-bool Joy2_Left()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_LEFT)); }
-bool Joy2_Right()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_RIGHT)); }
-bool Joy2_Button1()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_A))); }	
-bool Joy2_Button2()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_B))); }
+bool KB2_Hold_Up()		{ return KEY_ON(KEY_E); }
+bool KB2_Hold_Down()	{ return KEY_ON(KEY_D); }
+bool KB2_Hold_Left()	{ return KEY_ON(KEY_S); }
+bool KB2_Hold_Right()	{ return KEY_ON(KEY_F); }
+
+bool KB2_Press_Up()		{ return KEY_PRESS(KEY_E); }
+bool KB2_Press_Down()	{ return KEY_PRESS(KEY_D); }
+bool KB2_Press_Left()	{ return KEY_PRESS(KEY_S); }
+bool KB2_Press_Right()	{ return KEY_PRESS(KEY_F); }
+
+bool Joy1_Hold_Up()		{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_UP)); }
+bool Joy1_Hold_Down()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_DOWN)); }
+bool Joy1_Hold_Left()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_LEFT)); }
+bool Joy1_Hold_Right()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_RIGHT)); }
+
+bool Joy1_Press_Up()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_UP)		&& !IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_DIR_UP)); }
+bool Joy1_Press_Down()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_DOWN)	&& !IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_DIR_DOWN)); }
+bool Joy1_Press_Left()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_LEFT)	&& !IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_DIR_LEFT)); }
+bool Joy1_Press_Right()	{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_DIR_RIGHT)	&& !IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_DIR_RIGHT)); }
+
+bool Joy1_Button1()		{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_A))); }	
+bool Joy1_Button2()		{ return (IS_JOY_PRESSED(g_Joy1, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy1, JOY_INPUT_TRIGGER_B))); }
+
+bool Joy2_Hold_Up()		{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_UP)); }
+bool Joy2_Hold_Down()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_DOWN)); }
+bool Joy2_Hold_Left()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_LEFT)); }
+bool Joy2_Hold_Right()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_RIGHT)); }
+
+bool Joy2_Press_Up()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_UP)    && !IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_DIR_UP)); }
+bool Joy2_Press_Down()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_DOWN)  && !IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_DIR_DOWN)); }
+bool Joy2_Press_Left()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_LEFT)  && !IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_DIR_LEFT)); }
+bool Joy2_Press_Right()	{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_DIR_RIGHT) && !IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_DIR_RIGHT)); }
+
+bool Joy2_Button1()		{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_A) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_A))); }	
+bool Joy2_Button2()		{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_B) && !(IS_JOY_PRESSED(g_PrevJoy2, JOY_INPUT_TRIGGER_B))); }
 
 //=============================================================================
 //
@@ -2697,14 +3002,15 @@ bool State_Init()
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 | VDP_SPRITE_SCALE_1);
 	VDP_EnableVBlank(true);
 	
-	g_InputBinding[0] = BIND_KB1A;
-	g_InputBinding[1] = BIND_KB2;
+	g_InputBinding[SIDE_BOTTOM] = BIND_KB1A;
+	g_InputBinding[SIDE_TOP] = BIND_KB2;
 	
 	// Initialize PT3
 	PT3_Init();
 	PT3_SetNoteTable(PT3_NT2);
 	PT3_SetLoop(true);
 	PT3_InitSong(g_DataMusic);
+	PT3_Pause();
 
 	// Initialize ayFX
 	ayFX_InitBank(g_DataSFX);
@@ -2726,8 +3032,8 @@ bool State_TitleStart()
 
 	// Load screen data
 	VDP_FillScreen_GM2(0); // Don't set the Layout table yet
-	VDP_LoadPattern_GM2(g_DataLogo_Patterns, sizeof(g_DataLogo_Patterns)/8, OFFSET_TITLE_LOGO);
-	VDP_LoadColor_GM2(g_DataLogo_Colors, sizeof(g_DataLogo_Colors)/8, OFFSET_TITLE_LOGO);
+	UncompressGM2(g_DataLogo_Patterns, g_ScreenPatternLow + (OFFSET_TITLE_LOGO * 8));
+	UncompressGM2(g_DataLogo_Colors,   g_ScreenColorLow   + (OFFSET_TITLE_LOGO * 8));
 
 	// Load sprites data
 	VDP_WriteVRAM_64K(g_DataLogoBall, g_SpritePatternLow, 8 * 32);
@@ -2742,6 +3048,8 @@ bool State_TitleStart()
 	SetSprite(6, 0, 0, 24, VDP_SPRITE_EC | COLOR_LIGHT_YELLOW);
 	SetSprite(7, 0, 0, 28, VDP_SPRITE_EC | COLOR_DARK_RED);
 	VDP_HideSpriteFrom(8);
+
+	HideScoreSprites();
 
 	// Initialize font
 	Print_SetTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
@@ -2761,6 +3069,23 @@ bool State_TitleStart()
 	return false;
 }
 
+
+//-----------------------------------------------------------------------------
+///
+void MoveLogoBall(u8 x) __FASTCALL
+{
+	x += 4;
+	VDP_SetSpritePosition(0, x, 32 +  0);
+	VDP_SetSpritePosition(1, x, 32 +  0);
+	VDP_SetSpritePosition(4, x, 32 + 16);
+	VDP_SetSpritePosition(5, x, 32 + 16);
+	x += 16;
+	VDP_SetSpritePosition(2, x, 32 +  0);
+	VDP_SetSpritePosition(3, x, 32 +  0);
+	VDP_SetSpritePosition(6, x, 32 + 16);
+	VDP_SetSpritePosition(7, x, 32 + 16);
+}
+
 //-----------------------------------------------------------------------------
 ///
 bool State_TitleUpdate()
@@ -2769,36 +3094,27 @@ bool State_TitleUpdate()
 
 	if(g_EventFrame < 25) // Ball movement
 	{
-		VDP_SetSpritePosition(0, g_EventFrame * 8 +  0 + 4, 32 +  0);
-		VDP_SetSpritePosition(1, g_EventFrame * 8 +  0 + 4, 32 +  0);
-		VDP_SetSpritePosition(2, g_EventFrame * 8 + 16 + 4, 32 +  0);
-		VDP_SetSpritePosition(3, g_EventFrame * 8 + 16 + 4, 32 +  0);
-		VDP_SetSpritePosition(4, g_EventFrame * 8 +  0 + 4, 32 + 16);
-		VDP_SetSpritePosition(5, g_EventFrame * 8 +  0 + 4, 32 + 16);
-		VDP_SetSpritePosition(6, g_EventFrame * 8 + 16 + 4, 32 + 16);
-		VDP_SetSpritePosition(7, g_EventFrame * 8 + 16 + 4, 32 + 16);
+		MoveLogoBall(g_EventFrame * 8);
 	}
 	else if(g_EventFrame == 25) // White flash
 	{	
-		if(g_PlaySFX)
-			ayFX_PlayBank(13, 0);
+		ayFX_PlayBank(13, 0);
 		VDP_SetColor(COLOR_WHITE);
-		VDP_FillVRAM_64K(0xFF, g_ScreenColorLow + (0 * 0x800),  8);
-		VDP_FillVRAM_64K(0xFF, g_ScreenColorLow + (1 * 0x800),  8);
-		VDP_FillVRAM_64K(0xFF, g_ScreenColorLow + (2 * 0x800),  8);
+		VDP_FillVRAM_64K(0x0F, g_ScreenColorLow + (0 * 0x800),  8);
+		VDP_FillVRAM_64K(0x0F, g_ScreenColorLow + (1 * 0x800),  8);
+		VDP_FillVRAM_64K(0x0F, g_ScreenColorLow + (2 * 0x800),  8);
 	}
 	else if(g_EventFrame == 29) // Title
 	{	
 		VDP_SetColor(COLOR_BLACK);
-		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (0 * 0x800),  8);
-		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (1 * 0x800),  8);
-		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (2 * 0x800),  8);
+		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
+		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
+		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
 		VDP_WriteLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
 	}
 	else if(g_EventFrame == 64) // Title
 	{
-		if(g_PlayMusic)
-			PT3_Resume();
+		PT3_Resume();
 
 		Print_SelectTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
 		Print_SetPosition(11, 18);
@@ -2806,27 +3122,29 @@ bool State_TitleUpdate()
 	}
 	if(g_EventFrame < 255)
 		g_EventFrame++;
-	
-	if(Keyboard_IsKeyPressed(KEY_SPACE)) // Skip
+
+	bool bPressed = false;
+	for(u8 i = 0; i < BIND_MAX; ++i)
 	{
-		if(g_PlayMusic)
-			PT3_Resume();
+		if(g_Binding[i].inButton1() || g_Binding[i].inButton2())
+		{
+			g_InputBinding[SIDE_BOTTOM] = i;
+			bPressed = true;
+			break;
+		}		
+	}
+	
+	if(bPressed) // Skip
+	{
+		PT3_Resume();
 
 		VDP_SetColor(COLOR_BLACK);
-		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (0 * 0x800),  8);
-		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (1 * 0x800),  8);
-		VDP_WriteVRAM_64K(g_DataLogo_Colors, g_ScreenColorLow + (2 * 0x800),  8);
+		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
+		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
+		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
 		VDP_WriteLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
 
-		g_EventFrame = 25;
-		VDP_SetSpritePosition(0, g_EventFrame * 8 +  0 - 4, 32 +  0);
-		VDP_SetSpritePosition(1, g_EventFrame * 8 +  0 - 4, 32 +  0);
-		VDP_SetSpritePosition(2, g_EventFrame * 8 + 16 - 4, 32 +  0);
-		VDP_SetSpritePosition(3, g_EventFrame * 8 + 16 - 4, 32 +  0);
-		VDP_SetSpritePosition(4, g_EventFrame * 8 +  0 - 4, 32 + 16);
-		VDP_SetSpritePosition(5, g_EventFrame * 8 +  0 - 4, 32 + 16);
-		VDP_SetSpritePosition(6, g_EventFrame * 8 + 16 - 4, 32 + 16);
-		VDP_SetSpritePosition(7, g_EventFrame * 8 + 16 - 4, 32 + 16);
+		MoveLogoBall(24 * 8);
 
 		Game_SetState(State_MenuStart);
 	}
@@ -2858,7 +3176,26 @@ bool State_ScoreStart()
 	// Display Score board
 	VDP_FillScreen_GM2(0);
 	VDP_WriteLayout_GM2(g_DataScore_Names, 3, SCORE_BOARD_Y, 27, 10);
-	VDP_HideSpriteFrom(0);
+	VDP_WriteLayout_GM2(g_DataScoreL1_Names, 16, SCORE_BOARD_Y+10, 14, 12);
+
+	// Hide sprites
+	for(u8 s = 0; s < SPRITE_SCORE_BALL_1; ++s)
+		VDP_SetSpritePositionY(s, 213);
+
+	u16 dst = g_SpritePattern[g_DisplayBuffer]; // Pattern #0
+	VDP_FillVRAM_64K(0, dst, 8 * 4 * 4);
+	const u8* src = g_DataBall + 6 * 8;
+	for(u8 i = 0; i < 4; ++i)
+	{
+		VDP_WriteVRAM_64K(src, dst, 8);
+		src += 8;
+		dst += 8 * 4;
+	}
+	
+	SetSprite(SPRITE_SCORE_BALL_1, 132, 213, 12, COLOR_BLACK);			// Outline
+	SetSprite(SPRITE_SCORE_BALL_2, 132, 213, 8,  COLOR_WHITE);			// Strip
+	SetSprite(SPRITE_SCORE_BALL_3, 132, 213, 4,  COLOR_DARK_YELLOW);	// Shade
+	SetSprite(SPRITE_SCORE_BALL_4, 132, 213, 0,  COLOR_LIGHT_YELLOW);	// Base
 	
 	DisplayScore();
 	
@@ -2872,8 +3209,17 @@ bool State_ScoreUpdate()
 {
 	UpdateInput();
 
-	if(KEY_PRESS(KEY_F1) || g_Player[0].binding->inButton1() || g_Player[1].binding->inButton1())
+	i16 dy = g_Cosinus64[(g_Frame % 32) * 2] / 32;
+	u8 y = 47 + 16 * (1 - g_Server) + dy;
+	
+	VDP_SetSpritePositionY(SPRITE_SCORE_BALL_1, y);
+	VDP_SetSpritePositionY(SPRITE_SCORE_BALL_2, y);
+	VDP_SetSpritePositionY(SPRITE_SCORE_BALL_3, y);
+	VDP_SetSpritePositionY(SPRITE_SCORE_BALL_4, y);
+
+	if(KEY_PRESS(KEY_F1) || g_Player[SIDE_BOTTOM].binding->inButton1() || g_Player[SIDE_TOP].binding->inButton1())
 	{
+		VDP_HideSpriteFrom(SPRITE_SCORE_BALL_1);
 		Game_SetState(State_CourtRestore);
 		return false;
 	}
@@ -2913,8 +3259,11 @@ bool State_MatchStart()
 	g_ScoreFct = MatchScore;
 	g_NumSet = (g_OptionSets * 2) + 1;
 	g_CurSet = 0;
+	g_TotalPoints[0] = 0;
+	g_TotalPoints[1] = 0;
 	g_Points[0] = 0;
 	g_Points[1] = 0;
+	g_OddPoint = false;
 	g_Sets[0] = 0;
 	g_Sets[1] = 0;
 	for(u8 i = 0; i < g_NumSet; ++i)
@@ -2922,14 +3271,17 @@ bool State_MatchStart()
 		g_Games[i][0] = 0;
 		g_Games[i][1] = 0;
 	}
+	g_Server = SIDE_BOTTOM;
 
 	// Initialize timer
 	g_EventID = EVENT_NONE;
 	g_EventTimer = 0;
 
 	// Initialize ball
+	InitializeNetSprites();
 	InitService(0);
 	// Ball_ShootRandom();
+	Ball_LoadSprites();
 
 	VDP_EnableDisplay(true);
 	Game_SetState(State_MatchUpdate);
@@ -2940,6 +3292,8 @@ bool State_MatchStart()
 ///
 bool State_MatchUpdate()
 {
+VDP_SetColor(COLOR_BLACK);
+
 	//---------------------------------------------------------------------
 	// Switch buffer
 	g_WriteBuffer = 1 - g_WriteBuffer;
@@ -2948,6 +3302,8 @@ bool State_MatchUpdate()
 	PreparePlayerBottom();
 	PreparePlayerTop();
 	Ball_Prepare();
+
+VDP_SetColor(COLOR_LIGHT_GREEN);
 
 	// Handle match event
 	bool bAllowInput = true;
@@ -2993,9 +3349,20 @@ bool State_MatchUpdate()
 	
 	if(bAllowInput)
 	{
-		HandleInput(&g_Player[SIDE_BOTTOM]);
-		HandleInput(&g_Player[SIDE_TOP]);
+		if(g_Serving)
+		{
+			HandleService(&g_Player[g_Server]);
+			HandleInput(&g_Player[1-g_Server]);
+			
+		}
+		else
+		{
+			HandleInput(&g_Player[SIDE_BOTTOM]);
+			HandleInput(&g_Player[SIDE_TOP]);
+		}
 	}
+
+VDP_SetColor(COLOR_LIGHT_BLUE);
 
 	//---------------------------------------------------------------------
 	// Update sprites position
@@ -3007,12 +3374,15 @@ bool State_MatchUpdate()
 	UpdateAction(&g_Player[SIDE_BOTTOM]);
 	UpdateAction(&g_Player[SIDE_TOP]);
 
+VDP_SetColor(COLOR_MAGENTA);
+
 	//---------------------------------------------------------------------
 	// Draw anim
 	
 	DrawPlayerBottom();
 	DrawPlayerTop();
-	Ball_Draw();
+
+VDP_SetColor(COLOR_LIGHT_YELLOW);
 
 	return true;
 }
@@ -3055,6 +3425,8 @@ bool State_TrainingStart()
 		VDP_WriteLayout_GM2(g_DataScoreL5_Names, 32-9, 22, 9, 2);
 	}
 	DisplayTrainingScore();
+
+	Ball_LoadSprites();
 
 	g_EventID = EVENT_NONE;
 	Ball_ShootRandom();
@@ -3189,7 +3561,6 @@ bool State_TrainingUpdate()
 		DrawPlayerBottom();
 	else
 		DrawPlayerTop();
-	Ball_Draw();
 	
 	if(g_EventID != EVENT_NONE)
 	{
@@ -3223,9 +3594,12 @@ void VDP_InterruptHandler()
 /// Main loop
 void VSyncCallback()
 {
-	PT3_Decode();
-	ayFX_Update();
-	PT3_UpdatePSG();
+	if(g_PlayMusic)
+		PT3_Decode();
+	if(g_PlaySFX)
+		ayFX_Update();
+	if(g_PlayMusic || g_PlaySFX)
+		PT3_UpdatePSG();
 }
 
 //-----------------------------------------------------------------------------
@@ -3247,3 +3621,5 @@ void main()
 	while(1)
 		Game_Update();
 }
+
+void Bios_SetHookCallback(u16 hook, callback cb) {}
