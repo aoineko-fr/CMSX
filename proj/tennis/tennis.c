@@ -27,25 +27,25 @@
 
 //-----------------------------------------------------------------------------
 // DEFINES
-#define VERSION						"V0.2.09"
-#define DEBUG						1
+#define VERSION						"V0.2.11"
+#define DEBUG						0
 #define MSX2_ENHANCE				0
+#define AUDIO_ENABLE				1
+#define DISPLAY_CREDITS				0
 
 // VRAM Tables Address - MSX1
 #define MSX1_LAYOUT_TABLE			0x3C00
 #define MSX1_COLOR_TABLE			0x2000
 #define MSX1_PATTERN_TABLE			0x0000
 #define MSX1_SPRITE_ATTRIBUTE		0x3F00
-#define MSX1_SPRITE_PATTERN_0		0x1800
-#define MSX1_SPRITE_PATTERN_1		0x3800
+#define MSX1_SPRITE_PATTERN			0x1800
 
 // VRAM Tables Address - MSX2/2+/tR
 #define MSX2_LAYOUT_TABLE			0x1800
 #define MSX2_COLOR_TABLE			0x2000
 #define MSX2_PATTERN_TABLE			0x0000
 #define MSX2_SPRITE_ATTRIBUTE		0x1E00
-#define MSX2_SPRITE_PATTERN_0		0x3800
-#define MSX2_SPRITE_PATTERN_1		0x3800
+#define MSX2_SPRITE_PATTERN			0x3800
 
 // Unit conversion (Pixel <> Q10.6)
 #define UNIT_TO_PX(a)				(u8)((a) / 64)
@@ -62,7 +62,7 @@
 #define PLY_DOWN_MIN_X				PX_TO_UNIT(97 + 8)
 #define PLY_DOWN_MAX_X				PX_TO_UNIT(191 + 8)
 
-#define SHOT_DETECT_X				16
+#define SHOT_DETECT_X				20
 #define SHOT_DETECT_Y				4
 #define SHOT_DETECT_SMASH			10
 
@@ -112,6 +112,7 @@
 
 #define EVENT_DELAY					(50)
 
+/// Ball spin types
 enum SPIN
 {
 	SPIN_TOP = 0,
@@ -120,6 +121,7 @@ enum SPIN
 	SPIN_MAX,
 };
 
+/// Ball shot types
 enum SHOT
 {
 	SHOT_FLAT = 0,	// Flat shot
@@ -128,7 +130,7 @@ enum SHOT
 	SHOT_MAX,
 };
 
-/// 
+/// Training shot options
 enum TRAIN
 {
 	TRAIN_BOTH = 0,
@@ -137,7 +139,7 @@ enum TRAIN
 	TRAIN_MAX,
 };
 
-/// 
+/// Player input direction
 enum DIR
 {
 	DIR_CENTER = 0,
@@ -146,7 +148,7 @@ enum DIR
 	DIR_MAX,
 };
 
-/// Player Actions
+/// Player actions
 enum ACTION
 {
 	ACTION_IDLE = 0,
@@ -161,7 +163,7 @@ enum ACTION
 	ACTION_MAX,
 };
 
-/// Player Actions Functions
+/// Player actions special functions
 enum FUNCT
 {
 	FUNCT_NONE = 0,
@@ -218,7 +220,9 @@ enum SPRITE
 	SPRITE_SCORE_BALL_3,                // 30
 	SPRITE_SCORE_BALL_4,                // 31
 
-	SPRITE_MAX,
+	SPRITE_MAX, //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	SPRITE_BALL_MARK      = SPRITE_SCORE_1,
 
 	SPRITE_LAUNCHER_BOT_1 = SPRITE_PLY_BOT_CLOTH,
 	SPRITE_LAUNCHER_BOT_2 = SPRITE_PLY_BOT_WHITE_H,
@@ -233,10 +237,6 @@ enum SPRITE
 	SPRITE_LAUNCHER_TOP_5 = SPRITE_PLY_TOP_SKIN_L,
 };
 
-#if (SPRITE_MAX >= 32)
-	Error! Only 32 sprites can be defined.
-#endif
-
 /// Menu pages enumeration
 enum
 {
@@ -249,22 +249,25 @@ enum
 	MENU_MAX,
 };
 
+/// Point validation type
 enum POINT_VALIDATION
 {
-	POINT_PENDING = 0,	// Before first boucne
-	POINT_VALIDATED,	// First boucne was valid
+	POINT_PENDING = 0,	// Before normal shot's first bounce
+	POINT_SERVING,		// Before serve first bounce
+	POINT_VALIDATED,	// First bounce was valid
 	POINT_FINISHED,		// Point already checked
 	POINT_MAX,
 };
 
-enum POINT
+// Tennis score types
+enum SCORE
 {
-	POINT_0 = 0,
-	POINT_15,
-	POINT_30,
-	POINT_40,
-	POINT_ADV,
-	POINT_WIN,
+	SCORE_0 = 0,
+	SCORE_15,
+	SCORE_30,
+	SCORE_40,
+	SCORE_ADV,
+	SCORE_WIN,
 };
 
 /// Rule event
@@ -289,6 +292,14 @@ enum SIDE
 {
 	SIDE_BOTTOM = 0,
 	SIDE_TOP,
+};
+
+enum SERVE_ZONE
+{
+	SERVE_BOT_R = 0,
+	SERVE_BOT_L,
+	SERVE_TOP_L,
+	SERVE_TOP_R,
 };
 
 enum BIND
@@ -368,7 +379,7 @@ typedef struct
 	u8			shotCnt;
 	u8			step;
 	u8			anim;
-	u8			prevAnim[2]; // buffered animation frame
+	u8			prevAnim; // buffered animation frame
 	const Binding* binding;
 	InputCB		inLong;
 	InputCB		inShort;
@@ -388,6 +399,7 @@ typedef struct
 	u8			bounce;
 	u8			point;
 	u8			spin;
+	bool		physics;
 } Ball;
 
 /// Animation strcture
@@ -430,6 +442,16 @@ typedef struct
 	u8			y;
 	u8			pattern;
 } TrainSide;
+
+/// Serve information (start position, X-coordinate limit and valid serving zone)
+typedef struct
+{
+	Vector8		startPos;			///< Player start position (screen coordinate)
+	i16			minX;				///< Minimum X coordinate (Q10.6 format)
+	i16			maxX;				///< Maximum X coordinate (Q10.6 format)
+	Vector8		zoneMin;			///< Serving zone minimum coordinate (screen coordinate)
+	Vector8		zoneMax;			///< Serving zone maximum coordinate (screen coordinate)
+} ServeInfo;
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS PROTOTYPE
@@ -611,11 +633,21 @@ const Action g_Actions[] =
 // | 2 | 4 | 7 |
 // +---+---+---+
 
-///
+/// Court field area definition
 const Field g_Field[2] =
 {
 	{ { 55, 31 }, { 200, 95 } },	// Top field    (Player 1 target)
 	{ { 55, 96 }, { 200, 160 } },	// Bottom field (Player 2 target)
+};
+
+/// Serve information
+const ServeInfo g_ServeInfo[4] =
+{
+	//                   startPos     minX             maxX              zoneMin      zoneMax	
+	/* SERVE_BOT_R */ { { 164, 161 }, PX_TO_UNIT(128), PX_TO_UNIT(200), {  55, 63 }, { 127,  95 } },
+	/* SERVE_BOT_L */ { {  92, 161 }, PX_TO_UNIT( 55), PX_TO_UNIT(127), { 128, 63 }, { 200,  95 } },
+	/* SERVE_TOP_L */ { {  92,  30 }, PX_TO_UNIT( 55), PX_TO_UNIT(127), { 128, 96 }, { 200, 128 } },
+	/* SERVE_TOP_R */ { { 164,  30 }, PX_TO_UNIT(128), PX_TO_UNIT(200), {  55, 96 }, { 127, 128 } },
 };
 
 /// Movement
@@ -660,7 +692,7 @@ const u8 g_ColorShadeSelect[8] =
 // Menu 0 - Main
 const MenuEntry g_MenuMain[] =
 {
-	{ "1P MATCH",	MENU_ITEM_GOTO|MENU_MATCH1P, 0, 0 },
+	{ "1P MATCH",	MENU_ITEM_DISABLE/*MENU_ITEM_GOTO|MENU_MATCH1P*/, 0, 0 },
 	{ "2P MATCH",	MENU_ITEM_GOTO|MENU_MATCH2P, 0, 0 },
 	{ "TRAINING",	MENU_ITEM_GOTO|MENU_TRAINING, 0, 0 },
 	{ "OPTIONS", 	MENU_ITEM_GOTO|MENU_OPTIONS, 0, 0 },
@@ -762,17 +794,17 @@ const Menu g_Menus[MENU_MAX] =
 const Shot g_Shots[] =
 {
 	//	ZY				Z				Spin
-	// Normal shot - Long
-	{ PX_TO_UNIT(3.5), PX_TO_UNIT(3.0), SPIN_FLAT },
-	// Normal shot - Med
+	// Flat shot - Long
+	{ PX_TO_UNIT(3.0), PX_TO_UNIT(3.5), SPIN_FLAT },
+	// Flat shot - Med
 	{ PX_TO_UNIT(2.7), PX_TO_UNIT(3.0), SPIN_FLAT },
-	// Normal shot - Short
-	{ PX_TO_UNIT(2.0), PX_TO_UNIT(3.0), SPIN_FLAT },
-	// Normal shot - Smash
-	{ PX_TO_UNIT(5.0), PX_TO_UNIT(-0.5), SPIN_FLAT },
+	// Flat shot - Short
+	{ PX_TO_UNIT(2.0), PX_TO_UNIT(2.5), SPIN_FLAT },
+	// Flat shot - Smash
+	{ PX_TO_UNIT(4.0), PX_TO_UNIT(-0.5), SPIN_FLAT },
 	
 	// High shot - Long
-	{ PX_TO_UNIT(2.2), PX_TO_UNIT(5.0), SPIN_FLAT },	// Lob
+	{ PX_TO_UNIT(2.3), PX_TO_UNIT(5.0), SPIN_FLAT },	// Lob
 	// High shot - Med
 	{ PX_TO_UNIT(2.2), PX_TO_UNIT(4.0), SPIN_FLAT },
 	// High shot - Short
@@ -780,14 +812,14 @@ const Shot g_Shots[] =
 	// High shot - Smash
 	{ PX_TO_UNIT(4.0), PX_TO_UNIT(0.0), SPIN_FLAT },
 	
-	// Low shot - Long
-	{ PX_TO_UNIT(4.0), PX_TO_UNIT(1.9), SPIN_TOP },
-	// Low shot - Med
+	// Attack shot - Long
+	{ PX_TO_UNIT(3.5), PX_TO_UNIT(2.0), SPIN_TOP },
+	// Attack shot - Med
 	{ PX_TO_UNIT(3.0), PX_TO_UNIT(2.3), SPIN_TOP },
-	// Low shot - Short
+	// Attack shot - Short
 	{ PX_TO_UNIT(2.0), PX_TO_UNIT(2.7), SPIN_FLAT },
-	// Low shot - Smash
-	{ PX_TO_UNIT(6.0), PX_TO_UNIT(-0.5), SPIN_FLAT },
+	// Attack shot - Smash
+	{ PX_TO_UNIT(5.0), PX_TO_UNIT(-0.5), SPIN_FLAT },
 	
 };
 
@@ -823,7 +855,7 @@ const c8* g_ScoreString[] = { "00", "15", "30", "40", ":;" };
 /// Score board's player text:  P1    P2    AI
 const c8* g_PlayerString[] = { ">1", ">2", "<=" };
 
-const c8* g_CrediScroll = "______________________DEDICATED_TO_MY_WONDERFUL_WIFE_AND_SON_$$____THANKS_TO_ALL_MSX-VILLAGE_AND_MRC_MEMBERS_FOR_SUPPORT!____MSX'LL_NEVER_DIE.____PRAISE_THE_HOLY-BRIOCHE!";
+const c8* g_CreditScroll = "______________________DEDICATED_TO_MY_WONDERFUL_WIFE_AND_SON_$$____THANKS_TO_ALL_MSX-VILLAGE_AND_MRC_MEMBERS_FOR_SUPPORT!____MSX'LL_NEVER_DIE.____PRAISE_THE_HOLY-BRIOCHE!";
 
 //=============================================================================
 //
@@ -845,9 +877,6 @@ u8			g_InputBinding[2];
 u8			g_GameMode;
 
 // System
-u16			g_SpritePattern[2];
-u8			g_WriteBuffer = 0;
-u8			g_DisplayBuffer = 1;
 u8			g_NetPostSprite = 0xFF;
 #if (MSX2_ENHANCE)
 	u8		g_VersionVDP;
@@ -881,8 +910,10 @@ u8			g_Games[5][2];
 u8			g_Sets[2];
 u8			g_CurSet;
 u8			g_NumSet;
+
 u8			g_Server;
-bool		g_Serving;
+bool		g_ServeState;
+u8			g_ServeZone;
 bool		g_OddPoint;
 u8			g_TotalPoints[2];
 u8			g_TotalFault[2];
@@ -895,8 +926,8 @@ u8			g_TrainShot = TRAIN_BOTH;
 u8			g_TrainSpin = SPIN_FLAT;
 
 // Misc
-c8			g_CrediScrollBug[SCROLL_BUF_SIZE];
-u8			g_CrediScrollCnt = 0;
+c8			g_CreditScrollBuf[SCROLL_BUF_SIZE];
+u8			g_CreditScrollCnt = 0;
 
 //_____________________________________________________________________________
 //   ▄▄   ▄▄  ▄▄▄  ▄▄▄▄
@@ -918,6 +949,7 @@ const c8* Menu_StartMatch(u8 op, i8 value)
 	{
 		g_GameMode = value;
 		Game_SetState(State_MatchStart);
+		ayFX_PlayBank(17, 0);
 	}
 	return ""; 
 }
@@ -927,7 +959,10 @@ const c8* Menu_StartMatch(u8 op, i8 value)
 const c8* Menu_StartTrain(u8 op, i8 value)
 {
 	if(op == MENU_ACTION_SET)
+	{
 		Game_SetState(State_TrainingStart);
+		ayFX_PlayBank(17, 0);
+	}
 	return "";
 }
 
@@ -1047,17 +1082,21 @@ const char* Menu_CreditScroll(u8 op, i8 value)
 {
 	if(op == MENU_ACTION_GET)
 	{	
-		u8 len = String_Length(g_CrediScroll);
+		u8 len = String_Length(g_CreditScroll);
 		for(u8 i=0; i < SCROLL_BUF_SIZE-1; i++)
 		{
-			u8 j = (i + g_CrediScrollCnt) % len;
-			g_CrediScrollBug[i] = g_CrediScroll[j];
+			u8 j = (i + g_CreditScrollCnt) % len;
+			g_CreditScrollBuf[i] = g_CreditScroll[j];
 		}
-		g_CrediScrollBug[SCROLL_BUF_SIZE-1] = 0;
-		g_CrediScrollCnt++;
-		g_CrediScrollCnt %= len;
+		g_CreditScrollBuf[SCROLL_BUF_SIZE-1] = 0;
+		g_CreditScrollCnt++;
+		g_CreditScrollCnt %= len;
 	}
-	return g_CrediScrollBug;
+#if (DISPLAY_CREDITS)
+	return g_CreditScrollBuf;
+#else
+	return "";
+#endif
 }
 
 
@@ -1216,6 +1255,7 @@ void Menu_Update()
 	MenuEntry* pCurEntry = &g_CurrentMenu->items[g_MenuItem];
 	if(Menu_PressTrigger())
 	{
+		ayFX_PlayBank(14, 0);
 		if(pCurEntry->type == MENU_ITEM_ACTION)
 		{
 			menuCallback cb = (menuCallback)pCurEntry->action;
@@ -1258,6 +1298,7 @@ void Menu_Update()
 			*data = 1 - *data;
 		}
 		Menu_DisplayItem(g_MenuItem);
+		ayFX_PlayBank(14, 0);
 	}
 	else if(Menu_PressLeft())
 	{
@@ -1277,6 +1318,7 @@ void Menu_Update()
 			*data = 1 - *data;
 		}
 		Menu_DisplayItem(g_MenuItem);
+		ayFX_PlayBank(14, 0);
 	}
 	
 	// Handle navigation
@@ -1379,13 +1421,14 @@ void Ball_ShootRandom()
 	g_Ball.coolDown = 0;
 	g_Ball.bounce = 0;
 	g_Ball.point = POINT_PENDING;
+	g_Ball.physics = true;
 		
 	ayFX_PlayBank(1, 0);
 }
 
 //-----------------------------------------------------------------------------
 ///
-void Ball_Prepare()
+void Ball_SwitchSprites()
 {
 	// Flicker Shadows
 	u8 pat = 80;
@@ -1430,82 +1473,91 @@ void Ball_Hide()
 	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
 	g_Ball.velXY = 0;
 	g_Ball.velZ = 0;
+	// g_Ball.physics = false;
 }
 
 //-----------------------------------------------------------------------------
 ///
 void Ball_Update()
 {
-	// Horizontal force
-	i16 dx = g_Ball.velXY * (i16)g_Cosinus64[g_Ball.dir];
-	dx /= 64;
-	g_Ball.pos.x += dx;
+	//-------------------------------------------------------------------------
+	// Simulate ball physics
+	if(g_Ball.physics)
+	{
+		// Horizontal force
+		i16 dx = g_Ball.velXY * (i16)g_Cosinus64[g_Ball.dir];
+		dx /= 64;
+		g_Ball.pos.x += dx;
+		
+		i16 prevY = g_Ball.pos.y;
+		i16 dy = g_Ball.velXY * (i16)g_Sinus64[g_Ball.dir];
+		dy /= 64;
+		g_Ball.pos.y -= dy;
+		g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
+		g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
+		
+		// Vertical force - Gravity
+		g_Ball.velZ -= GRAVITY;	
+		g_Ball.height += g_Ball.velZ;
+
+		// Bounce
+		if(g_Ball.height < 0)
+		{
+			g_Ball.height = 0;
+			g_Ball.bounce++;
+			g_Ball.velZ = -g_Ball.velZ * 2 / 3;
+
+			/*if(g_Ball.spin == SPIN_TOP)
+			{
+			}
+			else*/ if(g_Ball.spin == SPIN_BACK)
+			{
+				g_Ball.velXY = g_Ball.velXY / 2;
+			}
+			else if(g_Ball.spin == SPIN_FLAT)
+			{
+				g_Ball.velXY = g_Ball.velXY * 2 / 3;
+			}
+
+			if(g_Ball.bounce == 1)
+			{
+				ayFX_PlayBank(12, 0);
+
+				if(Ball_CheckField() && (g_Ball.point == POINT_PENDING))
+					g_Ball.point = POINT_VALIDATED;
+				else
+					g_ScoreFct(EVENT_OUT);
+			}
+			else if(g_Ball.bounce == 2)
+			{
+				g_ScoreFct(EVENT_IN);
+				ayFX_PlayBank(12, 0);
+			}
+		}
+
+		if(g_Ball.coolDown > 0)
+			g_Ball.coolDown--;
+
+		// Check out of screen
+		if((g_Ball.pos.y < 0) || (g_Ball.pos.y > PX_TO_UNIT(192)) || (g_Ball.pos.x < 0) || (g_Ball.pos.x > PX_TO_UNIT(256)))
+		{
+			Ball_Hide();
+			g_ScoreFct((g_Ball.point == POINT_PENDING) ? EVENT_OUT : EVENT_IN);
+		}
+		// Check net collision
+		else if(g_Ball.height < PX_TO_UNIT(14))
+		{
+			if(((prevY < PX_TO_UNIT(96)) && (g_Ball.pos.y >= PX_TO_UNIT(96))) || (prevY > PX_TO_UNIT(96)) && (g_Ball.pos.y <= PX_TO_UNIT(96)))
+			{
+				g_Ball.velXY = 0;
+				g_Ball.velZ = 0;
+				g_ScoreFct(EVENT_NET);
+			}
+		}
+	}
 	
-	i16 prevY = g_Ball.pos.y;
-	i16 dy = g_Ball.velXY * (i16)g_Sinus64[g_Ball.dir];
-	dy /= 64;
-	g_Ball.pos.y -= dy;
-	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
-	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
-	
-	// Vertical force - Gravity
-	g_Ball.velZ -= GRAVITY;	
-	g_Ball.height += g_Ball.velZ;
-
-	// Bounce
-	if(g_Ball.height < 0)
-	{
-		g_Ball.height = 0;
-		g_Ball.bounce++;
-		g_Ball.velZ = -g_Ball.velZ * 2 / 3;
-
-		/*if(g_Ball.spin == SPIN_TOP)
-		{
-		}
-		else*/ if(g_Ball.spin == SPIN_BACK)
-		{
-			g_Ball.velXY = g_Ball.velXY / 2;
-		}
-		else if(g_Ball.spin == SPIN_FLAT)
-		{
-			g_Ball.velXY = g_Ball.velXY * 2 / 3;
-		}
-
-		if(g_Ball.bounce == 1)
-		{
-			ayFX_PlayBank(12, 0);
-
-			if(Ball_CheckField() && (g_Ball.point == POINT_PENDING))
-				g_Ball.point = POINT_VALIDATED;
-			else
-				g_ScoreFct(EVENT_OUT);
-		}
-		else if(g_Ball.bounce == 2)
-		{
-			g_ScoreFct(EVENT_IN);
-			ayFX_PlayBank(12, 0);
-		}
-	}
-
-	if(g_Ball.coolDown > 0)
-		g_Ball.coolDown--;
-
-	// Check out of screen
-	if((g_Ball.pos.y < 0) || (g_Ball.pos.y > PX_TO_UNIT(192)) || (g_Ball.pos.x < 0) || (g_Ball.pos.x > PX_TO_UNIT(256)))
-	{
-		Ball_Hide();
-		g_ScoreFct((g_Ball.point == POINT_PENDING) ? EVENT_OUT : EVENT_IN);
-	}
-	// Check net collision
-	else if(g_Ball.height < PX_TO_UNIT(14))
-	{
-		if(((prevY < PX_TO_UNIT(96)) && (g_Ball.pos.y >= PX_TO_UNIT(96))) || (prevY > PX_TO_UNIT(96)) && (g_Ball.pos.y <= PX_TO_UNIT(96)))
-		{
-			g_Ball.velXY = 0;
-			g_Ball.velZ = 0;
-			g_ScoreFct(EVENT_NET);
-		}
-	}
+	//-------------------------------------------------------------------------
+	// Display ball
 
 	// Update sprites position
 	u8  x = g_Ball.srcPos.x - 3;
@@ -1535,24 +1587,21 @@ void Ball_Update()
 /// Load ball sprites to VRAM
 void Ball_LoadSprites()
 {	
-	for(u8 i = 0; i < 2; ++i)
-	{
-		const u8* src = g_DataBall;
-		u16 dst = g_SpritePattern[i] + (80 * 8); // Pattern #80
-		VDP_WriteVRAM_64K(src, dst, 8);
-		
-		src += (1 * 8);
-		dst += (4 * 8); // Pattern #84
-		VDP_WriteVRAM_64K(src, dst, 8);
+	const u8* src = g_DataBall;
+	u16 dst = g_SpritePatternLow + (80 * 8); // Pattern #80
+	VDP_WriteVRAM_64K(src, dst, 8);
+	
+	src += (1 * 8);
+	dst += (4 * 8); // Pattern #84
+	VDP_WriteVRAM_64K(src, dst, 8);
 
-		src += (1 * 8);
-		dst += (4 * 8); // Pattern #88
-		VDP_WriteVRAM_64K(src, dst, 8);
+	src += (1 * 8);
+	dst += (4 * 8); // Pattern #88
+	VDP_WriteVRAM_64K(src, dst, 8);
 
-		src += (1 * 8);
-		dst += (4 * 8); // Pattern #88
-		VDP_WriteVRAM_64K(src, dst, 8);
-	}
+	src += (1 * 8);
+	dst += (4 * 8); // Pattern #88
+	VDP_WriteVRAM_64K(src, dst, 8);
 }
 
 
@@ -1561,6 +1610,38 @@ void Ball_LoadSprites()
 //   P L A Y E R S
 //
 //=============================================================================
+
+//-----------------------------------------------------------------------------
+///
+void ThrowService(Player* ply)
+{
+	// Position
+	g_Ball.height = PX_TO_UNIT(10);
+	g_Ball.pos = ply->pos;
+	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
+	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
+
+	switch(g_ServeZone)
+	{
+	case SERVE_BOT_R: g_Ball.dir = 16+7; break;
+	case SERVE_BOT_L: g_Ball.dir = 16-7; break;
+	case SERVE_TOP_L: g_Ball.dir = 48+7; break;
+	case SERVE_TOP_R: g_Ball.dir = 48-7; break;
+	};
+	
+	g_Ball.velXY = PX_TO_UNIT(3.3);
+	g_Ball.velZ = PX_TO_UNIT(3);
+	g_Ball.spin = SPIN_FLAT;
+
+	// Misc
+	g_Ball.lastPly = ply->side;
+	g_Ball.coolDown = 0;
+	g_Ball.bounce = 0;
+	g_Ball.point = POINT_PENDING;
+	g_Ball.physics = true;
+		
+	ayFX_PlayBank(1, 0);
+}
 
 //-----------------------------------------------------------------------------
 ///
@@ -1715,7 +1796,7 @@ void SetAction(Player* ply, u8 id)
 
 //-----------------------------------------------------------------------------
 ///
-void UpdateAction(Player* ply) __FASTCALL
+void Player_UpdateAction(Player* ply) __FASTCALL
 {
 	const Action* act = &g_Actions[ply->action];
 
@@ -1737,7 +1818,7 @@ void UpdateAction(Player* ply) __FASTCALL
 		else // stop action and transit to IDLE
 		{
 			SetAction(ply, ACTION_IDLE);
-			UpdateAction(ply);
+			Player_UpdateAction(ply);
 			return;
 		}
 	}
@@ -1750,7 +1831,8 @@ void UpdateAction(Player* ply) __FASTCALL
 		if(bind->inButton1() || bind->inButton2())
 		{
 			SetAction(ply, ACTION_SERVE);
-			g_Serving = false;
+			ThrowService(ply);
+			g_ServeState = false;
 		}
 		break;
 	
@@ -1774,7 +1856,7 @@ void UpdateAction(Player* ply) __FASTCALL
 
 //-----------------------------------------------------------------------------
 ///
-void HandleService(Player* ply) __FASTCALL
+void Player_HandleService(Player* ply) __FASTCALL
 {
 	const Binding* bind = ply->binding;
 	if(g_Actions[ply->action].interrupt)
@@ -1793,7 +1875,7 @@ void HandleService(Player* ply) __FASTCALL
 				
 			if(dir == 4) // No move
 			{
-				ply->action = ACTION_IDLE;
+				SetAction(ply, ACTION_IDLE);
 			}
 			else
 			{
@@ -1802,21 +1884,15 @@ void HandleService(Player* ply) __FASTCALL
 
 				// Update player position
 				ply->pos.x += g_Move[dir].x;
-				
-				// Validate new X position
-				if(ply->pos.x < PLY_MIN_X)
-					ply->pos.x = PLY_MIN_X;
-				else if(ply->pos.x > PLY_MAX_X)
-					ply->pos.x = PLY_MAX_X;
-				
-				// Validate new Y position
-				// if(ply->side == SIDE_BOTTOM)
-				// {
-				// }
-				// else
-				// {
-				// }
 
+				const ServeInfo* info = &g_ServeInfo[g_ServeZone];
+
+				// Validate new X position
+				if(ply->pos.x < info->minX)
+					ply->pos.x = info->minX;
+				else if(ply->pos.x > info->maxX)
+					ply->pos.x = info->maxX;
+				
 				// Precompute screen position
 				ply->srcPos.x = UNIT_TO_PX(ply->pos.x);
 				
@@ -1833,17 +1909,18 @@ void HandleService(Player* ply) __FASTCALL
 
 //-----------------------------------------------------------------------------
 ///
-void HandleInput(Player* ply) __FASTCALL
+void Player_HandleInput(Player* ply) __FASTCALL
 {
 	const Binding* bind = ply->binding;
 	if(g_Actions[ply->action].interrupt)
 	{
-		if(bind->inButton1() || bind->inButton2())
+		if(bind->inButton1() || bind->inButton2()) // Button triggered
 		{
 			if(g_Ball.height > PX_TO_UNIT(32))
 				SetAction(ply, ACTION_SMASH);
 			else
 			{
+				// Project the movement vector of the ball on the horizontal line of the player (to know if it will arrive on his right or on his left) 
 				i16 dY;
 				if(ply->side == SIDE_BOTTOM)
 					dY = ply->srcPos.y - g_Ball.srcPos.y;
@@ -1860,7 +1937,6 @@ void HandleInput(Player* ply) __FASTCALL
 				ply->shot = SHOT_FLAT;
 			else // if(bind->inButton2())
 				ply->shot = SHOT_SLICE;
-			//ply->shotCnt = 0;
 		}
 		else
 		{
@@ -1876,7 +1952,7 @@ void HandleInput(Player* ply) __FASTCALL
 				
 			if(dir == 4) // No move
 			{
-				ply->action = ACTION_IDLE;
+				SetAction(ply, ACTION_IDLE);
 			}
 			else
 			{
@@ -1927,20 +2003,6 @@ void HandleInput(Player* ply) __FASTCALL
 
 //-----------------------------------------------------------------------------
 ///
-void PreparePlayerBottom()
-{
-	// Flicker Shadows
-	u8 pat = 0;
-	if(g_FlickerShadow && (g_Frame & 0x1))
-	{
-		pat += 4;
-	}
-	VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_H, pat);      // Pattern #0  / #4
-	VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_L, pat + 20); // Pattern #20 / #24
-}
-
-//-----------------------------------------------------------------------------
-///
 void UpdatePlayerBottom()
 {	
 	// Update sprite position
@@ -1983,16 +2045,16 @@ void UpdatePlayerBottom()
 void DrawPlayerBottom()
 {
 	u8 frame = g_Player[SIDE_BOTTOM].anim;
-	if(g_Player[SIDE_BOTTOM].prevAnim[g_WriteBuffer] == frame)
+	if(g_Player[SIDE_BOTTOM].prevAnim == frame)
 		return;
 
-	g_Player[SIDE_BOTTOM].prevAnim[g_WriteBuffer] = frame;
+	g_Player[SIDE_BOTTOM].prevAnim = frame;
 
 	const u8* src;
 	u16 dst;
 
 	src = g_DataPlayer1 + (frame * 224);
-	dst = g_SpritePattern[g_WriteBuffer] + (0 * 8); // Pattern #0 - 20
+	dst = g_SpritePatternLow + (0 * 8); // Pattern #0 - 20
 	VDP_WriteVRAM_64K(src, dst, 21 * 8);
 	
 	src += 21 * 8;
@@ -2045,16 +2107,24 @@ void DrawPlayerBottom()
 
 //-----------------------------------------------------------------------------
 ///
-void PreparePlayerTop()
+void Player_SwitchSprites(Player* ply) __FASTCALL
 {
 	// Flicker Shadows
-	u8 pat = 40;
+	u8 pat = 0;
 	if(g_FlickerShadow && (g_Frame & 0x1))
 	{
 		pat += 4;
 	}
-	VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_H, pat);      // Pattern #40 / #44
-	VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_L, pat + 16); // Pattern #56 / #60
+	if(ply->side == SIDE_BOTTOM)
+	{
+		VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_H, pat);      // Pattern #0  / #4
+		VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_L, pat + 20); // Pattern #20 / #24
+	}
+	else
+	{
+		VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_H, pat + 40);      // Pattern #40 / #44
+		VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_L, pat + 40 + 16); // Pattern #56 / #60
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2128,16 +2198,16 @@ void UpdatePlayerTop()
 void DrawPlayerTop() __FASTCALL
 {
 	u8 frame = g_Player[SIDE_TOP].anim;
-	if(g_Player[SIDE_TOP].prevAnim[g_WriteBuffer] == frame)
+	if(g_Player[SIDE_TOP].prevAnim == frame)
 		return;
 
-	g_Player[SIDE_TOP].prevAnim[g_WriteBuffer] = frame;
+	g_Player[SIDE_TOP].prevAnim = frame;
 
 	const u8* src;
 	u16 dst;
 		
 	src = g_DataPlayer2 + (frame * 224);
-	dst = g_SpritePattern[g_WriteBuffer] + (41 * 8); // Pattern #41
+	dst = g_SpritePatternLow + (41 * 8); // Pattern #41
 	VDP_WriteVRAM_64K(src, dst, 8);
 	
 	src += 8;
@@ -2190,7 +2260,7 @@ void DrawPlayerTop() __FASTCALL
 
 //-----------------------------------------------------------------------------
 ///
-void PrepareLauncher()
+void Launcher_SwitchSprites()
 {
 	// Flicker Shadows
 	u8 pat = g_TrainSideData[g_TrainSide].pattern;
@@ -2217,9 +2287,7 @@ void InitializeNetSprites()
 {
 	// Setup net sprites
 	u16 dst;
-	dst	= g_SpritePattern[g_WriteBuffer] + (108 * 8); // Pattern #108 - #124
-	VDP_WriteVRAM_64K(g_DataNet, dst, 8 * 4 * 5);
-	dst	= g_SpritePattern[g_DisplayBuffer] + (108 * 8); // Pattern #108 - #124
+	dst	= g_SpritePatternLow + (108 * 8); // Pattern #108 - #124
 	VDP_WriteVRAM_64K(g_DataNet, dst, 8 * 4 * 5);
 	g_NetPostSprite = 0xFF;
 	SetSprite(SPRITE_NET_LEFT,  0, 213, 108, COLOR_WHITE); 	// Net part 1
@@ -2264,8 +2332,6 @@ void UncompressGM2(const u8* src, u16 dst)
 ///
 void InitializeCourt()
 {
-	VDP_SetSpritePatternTable(g_SpritePattern[0]);
-
 	// Load court data to VRAM
 	VDP_FillScreen_GM2(0);
 	VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
@@ -2288,8 +2354,7 @@ void InitializeCourt()
 	Print_SetColor(COLOR_WHITE, COLOR_BLACK);
 
 	// Initialize sprites
-	VDP_FillVRAM(0x00, g_SpritePattern[0], 0, 128*8); // Clear sprite patterns table (only 128 entry used)
-	VDP_FillVRAM(0x00, g_SpritePattern[1], 0, 128*8);
+	VDP_FillVRAM_64K(0x00, g_SpritePatternLow, 128*8); // Clear sprite patterns table
 	
 	// Setup ball sprites
 	SetSprite(SPRITE_BALL_OUTLINE, 0, 213, 80, COLOR_BLACK);			// Outline
@@ -2306,84 +2371,76 @@ void InitializeCourt()
 
 //-----------------------------------------------------------------------------
 ///
-void InitializePlayerBottom(u8 controller) __FASTCALL
+void Player_Initialize(u8 side, u8 controller)
 {
-	// Setup player 1 sprites
-	SetSprite(SPRITE_PLY_BOT_BLACK_H, 0, 213, 0,  COLOR_BLACK);			// Outline
-	SetSprite(SPRITE_PLY_BOT_BLACK_L, 0, 213, 20, COLOR_BLACK);			// Outline
-	SetSprite(SPRITE_PLY_BOT_RACKET,  0, 213, 36, COLOR_BLACK);			// Racket
-	SetSprite(SPRITE_PLY_BOT_CLOTH,   0, 213, 8,  COLOR_LIGHT_BLUE);	// Cloth
-	SetSprite(SPRITE_PLY_BOT_WHITE_H, 0, 213, 12, COLOR_WHITE);			// White
-	SetSprite(SPRITE_PLY_BOT_WHITE_L, 0, 213, 28, COLOR_WHITE);			// White
-	SetSprite(SPRITE_PLY_BOT_SKIN_H,  0, 213, 16, COLOR_LIGHT_RED);		// Skin
-	SetSprite(SPRITE_PLY_BOT_SKIN_L,  0, 213, 32, COLOR_LIGHT_RED);		// Skin
-
-	// Initialize player 1
-	Player* ply = &g_Player[SIDE_BOTTOM];
-	ply->side = SIDE_BOTTOM;
+	// Setup player sprites
+	if(side == SIDE_BOTTOM)
+	{
+		SetSprite(SPRITE_PLY_BOT_BLACK_H, 0, 213, 0,  COLOR_BLACK);			// Outline
+		SetSprite(SPRITE_PLY_BOT_BLACK_L, 0, 213, 20, COLOR_BLACK);			// Outline
+		SetSprite(SPRITE_PLY_BOT_RACKET,  0, 213, 36, COLOR_BLACK);			// Racket
+		SetSprite(SPRITE_PLY_BOT_CLOTH,   0, 213, 8,  COLOR_LIGHT_BLUE);	// Cloth
+		SetSprite(SPRITE_PLY_BOT_WHITE_H, 0, 213, 12, COLOR_WHITE);			// White
+		SetSprite(SPRITE_PLY_BOT_WHITE_L, 0, 213, 28, COLOR_WHITE);			// White
+		SetSprite(SPRITE_PLY_BOT_SKIN_H,  0, 213, 16, COLOR_LIGHT_RED);		// Skin
+		SetSprite(SPRITE_PLY_BOT_SKIN_L,  0, 213, 32, COLOR_LIGHT_RED);		// Skin
+	}
+	else // if(side == SIDE_TOP)
+	{
+		SetSprite(SPRITE_PLY_TOP_BLACK_H, 0, 213, 40, COLOR_BLACK);			// Outline
+		SetSprite(SPRITE_PLY_TOP_BLACK_L, 0, 213, 56, COLOR_BLACK);			// Outline
+		SetSprite(SPRITE_PLY_TOP_RACKET,  0, 213, 76, COLOR_BLACK);			// Racket
+		SetSprite(SPRITE_PLY_TOP_CLOTH,   0, 213, 64, COLOR_MEDIUM_GREEN);	// Cloth
+		SetSprite(SPRITE_PLY_TOP_WHITE_H, 0, 213, 48, COLOR_WHITE);			// White
+		SetSprite(SPRITE_PLY_TOP_WHITE_L, 0, 213, 68, COLOR_WHITE);			// White
+		SetSprite(SPRITE_PLY_TOP_SKIN_H,  0, 213, 52, COLOR_LIGHT_RED);		// Skin
+		SetSprite(SPRITE_PLY_TOP_SKIN_L,  0, 213, 72, COLOR_LIGHT_RED);		// Skin
+	}
+	
+	// Initialize player
+	Player* ply = &g_Player[side];
+	ply->side = side;
 	ply->control = controller;
-	ply->pos.x = PX_TO_UNIT(128+32);
-	ply->pos.y = PX_TO_UNIT(192-32);
-	ply->srcPos.x = UNIT_TO_PX(ply->pos.x);
-	ply->srcPos.y = UNIT_TO_PX(ply->pos.y);
 	ply->action = ACTION_IDLE;
 	ply->counter = 0;
 	ply->anim = 0;
-	ply->prevAnim[0] = 0xFF;
-	ply->prevAnim[1] = 0xFF;
+	ply->prevAnim = 0xFF;
 	ply->step = 0;
 	ply->binding = &g_Binding[g_InputBinding[controller]];
 	const Binding* bind = ply->binding;
-	ply->inLong  = bind->inHoldUp;
-	ply->inShort = bind->inHoldDown;
+	if(side == SIDE_BOTTOM)
+	{
+		ply->inLong  = bind->inHoldUp;
+		ply->inShort = bind->inHoldDown;
+	}
+	else // if(side == SIDE_TOP)
+	{
+		ply->inLong  = bind->inHoldUp;
+		ply->inShort = bind->inHoldDown;
+	}
+	
+	u8 zone = g_ServeZone;
+	if(side != g_Server)
+	{
+		zone += 2;
+		zone %= 4;
+	}
+	
+	ply->srcPos.x = g_ServeInfo[zone].startPos.x;
+	ply->srcPos.y = g_ServeInfo[zone].startPos.y;
+	ply->pos.x = PX_TO_UNIT(ply->srcPos.x);
+	ply->pos.y = PX_TO_UNIT(ply->srcPos.y);
 }
 
 //-----------------------------------------------------------------------------
 ///
-void InitializePlayerTop(u8 controller) __FASTCALL
-{
-	// Setup player 2 sprites
-	SetSprite(SPRITE_PLY_TOP_BLACK_H, 0, 213, 40, COLOR_BLACK);			// Outline
-	SetSprite(SPRITE_PLY_TOP_BLACK_L, 0, 213, 56, COLOR_BLACK);			// Outline
-	SetSprite(SPRITE_PLY_TOP_RACKET,  0, 213, 76, COLOR_BLACK);			// Racket
-	SetSprite(SPRITE_PLY_TOP_CLOTH,   0, 213, 64, COLOR_MEDIUM_GREEN);	// Cloth
-	SetSprite(SPRITE_PLY_TOP_WHITE_H, 0, 213, 48, COLOR_WHITE);			// White
-	SetSprite(SPRITE_PLY_TOP_WHITE_L, 0, 213, 68, COLOR_WHITE);			// White
-	SetSprite(SPRITE_PLY_TOP_SKIN_H,  0, 213, 52, COLOR_LIGHT_RED);		// Skin
-	SetSprite(SPRITE_PLY_TOP_SKIN_L,  0, 213, 72, COLOR_LIGHT_RED);		// Skin
-
-	// Initialize player 2
-	Player* ply = &g_Player[SIDE_TOP];
-	ply->side = SIDE_TOP;
-	ply->control = controller;
-	ply->pos.x = PX_TO_UNIT(128-32);
-	ply->pos.y = PX_TO_UNIT(32);
-	ply->srcPos.x = UNIT_TO_PX(ply->pos.x);
-	ply->srcPos.y = UNIT_TO_PX(ply->pos.y);
-	ply->action = ACTION_IDLE;
-	ply->counter = 0;
-	ply->anim = 0;
-	ply->prevAnim[0] = 0xFF;
-	ply->prevAnim[1] = 0xFF;
-	ply->step = 0;
-	ply->binding = &g_Binding[g_InputBinding[controller]];
-	const Binding* bind = ply->binding;
-	ply->inLong  = bind->inHoldDown;
-	ply->inShort = bind->inHoldUp;
-
-}
-
-//-----------------------------------------------------------------------------
-///
-void InitializeLauncher()
+void Launcher_Initialize()
 {
 	if(g_TrainSide == SIDE_BOTTOM)
 	{
 		// Load launcher pattern
 		u16 dst;
-		dst	= g_SpritePattern[g_WriteBuffer] + (40 * 8); // Pattern #40 - #71
-		VDP_WriteVRAM_64K(g_DataLauncher0, dst, 8 * 8 *4);
-		dst	= g_SpritePattern[g_DisplayBuffer] + (40 * 8); // Pattern #40 - #71
+		dst	= g_SpritePatternLow + (40 * 8); // Pattern #40 - #71
 		VDP_WriteVRAM_64K(g_DataLauncher0, dst, 8 * 8 *4);
 
 		// Setup launcher sprites
@@ -2397,9 +2454,7 @@ void InitializeLauncher()
 	{
 		// Load launcher pattern
 		u16 dst;
-		dst	= g_SpritePattern[g_WriteBuffer] + (0 * 8); // Pattern #40 - #71
-		VDP_WriteVRAM_64K(g_DataLauncher1, dst, 8 * 8 *4);
-		dst	= g_SpritePattern[g_DisplayBuffer] + (0 * 8); // Pattern #40 - #71
+		dst	= g_SpritePatternLow + (0 * 8); // Pattern #40 - #71
 		VDP_WriteVRAM_64K(g_DataLauncher1, dst, 8 * 8 *4);
 
 		// Setup launcher sprites
@@ -2543,14 +2598,12 @@ void DisplayScore()
 
 //-----------------------------------------------------------------------------
 ///
-void InitService(u8 side)
+void InitService()
 {
-	InitializePlayerBottom(0);
-	InitializePlayerTop(1);
-	g_Serving = true;
-	// g_TrainSide = 1 - g_Server;
-	// Ball_ShootRandom();
-	// SetAction(&g_Player[g_Server], ACTION_SERVICE);
+	g_ServeState = true;
+	g_ServeZone = (g_Server * 2) + g_OddPoint;
+	Player_Initialize(SIDE_BOTTOM, 0);
+	Player_Initialize(SIDE_TOP, 1);
 }
 
 //-----------------------------------------------------------------------------
@@ -2583,9 +2636,7 @@ bool Event_WinPoint()
 			// Text
 			u16 dst;
 			const u8* src = g_DataEvent + (g_EventSub * 8 * 8);
-			dst	= g_SpritePattern[g_WriteBuffer] + (112 * 8); // Pattern #112
-			VDP_WriteVRAM_64K(src, dst, 8 * 8);		
-			dst	= g_SpritePattern[g_DisplayBuffer] + (112 * 8); // Pattern #112
+			dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
 			VDP_WriteVRAM_64K(src, dst, 8 * 8);
 			SetSprite(SPRITE_SCORE_1, 58,    60,   112, COLOR_WHITE);
 			SetSprite(SPRITE_SCORE_2, 58+16, 60,   116, COLOR_WHITE);
@@ -2612,24 +2663,20 @@ bool Event_WinPoint()
 	
 		// Top Player
 		src = g_DataPoints + (g_Points[1] * 8 * 4);
-		dst	= g_SpritePattern[g_WriteBuffer] + (112 * 8); // Pattern #112
+		dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
-		dst	= g_SpritePattern[g_DisplayBuffer] + (112 * 8); // Pattern #112
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);
 		SetSprite(SPRITE_SCORE_1, 0, 213, 112, VDP_SPRITE_EC | SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_2, 0, 213, 112, VDP_SPRITE_EC | SCORE_SHADE);
 		
 		// Top Player
 		src = g_DataPoints + (g_Points[0] * 8 * 4);
-		dst	= g_SpritePattern[g_WriteBuffer] + (116 * 8); // Pattern #116
+		dst	= g_SpritePatternLow + (116 * 8); // Pattern #116
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
-		dst	= g_SpritePattern[g_DisplayBuffer] + (116 * 8); // Pattern #116
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);
 		SetSprite(SPRITE_SCORE_3, 0, 213, 116, SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_4, 0, 213, 116, SCORE_SHADE);
 
-		InitializePlayerBottom(0);
-		InitializePlayerTop(1);
+		// Player_Initialize(SIDE_BOTTOM, 0);
+		// Player_Initialize(SIDE_TOP, 1);
 		Ball_Hide();
 	}
 	if(g_EventFrame < EVENT_DELAY+16)
@@ -2649,7 +2696,7 @@ bool Event_WinPoint()
 		// Hide score sprites
 		HideScoreSprites();
 		InitializeNetSprites();
-		InitService(0);
+		InitService();
 		g_EventID = EVENT_NONE;
 	}
 	
@@ -2668,10 +2715,8 @@ bool Event_WinGame()
 		
 		// Text
 		src = g_DataEvent + (EVENT_GAME * 8 * 8);
-		dst	= g_SpritePattern[g_WriteBuffer] + (112 * 8); // Pattern #112
+		dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
 		VDP_WriteVRAM_64K(src, dst, 8 * 8);		
-		dst	= g_SpritePattern[g_DisplayBuffer] + (112 * 8); // Pattern #112
-		VDP_WriteVRAM_64K(src, dst, 8 * 8);
 		SetSprite(SPRITE_SCORE_1, 0, 213, 112, VDP_SPRITE_EC | SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_2, 0, 213, 116, VDP_SPRITE_EC | SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_3, 0, 213, 112, VDP_SPRITE_EC | SCORE_SHADE);
@@ -2680,16 +2725,13 @@ bool Event_WinGame()
 		// Player
 		u8 ctrl = g_Player[g_Winner].control;
 		src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: P1, 6: P2, 7: Ai
-		dst	= g_SpritePattern[g_WriteBuffer] + (120 * 8); // Pattern #116
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
-		dst	= g_SpritePattern[g_DisplayBuffer] + (120 * 8); // Pattern #116
+		dst	= g_SpritePatternLow + (120 * 8); // Pattern #116
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);
 		SetSprite(SPRITE_SCORE_5, 0, 213, 120, SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_6, 0, 213, 120, SCORE_SHADE);
 
-
-		InitializePlayerBottom(0);
-		InitializePlayerTop(1);
+		// Player_Initialize(SIDE_BOTTOM, 0);
+		// Player_Initialize(SIDE_TOP, 1);
 		Ball_Hide();
 	}
 	if(g_EventFrame < 16)
@@ -2711,7 +2753,7 @@ bool Event_WinGame()
 		// Hide score sprites
 		HideScoreSprites();
 		InitializeNetSprites();
-		InitService(0);
+		InitService();
 		g_EventID = EVENT_NONE;
 	}
 	g_EventFrame++;
@@ -2731,10 +2773,8 @@ bool Event_WinSet()
 		
 		// Text
 		src = g_DataEvent + (EVENT_SET * 8 * 8);
-		dst	= g_SpritePattern[g_WriteBuffer] + (112 * 8); // Pattern #112
+		dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
 		VDP_WriteVRAM_64K(src, dst, 8 * 8);		
-		dst	= g_SpritePattern[g_DisplayBuffer] + (112 * 8); // Pattern #112
-		VDP_WriteVRAM_64K(src, dst, 8 * 8);
 		SetSprite(SPRITE_SCORE_1, 0, 213, 112, VDP_SPRITE_EC | SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_2, 0, 213, 116, VDP_SPRITE_EC | SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_3, 0, 213, 112, VDP_SPRITE_EC | SCORE_SHADE);
@@ -2743,16 +2783,13 @@ bool Event_WinSet()
 		// Player
 		u8 ctrl = g_Player[g_Winner].control;
 		src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: AI, 6: P1, 7: P2
-		dst	= g_SpritePattern[g_WriteBuffer] + (120 * 8); // Pattern #116
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
-		dst	= g_SpritePattern[g_DisplayBuffer] + (120 * 8); // Pattern #116
+		dst	= g_SpritePatternLow + (120 * 8); // Pattern #116
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);
 		SetSprite(SPRITE_SCORE_5, 0, 213, 120, SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_6, 0, 213, 120, SCORE_SHADE);
 
-
-		InitializePlayerBottom(0);
-		InitializePlayerTop(1);
+		// Player_Initialize(SIDE_BOTTOM, 0);
+		// Player_Initialize(SIDE_TOP, 1);
 		Ball_Hide();
 	}
 	if(g_EventFrame < 16)
@@ -2773,7 +2810,7 @@ bool Event_WinSet()
 	{
 		HideScoreSprites();
 		InitializeNetSprites();
-		InitService(0);
+		InitService();
 		g_EventID = EVENT_NONE;
 		Game_SetState(State_ScoreStart);
 	}
@@ -2793,6 +2830,8 @@ bool HandleEvent()
 	case EVENT_SET:   return Event_WinSet();
 	case EVENT_MATCH: 
 		Game_SetState(State_TitleStart);
+		break;
+	default:
 		break;
 	};
 	return true;
@@ -2833,16 +2872,18 @@ void MatchScore(u8 subEvent)
 	}
 
 	// Deuce
-	if((g_Points[0] == POINT_ADV) && (g_Points[1] == POINT_ADV))
+	if((g_Points[0] == SCORE_ADV) && (g_Points[1] == SCORE_ADV))
 	{
-		g_Points[0] = POINT_40;
-		g_Points[1] = POINT_40;
+		g_Points[0] = SCORE_40;
+		g_Points[1] = SCORE_40;
 	}
+
+	g_OddPoint = (g_Points[0] + g_Points[1]) & 0x1;
 		
 	for(u8 i = 0; i < 2; ++i)
 	{
 		// Win the current game
-		if((g_Points[i] == POINT_WIN) || ((g_Points[i] == POINT_ADV) && (g_Points[1-i] < POINT_40)))
+		if((g_Points[i] == SCORE_WIN) || ((g_Points[i] == SCORE_ADV) && (g_Points[1-i] < SCORE_40)))
 		{
 			g_Winner = i;
 			g_Games[g_CurSet][i]++;
@@ -2981,10 +3022,8 @@ bool State_Init()
 		VDP_SetLayoutTable(MSX1_LAYOUT_TABLE);
 		VDP_SetColorTable(MSX1_COLOR_TABLE);
 		VDP_SetPatternTable(MSX1_PATTERN_TABLE);
-		VDP_SetSpritePatternTable(MSX1_SPRITE_PATTERN_0);
+		VDP_SetSpritePatternTable(MSX1_SPRITE_PATTERN);
 		VDP_SetSpriteAttributeTable(MSX1_SPRITE_ATTRIBUTE);
-		g_SpritePattern[0] = MSX1_SPRITE_PATTERN_0;
-		g_SpritePattern[1] = MSX1_SPRITE_PATTERN_1;
 	#if (MSX2_ENHANCE)
 	}
 	else // VDP_VERSION_V99xx
@@ -2993,10 +3032,8 @@ bool State_Init()
 		VDP_SetLayoutTable(MSX2_LAYOUT_TABLE);
 		VDP_SetColorTable(MSX2_COLOR_TABLE);
 		VDP_SetPatternTable(MSX2_PATTERN_TABLE);
-		VDP_SetSpritePatternTable(MSX2_SPRITE_PATTERN_0);
+		VDP_SetSpritePatternTable(MSX2_SPRITE_PATTERN);
 		VDP_SetSpriteAttributeTable(MSX2_SPRITE_ATTRIBUTE);
-		g_SpritePattern[0] = MSX2_SPRITE_PATTERN_0;
-		g_SpritePattern[1] = MSX2_SPRITE_PATTERN_1;
 	}
 	#endif
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 | VDP_SPRITE_SCALE_1);
@@ -3011,11 +3048,13 @@ bool State_Init()
 	PT3_SetLoop(true);
 	PT3_InitSong(g_DataMusic);
 	PT3_Pause();
+	g_PlayMusic = AUDIO_ENABLE;
 
 	// Initialize ayFX
 	ayFX_InitBank(g_DataSFX);
 	ayFX_SetChannel(PSG_CHANNEL_A);
 	ayFX_SetMode(AYFX_MODE_FIXED);
+	g_PlaySFX = AUDIO_ENABLE;
 
 	Game_SetState(State_TitleStart);
 	return false;
@@ -3027,7 +3066,6 @@ bool State_TitleStart()
 {
 	VDP_EnableDisplay(false);
 
-	VDP_SetSpritePatternTable(g_SpritePattern[0]);
 	VDP_SetColor(COLOR_BLACK);
 
 	// Load screen data
@@ -3117,7 +3155,11 @@ bool State_TitleUpdate()
 		PT3_Resume();
 
 		Print_SelectTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
-		Print_SetPosition(11, 18);
+		Print_SetPosition(7, 16);
+		Print_DrawText("PIXEL PHENIX # 2021");
+
+		Print_SelectTextFont(g_DataFont, OFFSET_TITLE_FONT_ALT);
+		Print_SetPosition(11, 22);
 		Print_DrawText("PRESS A KEY");
 	}
 	if(g_EventFrame < 255)
@@ -3182,7 +3224,7 @@ bool State_ScoreStart()
 	for(u8 s = 0; s < SPRITE_SCORE_BALL_1; ++s)
 		VDP_SetSpritePositionY(s, 213);
 
-	u16 dst = g_SpritePattern[g_DisplayBuffer]; // Pattern #0
+	u16 dst = g_SpritePatternLow; // Pattern #0
 	VDP_FillVRAM_64K(0, dst, 8 * 4 * 4);
 	const u8* src = g_DataBall + 6 * 8;
 	for(u8 i = 0; i < 4; ++i)
@@ -3251,8 +3293,8 @@ bool State_MatchStart()
 	VDP_EnableDisplay(false);
 
 	InitializeCourt();
-	InitializePlayerBottom(0);
-	InitializePlayerTop(1);
+	// Player_Initialize(SIDE_BOTTOM, 0);
+	// Player_Initialize(SIDE_TOP, 1);
 	HideLauncher();
 	
 	// Initialize score
@@ -3279,7 +3321,7 @@ bool State_MatchStart()
 
 	// Initialize ball
 	InitializeNetSprites();
-	InitService(0);
+	InitService();
 	// Ball_ShootRandom();
 	Ball_LoadSprites();
 
@@ -3292,33 +3334,20 @@ bool State_MatchStart()
 ///
 bool State_MatchUpdate()
 {
-VDP_SetColor(COLOR_BLACK);
+// VDP_SetColor(COLOR_BLACK);
 
 	//---------------------------------------------------------------------
-	// Switch buffer
-	g_WriteBuffer = 1 - g_WriteBuffer;
-	g_DisplayBuffer = 1 - g_DisplayBuffer;
-	VDP_SetSpritePatternTable(g_SpritePattern[g_DisplayBuffer]);
-	PreparePlayerBottom();
-	PreparePlayerTop();
-	Ball_Prepare();
+	// Switch shaded sprites during V-Blank
+	Player_SwitchSprites(&g_Player[SIDE_BOTTOM]);
+	Player_SwitchSprites(&g_Player[SIDE_TOP]);
+	Ball_SwitchSprites();
 
-VDP_SetColor(COLOR_LIGHT_GREEN);
+// VDP_SetColor(COLOR_LIGHT_GREEN);
 
+	//---------------------------------------------------------------------
 	// Handle match event
-	bool bAllowInput = true;
 	
-	if(g_EventID != EVENT_NONE)
-	{
-		//---------------------------------------------------------------------
-		// Handle Event
-		bAllowInput = HandleEvent();
-
-		// if(g_EventTimer == 0)
-			// bAllowInput = HandleEvent();
-		// else
-			// g_EventTimer--;		
-	}
+	bool bAllowInput = HandleEvent();
 
 	//---------------------------------------------------------------------
 	// Handle input
@@ -3328,41 +3357,40 @@ VDP_SetColor(COLOR_LIGHT_GREEN);
 	#if (DEBUG)
 		if(KEY_PRESS(KEY_HOME))
 			g_Debug = 1 - g_Debug;
+		if(KEY_PRESS(KEY_F2))
+			Ball_ShootRandom();
 	#endif
 	
-	if(KEY_PRESS(KEY_F1))
-	{
-		Game_SetState(State_ScoreStart);
-		return false;
-	}
-
-	if(KEY_PRESS(KEY_F2))
-		Ball_ShootRandom();
-	if(KEY_PRESS(KEY_F3)) // Activate/deactivate shadows
-		g_FlickerShadow = 1 - g_FlickerShadow;
 	if(KEY_PRESS(KEY_ESC)) // Return to main menu
 	{
 		// VDP_HideSpriteFrom(0);
 		Game_SetState(State_TitleStart);
 		return false;
 	}
+	if(KEY_PRESS(KEY_F1))
+	{
+		Game_SetState(State_ScoreStart);
+		return false;
+	}
+	if(KEY_PRESS(KEY_F3)) // Activate/deactivate shadows
+		g_FlickerShadow = 1 - g_FlickerShadow;
 	
 	if(bAllowInput)
 	{
-		if(g_Serving)
+		if(g_ServeState)
 		{
-			HandleService(&g_Player[g_Server]);
-			HandleInput(&g_Player[1-g_Server]);
+			Player_HandleService(&g_Player[g_Server]);
+			Player_HandleInput(&g_Player[1-g_Server]);
 			
 		}
 		else
 		{
-			HandleInput(&g_Player[SIDE_BOTTOM]);
-			HandleInput(&g_Player[SIDE_TOP]);
+			Player_HandleInput(&g_Player[SIDE_BOTTOM]);
+			Player_HandleInput(&g_Player[SIDE_TOP]);
 		}
 	}
 
-VDP_SetColor(COLOR_LIGHT_BLUE);
+// VDP_SetColor(COLOR_LIGHT_BLUE);
 
 	//---------------------------------------------------------------------
 	// Update sprites position
@@ -3371,10 +3399,10 @@ VDP_SetColor(COLOR_LIGHT_BLUE);
 	UpdatePlayerTop();
 	Ball_Update();
 
-	UpdateAction(&g_Player[SIDE_BOTTOM]);
-	UpdateAction(&g_Player[SIDE_TOP]);
+	Player_UpdateAction(&g_Player[SIDE_BOTTOM]);
+	Player_UpdateAction(&g_Player[SIDE_TOP]);
 
-VDP_SetColor(COLOR_MAGENTA);
+// VDP_SetColor(COLOR_MAGENTA);
 
 	//---------------------------------------------------------------------
 	// Draw anim
@@ -3382,7 +3410,7 @@ VDP_SetColor(COLOR_MAGENTA);
 	DrawPlayerBottom();
 	DrawPlayerTop();
 
-VDP_SetColor(COLOR_LIGHT_YELLOW);
+// VDP_SetColor(COLOR_LIGHT_YELLOW);
 
 	return true;
 }
@@ -3393,7 +3421,7 @@ bool State_WinMatch()
 {
 	if(g_EventFrame == 0)
 	{
-		InitService(0);
+		InitService();
 		Game_SetState(State_MatchUpdate);
 	}
 	g_EventFrame++;
@@ -3407,9 +3435,9 @@ bool State_TrainingStart()
 	VDP_EnableDisplay(false);
 
 	InitializeCourt();
-	InitializePlayerBottom(g_TrainSide);
-	InitializePlayerTop(1-g_TrainSide);
-	InitializeLauncher();
+	Player_Initialize(SIDE_BOTTOM, g_TrainSide);
+	Player_Initialize(SIDE_TOP, 1-g_TrainSide);
+	Launcher_Initialize();
 	
 	// Initialize score board
 	g_TrainScore = 0;
@@ -3443,17 +3471,13 @@ bool State_TrainingUpdate()
 	//---------------------------------------------------------------------
 	// Switch buffer
 
-	g_WriteBuffer = 1 - g_WriteBuffer;
-	g_DisplayBuffer = 1 - g_DisplayBuffer;
-	VDP_SetSpritePatternTable(g_SpritePattern[g_DisplayBuffer]);
-
 	// Prepare sprite objects
 	if(g_TrainSide == SIDE_BOTTOM)
-		PreparePlayerBottom();
+		Player_SwitchSprites(&g_Player[SIDE_BOTTOM]);
 	else
-		PreparePlayerTop();
-	PrepareLauncher();
-	Ball_Prepare();
+		Player_SwitchSprites(&g_Player[SIDE_TOP]);
+	Launcher_SwitchSprites();
+	Ball_SwitchSprites();
 
 	//---------------------------------------------------------------------
 	// Update input
@@ -3540,7 +3564,7 @@ bool State_TrainingUpdate()
 		}
 	#endif
 	
-	HandleInput(&g_Player[g_TrainSide]);
+	Player_HandleInput(&g_Player[g_TrainSide]);
 	
 	//---------------------------------------------------------------------
 	// Update sprites position
@@ -3552,7 +3576,7 @@ bool State_TrainingUpdate()
 		
 	Ball_Update();
 
-	UpdateAction(&g_Player[g_TrainSide]);
+	Player_UpdateAction(&g_Player[g_TrainSide]);
 
 	//---------------------------------------------------------------------
 	// Draw anim

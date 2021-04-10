@@ -9,6 +9,16 @@ T:	Type of pattern (2-bits)
 	3: N blocks of uncompressed data
 N:	Number of repetition of the blocks (6-bits: 1-64)
 
+0.2.11
+- Handle serving phase
+- Adjust shot parameters
+- Added menu SFX
+- Merged redundant code
+
+0.2.10
+- Remove sprite loading double-buffering
+- Added basic serve action
+
 0.2.09
 - Fixed bug with menu trigger than was not working with standard Bool and Int values
 - Update ball and racket sprites (and remove unused data)
