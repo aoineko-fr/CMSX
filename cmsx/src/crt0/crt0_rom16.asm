@@ -41,6 +41,10 @@ init:
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
 	
+	; Initialize heap address
+	ld		hl, #s__HEAP
+	ld		(#_g_HeapStartAddress), hl
+
 	; Initialize globals
     ld		bc, #l__INITIALIZER
 	ld		a, b
@@ -50,10 +54,6 @@ init:
 	ld		hl, #s__INITIALIZER
 	ldir
 	
-	; Initialize heap address
-	ld		hl, #s__HEAP
-	ld		(#_g_HeapStartAddress), hl
-
 start:
 	; start main() function
 	ei

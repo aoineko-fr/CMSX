@@ -21,8 +21,11 @@ if /I %Ext%==com (set TargetType=TARGET_TYPE_DOS)
 
 if not exist %OutDir% ( md %OutDir% )
 
+if %Optim%==Speed (set CompileOpt=--opt-code-speed)
+if %Optim%==Size (set CompileOpt=--opt-code-size)
+
 REM set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src --opt-code-speed --max-allocs-per-node20000 %File% -o %OutDir%\
-set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src --opt-code-speed --constseg RODATA %File% -o %OutDir%\
+set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src %CompileOpt% --constseg RODATA %File% -o %OutDir%\
 set ASMParam=-o -l -s -I%ProjDir% -I%LibDir%\src %File%
 
 if /I %FileExt%==.c (

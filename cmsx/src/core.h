@@ -27,11 +27,11 @@ typedef unsigned char	bool; 	///< 8 bits boolean type
 #define false			0		///< Value for "false" boolean
 
 // Integer
-typedef char			i8;		///< 8 bits signed integer type
+typedef signed char		i8;		///< 8 bits signed integer type
 typedef unsigned char	u8;		///< 8 bits unsigned integer type
-typedef short			i16;	///< 16 bits signed integer type
+typedef signed short	i16;	///< 16 bits signed integer type
 typedef unsigned short	u16;	///< 16 bits unsigned integer type
-typedef long			i32;	///< 32 bits signed integer type
+typedef signed long		i32;	///< 32 bits signed integer type
 typedef unsigned long	u32;	///< 32 bits unsigned integer type
 
 // Float

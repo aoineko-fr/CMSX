@@ -53,6 +53,10 @@ init:
 	or		a, c
 	out		(PPI_A), a
 	
+	; Initialize heap address
+	ld		hl, #s__HEAP
+	ld		(#_g_HeapStartAddress), hl
+
 	; Initialize globals
     ld		bc, #l__INITIALIZER
 	ld		a, b
@@ -61,10 +65,6 @@ init:
 	ld		de, #s__INITIALIZED
 	ld		hl, #s__INITIALIZER
 	ldir
-
-	; Initialize heap address
-	ld		hl, #s__HEAP
-	ld		(#_g_HeapStartAddress), hl
 
 start:
 	; start main() function

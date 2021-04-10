@@ -39,10 +39,6 @@ init:
 	ld		hl, #s__INITIALIZER
 	ldir
 
-	; Initialize heap address
-	ld		hl, #s__HEAP
-	ld		(#_g_HeapStartAddress), hl
-
 start:
 	; start main() function
 	ei
@@ -65,7 +61,7 @@ start:
 .area   _GSFINAL
 .area	_DATA
 _g_HeapStartAddress::
-	.ds 2
+	.dw		s__HEAP
 
 .area	_INITIALIZED
 .area	_BSEG
