@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.12.0 on Fri Apr  2 00:19:44 2021
+// Data generated using CMSXimg 1.12.0 on Fri Jun  4 22:16:24 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     font.png
@@ -15,11 +15,8 @@
 //  - Compressor:     None
 //  - Skip empty:     TRUE
 
-#ifndef D_g_DataFont
-	#define D_g_DataFont
-#endif
 // Data table
-D_g_DataFont const unsigned char g_DataFont[] =
+const unsigned char g_DataFont[] =
 {
 // Font header data
 	0x88, // Data size [x|y]

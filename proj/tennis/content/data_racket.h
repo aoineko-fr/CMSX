@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.12.0 on Fri Apr  2 00:19:44 2021
+// Data generated using CMSXimg 1.12.0 on Fri Jun  4 22:16:24 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     misc.png
@@ -15,11 +15,8 @@
 //  - Compressor:     None
 //  - Skip empty:     FALSE
 
-#ifndef D_g_DataRacket
-	#define D_g_DataRacket
-#endif
 // Data table
-D_g_DataRacket const unsigned char g_DataRacket[] =
+const unsigned char g_DataRacket[] =
 {
 // Sprite[0] (offset:0)
 	0x00, /* ........ */ 

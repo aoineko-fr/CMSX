@@ -26,26 +26,19 @@
 //=============================================================================
 
 //-----------------------------------------------------------------------------
-// DEFINES
-#define VERSION						"V0.2.11"
-#define DEBUG						0
+// CONFIG
+#define VERSION						"V0.2.15"
+#define DEBUG						1
 #define MSX2_ENHANCE				0
-#define AUDIO_ENABLE				1
-#define DISPLAY_CREDITS				0
+#define AUDIO_ENABLE				0
+#define DISPLAY_CREDITS				1
 
-// VRAM Tables Address - MSX1
-#define MSX1_LAYOUT_TABLE			0x3C00
-#define MSX1_COLOR_TABLE			0x2000
-#define MSX1_PATTERN_TABLE			0x0000
-#define MSX1_SPRITE_ATTRIBUTE		0x3F00
-#define MSX1_SPRITE_PATTERN			0x1800
-
-// VRAM Tables Address - MSX2/2+/tR
-#define MSX2_LAYOUT_TABLE			0x1800
-#define MSX2_COLOR_TABLE			0x2000
-#define MSX2_PATTERN_TABLE			0x0000
-#define MSX2_SPRITE_ATTRIBUTE		0x1E00
-#define MSX2_SPRITE_PATTERN			0x3800
+// VRAM Tables Address
+#define VRAM_LAYOUT_TABLE			0x3800
+#define VRAM_COLOR_TABLE			0x2000
+#define VRAM_PATTERN_TABLE			0x0000
+#define VRAM_SPRITE_ATTRIBUTE		0x3E00
+#define VRAM_SPRITE_PATTERN			0x1800
 
 // Unit conversion (Pixel <> Q10.6)
 #define UNIT_TO_PX(a)				(u8)((a) / 64)
@@ -131,7 +124,7 @@ enum SHOT
 };
 
 /// Training shot options
-enum TRAIN
+enum TRAIN_SHOT
 {
 	TRAIN_BOTH = 0,
 	TRAIN_FLAT,
@@ -140,9 +133,10 @@ enum TRAIN
 };
 
 /// Player input direction
-enum DIR
+enum TAIN_DIR
 {
-	DIR_CENTER = 0,
+	DIR_RANDOM = 0,
+	DIR_CENTER,
 	DIR_RIGHT,
 	DIR_LEFT,
 	DIR_MAX,
@@ -160,6 +154,8 @@ enum ACTION
 	ACTION_SMASH,
 	ACTION_THROW,
 	ACTION_SERVE,
+	ACTION_WIN,
+	ACTION_LOOSE,
 	ACTION_MAX,
 };
 
@@ -173,6 +169,7 @@ enum FUNCT
 	FUNCT_SMASH,
 	FUNCT_THROW,
 	FUNCT_SERVE,
+	FUNCT_CUP,
 	FUNCT_MAX,
 };
 
@@ -205,9 +202,6 @@ enum SPRITE
 	SPRITE_PLY_TOP_SKIN_H,				// 18
 	SPRITE_PLY_TOP_SKIN_L,				// 19
 
-	SPRITE_BALL_BODY,					// 20
-	SPRITE_BALL_SHADOW,					// 21
-
 	SPRITE_SCORE_1,						// 22
 	SPRITE_SCORE_2,						// 23
 	SPRITE_SCORE_3,						// 24
@@ -220,21 +214,112 @@ enum SPRITE
 	SPRITE_SCORE_BALL_3,                // 30
 	SPRITE_SCORE_BALL_4,                // 31
 
+	SPRITE_BALL_BODY,					// 20
+	SPRITE_BALL_SHADOW,					// 21
+
 	SPRITE_MAX, //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	SPRITE_BALL_MARK      = SPRITE_SCORE_1,
 
-	SPRITE_LAUNCHER_BOT_1 = SPRITE_PLY_BOT_CLOTH,
-	SPRITE_LAUNCHER_BOT_2 = SPRITE_PLY_BOT_WHITE_H,
-	SPRITE_LAUNCHER_BOT_3 = SPRITE_PLY_BOT_WHITE_L,
-	SPRITE_LAUNCHER_BOT_4 = SPRITE_PLY_BOT_SKIN_H,
-	SPRITE_LAUNCHER_BOT_5 = SPRITE_PLY_BOT_SKIN_L,
+	SPRITE_LAUNCHER_BOT_1 = SPRITE_PLY_BOT_BLACK_H,	
+	SPRITE_LAUNCHER_BOT_2 = SPRITE_PLY_BOT_BLACK_L,		
+	SPRITE_LAUNCHER_BOT_3 = SPRITE_PLY_BOT_RACKET,		
+	SPRITE_LAUNCHER_BOT_4 = SPRITE_PLY_BOT_CLOTH,
+	SPRITE_LAUNCHER_BOT_5 = SPRITE_PLY_BOT_WHITE_H,
 
-	SPRITE_LAUNCHER_TOP_1 = SPRITE_PLY_TOP_CLOTH,
-	SPRITE_LAUNCHER_TOP_2 = SPRITE_PLY_TOP_WHITE_H,
-	SPRITE_LAUNCHER_TOP_3 = SPRITE_PLY_TOP_WHITE_L,
-	SPRITE_LAUNCHER_TOP_4 = SPRITE_PLY_TOP_SKIN_H,
-	SPRITE_LAUNCHER_TOP_5 = SPRITE_PLY_TOP_SKIN_L,
+	SPRITE_LAUNCHER_TOP_1 = SPRITE_PLY_TOP_BLACK_H,	
+	SPRITE_LAUNCHER_TOP_2 = SPRITE_PLY_TOP_BLACK_L,		
+	SPRITE_LAUNCHER_TOP_3 = SPRITE_PLY_TOP_RACKET,		
+	SPRITE_LAUNCHER_TOP_4 = SPRITE_PLY_TOP_CLOTH,
+	SPRITE_LAUNCHER_TOP_5 = SPRITE_PLY_TOP_WHITE_H,
+
+	SPRITE_CUP_OUTLINE    = SPRITE_SCORE_BALL_1,
+	SPRITE_CUP_BODY       = SPRITE_SCORE_BALL_2,
+
+	SPRITE_CURSOR         = SPRITE_SCORE_BALL_1,
+	SPRITE_CURSOR_1       = SPRITE_SCORE_BALL_1,
+	SPRITE_CURSOR_2       = SPRITE_SCORE_BALL_2,
+	SPRITE_CURSOR_3       = SPRITE_SCORE_BALL_3,
+	SPRITE_CURSOR_4       = SPRITE_SCORE_BALL_4,
+};
+
+enum PATTERN
+{
+	// Bottom player
+	PATTERN_PLY_BOT_LINE1_H =   0, // #000
+	PATTERN_PLY_BOT_LINE2_H =   4, // #004
+	PATTERN_PLY_BOT_CLOTH   =   8, // #008
+	PATTERN_PLY_BOT_WHITE_H =  12, // #012
+	PATTERN_PLY_BOT_SKIN_H  =  16, // #016
+	PATTERN_PLY_BOT_LINE1_L =  20, // #020
+	PATTERN_PLY_BOT_LINE2_L =  24, // #024
+	PATTERN_PLY_BOT_WHITE_L =  28, // #028
+	PATTERN_PLY_BOT_SKIN_L  =  32, // #032
+	// Top player
+	PATTERN_PLY_TOP_LINE1_H =  36, // #036
+	PATTERN_PLY_TOP_LINE2_H =  40, // #040
+	PATTERN_PLY_TOP_WHITE_H =  44, // #044
+	PATTERN_PLY_TOP_SKIN_H  =  48, // #048
+	PATTERN_PLY_TOP_LINE1_L =  52, // #052
+	PATTERN_PLY_TOP_LINE2_L =  56, // #056
+	PATTERN_PLY_TOP_CLOTH   =  60, // #060
+	PATTERN_PLY_TOP_WHITE_L =  64, // #064
+	PATTERN_PLY_TOP_SKIN_L  =  68, // #068
+	// Ball
+	PATTERN_BALL_LINE1      =  72, // #072
+	PATTERN_BALL_LINE2      =  76, // #076
+	PATTERN_BALL_BODY       =  80, // #080
+	PATTERN_BALL_SHADE      =  84, // #084
+	PATTERN_BALL_MARK       =  88, // #088
+	// Racket
+	PATTERN_RACKET_R        =  92, // #092
+	PATTERN_RACKET_L        =  96, // #096
+	PATTERN_RACKET_T        = 100, // #100
+	PATTERN_104             = 104, // #104
+	// Net
+	PATTERN_NET1            = 108, // #108
+	PATTERN_NET2            = 112, // #112
+	PATTERN_NET3            = 116, // #116
+	PATTERN_NET4            = 120, // #120
+	PATTERN_NET5            = 124, // #124
+	// Bottom player
+	PATTERN_128             = 128, // #128
+	PATTERN_132             = 132, // #132
+	PATTERN_136             = 136, // #136
+	PATTERN_140             = 140, // #140
+	PATTERN_144             = 144, // #144
+	PATTERN_148             = 148, // #148
+	PATTERN_152             = 152, // #152
+	PATTERN_156             = 156, // #156
+	PATTERN_160             = 160, // #160
+	// Top player
+	PATTERN_164             = 164, // #164
+	PATTERN_168             = 168, // #168
+	PATTERN_172             = 172, // #172
+	PATTERN_176             = 176, // #176
+	PATTERN_180             = 180, // #180
+	PATTERN_184             = 184, // #184
+	PATTERN_188             = 188, // #188
+	PATTERN_192             = 192, // #192
+	PATTERN_196             = 196, // #196
+	// 
+	PATTERN_200             = 200, // #200
+	PATTERN_CURSOR1         = 204, // #204
+	PATTERN_CURSOR2         = 208, // #208
+	PATTERN_CURSOR3         = 212, // #212
+	// Cup sprites
+	PATTERN_CUP_OUTLINE1    = 216, // #216
+	PATTERN_CUP_OUTLINE2    = 220, // #220
+	PATTERN_CUP_BODY        = 224, // #224
+	// Server icon
+	PATTERN_SERVER_BASE     = 228, // #228
+	PATTERN_SERVER_SHADE    = 232, // #232
+	PATTERN_SERVER_STRIP    = 236, // #236
+	PATTERN_SERVER_OUTLINE  = 240, // #240
+	// Score
+	PATTERN_SCORE_A         = 244, // #244
+	PATTERN_SCORE_B         = 248, // #248
+	PATTERN_SCORE_PLY       = 252, // #252
 };
 
 /// Menu pages enumeration
@@ -285,6 +370,7 @@ enum EVENT
 	EVENT_DBLFAULT,
 	EVENT_POINT,
 	EVENT_NONE,
+	EVENT_INOUT,
 	EVENT_IN,
 };
 
@@ -470,6 +556,8 @@ bool State_MatchUpdate();
 bool State_WinMatch();
 bool State_TrainingStart();
 bool State_TrainingUpdate();
+bool State_VictoryStart();
+bool State_VictoryUpdate();
 
 // Menu callback
 const char* Menu_StartMatch(u8 op, i8 value);
@@ -477,10 +565,12 @@ const char* Menu_StartTrain(u8 op, i8 value);
 const char* Menu_SetAI(u8 op, i8 value);
 const char* Menu_SetSets(u8 op, i8 value);
 const char* Menu_SetShot(u8 op, i8 value);
+const char* Menu_SetDir(u8 op, i8 value);
 const char* Menu_SetSide(u8 op, i8 value);
 const char* Menu_CreditScroll(u8 op, i8 value);
 const char* Menu_SetInput(u8 op, i8 value);
 const char* Menu_SetMusic(u8 op, i8 value);
+const char* Menu_SetSFX(u8 op, i8 value);
 
 // Input callback
 bool KB1_Hold_Up();
@@ -527,6 +617,9 @@ bool Joy2_Press_Left();
 bool Joy2_Press_Right();
 bool Joy2_Button1();
 bool Joy2_Button2();
+
+// Helpers
+void SetSprite(u8 index, u8 x, u8 y, u8 shape, u8 color);
 
 //-----------------------------------------------------------------------------
 // EXTERNAL VARIABLES
@@ -609,10 +702,21 @@ const Anim g_FramesServe[] =
 	{ 14, 16, FUNCT_NONE },
 };
 
+const Anim g_FramesWin[] = 
+{
+	{ 23, 12, FUNCT_CUP },
+	{ 24, 12, FUNCT_CUP },
+};
+
+const Anim g_FramesLoose[] = 
+{
+	{ 25, 16, FUNCT_NONE },
+	{ 26, 16, FUNCT_NONE },
+};
 
 // Actions list
 const Action g_Actions[] =
-{
+{ //                       frames                                 loop  interupt
 	/* ACTION_IDLE    */ { g_FramesIdle,   numberof(g_FramesIdle),   1, 1 },
 	/* ACTION_WALK_F  */ { g_FramesWalkF,  numberof(g_FramesWalkF),  1, 1 },
 	/* ACTION_WALK_R  */ { g_FramesWalkR,  numberof(g_FramesWalkR),  1, 1 },
@@ -622,6 +726,8 @@ const Action g_Actions[] =
 	/* ACTION_SMASH   */ { g_FramesSmash,  numberof(g_FramesSmash),  0, 0 },
 	/* ACTION_THROW   */ { g_FramesThrow,  numberof(g_FramesThrow),  0, 0 },
 	/* ACTION_SERVE   */ { g_FramesServe,  numberof(g_FramesServe),  0, 0 },
+	/* ACTION_WIN     */ { g_FramesWin,    numberof(g_FramesWin),    1, 0 },
+	/* ACTION_LOOSE   */ { g_FramesLoose,  numberof(g_FramesLoose),  1, 0 },
 };
 
 // Direction index
@@ -692,7 +798,7 @@ const u8 g_ColorShadeSelect[8] =
 // Menu 0 - Main
 const MenuEntry g_MenuMain[] =
 {
-	{ "1P MATCH",	MENU_ITEM_DISABLE/*MENU_ITEM_GOTO|MENU_MATCH1P*/, 0, 0 },
+	// { "1P MATCH",	MENU_ITEM_GOTO|MENU_MATCH1P, 0, 0 },
 	{ "2P MATCH",	MENU_ITEM_GOTO|MENU_MATCH2P, 0, 0 },
 	{ "TRAINING",	MENU_ITEM_GOTO|MENU_TRAINING, 0, 0 },
 	{ "OPTIONS", 	MENU_ITEM_GOTO|MENU_OPTIONS, 0, 0 },
@@ -740,8 +846,8 @@ const MenuEntry g_MenuTraining[] =
 	{ "START>",		MENU_ITEM_ACTION, Menu_StartTrain, MODE_TRAIN },
 	{ "SIDE",		MENU_ITEM_ACTION, Menu_SetSide, 0 },
 	{ "SHOT",		MENU_ITEM_ACTION, Menu_SetShot, 0 },
+	{ "DIR",		MENU_ITEM_ACTION, Menu_SetDir, 0 },
 	{ "INPUT",		MENU_ITEM_ACTION, Menu_SetInput, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -753,7 +859,7 @@ const MenuEntry g_MenuTraining[] =
 const MenuEntry g_MenuOption[] =
 {
 	{ "MUSIC",		MENU_ITEM_ACTION, &Menu_SetMusic, 0 },
-	{ "SFX",		MENU_ITEM_BOOL, &g_PlaySFX, 0 },
+	{ "SFX",		MENU_ITEM_ACTION, &Menu_SetSFX, 0 },
 	{ "SHADE",		MENU_ITEM_BOOL, &g_FlickerShadow, 0 },
 	{ "P1 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 0 },
 	{ "P2 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 1 },
@@ -826,8 +932,8 @@ const Shot g_Shots[] =
 ///
 const TrainSide g_TrainSideData[] = 
 {
-	{ { 128, 24     }, 44, 0,   40 },
-	{ { 128, 192-24 }, 12, 144, 0 },
+	{ { 128, 24     }, 44, 0,   PATTERN_PLY_TOP_LINE1_H },
+	{ { 128, 192-24 }, 12, 144, PATTERN_PLY_BOT_LINE1_H },
 };
 
 /// Input bindings
@@ -877,7 +983,6 @@ u8			g_InputBinding[2];
 u8			g_GameMode;
 
 // System
-u8			g_NetPostSprite = 0xFF;
 #if (MSX2_ENHANCE)
 	u8		g_VersionVDP;
 #endif
@@ -911,9 +1016,14 @@ u8			g_Sets[2];
 u8			g_CurSet;
 u8			g_NumSet;
 
+// Serving
 u8			g_Server;
 bool		g_ServeState;
 u8			g_ServeZone;
+i8			g_ServeDX;
+i8			g_ServeDY;
+
+// Stats
 bool		g_OddPoint;
 u8			g_TotalPoints[2];
 u8			g_TotalFault[2];
@@ -924,10 +1034,13 @@ u8			g_TrainBest = 0;
 u8			g_TrainSide = SIDE_BOTTOM;
 u8			g_TrainShot = TRAIN_BOTH;
 u8			g_TrainSpin = SPIN_FLAT;
+u8			g_TrainDir = DIR_RANDOM;
+Vector8		g_TrainZone;
 
 // Misc
 c8			g_CreditScrollBuf[SCROLL_BUF_SIZE];
 u8			g_CreditScrollCnt = 0;
+u8			g_DisplayNet;
 
 //_____________________________________________________________________________
 //   ▄▄   ▄▄  ▄▄▄  ▄▄▄▄
@@ -960,6 +1073,7 @@ const c8* Menu_StartTrain(u8 op, i8 value)
 {
 	if(op == MENU_ACTION_SET)
 	{
+		g_GameMode = value;
 		Game_SetState(State_TrainingStart);
 		ayFX_PlayBank(17, 0);
 	}
@@ -1025,6 +1139,26 @@ const char* Menu_SetShot(u8 op, i8 value)
 
 //-----------------------------------------------------------------------------
 ///
+const char* Menu_SetDir(u8 op, i8 value)
+{
+	switch(op)
+	{
+	case MENU_ACTION_SET:
+	case MENU_ACTION_INC: g_TrainDir = (g_TrainDir + 1) % DIR_MAX; break;
+	case MENU_ACTION_DEC: g_TrainDir = (g_TrainDir + (DIR_MAX-1)) % DIR_MAX; break;	
+	}
+	
+	switch(g_TrainDir)
+	{
+	case DIR_RANDOM: return "RANDOM";
+	case DIR_CENTER: return "CENTER";
+	case DIR_RIGHT: return "RIGHT";
+	case DIR_LEFT: return "LEFT";
+	};
+}
+
+//-----------------------------------------------------------------------------
+///
 const char* Menu_SetMusic(u8 op, i8 value)
 {
 	switch(op)
@@ -1043,6 +1177,26 @@ const char* Menu_SetMusic(u8 op, i8 value)
 	return g_PlayMusic ? "/" : "\\";
 }
 
+//-----------------------------------------------------------------------------
+///
+const char* Menu_SetSFX(u8 op, i8 value)
+{
+	switch(op)
+	{
+	case MENU_ACTION_SET:
+	case MENU_ACTION_INC:
+	case MENU_ACTION_DEC:
+		g_PlaySFX = 1 - g_PlaySFX;
+		if(!g_PlaySFX)
+		{
+			ayFX_Mute();
+			PT3_UpdatePSG();
+		}
+		break;	
+	}
+	
+	return g_PlaySFX ? "/" : "\\";
+}
 
 //-----------------------------------------------------------------------------
 ///
@@ -1380,9 +1534,146 @@ void Menu_Update()
 
 //=============================================================================
 //
+//   S Y S T E M
+//
+//=============================================================================
+
+//-----------------------------------------------------------------------------
+///
+void LoadMatchData()
+{
+	 // Clear sprite patterns table
+	 VDP_FillVRAM_64K(0x00, g_SpritePatternLow, 256*8);
+
+	// Load ball sprites
+	{
+		const u8* src = g_DataBall;
+		u16 dst = g_SpritePatternLow + (PATTERN_BALL_LINE1 * 8);
+		for(i8 i = 0; i < 5; i++)
+		{
+			VDP_WriteVRAM_64K(src, dst, 8);
+			src += (1 * 8);
+			dst += (4 * 8);
+		}
+	}
+	
+	// Load racket sprites
+	{
+		const u8* src = g_DataRacket;
+		u16 dst	= g_SpritePatternLow + (PATTERN_RACKET_R * 8) + 8;
+		for(u8 i = 0; i < 3; i++)
+		{
+			VDP_WriteVRAM_64K(src, dst, 8);
+			src += 8;
+			dst += 8 * 4;
+		}
+	}
+	
+	// Load cursor sprites
+	{
+		u16 dst = g_SpritePatternLow + (PATTERN_CURSOR1 * 8);
+		VDP_WriteVRAM_64K(g_DataCursor, dst, 8 * 4 * 3);
+	}
+
+	// Load net sprites
+	{
+		u16 dst = g_SpritePatternLow + (PATTERN_NET1 * 8);
+		VDP_WriteVRAM_64K(g_DataNet, dst, 8 * 4 * 5);
+	}
+	
+	// Load score ball sprites
+	{
+		const u8* src = g_DataBall + 6 * 8;
+		u16 dst = g_SpritePatternLow + (PATTERN_SERVER_BASE * 8);
+		for(u8 i = 0; i < 4; ++i)
+		{
+			VDP_WriteVRAM_64K(src, dst, 8);
+			src += 8;
+			dst += 8 * 4;
+		}
+	}
+
+	// Load cup sprites
+	{
+		const u8* src = g_DataCup;
+		u16 dst = g_SpritePatternLow + (PATTERN_CUP_OUTLINE1 * 8);
+		for(u8 i = 0; i < 6; ++i)
+		{
+			VDP_WriteVRAM_64K(src, dst, 8);
+			src += 8;
+			dst += 8 * 2;
+		}
+	}
+}
+
+
+//=============================================================================
+//
 //   B A L L
 //
 //=============================================================================
+
+//-----------------------------------------------------------------------------
+///
+void SetNetSprite(u8 x) __FASTCALL
+{
+	x /= 8;
+	for(u8 i = 0; i < 2; ++i)
+	{
+		if(g_CourtNet[x] == 0x80)
+			x--;
+		if(g_CourtNet[x] != 0xFF)
+		{
+			if(g_CourtNet[x] == 0)
+				VDP_SetSprite(SPRITE_NET_LEFT+i, x * 8, 79, PATTERN_NET1 + g_CourtNet[x] * 4);
+			else
+			{
+				VDP_SetSprite(SPRITE_NET_LEFT+i, x * 8, 79, PATTERN_NET1 + g_CourtNet[x] * 4);
+				VDP_SetSprite(SPRITE_NET_GRAY, x * 8, 79, PATTERN_NET1 + 4 + g_CourtNet[x] * 4);
+			}
+			x += 2;
+		}
+		else
+			x++;
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+///
+void SetTrainingCursor()
+{
+	u16 rnd = Math_GetRandom();
+	g_TrainZone.x = (rnd % 128) + 56;
+	g_TrainZone.y = ((rnd >> 8) % 40) + 32;
+	if(g_TrainSide == SIDE_TOP)
+		g_TrainZone.y += 72;
+
+	SetSprite(SPRITE_CURSOR, g_TrainZone.x, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+
+	// SetSprite(SPRITE_CURSOR_1, g_TrainZone.x, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+	// SetSprite(SPRITE_CURSOR_2, g_TrainZone.x + 16, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+	// SetSprite(SPRITE_CURSOR_3, g_TrainZone.x, g_TrainZone.y + 16, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+	// SetSprite(SPRITE_CURSOR_4, g_TrainZone.x + 16, g_TrainZone.y + 16, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+
+	if(g_TrainSide == SIDE_BOTTOM)
+	{
+		VDP_SetSpritePositionY(SPRITE_NET_LEFT, 213);
+		VDP_SetSpritePositionY(SPRITE_NET_RIGHT, 213);
+		VDP_SetSpritePositionY(SPRITE_NET_GRAY, 213);
+		SetNetSprite(g_TrainZone.x);
+	}
+}
+
+void UpdateTrainingCursor()
+{
+	// VDP_SetSpritePattern(SPRITE_CURSOR, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
+
+	VDP_SetSpritePattern(SPRITE_CURSOR_1, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
+	VDP_SetSpritePattern(SPRITE_CURSOR_2, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
+	VDP_SetSpritePattern(SPRITE_CURSOR_3, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
+	VDP_SetSpritePattern(SPRITE_CURSOR_4, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
+}
 
 //-----------------------------------------------------------------------------
 ///
@@ -1398,10 +1689,19 @@ void Ball_ShootRandom()
 	u16 rnd = Math_GetRandom();
 
 	// Direction
-	g_Ball.dir = rnd;
-	g_Ball.dir %= 9;
-	g_Ball.dir += g_TrainSideData[g_TrainSide].dir;
-
+	g_Ball.dir = g_TrainSide == SIDE_BOTTOM ? 48 : 16;
+	switch(g_TrainDir)
+	{
+	case DIR_RANDOM:
+		g_Ball.dir = rnd;
+		g_Ball.dir %= 9;
+		g_Ball.dir += g_TrainSideData[g_TrainSide].dir;
+		break;
+	case DIR_CENTER: break;
+	case DIR_RIGHT:  g_Ball.dir += 4; break;
+	case DIR_LEFT:   g_Ball.dir -= 4; break;
+	}
+		
 	// Velocity
 	if(((g_TrainShot == TRAIN_FLAT)) || ((g_TrainShot == TRAIN_BOTH) && (rnd & BIT_8))) // top spine
 	{
@@ -1422,7 +1722,7 @@ void Ball_ShootRandom()
 	g_Ball.bounce = 0;
 	g_Ball.point = POINT_PENDING;
 	g_Ball.physics = true;
-		
+	
 	ayFX_PlayBank(1, 0);
 }
 
@@ -1431,7 +1731,7 @@ void Ball_ShootRandom()
 void Ball_SwitchSprites()
 {
 	// Flicker Shadows
-	u8 pat = 80;
+	u8 pat = PATTERN_BALL_LINE1;
 	if(g_FlickerShadow && (g_Frame & 0x1))
 	{
 		pat += 4;
@@ -1468,12 +1768,13 @@ void Ball_Hide()
 	VDP_SetSpritePositionY(SPRITE_BALL_SHADOW,  213);
 	VDP_SetSpritePositionY(SPRITE_BALL_OUTLINE, 213);
 	VDP_SetSpritePositionY(SPRITE_BALL_BODY,    213);
+	VDP_SetSpritePositionY(SPRITE_BALL_MARK,    213);
 
 	g_Ball.pos.y = PX_TO_UNIT(246);
 	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
 	g_Ball.velXY = 0;
 	g_Ball.velZ = 0;
-	// g_Ball.physics = false;
+	g_Ball.physics = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1524,13 +1825,16 @@ void Ball_Update()
 				ayFX_PlayBank(12, 0);
 
 				if(Ball_CheckField() && (g_Ball.point == POINT_PENDING))
+				{
 					g_Ball.point = POINT_VALIDATED;
+					g_ScoreFct(EVENT_IN);
+				}
 				else
 					g_ScoreFct(EVENT_OUT);
 			}
 			else if(g_Ball.bounce == 2)
 			{
-				g_ScoreFct(EVENT_IN);
+				g_ScoreFct(EVENT_INOUT);
 				ayFX_PlayBank(12, 0);
 			}
 		}
@@ -1542,7 +1846,7 @@ void Ball_Update()
 		if((g_Ball.pos.y < 0) || (g_Ball.pos.y > PX_TO_UNIT(192)) || (g_Ball.pos.x < 0) || (g_Ball.pos.x > PX_TO_UNIT(256)))
 		{
 			Ball_Hide();
-			g_ScoreFct((g_Ball.point == POINT_PENDING) ? EVENT_OUT : EVENT_IN);
+			g_ScoreFct((g_Ball.point == POINT_PENDING) ? EVENT_OUT : EVENT_INOUT);
 		}
 		// Check net collision
 		else if(g_Ball.height < PX_TO_UNIT(14))
@@ -1583,28 +1887,6 @@ void Ball_Update()
 	}
 }
 
-//-----------------------------------------------------------------------------
-/// Load ball sprites to VRAM
-void Ball_LoadSprites()
-{	
-	const u8* src = g_DataBall;
-	u16 dst = g_SpritePatternLow + (80 * 8); // Pattern #80
-	VDP_WriteVRAM_64K(src, dst, 8);
-	
-	src += (1 * 8);
-	dst += (4 * 8); // Pattern #84
-	VDP_WriteVRAM_64K(src, dst, 8);
-
-	src += (1 * 8);
-	dst += (4 * 8); // Pattern #88
-	VDP_WriteVRAM_64K(src, dst, 8);
-
-	src += (1 * 8);
-	dst += (4 * 8); // Pattern #88
-	VDP_WriteVRAM_64K(src, dst, 8);
-}
-
-
 //=============================================================================
 //
 //   P L A Y E R S
@@ -1616,11 +1898,20 @@ void Ball_LoadSprites()
 void ThrowService(Player* ply)
 {
 	// Position
-	g_Ball.height = PX_TO_UNIT(10);
+	g_Ball.height = PX_TO_UNIT(28);
 	g_Ball.pos = ply->pos;
 	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
 	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
 
+	g_ServeDX /= 16;
+	g_ServeDY /= 16;
+
+// Print_SetPosition(0, 1);
+// Print_DrawInt(g_ServeDX);
+// Print_SetPosition(0, 2);
+// Print_DrawInt(g_ServeDY);
+
+	// Setup direction
 	switch(g_ServeZone)
 	{
 	case SERVE_BOT_R: g_Ball.dir = 16+7; break;
@@ -1628,10 +1919,42 @@ void ThrowService(Player* ply)
 	case SERVE_TOP_L: g_Ball.dir = 48+7; break;
 	case SERVE_TOP_R: g_Ball.dir = 48-7; break;
 	};
-	
+	g_Ball.dir -= g_ServeDX;
+
+	// Setup velocity	
 	g_Ball.velXY = PX_TO_UNIT(3.3);
-	g_Ball.velZ = PX_TO_UNIT(3);
+	g_Ball.velZ = PX_TO_UNIT(2.5);
 	g_Ball.spin = SPIN_FLAT;
+
+	// g_Ball.velZ -= g_ServeDX + PX_TO_UNIT(0.1);
+
+	// g_Ball.velXY += g_ServeDY + PX_TO_UNIT(0.1);
+	// g_Ball.velZ -= g_ServeDY + PX_TO_UNIT(0.1);
+
+	// if(g_ServeDY < 0)
+	// {
+		// g_Ball.velXY = PX_TO_UNIT(3.3);
+		// g_Ball.velZ = PX_TO_UNIT(2.5);
+	// }
+	// else if(g_ServeDY > 0)
+	// {
+		// g_Ball.velXY = PX_TO_UNIT(3.3);
+		// g_Ball.velZ = PX_TO_UNIT(2.5);
+	// }
+
+
+	// if(g_ServeDY < -32)
+		// g_Ball.velXY = PX_TO_UNIT(2.8);
+	// else if(g_ServeDY < -16)
+		// g_Ball.velXY = PX_TO_UNIT(3.0);
+	// else if(g_ServeDY < -8)
+		// g_Ball.velXY = PX_TO_UNIT(3.1);
+	// else if(g_ServeDY > 8)
+		// g_Ball.velXY = PX_TO_UNIT(3.8);
+	// else if(g_ServeDY > 16)
+		// g_Ball.velXY = PX_TO_UNIT(4.6);
+	// else if(g_ServeDY > 32)
+		// g_Ball.velXY = PX_TO_UNIT(5.5);
 
 	// Misc
 	g_Ball.lastPly = ply->side;
@@ -1759,6 +2082,7 @@ void Player_CheckShoot(Player* ply)
 	g_Ball.coolDown = 10;
 	g_Ball.bounce = 0;
 	g_Ball.point = POINT_PENDING;
+	//g_Ball.physics = true;
 }
 
 
@@ -1823,11 +2147,23 @@ void Player_UpdateAction(Player* ply) __FASTCALL
 		}
 	}
 	
+	// Update animation
+	ply->anim = act->animFrames[ply->step].frame;
+	ply->counter++;
+
 	// Handle current action's event
 	const Binding* bind = ply->binding;
 	switch(act->animFrames[ply->step].event)
 	{
 	case FUNCT_THROW:
+		if(bind->inHoldRight())
+			g_ServeDX++;
+		else if(bind->inHoldLeft())
+			g_ServeDX--;			
+		if(ply->inLong())
+			g_ServeDY++;
+		else if(ply->inShort())
+			g_ServeDY--;
 		if(bind->inButton1() || bind->inButton2())
 		{
 			SetAction(ply, ACTION_SERVE);
@@ -1845,13 +2181,14 @@ void Player_UpdateAction(Player* ply) __FASTCALL
 		if(bind->inButton2() && (ply->shot == SHOT_FLAT))
 			ply->shot = SHOT_ATTACK;
 		break;
+
+	case FUNCT_CUP:
+		VDP_SetSpritePositionY(SPRITE_CUP_OUTLINE, 164-33 - 22 + ply->anim);
+		VDP_SetSpritePositionY(SPRITE_CUP_BODY,    164-33 - 22 + ply->anim);
+
 	default:
 		break;
 	};
-
-	// Update animation
-	ply->anim = act->animFrames[ply->step].frame;
-	ply->counter++;
 }
 
 //-----------------------------------------------------------------------------
@@ -1863,6 +2200,8 @@ void Player_HandleService(Player* ply) __FASTCALL
 	{
 		if(bind->inButton1() || bind->inButton2())
 		{
+			g_ServeDX = 0;
+			g_ServeDY = 0;
 			SetAction(ply, ACTION_THROW);
 		}
 		else
@@ -2024,15 +2363,16 @@ void UpdatePlayerBottom()
 	{
 	case FUNCT_SHOOT_R:
 		Player_CheckShoot(&g_Player[SIDE_BOTTOM]);
-		VDP_SetSpritePosition(SPRITE_PLY_BOT_RACKET, x+16, y-16);
+		VDP_SetSprite(SPRITE_PLY_BOT_RACKET, x+16, y-16, PATTERN_RACKET_R);
 		break;
 	case FUNCT_SHOOT_L:
 		Player_CheckShoot(&g_Player[SIDE_BOTTOM]);
-		VDP_SetSpritePosition(SPRITE_PLY_BOT_RACKET, x-8, y-16);
+		VDP_SetSprite(SPRITE_PLY_BOT_RACKET, x-8, y-16, PATTERN_RACKET_L);
 		break;
 	case FUNCT_SMASH:
 		Player_CheckShoot(&g_Player[SIDE_BOTTOM]);
-		VDP_SetSpritePosition(SPRITE_PLY_BOT_RACKET, x+8, y-32);
+	case FUNCT_SERVE:
+		VDP_SetSprite(SPRITE_PLY_BOT_RACKET, x+8, y-32, PATTERN_RACKET_T);
 		break;
 	default:
 		VDP_SetSpritePositionY(SPRITE_PLY_BOT_RACKET, 213);
@@ -2054,7 +2394,7 @@ void DrawPlayerBottom()
 	u16 dst;
 
 	src = g_DataPlayer1 + (frame * 224);
-	dst = g_SpritePatternLow + (0 * 8); // Pattern #0 - 20
+	dst = g_SpritePatternLow + (PATTERN_PLY_BOT_LINE1_H * 8); // Pattern #0 - 20
 	VDP_WriteVRAM_64K(src, dst, 21 * 8);
 	
 	src += 21 * 8;
@@ -2084,25 +2424,6 @@ void DrawPlayerBottom()
 	src += 8;
 	dst += (2 * 8);  // Pattern #34
 	VDP_WriteVRAM_64K(src, dst, 8);
-
-	u8 event = g_Actions[g_Player[SIDE_BOTTOM].action].animFrames[g_Player[SIDE_BOTTOM].step].event;
-	if(event != FUNCT_NONE)
-	{
-		switch(event)
-		{
-		case FUNCT_SHOOT_R:
-			src = g_DataRacket;
-			break;
-		case FUNCT_SHOOT_L:
-			src = g_DataRacket + (1 * 8);
-			break;
-		case FUNCT_SMASH:
-			src = g_DataRacket + (2 * 8);
-			break;
-		};
-		dst += (3 * 8);  // Pattern #37
-		VDP_WriteVRAM_64K(src, dst, 8);	
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2117,13 +2438,13 @@ void Player_SwitchSprites(Player* ply) __FASTCALL
 	}
 	if(ply->side == SIDE_BOTTOM)
 	{
-		VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_H, pat);      // Pattern #0  / #4
-		VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_L, pat + 20); // Pattern #20 / #24
+		VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_H, pat + PATTERN_PLY_BOT_LINE1_H);      // Pattern #0  / #4
+		VDP_SetSpritePattern(SPRITE_PLY_BOT_BLACK_L, pat + PATTERN_PLY_BOT_LINE1_H + 20); // Pattern #20 / #24
 	}
 	else
 	{
-		VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_H, pat + 40);      // Pattern #40 / #44
-		VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_L, pat + 40 + 16); // Pattern #56 / #60
+		VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_H, pat + PATTERN_PLY_TOP_LINE1_H);      // Pattern #40 / #44
+		VDP_SetSpritePattern(SPRITE_PLY_TOP_BLACK_L, pat + PATTERN_PLY_TOP_LINE1_H + 16); // Pattern #56 / #60
 	}
 }
 
@@ -2150,15 +2471,16 @@ void UpdatePlayerTop()
 	{
 	case FUNCT_SHOOT_R:
 		Player_CheckShoot(&g_Player[SIDE_TOP]);
-		VDP_SetSpritePosition(SPRITE_PLY_TOP_RACKET, x+16, y-8);
+		VDP_SetSprite(SPRITE_PLY_TOP_RACKET, x+16, y-8, PATTERN_RACKET_R);
 		break;                                    
 	case FUNCT_SHOOT_L:                           
 		Player_CheckShoot(&g_Player[SIDE_TOP]);
-		VDP_SetSpritePosition(SPRITE_PLY_TOP_RACKET, x-8, y-8);
+		VDP_SetSprite(SPRITE_PLY_TOP_RACKET, x-8, y-8, PATTERN_RACKET_L);
 		break;                                    
-	case FUNCT_SMASH:                             
+	case FUNCT_SMASH:
 		Player_CheckShoot(&g_Player[SIDE_TOP]);
-		VDP_SetSpritePosition(SPRITE_PLY_TOP_RACKET, x+0, y-24);
+	case FUNCT_SERVE:
+		VDP_SetSprite(SPRITE_PLY_TOP_RACKET, x+0, y-24, PATTERN_RACKET_T);
 		break;                                    
 	default:                                      
 		VDP_SetSpritePositionY(SPRITE_PLY_TOP_RACKET, 213);
@@ -2166,30 +2488,13 @@ void UpdatePlayerTop()
 	};
 	
 	// Handle net
-	VDP_SetSpritePositionY(SPRITE_NET_LEFT, 213);
-	VDP_SetSpritePositionY(SPRITE_NET_RIGHT, 213);
-	VDP_SetSpritePositionY(SPRITE_NET_GRAY, 213);
-	if(g_Player[SIDE_TOP].srcPos.y >= 80)
+	if(g_DisplayNet)
 	{
-		x /= 8;
-		for(u8 i = 0; i < 2; ++i)
-		{
-			if(g_CourtNet[x] == 0x80)
-				x--;
-			if(g_CourtNet[x] != 0xFF)
-			{
-				if(g_CourtNet[x] == 0)
-					VDP_SetSprite(SPRITE_NET_LEFT+i, x * 8, 79, 108 + g_CourtNet[x] * 4);
-				else
-				{
-					VDP_SetSprite(SPRITE_NET_LEFT+i, x * 8, 79, 108 + g_CourtNet[x] * 4);
-					VDP_SetSprite(SPRITE_NET_GRAY, x * 8, 79, 108 + 4 + g_CourtNet[x] * 4);
-				}
-				x += 2;
-			}
-			else
-				x++;
-		}
+		VDP_SetSpritePositionY(SPRITE_NET_LEFT, 213);
+		VDP_SetSpritePositionY(SPRITE_NET_RIGHT, 213);
+		VDP_SetSpritePositionY(SPRITE_NET_GRAY, 213);
+		if(g_Player[SIDE_TOP].srcPos.y >= 80)
+			SetNetSprite(x);
 	}
 }
 
@@ -2207,7 +2512,7 @@ void DrawPlayerTop() __FASTCALL
 	u16 dst;
 		
 	src = g_DataPlayer2 + (frame * 224);
-	dst = g_SpritePatternLow + (41 * 8); // Pattern #41
+	dst = g_SpritePatternLow + ((PATTERN_PLY_TOP_LINE1_H+1) * 8); // Pattern #41
 	VDP_WriteVRAM_64K(src, dst, 8);
 	
 	src += 8;
@@ -2237,25 +2542,6 @@ void DrawPlayerTop() __FASTCALL
 	src += 8;
 	dst += (2 * 8);  // Pattern #55 - #75
 	VDP_WriteVRAM_64K(src, dst, 21 * 8);
-
-	u8 event = g_Actions[g_Player[SIDE_TOP].action].animFrames[g_Player[SIDE_TOP].step].event;
-	if(event != FUNCT_NONE)
-	{
-		switch(event)
-		{
-		case FUNCT_SHOOT_R:
-			src = g_DataRacket;
-			break;
-		case FUNCT_SHOOT_L:
-			src = g_DataRacket + (1 * 8);
-			break;
-		case FUNCT_SMASH:
-			src = g_DataRacket + (2 * 8);
-			break;
-		};
-		dst += (22 * 8);  // Pattern #77
-		VDP_WriteVRAM_64K(src, dst, 8);	
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2278,21 +2564,6 @@ void Launcher_SwitchSprites()
 		VDP_SetSpritePattern(SPRITE_LAUNCHER_BOT_1, pat);     // Pattern #40 / #48
 		VDP_SetSpritePattern(SPRITE_LAUNCHER_BOT_2, pat + 4); // Pattern #44 / #52
 	}
-}
-
-
-//-----------------------------------------------------------------------------
-///
-void InitializeNetSprites()
-{
-	// Setup net sprites
-	u16 dst;
-	dst	= g_SpritePatternLow + (108 * 8); // Pattern #108 - #124
-	VDP_WriteVRAM_64K(g_DataNet, dst, 8 * 4 * 5);
-	g_NetPostSprite = 0xFF;
-	SetSprite(SPRITE_NET_LEFT,  0, 213, 108, COLOR_WHITE); 	// Net part 1
-	SetSprite(SPRITE_NET_RIGHT, 0, 213, 108, COLOR_WHITE); 	// Net part 2
-	SetSprite(SPRITE_NET_GRAY,  0, 213, 124, COLOR_GRAY);  	// Net gray part
 }
 
 //-----------------------------------------------------------------------------
@@ -2353,16 +2624,23 @@ void InitializeCourt()
 	Print_SetTextFont(g_DataSrcFont, OFFSET_GAME_SCRFONT);
 	Print_SetColor(COLOR_WHITE, COLOR_BLACK);
 
-	// Initialize sprites
-	VDP_FillVRAM_64K(0x00, g_SpritePatternLow, 128*8); // Clear sprite patterns table
-	
-	// Setup ball sprites
-	SetSprite(SPRITE_BALL_OUTLINE, 0, 213, 80, COLOR_BLACK);			// Outline
-	SetSprite(SPRITE_BALL_BODY,    0, 213, 88, COLOR_LIGHT_YELLOW);		// Body
-	SetSprite(SPRITE_BALL_SHADOW,  0, 213, 92, COLOR_BLACK);			// Shadow
+	// Load static data to VRAM
+	LoadMatchData();
 
-	InitializeNetSprites();
+	// Setup ball sprites
+	SetSprite(SPRITE_BALL_OUTLINE, 0, 213, PATTERN_BALL_LINE1, COLOR_BLACK);		// Outline
+	SetSprite(SPRITE_BALL_BODY,    0, 213, PATTERN_BALL_BODY,  COLOR_LIGHT_YELLOW);	// Body
+	SetSprite(SPRITE_BALL_SHADOW,  0, 213, PATTERN_BALL_SHADE, COLOR_BLACK);		// Shadow
+	SetSprite(SPRITE_BALL_MARK,    0, 213, PATTERN_BALL_MARK,  COLOR_MEDIUM_RED);	// Mark
+
+	// Setup net sprites	
+	SetSprite(SPRITE_NET_LEFT,  0, 213, PATTERN_NET1, COLOR_WHITE); 	// Net part 1
+	SetSprite(SPRITE_NET_RIGHT, 0, 213, PATTERN_NET1, COLOR_WHITE); 	// Net part 2
+	SetSprite(SPRITE_NET_GRAY,  0, 213, PATTERN_NET5, COLOR_GRAY);  	// Net gray part
+
 	VDP_HideSpriteFrom(SPRITE_SCORE_BALL_1);
+
+	g_DisplayNet = true;
 
 	PT3_Pause();
 
@@ -2376,25 +2654,25 @@ void Player_Initialize(u8 side, u8 controller)
 	// Setup player sprites
 	if(side == SIDE_BOTTOM)
 	{
-		SetSprite(SPRITE_PLY_BOT_BLACK_H, 0, 213, 0,  COLOR_BLACK);			// Outline
-		SetSprite(SPRITE_PLY_BOT_BLACK_L, 0, 213, 20, COLOR_BLACK);			// Outline
-		SetSprite(SPRITE_PLY_BOT_RACKET,  0, 213, 36, COLOR_BLACK);			// Racket
-		SetSprite(SPRITE_PLY_BOT_CLOTH,   0, 213, 8,  COLOR_LIGHT_BLUE);	// Cloth
-		SetSprite(SPRITE_PLY_BOT_WHITE_H, 0, 213, 12, COLOR_WHITE);			// White
-		SetSprite(SPRITE_PLY_BOT_WHITE_L, 0, 213, 28, COLOR_WHITE);			// White
-		SetSprite(SPRITE_PLY_BOT_SKIN_H,  0, 213, 16, COLOR_LIGHT_RED);		// Skin
-		SetSprite(SPRITE_PLY_BOT_SKIN_L,  0, 213, 32, COLOR_LIGHT_RED);		// Skin
+		SetSprite(SPRITE_PLY_BOT_BLACK_H, 0, 213, PATTERN_PLY_BOT_LINE1_H, COLOR_BLACK);		// Outline
+		SetSprite(SPRITE_PLY_BOT_BLACK_L, 0, 213, PATTERN_PLY_BOT_LINE1_L, COLOR_BLACK);		// Outline
+		SetSprite(SPRITE_PLY_BOT_CLOTH,   0, 213, PATTERN_PLY_BOT_CLOTH,   COLOR_LIGHT_BLUE);	// Cloth
+		SetSprite(SPRITE_PLY_BOT_WHITE_H, 0, 213, PATTERN_PLY_BOT_WHITE_H, COLOR_WHITE);		// White
+		SetSprite(SPRITE_PLY_BOT_WHITE_L, 0, 213, PATTERN_PLY_BOT_WHITE_L, COLOR_WHITE);		// White
+		SetSprite(SPRITE_PLY_BOT_SKIN_H,  0, 213, PATTERN_PLY_BOT_SKIN_H,  COLOR_LIGHT_RED);	// Skin
+		SetSprite(SPRITE_PLY_BOT_SKIN_L,  0, 213, PATTERN_PLY_BOT_SKIN_L,  COLOR_LIGHT_RED);	// Skin
+		SetSprite(SPRITE_PLY_BOT_RACKET,  0, 213, PATTERN_RACKET_R,        COLOR_BLACK);		// Racket
 	}
 	else // if(side == SIDE_TOP)
 	{
-		SetSprite(SPRITE_PLY_TOP_BLACK_H, 0, 213, 40, COLOR_BLACK);			// Outline
-		SetSprite(SPRITE_PLY_TOP_BLACK_L, 0, 213, 56, COLOR_BLACK);			// Outline
-		SetSprite(SPRITE_PLY_TOP_RACKET,  0, 213, 76, COLOR_BLACK);			// Racket
-		SetSprite(SPRITE_PLY_TOP_CLOTH,   0, 213, 64, COLOR_MEDIUM_GREEN);	// Cloth
-		SetSprite(SPRITE_PLY_TOP_WHITE_H, 0, 213, 48, COLOR_WHITE);			// White
-		SetSprite(SPRITE_PLY_TOP_WHITE_L, 0, 213, 68, COLOR_WHITE);			// White
-		SetSprite(SPRITE_PLY_TOP_SKIN_H,  0, 213, 52, COLOR_LIGHT_RED);		// Skin
-		SetSprite(SPRITE_PLY_TOP_SKIN_L,  0, 213, 72, COLOR_LIGHT_RED);		// Skin
+		SetSprite(SPRITE_PLY_TOP_BLACK_H, 0, 213, PATTERN_PLY_TOP_LINE1_H, COLOR_BLACK);			// Outline
+		SetSprite(SPRITE_PLY_TOP_BLACK_L, 0, 213, PATTERN_PLY_TOP_LINE1_L, COLOR_BLACK);			// Outline
+		SetSprite(SPRITE_PLY_TOP_CLOTH,   0, 213, PATTERN_PLY_TOP_CLOTH, COLOR_MEDIUM_GREEN);	// Cloth
+		SetSprite(SPRITE_PLY_TOP_WHITE_H, 0, 213, PATTERN_PLY_TOP_WHITE_H, COLOR_WHITE);			// White
+		SetSprite(SPRITE_PLY_TOP_WHITE_L, 0, 213, PATTERN_PLY_TOP_WHITE_L, COLOR_WHITE);			// White
+		SetSprite(SPRITE_PLY_TOP_SKIN_H,  0, 213, PATTERN_PLY_TOP_SKIN_H, COLOR_LIGHT_RED);		// Skin
+		SetSprite(SPRITE_PLY_TOP_SKIN_L,  0, 213, PATTERN_PLY_TOP_SKIN_L, COLOR_LIGHT_RED);		// Skin
+		SetSprite(SPRITE_PLY_TOP_RACKET,  0, 213, PATTERN_RACKET_R, COLOR_BLACK);			// Racket
 	}
 	
 	// Initialize player
@@ -2415,8 +2693,8 @@ void Player_Initialize(u8 side, u8 controller)
 	}
 	else // if(side == SIDE_TOP)
 	{
-		ply->inLong  = bind->inHoldUp;
-		ply->inShort = bind->inHoldDown;
+		ply->inLong  = bind->inHoldDown;
+		ply->inShort = bind->inHoldUp;
 	}
 	
 	u8 zone = g_ServeZone;
@@ -2440,29 +2718,29 @@ void Launcher_Initialize()
 	{
 		// Load launcher pattern
 		u16 dst;
-		dst	= g_SpritePatternLow + (40 * 8); // Pattern #40 - #71
+		dst	= g_SpritePatternLow + (PATTERN_PLY_TOP_LINE1_H * 8); // Pattern #40 - #71
 		VDP_WriteVRAM_64K(g_DataLauncher0, dst, 8 * 8 *4);
 
 		// Setup launcher sprites
-		SetSprite(SPRITE_LAUNCHER_TOP_1, 128-8, (u8)(-4 +  0), 40 +  0, COLOR_BLACK);			// Black 1&2
-		SetSprite(SPRITE_LAUNCHER_TOP_2, 128-8, (u8)(-4 + 16), 40 +  4, COLOR_BLACK);			// Black 1&2
-		SetSprite(SPRITE_LAUNCHER_TOP_3, 128-8, (u8)(-4 +  0), 40 + 16, COLOR_LIGHT_YELLOW);	// Yellow
-		SetSprite(SPRITE_LAUNCHER_TOP_4, 128-8, (u8)(-4 +  8), 40 + 20, COLOR_MEDIUM_GREEN);	// Green
-		SetSprite(SPRITE_LAUNCHER_TOP_5, 128-8, (u8)(-4 + 16), 40 + 24, COLOR_WHITE);			// White
+		SetSprite(SPRITE_LAUNCHER_TOP_1, 128-8, (u8)(-4 +  0), PATTERN_PLY_TOP_LINE1_H +  0, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_TOP_2, 128-8, (u8)(-4 + 16), PATTERN_PLY_TOP_LINE1_H +  4, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_TOP_3, 128-8, (u8)(-4 +  0), PATTERN_PLY_TOP_LINE1_H + 16, COLOR_LIGHT_YELLOW);	// Yellow
+		SetSprite(SPRITE_LAUNCHER_TOP_4, 128-8, (u8)(-4 +  8), PATTERN_PLY_TOP_LINE1_H + 20, COLOR_MEDIUM_GREEN);	// Green
+		SetSprite(SPRITE_LAUNCHER_TOP_5, 128-8, (u8)(-4 + 16), PATTERN_PLY_TOP_LINE1_H + 24, COLOR_WHITE);			// White
 	}
 	else // if(g_TrainSide == SIDE_TOP)
 	{
 		// Load launcher pattern
 		u16 dst;
-		dst	= g_SpritePatternLow + (0 * 8); // Pattern #40 - #71
+		dst	= g_SpritePatternLow + (PATTERN_PLY_BOT_LINE1_H * 8); // Pattern #40 - #71
 		VDP_WriteVRAM_64K(g_DataLauncher1, dst, 8 * 8 *4);
 
 		// Setup launcher sprites
-		SetSprite(SPRITE_LAUNCHER_BOT_1, 128-8, (u8)(150 +  0), 0 +  0, COLOR_BLACK);			// Black 1&2
-		SetSprite(SPRITE_LAUNCHER_BOT_2, 128-8, (u8)(150 + 16), 0 +  4, COLOR_BLACK);			// Black 1&2
-		SetSprite(SPRITE_LAUNCHER_BOT_3, 128-8, (u8)(150 -  1), 0 + 16, COLOR_LIGHT_YELLOW);	// Yellow
-		SetSprite(SPRITE_LAUNCHER_BOT_4, 128-8, (u8)(150 +  3), 0 + 20, COLOR_MEDIUM_GREEN);	// Green
-		SetSprite(SPRITE_LAUNCHER_BOT_5, 128-8, (u8)(150 + 15), 0 + 24, COLOR_WHITE);			// White
+		SetSprite(SPRITE_LAUNCHER_BOT_1, 128-8, (u8)(150 +  0), PATTERN_PLY_BOT_LINE1_H +  0, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_BOT_2, 128-8, (u8)(150 + 16), PATTERN_PLY_BOT_LINE1_H +  4, COLOR_BLACK);			// Black 1&2
+		SetSprite(SPRITE_LAUNCHER_BOT_3, 128-8, (u8)(150 -  1), PATTERN_PLY_BOT_LINE1_H + 16, COLOR_LIGHT_YELLOW);	// Yellow
+		SetSprite(SPRITE_LAUNCHER_BOT_4, 128-8, (u8)(150 +  3), PATTERN_PLY_BOT_LINE1_H + 20, COLOR_MEDIUM_GREEN);	// Green
+		SetSprite(SPRITE_LAUNCHER_BOT_5, 128-8, (u8)(150 + 15), PATTERN_PLY_BOT_LINE1_H + 24, COLOR_WHITE);			// White
 	}	
 }
 
@@ -2512,20 +2790,30 @@ void TrainingScore(u8 subEvent)
 	if(g_Ball.point == POINT_FINISHED)
 		return;
 
-	if((g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly == g_TrainSide))
+	if((subEvent == EVENT_IN) && (g_Ball.lastPly != g_TrainSide))
+		return;
+
+	if((subEvent == EVENT_IN) && (g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly == g_TrainSide))
 	{
-		if(g_TrainScore < 99)
-			g_TrainScore++;
-		if(g_TrainScore > g_TrainBest)
-			g_TrainBest = g_TrainScore;
+		if(((u8)(g_Ball.srcPos.x - g_TrainZone.x) <= 16) && ((u8)(g_Ball.srcPos.y - g_TrainZone.y) <= 16))
+		{
+			if(g_TrainScore < 99)
+				g_TrainScore++;
+			if(g_TrainScore > g_TrainBest)
+				g_TrainBest = g_TrainScore;
+			SetTrainingCursor();
+			DisplayTrainingScore();
+		}
+		else
+			return;
 	}
 	else if(((g_Ball.point == POINT_PENDING) && (g_Ball.lastPly == g_TrainSide))
 		|| ((g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly != g_TrainSide)))
 	{
 		g_TrainScore = 0;
+		SetTrainingCursor();
+		DisplayTrainingScore();
 	}
-
-	DisplayTrainingScore();
 
 	g_Ball.point = POINT_FINISHED;
 
@@ -2610,8 +2898,6 @@ void InitService()
 ///
 void HideScoreSprites()
 {
-	// VDP_HideSpriteFrom(SPRITE_SCORE_1);
-
 	VDP_SetSpritePositionY(SPRITE_SCORE_1,  213);
 	VDP_SetSpritePositionY(SPRITE_SCORE_2,  213);
 	VDP_SetSpritePositionY(SPRITE_SCORE_3,  213);
@@ -2629,19 +2915,19 @@ bool Event_WinPoint()
 	// Display Referee
 	if(g_EventFrame == 1)
 	{
-		if(g_EventSub != EVENT_IN)
+		if(g_EventSub != EVENT_INOUT)
 		{
 			VDP_WriteLayout_GM2(g_DataReferee_Names, 0, 7, 12, 6);		
 
 			// Text
 			u16 dst;
 			const u8* src = g_DataEvent + (g_EventSub * 8 * 8);
-			dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
+			dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
 			VDP_WriteVRAM_64K(src, dst, 8 * 8);
-			SetSprite(SPRITE_SCORE_1, 58,    60,   112, COLOR_WHITE);
-			SetSprite(SPRITE_SCORE_2, 58+16, 60,   116, COLOR_WHITE);
-			SetSprite(SPRITE_SCORE_3, 58+1,  60+1, 112, COLOR_BLACK);
-			SetSprite(SPRITE_SCORE_4, 58+17, 60+1, 116, COLOR_BLACK);
+			SetSprite(SPRITE_SCORE_1, 58,    60,   PATTERN_SCORE_A, COLOR_WHITE);
+			SetSprite(SPRITE_SCORE_2, 58+16, 60,   PATTERN_SCORE_B, COLOR_WHITE);
+			SetSprite(SPRITE_SCORE_3, 58+1,  60+1, PATTERN_SCORE_A, COLOR_BLACK);
+			SetSprite(SPRITE_SCORE_4, 58+17, 60+1, PATTERN_SCORE_B, COLOR_BLACK);
 		}
 		else
 			g_EventFrame += EVENT_DELAY / 2;
@@ -2663,17 +2949,17 @@ bool Event_WinPoint()
 	
 		// Top Player
 		src = g_DataPoints + (g_Points[1] * 8 * 4);
-		dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
+		dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
-		SetSprite(SPRITE_SCORE_1, 0, 213, 112, VDP_SPRITE_EC | SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_2, 0, 213, 112, VDP_SPRITE_EC | SCORE_SHADE);
+		SetSprite(SPRITE_SCORE_1, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_COLOR);
+		SetSprite(SPRITE_SCORE_2, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_SHADE);
 		
 		// Top Player
 		src = g_DataPoints + (g_Points[0] * 8 * 4);
-		dst	= g_SpritePatternLow + (116 * 8); // Pattern #116
+		dst	= g_SpritePatternLow + (PATTERN_SCORE_B * 8); // Pattern #116
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
-		SetSprite(SPRITE_SCORE_3, 0, 213, 116, SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_4, 0, 213, 116, SCORE_SHADE);
+		SetSprite(SPRITE_SCORE_3, 0, 213, PATTERN_SCORE_B, SCORE_COLOR);
+		SetSprite(SPRITE_SCORE_4, 0, 213, PATTERN_SCORE_B, SCORE_SHADE);
 
 		// Player_Initialize(SIDE_BOTTOM, 0);
 		// Player_Initialize(SIDE_TOP, 1);
@@ -2695,7 +2981,6 @@ bool Event_WinPoint()
 	{
 		// Hide score sprites
 		HideScoreSprites();
-		InitializeNetSprites();
 		InitService();
 		g_EventID = EVENT_NONE;
 	}
@@ -2705,33 +2990,31 @@ bool Event_WinPoint()
 
 //-----------------------------------------------------------------------------
 ///
-bool Event_WinGame()
+bool Event_Default(u8 event)
 {
 	if(g_EventFrame == 0)
 	{
-		// Load launcher pattern
-		const u8* src;
-		u16 dst;
-		
 		// Text
-		src = g_DataEvent + (EVENT_GAME * 8 * 8);
-		dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
-		VDP_WriteVRAM_64K(src, dst, 8 * 8);		
-		SetSprite(SPRITE_SCORE_1, 0, 213, 112, VDP_SPRITE_EC | SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_2, 0, 213, 116, VDP_SPRITE_EC | SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_3, 0, 213, 112, VDP_SPRITE_EC | SCORE_SHADE);
-		SetSprite(SPRITE_SCORE_4, 0, 213, 116, VDP_SPRITE_EC | SCORE_SHADE);
+		{
+			const u8* src = g_DataEvent + (event * 8 * 8);
+			u16 dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
+			VDP_WriteVRAM_64K(src, dst, 8 * 8);		
+			SetSprite(SPRITE_SCORE_1, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_COLOR);
+			SetSprite(SPRITE_SCORE_2, 0, 213, PATTERN_SCORE_B, VDP_SPRITE_EC | SCORE_COLOR);
+			SetSprite(SPRITE_SCORE_3, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_SHADE);
+			SetSprite(SPRITE_SCORE_4, 0, 213, PATTERN_SCORE_B, VDP_SPRITE_EC | SCORE_SHADE);
+		}
 		
 		// Player
-		u8 ctrl = g_Player[g_Winner].control;
-		src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: P1, 6: P2, 7: Ai
-		dst	= g_SpritePatternLow + (120 * 8); // Pattern #116
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);
-		SetSprite(SPRITE_SCORE_5, 0, 213, 120, SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_6, 0, 213, 120, SCORE_SHADE);
-
-		// Player_Initialize(SIDE_BOTTOM, 0);
-		// Player_Initialize(SIDE_TOP, 1);
+		{
+			u8 ctrl = g_Player[g_Winner].control;
+			const u8* src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: AI, 6: P1, 7: P2
+			u16 dst	= g_SpritePatternLow + (PATTERN_SCORE_PLY * 8); // Pattern #116
+			VDP_WriteVRAM_64K(src, dst, 8 * 4);
+			SetSprite(SPRITE_SCORE_5, 0, 213, PATTERN_SCORE_PLY, SCORE_COLOR);
+			SetSprite(SPRITE_SCORE_6, 0, 213, PATTERN_SCORE_PLY, SCORE_SHADE);
+		}
+		
 		Ball_Hide();
 	}
 	if(g_EventFrame < 16)
@@ -2752,67 +3035,12 @@ bool Event_WinGame()
 	{
 		// Hide score sprites
 		HideScoreSprites();
-		InitializeNetSprites();
 		InitService();
 		g_EventID = EVENT_NONE;
-	}
-	g_EventFrame++;
-	
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-///
-bool Event_WinSet()
-{
-	if(g_EventFrame == 0)
-	{
-		// Load launcher pattern
-		const u8* src;
-		u16 dst;
-		
-		// Text
-		src = g_DataEvent + (EVENT_SET * 8 * 8);
-		dst	= g_SpritePatternLow + (112 * 8); // Pattern #112
-		VDP_WriteVRAM_64K(src, dst, 8 * 8);		
-		SetSprite(SPRITE_SCORE_1, 0, 213, 112, VDP_SPRITE_EC | SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_2, 0, 213, 116, VDP_SPRITE_EC | SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_3, 0, 213, 112, VDP_SPRITE_EC | SCORE_SHADE);
-		SetSprite(SPRITE_SCORE_4, 0, 213, 116, VDP_SPRITE_EC | SCORE_SHADE);
-		
-		// Player
-		u8 ctrl = g_Player[g_Winner].control;
-		src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: AI, 6: P1, 7: P2
-		dst	= g_SpritePatternLow + (120 * 8); // Pattern #116
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);
-		SetSprite(SPRITE_SCORE_5, 0, 213, 120, SCORE_COLOR);
-		SetSprite(SPRITE_SCORE_6, 0, 213, 120, SCORE_SHADE);
-
-		// Player_Initialize(SIDE_BOTTOM, 0);
-		// Player_Initialize(SIDE_TOP, 1);
-		Ball_Hide();
-	}
-	if(g_EventFrame < 16)
-	{
-		VDP_SetSpritePosition(SPRITE_SCORE_1, EVENT_TOP_X    + (g_EventFrame * 8), EVENT_TOP_Y);
-		VDP_SetSpritePosition(SPRITE_SCORE_2, EVENT_TOP_X+16 + (g_EventFrame * 8), EVENT_TOP_Y);
-		VDP_SetSpritePosition(SPRITE_SCORE_3, EVENT_TOP_X+1  + (g_EventFrame * 8), EVENT_TOP_Y+1);
-		VDP_SetSpritePosition(SPRITE_SCORE_4, EVENT_TOP_X+17 + (g_EventFrame * 8), EVENT_TOP_Y+1);
-
-		VDP_SetSpritePosition(SPRITE_SCORE_5, EVENT_BOT_X   - (g_EventFrame * 8), EVENT_BOT_Y);
-		VDP_SetSpritePosition(SPRITE_SCORE_6, EVENT_BOT_X+1 - (g_EventFrame * 8), EVENT_BOT_Y+1);
-	}
-	if(g_EventFrame == 16)
-	{
-		ayFX_PlayBank(13, 0);
-	}
-	if(g_EventFrame == 50)
-	{
-		HideScoreSprites();
-		InitializeNetSprites();
-		InitService();
-		g_EventID = EVENT_NONE;
-		Game_SetState(State_ScoreStart);
+		if(event == EVENT_SET)
+			Game_SetState(State_ScoreStart);
+		else if(event == EVENT_MATCH)
+			Game_SetState(State_VictoryStart);
 	}
 	g_EventFrame++;
 	
@@ -2825,12 +3053,12 @@ bool HandleEvent()
 {
 	switch(g_EventID)
 	{
-	case EVENT_POINT: return Event_WinPoint();;
-	case EVENT_GAME:  return Event_WinGame();
-	case EVENT_SET:   return Event_WinSet();
-	case EVENT_MATCH: 
-		Game_SetState(State_TitleStart);
-		break;
+	case EVENT_POINT:
+		return Event_WinPoint();
+	case EVENT_GAME:
+	case EVENT_SET:
+	case EVENT_MATCH:
+		return Event_Default(g_EventID);
 	default:
 		break;
 	};
@@ -2852,7 +3080,7 @@ void InitNewGame()
 ///
 void MatchScore(u8 subEvent)
 {
-	if(g_Ball.point == POINT_FINISHED)
+	if((g_Ball.point == POINT_FINISHED) || (subEvent == EVENT_IN))
 		return;
 
 	u8 event = EVENT_POINT;
@@ -3019,29 +3247,26 @@ bool State_Init()
 	{
 	#endif
 		VDP_SetMode(VDP_MODE_GRAPHIC2);
-		VDP_SetLayoutTable(MSX1_LAYOUT_TABLE);
-		VDP_SetColorTable(MSX1_COLOR_TABLE);
-		VDP_SetPatternTable(MSX1_PATTERN_TABLE);
-		VDP_SetSpritePatternTable(MSX1_SPRITE_PATTERN);
-		VDP_SetSpriteAttributeTable(MSX1_SPRITE_ATTRIBUTE);
 	#if (MSX2_ENHANCE)
 	}
 	else // VDP_VERSION_V99xx
 	{
 		VDP_SetMode(VDP_MODE_GRAPHIC3);
-		VDP_SetLayoutTable(MSX2_LAYOUT_TABLE);
-		VDP_SetColorTable(MSX2_COLOR_TABLE);
-		VDP_SetPatternTable(MSX2_PATTERN_TABLE);
-		VDP_SetSpritePatternTable(MSX2_SPRITE_PATTERN);
-		VDP_SetSpriteAttributeTable(MSX2_SPRITE_ATTRIBUTE);
 	}
 	#endif
+	// Setup VRAM tables
+	VDP_SetLayoutTable(VRAM_LAYOUT_TABLE);
+	VDP_SetColorTable(VRAM_COLOR_TABLE);
+	VDP_SetPatternTable(VRAM_PATTERN_TABLE);
+	VDP_SetSpritePatternTable(VRAM_SPRITE_PATTERN);
+	VDP_SetSpriteAttributeTable(VRAM_SPRITE_ATTRIBUTE);
+	// Sprite settings
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 | VDP_SPRITE_SCALE_1);
 	VDP_EnableVBlank(true);
 	
 	g_InputBinding[SIDE_BOTTOM] = BIND_KB1A;
 	g_InputBinding[SIDE_TOP] = BIND_KB2;
-	
+		
 	// Initialize PT3
 	PT3_Init();
 	PT3_SetNoteTable(PT3_NT2);
@@ -3224,20 +3449,10 @@ bool State_ScoreStart()
 	for(u8 s = 0; s < SPRITE_SCORE_BALL_1; ++s)
 		VDP_SetSpritePositionY(s, 213);
 
-	u16 dst = g_SpritePatternLow; // Pattern #0
-	VDP_FillVRAM_64K(0, dst, 8 * 4 * 4);
-	const u8* src = g_DataBall + 6 * 8;
-	for(u8 i = 0; i < 4; ++i)
-	{
-		VDP_WriteVRAM_64K(src, dst, 8);
-		src += 8;
-		dst += 8 * 4;
-	}
-	
-	SetSprite(SPRITE_SCORE_BALL_1, 132, 213, 12, COLOR_BLACK);			// Outline
-	SetSprite(SPRITE_SCORE_BALL_2, 132, 213, 8,  COLOR_WHITE);			// Strip
-	SetSprite(SPRITE_SCORE_BALL_3, 132, 213, 4,  COLOR_DARK_YELLOW);	// Shade
-	SetSprite(SPRITE_SCORE_BALL_4, 132, 213, 0,  COLOR_LIGHT_YELLOW);	// Base
+	SetSprite(SPRITE_SCORE_BALL_4, 132, 213, PATTERN_SERVER_BASE,    COLOR_LIGHT_YELLOW);	// Base
+	SetSprite(SPRITE_SCORE_BALL_3, 132, 213, PATTERN_SERVER_SHADE,   COLOR_DARK_YELLOW);	// Shade
+	SetSprite(SPRITE_SCORE_BALL_2, 132, 213, PATTERN_SERVER_STRIP,   COLOR_WHITE);			// Strip
+	SetSprite(SPRITE_SCORE_BALL_1, 132, 213, PATTERN_SERVER_OUTLINE, COLOR_BLACK);			// Outline
 	
 	DisplayScore();
 	
@@ -3273,6 +3488,68 @@ bool State_ScoreUpdate()
 	
 	return true;
 }
+
+//-----------------------------------------------------------------------------
+///
+bool State_VictoryStart()
+{
+	State_ScoreStart();
+	Game_SetState(State_VictoryUpdate);
+
+	Player* ply = &g_Player[g_Winner];
+	SetAction(ply, ACTION_WIN);
+	ply->srcPos.x = 50;
+	ply->srcPos.y = 164;
+	
+	ply = &g_Player[1-g_Winner];
+	SetAction(ply, ACTION_LOOSE);
+	ply->srcPos.x = 80;
+	ply->srcPos.y = 164-40;
+
+	g_DisplayNet = false;
+
+	SetSprite(SPRITE_CUP_OUTLINE, 50-8, (u8)(164-33), PATTERN_CUP_OUTLINE1, COLOR_BLACK);
+	SetSprite(SPRITE_CUP_BODY,    50-8, (u8)(164-33), PATTERN_CUP_BODY,     COLOR_LIGHT_YELLOW);
+	
+	if(g_PlayMusic)
+		PT3_Resume();
+
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+///
+bool State_VictoryUpdate()
+{
+	u8 pat = PATTERN_CUP_OUTLINE1;
+	if(g_FlickerShadow && (g_Frame & 0x1))
+		pat += 4;
+	VDP_SetSpritePattern(SPRITE_CUP_OUTLINE, pat);
+
+	Player_SwitchSprites(&g_Player[SIDE_BOTTOM]);
+	Player_SwitchSprites(&g_Player[SIDE_TOP]);
+
+	UpdatePlayerBottom();
+	UpdatePlayerTop();
+
+	Player_UpdateAction(&g_Player[SIDE_BOTTOM]);
+	Player_UpdateAction(&g_Player[SIDE_TOP]);
+
+	DrawPlayerBottom();
+	DrawPlayerTop();
+	
+	UpdateInput();
+	if(g_Player[SIDE_BOTTOM].binding->inButton1() || g_Player[SIDE_TOP].binding->inButton1())
+	{
+		Game_SetState(State_TitleStart);
+		return false;
+	}
+
+	return true;
+}
+
+
 
 //-----------------------------------------------------------------------------
 ///
@@ -3320,10 +3597,8 @@ bool State_MatchStart()
 	g_EventTimer = 0;
 
 	// Initialize ball
-	InitializeNetSprites();
+	Ball_Hide();
 	InitService();
-	// Ball_ShootRandom();
-	Ball_LoadSprites();
 
 	VDP_EnableDisplay(true);
 	Game_SetState(State_MatchUpdate);
@@ -3357,8 +3632,8 @@ bool State_MatchUpdate()
 	#if (DEBUG)
 		if(KEY_PRESS(KEY_HOME))
 			g_Debug = 1 - g_Debug;
-		if(KEY_PRESS(KEY_F2))
-			Ball_ShootRandom();
+		// if(KEY_PRESS(KEY_F2))
+			// Ball_ShootRandom();
 	#endif
 	
 	if(KEY_PRESS(KEY_ESC)) // Return to main menu
@@ -3454,10 +3729,10 @@ bool State_TrainingStart()
 	}
 	DisplayTrainingScore();
 
-	Ball_LoadSprites();
-
 	g_EventID = EVENT_NONE;
+	Ball_Hide();
 	Ball_ShootRandom();
+	SetTrainingCursor();
 
 	VDP_EnableDisplay(true);
 	Game_SetState(State_TrainingUpdate);
@@ -3484,8 +3759,8 @@ bool State_TrainingUpdate()
 
 	UpdateInput();
 
-	if(KEY_PRESS(KEY_F2))
-		Ball_ShootRandom();
+	// if(KEY_PRESS(KEY_F2))
+		// Ball_ShootRandom();
 	if(KEY_PRESS(KEY_F3)) // Activate/deactivate shadows
 		g_FlickerShadow = 1 - g_FlickerShadow;
 	if(KEY_PRESS(KEY_ESC)) // Return to main menu
@@ -3578,6 +3853,8 @@ bool State_TrainingUpdate()
 
 	Player_UpdateAction(&g_Player[g_TrainSide]);
 
+	UpdateTrainingCursor();
+	
 	//---------------------------------------------------------------------
 	// Draw anim
 	

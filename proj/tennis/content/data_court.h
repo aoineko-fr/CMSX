@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.12.0 on Fri Apr  2 00:19:43 2021
+// Data generated using CMSXimg 1.12.0 on Fri Jun  4 22:16:24 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     court.png
@@ -12,15 +12,12 @@
 //  - Sprite size:    216, 144 (gap: 0, 0)
 //  - Sprite count:   1, 1
 //  - Color count:    256 (Transparent: #0000)
-//  - Compressor:     Unknow
+//  - Compressor:     RLEp (6-bits Pattern based RLE)
 //  - Skip empty:     FALSE
 //  - Offset:         0
 
-#ifndef D_g_DataCourt_Names
-	#define D_g_DataCourt_Names
-#endif
 // Names Table
-D_g_DataCourt_Names const unsigned char g_DataCourt_Names[] =
+const unsigned char g_DataCourt_Names[] =
 {
 	0x00, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x00, 0x00, 
 	0x00, 0x04, 0x05, 0x05, 0x06, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x07, 0x08, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x09, 0x05, 0x05, 0x0A, 0x00, 0x00, 
@@ -43,11 +40,8 @@ D_g_DataCourt_Names const unsigned char g_DataCourt_Names[] =
 };
 // Names size: 486 Bytes
 
-#ifndef D_g_DataCourt_Patterns
-	#define D_g_DataCourt_Patterns
-#endif
 // Patterns Table
-D_g_DataCourt_Patterns const unsigned char g_DataCourt_Patterns[] =
+const unsigned char g_DataCourt_Patterns[] =
 {
 // Chunk[0]
 	0x0F, // Type=0, Length=15
@@ -315,11 +309,8 @@ D_g_DataCourt_Patterns const unsigned char g_DataCourt_Patterns[] =
 };
 // Patterns size: 185 Bytes
 
-#ifndef D_g_DataCourt_Colors
-	#define D_g_DataCourt_Colors
-#endif
 // Colors Table
-D_g_DataCourt_Colors const unsigned char g_DataCourt_Colors[] =
+const unsigned char g_DataCourt_Colors[] =
 {
 // Chunk[0]
 	0x4F, // Type=1, Length=15

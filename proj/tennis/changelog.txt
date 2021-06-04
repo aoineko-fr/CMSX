@@ -9,6 +9,15 @@ T:	Type of pattern (2-bits)
 	3: N blocks of uncompressed data
 N:	Number of repetition of the blocks (6-bits: 1-64)
 
+0.2.13
+- Repartition of static sprite data in VRAM
+- Added victory screen with animated player
+- Added trainging gameplay with score cursor
+- Added option to choose the training machine shot direction
+
+0.2.12
+- Updated 48KB custom IRS ROM ctr0 to support launch from expended slot
+
 0.2.11
 - Handle serving phase
 - Adjust shot parameters

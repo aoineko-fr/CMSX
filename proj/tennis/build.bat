@@ -35,6 +35,7 @@ rem  - ROM32P0		.rom	32KB ROM in page 0-1 (0000h ~ 7FFFh)
 rem  - ROM32P1		.rom	32KB ROM in page 1-2 (4000h ~ BFFFh)
 rem  - ROM48		.rom	48KB ROM in page 0-2 (0000h ~ BFFFh) No direct acces to Main-ROM
 rem  - ROM48_ISR	.rom	48KB ROM in page 0-2 (0000h ~ BFFFh) With ISR replacement
+rem  - ROM64_ISR	.rom	64KB ROM in page 0-3 (0000h ~ FFFFh) With ISR replacement
 rem  - DOS			.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOSARG		.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
 set Target=ROM48_ISR

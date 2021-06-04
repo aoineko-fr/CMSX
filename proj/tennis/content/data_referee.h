@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.12.0 on Fri Apr  2 00:19:43 2021
+// Data generated using CMSXimg 1.12.0 on Fri Jun  4 22:16:24 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     misc.png
@@ -12,15 +12,12 @@
 //  - Sprite size:    96, 48 (gap: 0, 0)
 //  - Sprite count:   1, 1
 //  - Color count:    256 (Transparent: #0000)
-//  - Compressor:     Unknow
+//  - Compressor:     RLEp (6-bits Pattern based RLE)
 //  - Skip empty:     FALSE
 //  - Offset:         208
 
-#ifndef D_g_DataReferee_Names
-	#define D_g_DataReferee_Names
-#endif
 // Names Table
-D_g_DataReferee_Names const unsigned char g_DataReferee_Names[] =
+const unsigned char g_DataReferee_Names[] =
 {
 	0xD0, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD2, 
 	0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD4, 0xD4, 0xD4, 0xD4, 0xD4, 0xD9, 
@@ -31,11 +28,8 @@ D_g_DataReferee_Names const unsigned char g_DataReferee_Names[] =
 };
 // Names size: 72 Bytes
 
-#ifndef D_g_DataReferee_Patterns
-	#define D_g_DataReferee_Patterns
-#endif
 // Patterns Table
-D_g_DataReferee_Patterns const unsigned char g_DataReferee_Patterns[] =
+const unsigned char g_DataReferee_Patterns[] =
 {
 // Chunk[0]
 	0xC1, // Type=3, Length=1
@@ -288,11 +282,8 @@ D_g_DataReferee_Patterns const unsigned char g_DataReferee_Patterns[] =
 };
 // Patterns size: 176 Bytes
 
-#ifndef D_g_DataReferee_Colors
-	#define D_g_DataReferee_Colors
-#endif
 // Colors Table
-D_g_DataReferee_Colors const unsigned char g_DataReferee_Colors[] =
+const unsigned char g_DataReferee_Colors[] =
 {
 // Chunk[0]
 	0xC1, // Type=3, Length=1

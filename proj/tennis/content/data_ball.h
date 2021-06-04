@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.12.0 on Fri Apr  2 00:19:44 2021
+// Data generated using CMSXimg 1.12.0 on Fri Jun  4 22:16:24 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     misc.png
@@ -15,11 +15,8 @@
 //  - Compressor:     None
 //  - Skip empty:     FALSE
 
-#ifndef D_g_DataBall
-	#define D_g_DataBall
-#endif
 // Data table
-D_g_DataBall const unsigned char g_DataBall[] =
+const unsigned char g_DataBall[] =
 {
 // Sprite[0] (offset:0)
 	0x70, /* .###.... */ 
@@ -61,18 +58,18 @@ D_g_DataBall const unsigned char g_DataBall[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-	0x54, /* .#.#.#.. */ 
-	0xAA, /* #.#.#.#. */ 
-	0x54, /* .#.#.#.. */ 
+	0x70, /* .###.... */ 
+	0x88, /* #...#... */ 
+	0x70, /* .###.... */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 // Sprite[5] (offset:40)
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-	0x70, /* .###.... */ 
-	0x88, /* #...#... */ 
-	0x70, /* .###.... */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 // Sprite[6] (offset:48)
