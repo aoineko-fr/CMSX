@@ -68,7 +68,7 @@
 // Ball sprites
 #include "content/data_ball.h"
 
-#include "content/data_cursor.h"
+//#include "content/data_cursor.h"
 
 #include "pt3/pt3_notetable2.h"
 

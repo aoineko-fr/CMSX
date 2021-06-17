@@ -27,10 +27,10 @@
 
 //-----------------------------------------------------------------------------
 // CONFIG
-#define VERSION						"V0.2.15"
+#define VERSION						"V0.2.17"
 #define DEBUG						1
 #define MSX2_ENHANCE				0
-#define AUDIO_ENABLE				0
+#define AUDIO_ENABLE				1
 #define DISPLAY_CREDITS				1
 
 // VRAM Tables Address
@@ -105,6 +105,15 @@
 
 #define EVENT_DELAY					(50)
 
+/// Level types
+enum LEVEL
+{
+	LEVEL_EASY = 0,
+	LEVEL_MEDIUM,
+	LEVEL_HARD,
+	LEVEL_MAX,
+};
+
 /// Ball spin types
 enum SPIN
 {
@@ -174,7 +183,7 @@ enum FUNCT
 };
 
 /// Sprite list
-enum SPRITE
+enum SPRITE_ID
 {
 	SPRITE_PLY_BOT_BLACK_H = 0,			// 0
 	SPRITE_PLY_BOT_BLACK_L,				// 1
@@ -243,7 +252,7 @@ enum SPRITE
 	SPRITE_CURSOR_4       = SPRITE_SCORE_BALL_4,
 };
 
-enum PATTERN
+enum SPRITE_PATTERN
 {
 	// Bottom player
 	PATTERN_PLY_BOT_LINE1_H =   0, // #000
@@ -562,7 +571,7 @@ bool State_VictoryUpdate();
 // Menu callback
 const char* Menu_StartMatch(u8 op, i8 value);
 const char* Menu_StartTrain(u8 op, i8 value);
-const char* Menu_SetAI(u8 op, i8 value);
+const char* Menu_SetLevel(u8 op, i8 value);
 const char* Menu_SetSets(u8 op, i8 value);
 const char* Menu_SetShot(u8 op, i8 value);
 const char* Menu_SetDir(u8 op, i8 value);
@@ -798,9 +807,9 @@ const u8 g_ColorShadeSelect[8] =
 // Menu 0 - Main
 const MenuEntry g_MenuMain[] =
 {
+	{ "TRAINING",	MENU_ITEM_GOTO|MENU_TRAINING, 0, 0 },
 	// { "1P MATCH",	MENU_ITEM_GOTO|MENU_MATCH1P, 0, 0 },
 	{ "2P MATCH",	MENU_ITEM_GOTO|MENU_MATCH2P, 0, 0 },
-	{ "TRAINING",	MENU_ITEM_GOTO|MENU_TRAINING, 0, 0 },
 	{ "OPTIONS", 	MENU_ITEM_GOTO|MENU_OPTIONS, 0, 0 },
 	{ "CREDITS", 	MENU_ITEM_GOTO|MENU_CREDIT, 0, 0 },
 	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
@@ -814,8 +823,8 @@ const MenuEntry g_MenuMain[] =
 const MenuEntry g_MenuMatch1P[] =
 {
 	{ "START>",		MENU_ITEM_ACTION, Menu_StartMatch, MODE_1P },
+	{ "AI",			MENU_ITEM_ACTION, Menu_SetLevel, 0 },
 	{ "SETS",		MENU_ITEM_ACTION, Menu_SetSets, 0 },
-	{ "AI",			MENU_ITEM_ACTION, Menu_SetAI, 0 },
 	{ "INPUT",		MENU_ITEM_ACTION, Menu_SetInput, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -844,11 +853,11 @@ const MenuEntry g_MenuMatch2P[] =
 const MenuEntry g_MenuTraining[] =
 {
 	{ "START>",		MENU_ITEM_ACTION, Menu_StartTrain, MODE_TRAIN },
+	{ "LEVEL",		MENU_ITEM_ACTION, Menu_SetLevel, 0 },
 	{ "SIDE",		MENU_ITEM_ACTION, Menu_SetSide, 0 },
 	{ "SHOT",		MENU_ITEM_ACTION, Menu_SetShot, 0 },
 	{ "DIR",		MENU_ITEM_ACTION, Menu_SetDir, 0 },
 	{ "INPUT",		MENU_ITEM_ACTION, Menu_SetInput, 0 },
-	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -956,6 +965,13 @@ const Binding g_Binding[BIND_MAX] =
 ///
 const u8 g_CourtNet[32] = { 0xFF, 0xFF, 0xFF, 1, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0x80, 0xFF, 0xFF, 0xFF };
 
+const Vector8 g_TrainSize[LEVEL_MAX] =
+{
+	{ 32, 32 }, // LEVEL_EASY
+	{ 16, 32 }, // LEVEL_MEDIUM
+	{ 16, 16 }, // LEVEL_HARD
+};
+
 /// Score bard's score text:                           Adv
 const c8* g_ScoreString[] = { "00", "15", "30", "40", ":;" };
 /// Score board's player text:  P1    P2    AI
@@ -1004,7 +1020,7 @@ u8			g_MenuID = 0;
 u8			g_MenuItem = 0; 
 
 // Match
-u8			g_Level = 1;			///< AI level (0=Easy, 1=Medium, 2=Hard)
+u8			g_Level = LEVEL_MEDIUM;	///< AI level (0=Easy, 1=Medium, 2=Hard)
 u8			g_EventID;				///< Match event (@see EVENT enum)
 u8			g_EventSub;				///< Match event (@see EVENT enum)
 u8			g_EventTimer;			///< Match event timer (event start when timer is equal to 0)
@@ -1030,7 +1046,7 @@ u8			g_TotalFault[2];
 
 // Training
 u8			g_TrainScore;
-u8			g_TrainBest = 0;
+u8			g_TrainBest[LEVEL_MAX] = { 0, 0, 0 };
 u8			g_TrainSide = SIDE_BOTTOM;
 u8			g_TrainShot = TRAIN_BOTH;
 u8			g_TrainSpin = SPIN_FLAT;
@@ -1082,7 +1098,7 @@ const c8* Menu_StartTrain(u8 op, i8 value)
 
 //-----------------------------------------------------------------------------
 ///
-const char* Menu_SetAI(u8 op, i8 value)
+const char* Menu_SetLevel(u8 op, i8 value)
 {
 	switch(op)
 	{
@@ -1091,9 +1107,9 @@ const char* Menu_SetAI(u8 op, i8 value)
 	case MENU_ACTION_DEC: g_Level = (g_Level + 2) % 3; break;	
 	}
 
-	if(g_Level == 0)
+	if(g_Level == LEVEL_EASY)
 		return "EASY";
-	else if(g_Level == 1)
+	else if(g_Level == LEVEL_MEDIUM)
 		return "MED";
 
 	return "HARD";
@@ -1572,7 +1588,16 @@ void LoadMatchData()
 	// Load cursor sprites
 	{
 		u16 dst = g_SpritePatternLow + (PATTERN_CURSOR1 * 8);
-		VDP_WriteVRAM_64K(g_DataCursor, dst, 8 * 4 * 3);
+		// VDP_WriteVRAM_64K(g_DataCursor, dst, 8 * 4 * 3);
+		// VDP_FillVRAM_64K(0xFF, dst, 8 * 4);
+		// VDP_FillVRAM_64K(0x00, dst + 8 * 4, 8 * 4);
+		for(u8 i = 0; i < 8 * 2; i++)
+		{
+			VDP_FillVRAM_64K(0x55, dst + 4 * 8, 1);
+			VDP_FillVRAM_64K(0xAA, dst++, 1);
+			VDP_FillVRAM_64K(0xAA, dst + 4 * 8, 1);
+			VDP_FillVRAM_64K(0x55, dst++, 1);
+		}
 	}
 
 	// Load net sprites
@@ -1644,18 +1669,38 @@ void SetNetSprite(u8 x) __FASTCALL
 void SetTrainingCursor()
 {
 	u16 rnd = Math_GetRandom();
-	g_TrainZone.x = (rnd % 128) + 56;
-	g_TrainZone.y = ((rnd >> 8) % 40) + 32;
+
+	if(g_Level == LEVEL_EASY)
+		g_TrainZone.x = (rnd % (128-16)) + 56;
+	else
+		g_TrainZone.x = (rnd % 128) + 56;
+
+	if(g_Level == LEVEL_HARD)
+		g_TrainZone.y = ((rnd >> 8) % 40) + 32;
+	else
+		g_TrainZone.y = ((rnd >> 8) % (40-16)) + 32;
+
 	if(g_TrainSide == SIDE_TOP)
 		g_TrainZone.y += 72;
 
-	SetSprite(SPRITE_CURSOR, g_TrainZone.x, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+	VDP_SetSpritePositionY(SPRITE_CURSOR_1, 213);
+	VDP_SetSpritePositionY(SPRITE_CURSOR_2, 213);
+	VDP_SetSpritePositionY(SPRITE_CURSOR_3, 213);
+	VDP_SetSpritePositionY(SPRITE_CURSOR_4, 213);
 
-	// SetSprite(SPRITE_CURSOR_1, g_TrainZone.x, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
-	// SetSprite(SPRITE_CURSOR_2, g_TrainZone.x + 16, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
-	// SetSprite(SPRITE_CURSOR_3, g_TrainZone.x, g_TrainZone.y + 16, PATTERN_CURSOR1, COLOR_DARK_BLUE);
-	// SetSprite(SPRITE_CURSOR_4, g_TrainZone.x + 16, g_TrainZone.y + 16, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+	switch(g_Level)
+	{
+	case LEVEL_EASY:
+		SetSprite(SPRITE_CURSOR_2, g_TrainZone.x + 16, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+		SetSprite(SPRITE_CURSOR_4, g_TrainZone.x + 16, g_TrainZone.y + 16, PATTERN_CURSOR1, COLOR_DARK_BLUE);
 
+	case LEVEL_MEDIUM:
+		SetSprite(SPRITE_CURSOR_3, g_TrainZone.x, g_TrainZone.y + 16, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+
+	case LEVEL_HARD:
+		SetSprite(SPRITE_CURSOR_1, g_TrainZone.x, g_TrainZone.y, PATTERN_CURSOR1, COLOR_DARK_BLUE);
+	}
+	
 	if(g_TrainSide == SIDE_BOTTOM)
 	{
 		VDP_SetSpritePositionY(SPRITE_NET_LEFT, 213);
@@ -1667,12 +1712,11 @@ void SetTrainingCursor()
 
 void UpdateTrainingCursor()
 {
-	// VDP_SetSpritePattern(SPRITE_CURSOR, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
-
-	VDP_SetSpritePattern(SPRITE_CURSOR_1, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
-	VDP_SetSpritePattern(SPRITE_CURSOR_2, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
-	VDP_SetSpritePattern(SPRITE_CURSOR_3, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
-	VDP_SetSpritePattern(SPRITE_CURSOR_4, PATTERN_CURSOR1 + ((g_Frame  / 8) % 3) * 4);
+	u8 pat = g_FlickerShadow ? (PATTERN_CURSOR1 + (g_Frame & 0x1) * 4) : PATTERN_CURSOR1;
+	VDP_SetSpritePattern(SPRITE_CURSOR_1, pat);
+	VDP_SetSpritePattern(SPRITE_CURSOR_2, pat);
+	VDP_SetSpritePattern(SPRITE_CURSOR_3, pat);
+	VDP_SetSpritePattern(SPRITE_CURSOR_4, pat);
 }
 
 //-----------------------------------------------------------------------------
@@ -2568,7 +2612,7 @@ void Launcher_SwitchSprites()
 
 //-----------------------------------------------------------------------------
 ///
-void UncompressGM2(const u8* src, u16 dst)
+void UnpackRLEpToVRAM(const u8* src, u16 dst)
 {
 	while(*src != 0)
 	{
@@ -2606,16 +2650,16 @@ void InitializeCourt()
 	// Load court data to VRAM
 	VDP_FillScreen_GM2(0);
 	VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
-	UncompressGM2(g_DataCourt_Patterns, g_ScreenPatternLow + (OFFSET_GAME_COURT * 8));
-	UncompressGM2(g_DataCourt_Colors,   g_ScreenColorLow   + (OFFSET_GAME_COURT * 8));
+	UnpackRLEpToVRAM(g_DataCourt_Patterns, g_ScreenPatternLow + (OFFSET_GAME_COURT * 8));
+	UnpackRLEpToVRAM(g_DataCourt_Colors,   g_ScreenColorLow   + (OFFSET_GAME_COURT * 8));
 
 	// Load Scrore Board data to VRAM
-	UncompressGM2(g_DataScore_Patterns, g_ScreenPatternLow + (OFFSET_GAME_SCORE * 8));
-	UncompressGM2(g_DataScore_Colors,   g_ScreenColorLow   + (OFFSET_GAME_SCORE * 8));
+	UnpackRLEpToVRAM(g_DataScore_Patterns, g_ScreenPatternLow + (OFFSET_GAME_SCORE * 8));
+	UnpackRLEpToVRAM(g_DataScore_Colors,   g_ScreenColorLow   + (OFFSET_GAME_SCORE * 8));
 
 	// Load Referee data to VRAM
-	UncompressGM2(g_DataReferee_Patterns, g_ScreenPatternLow + (OFFSET_GAME_REFEREE * 8));
-	UncompressGM2(g_DataReferee_Colors,   g_ScreenColorLow   + (OFFSET_GAME_REFEREE * 8));
+	UnpackRLEpToVRAM(g_DataReferee_Patterns, g_ScreenPatternLow + (OFFSET_GAME_REFEREE * 8));
+	UnpackRLEpToVRAM(g_DataReferee_Colors,   g_ScreenColorLow   + (OFFSET_GAME_REFEREE * 8));
 
 	// Initialize font
 	Print_SetTextFont(g_DataFont, OFFSET_GAME_FONT);
@@ -2778,9 +2822,9 @@ void DisplayTrainingScore()
 	Print_DrawInt(g_TrainScore);
 
 	Print_SetPosition(29, y);
-	if(g_TrainBest < 10)
+	if(g_TrainBest[g_Level] < 10)
 		Print_DrawChar('0');
-	Print_DrawInt(g_TrainBest);
+	Print_DrawInt(g_TrainBest[g_Level]);
 }
 
 //-----------------------------------------------------------------------------
@@ -2795,12 +2839,12 @@ void TrainingScore(u8 subEvent)
 
 	if((subEvent == EVENT_IN) && (g_Ball.point == POINT_VALIDATED) && (g_Ball.lastPly == g_TrainSide))
 	{
-		if(((u8)(g_Ball.srcPos.x - g_TrainZone.x) <= 16) && ((u8)(g_Ball.srcPos.y - g_TrainZone.y) <= 16))
+		if(((u8)(g_Ball.srcPos.x - g_TrainZone.x) <= g_TrainSize[g_Level].x) && ((u8)(g_Ball.srcPos.y - g_TrainZone.y) <= g_TrainSize[g_Level].y))
 		{
 			if(g_TrainScore < 99)
 				g_TrainScore++;
-			if(g_TrainScore > g_TrainBest)
-				g_TrainBest = g_TrainScore;
+			if(g_TrainScore > g_TrainBest[g_Level])
+				g_TrainBest[g_Level] = g_TrainScore;
 			SetTrainingCursor();
 			DisplayTrainingScore();
 		}
@@ -3295,8 +3339,8 @@ bool State_TitleStart()
 
 	// Load screen data
 	VDP_FillScreen_GM2(0); // Don't set the Layout table yet
-	UncompressGM2(g_DataLogo_Patterns, g_ScreenPatternLow + (OFFSET_TITLE_LOGO * 8));
-	UncompressGM2(g_DataLogo_Colors,   g_ScreenColorLow   + (OFFSET_TITLE_LOGO * 8));
+	UnpackRLEpToVRAM(g_DataLogo_Patterns, g_ScreenPatternLow + (OFFSET_TITLE_LOGO * 8));
+	UnpackRLEpToVRAM(g_DataLogo_Colors,   g_ScreenColorLow   + (OFFSET_TITLE_LOGO * 8));
 
 	// Load sprites data
 	VDP_WriteVRAM_64K(g_DataLogoBall, g_SpritePatternLow, 8 * 32);
