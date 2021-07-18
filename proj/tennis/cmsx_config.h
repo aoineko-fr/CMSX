@@ -85,6 +85,10 @@
 #define USE_VDP_MODE_G6				0	// MSX2		Screen 7
 #define USE_VDP_MODE_G7				0	// MSX2/2+	Screen 8, 10, 11 & 12
 
+// Default palette datas
+#define USE_DEFAULT_PALETTE			0
+#define USE_MSX1_PALETTE			0
+
 //-----------------------------------------------------------------------------
 // INPUT MODULE
 //-----------------------------------------------------------------------------

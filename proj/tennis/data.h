@@ -68,9 +68,6 @@
 // Ball sprites
 #include "content/data_ball.h"
 
-//#include "content/data_cursor.h"
-
+// Misc
 #include "pt3/pt3_notetable2.h"
-
-// Math
 #include "mathtable/mt_trigo_Q10.6_64.inc"

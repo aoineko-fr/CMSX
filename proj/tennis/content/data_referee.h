@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.12.0 on Fri Jun  4 22:16:24 2021
+// Data generated using CMSXimg 1.12.0 on Thu Jun 17 23:15:38 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     misc.png
@@ -17,7 +17,7 @@
 //  - Offset:         208
 
 // Names Table
-const unsigned char g_DataReferee_Names[] =
+__at(0x3374) const unsigned char g_DataReferee_Names[] =
 {
 	0xD0, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD1, 0xD2, 
 	0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD4, 0xD4, 0xD4, 0xD4, 0xD4, 0xD9, 
@@ -29,7 +29,7 @@ const unsigned char g_DataReferee_Names[] =
 // Names size: 72 Bytes
 
 // Patterns Table
-const unsigned char g_DataReferee_Patterns[] =
+__at(0x33BC) const unsigned char g_DataReferee_Patterns[] =
 {
 // Chunk[0]
 	0xC1, // Type=3, Length=1
@@ -283,7 +283,7 @@ const unsigned char g_DataReferee_Patterns[] =
 // Patterns size: 176 Bytes
 
 // Colors Table
-const unsigned char g_DataReferee_Colors[] =
+__at(0x346C) const unsigned char g_DataReferee_Colors[] =
 {
 // Chunk[0]
 	0xC1, // Type=3, Length=1

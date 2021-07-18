@@ -27,11 +27,12 @@
 
 //-----------------------------------------------------------------------------
 // CONFIG
-#define VERSION						"V0.2.17"
+#define VERSION						"V0.2.18"
 #define DEBUG						1
 #define MSX2_ENHANCE				0
-#define AUDIO_ENABLE				1
+#define AUDIO_ENABLE				0
 #define DISPLAY_CREDITS				1
+#define COMPRESS_NAMES				0
 
 // VRAM Tables Address
 #define VRAM_LAYOUT_TABLE			0x3800
@@ -104,6 +105,12 @@
 #define SCORE_TXT_Y					(SCORE_BOARD_Y+5)
 
 #define EVENT_DELAY					(50)
+
+#if (COMPRESS_NAMES)
+	#define GM2_LAYOUT(src, x0, y0, x1, y1) { UnpackRLEpToRAM(src, g_UnpackBuffer); VDP_WriteLayout_GM2(g_UnpackBuffer, x0, y0, x1, y1); }
+#else
+	#define GM2_LAYOUT(src, x0, y0, x1, y1) VDP_WriteLayout_GM2(src, x0, y0, x1, y1);
+#endif
 
 /// Level types
 enum LEVEL
@@ -211,45 +218,54 @@ enum SPRITE_ID
 	SPRITE_PLY_TOP_SKIN_H,				// 18
 	SPRITE_PLY_TOP_SKIN_L,				// 19
 
-	SPRITE_SCORE_1,						// 22
-	SPRITE_SCORE_2,						// 23
-	SPRITE_SCORE_3,						// 24
-	SPRITE_SCORE_4,						// 25
-	SPRITE_SCORE_5,						// 26
-	SPRITE_SCORE_6,						// 27
-
-	SPRITE_SCORE_BALL_1,                // 28
-	SPRITE_SCORE_BALL_2,                // 29
-	SPRITE_SCORE_BALL_3,                // 30
-	SPRITE_SCORE_BALL_4,                // 31
-
 	SPRITE_BALL_BODY,					// 20
-	SPRITE_BALL_SHADOW,					// 21
+
+	SPRITE_SCORE_1,						// 21
+	SPRITE_SCORE_2,						// 22
+	SPRITE_SCORE_3,						// 23
+	SPRITE_SCORE_4,						// 24
+	SPRITE_SCORE_5,						// 25
+	SPRITE_SCORE_6,						// 26
+
+	SPRITE_SCORE_BALL_1,                // 27
+	SPRITE_SCORE_BALL_2,                // 28
+	SPRITE_SCORE_BALL_3,                // 29
+	SPRITE_SCORE_BALL_4,                // 30
+
+	SPRITE__31,                			// 31
 
 	SPRITE_MAX, //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	SPRITE_BALL_MARK      = SPRITE_SCORE_1,
+	SPRITE_CURSOR_1       = SPRITE_SCORE_1, // Easy + Medium + Hard
+	SPRITE_CURSOR_2       = SPRITE_SCORE_2, // Easy + Medium
+	SPRITE_CURSOR_3       = SPRITE_SCORE_3, // Easy
+	SPRITE_CURSOR_4       = SPRITE_SCORE_4, // Easy
+
+	SPRITE_BALL_SHADOW    = SPRITE_SCORE_5,
+	SPRITE_BALL_MARK      = SPRITE_SCORE_6,
 
 	SPRITE_LAUNCHER_BOT_1 = SPRITE_PLY_BOT_BLACK_H,	
 	SPRITE_LAUNCHER_BOT_2 = SPRITE_PLY_BOT_BLACK_L,		
 	SPRITE_LAUNCHER_BOT_3 = SPRITE_PLY_BOT_RACKET,		
 	SPRITE_LAUNCHER_BOT_4 = SPRITE_PLY_BOT_CLOTH,
 	SPRITE_LAUNCHER_BOT_5 = SPRITE_PLY_BOT_WHITE_H,
+	// Not used
+	SPRITE_LAUNCHER_BOT_6 = SPRITE_PLY_BOT_WHITE_L,
+	SPRITE_LAUNCHER_BOT_7 = SPRITE_PLY_BOT_SKIN_H,
+	SPRITE_LAUNCHER_BOT_8 = SPRITE_PLY_BOT_SKIN_L,
 
 	SPRITE_LAUNCHER_TOP_1 = SPRITE_PLY_TOP_BLACK_H,	
 	SPRITE_LAUNCHER_TOP_2 = SPRITE_PLY_TOP_BLACK_L,		
 	SPRITE_LAUNCHER_TOP_3 = SPRITE_PLY_TOP_RACKET,		
 	SPRITE_LAUNCHER_TOP_4 = SPRITE_PLY_TOP_CLOTH,
 	SPRITE_LAUNCHER_TOP_5 = SPRITE_PLY_TOP_WHITE_H,
+	// Not used
+	SPRITE_LAUNCHER_TOP_6 = SPRITE_PLY_TOP_WHITE_L,
+	SPRITE_LAUNCHER_TOP_7 = SPRITE_PLY_TOP_SKIN_H,
+	SPRITE_LAUNCHER_TOP_8 = SPRITE_PLY_TOP_SKIN_L,
 
 	SPRITE_CUP_OUTLINE    = SPRITE_SCORE_BALL_1,
 	SPRITE_CUP_BODY       = SPRITE_SCORE_BALL_2,
-
-	SPRITE_CURSOR         = SPRITE_SCORE_BALL_1,
-	SPRITE_CURSOR_1       = SPRITE_SCORE_BALL_1,
-	SPRITE_CURSOR_2       = SPRITE_SCORE_BALL_2,
-	SPRITE_CURSOR_3       = SPRITE_SCORE_BALL_3,
-	SPRITE_CURSOR_4       = SPRITE_SCORE_BALL_4,
 };
 
 enum SPRITE_PATTERN
@@ -313,9 +329,9 @@ enum SPRITE_PATTERN
 	PATTERN_196             = 196, // #196
 	// 
 	PATTERN_200             = 200, // #200
-	PATTERN_CURSOR1         = 204, // #204
-	PATTERN_CURSOR2         = 208, // #208
-	PATTERN_CURSOR3         = 212, // #212
+	PATTERN_204             = 204, // #204
+	PATTERN_CURSOR1         = 208, // #208
+	PATTERN_CURSOR2         = 212, // #212
 	// Cup sprites
 	PATTERN_CUP_OUTLINE1    = 216, // #216
 	PATTERN_CUP_OUTLINE2    = 220, // #220
@@ -1057,6 +1073,7 @@ Vector8		g_TrainZone;
 c8			g_CreditScrollBuf[SCROLL_BUF_SIZE];
 u8			g_CreditScrollCnt = 0;
 u8			g_DisplayNet;
+u8			g_UnpackBuffer[512];
 
 //_____________________________________________________________________________
 //   ▄▄   ▄▄  ▄▄▄  ▄▄▄▄
@@ -1184,7 +1201,10 @@ const char* Menu_SetMusic(u8 op, i8 value)
 	case MENU_ACTION_DEC:
 		g_PlayMusic = 1 - g_PlayMusic;
 		if(g_PlayMusic)
+		{
+			PT3_InitSong(g_DataMusic);
 			PT3_Resume();
+		}
 		else
 			PT3_Pause();
 		break;	
@@ -1558,6 +1578,8 @@ void Menu_Update()
 ///
 void LoadMatchData()
 {
+	 // Clear sprite attribute table
+	 VDP_FillVRAM_64K(0x00, g_SpriteAtributeLow, 32*4);
 	 // Clear sprite patterns table
 	 VDP_FillVRAM_64K(0x00, g_SpritePatternLow, 256*8);
 
@@ -1585,12 +1607,9 @@ void LoadMatchData()
 		}
 	}
 	
-	// Load cursor sprites
+	// Generate cursor sprites
 	{
 		u16 dst = g_SpritePatternLow + (PATTERN_CURSOR1 * 8);
-		// VDP_WriteVRAM_64K(g_DataCursor, dst, 8 * 4 * 3);
-		// VDP_FillVRAM_64K(0xFF, dst, 8 * 4);
-		// VDP_FillVRAM_64K(0x00, dst + 8 * 4, 8 * 4);
 		for(u8 i = 0; i < 8 * 2; i++)
 		{
 			VDP_FillVRAM_64K(0x55, dst + 4 * 8, 1);
@@ -1677,8 +1696,10 @@ void SetTrainingCursor()
 
 	if(g_Level == LEVEL_HARD)
 		g_TrainZone.y = ((rnd >> 8) % 40) + 32;
-	else
+	else if(g_Level == LEVEL_MEDIUM)
 		g_TrainZone.y = ((rnd >> 8) % (40-16)) + 32;
+	else
+		g_TrainZone.y = ((rnd >> 8) % (40-32)) + 40;
 
 	if(g_TrainSide == SIDE_TOP)
 		g_TrainZone.y += 72;
@@ -2612,7 +2633,7 @@ void Launcher_SwitchSprites()
 
 //-----------------------------------------------------------------------------
 ///
-void UnpackRLEpToVRAM(const u8* src, u16 dst)
+void UnpackGM2ToVRAM(const u8* src, u16 dst)
 {
 	while(*src != 0)
 	{
@@ -2645,21 +2666,83 @@ void UnpackRLEpToVRAM(const u8* src, u16 dst)
 
 //-----------------------------------------------------------------------------
 ///
+void UnpackSpriteToVRAM(const u8* src, u16 dst)
+{
+	while(*src != 0)
+	{
+		u8 type = *src >> 6;
+		u8 len = *src & 0x3F;
+		src++;
+		if(type == 0) // Chunk of zeros
+		{
+			VDP_FillVRAM_64K(0x00, dst, len);
+		}
+		else if(type == 1) // Chunk of same byte
+		{
+			VDP_FillVRAM_64K(*src, dst, len);
+			src++;
+		}
+		else // type == 3 // Chcunk of uncompressed data
+		{
+			VDP_WriteVRAM_64K(src, dst, len);
+			src += len;
+		}
+		dst += len;
+	}
+}
+
+//-----------------------------------------------------------------------------
+///
+#if (COMPRESS_NAMES)
+void UnpackRLEpToRAM(const u8* src, u8* dst)
+{
+	while(*src != 0)
+	{
+		u8 type = *src >> 6;
+		u8 len = *src & 0x3F;
+		src++;
+		if(type == 0) // Chunk of zeros
+		{
+			Mem_Set(0x00, dst + 0x0000, len);
+			Mem_Set(0x00, dst + 0x0800, len);
+			Mem_Set(0x00, dst + 0x1000, len);
+		}
+		else if(type == 1) // Chunk of same byte
+		{
+			Mem_Set(*src, dst + 0x0000, len);
+			Mem_Set(*src, dst + 0x0800, len);
+			Mem_Set(*src, dst + 0x1000, len);
+			src++;
+		}
+		else // type == 3 // Chcunk of uncompressed data
+		{
+			Mem_Copy(src, dst + 0x0000, len);
+			Mem_Copy(src, dst + 0x0800, len);
+			Mem_Copy(src, dst + 0x1000, len);
+			src += len;
+		}
+		dst += len;
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+///
 void InitializeCourt()
 {
 	// Load court data to VRAM
 	VDP_FillScreen_GM2(0);
-	VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
-	UnpackRLEpToVRAM(g_DataCourt_Patterns, g_ScreenPatternLow + (OFFSET_GAME_COURT * 8));
-	UnpackRLEpToVRAM(g_DataCourt_Colors,   g_ScreenColorLow   + (OFFSET_GAME_COURT * 8));
+	GM2_LAYOUT(g_DataCourt_Names, 3, 3, 27, 18);
+	UnpackGM2ToVRAM(g_DataCourt_Patterns, g_ScreenPatternLow + (OFFSET_GAME_COURT * 8));
+	UnpackGM2ToVRAM(g_DataCourt_Colors,   g_ScreenColorLow   + (OFFSET_GAME_COURT * 8));
 
 	// Load Scrore Board data to VRAM
-	UnpackRLEpToVRAM(g_DataScore_Patterns, g_ScreenPatternLow + (OFFSET_GAME_SCORE * 8));
-	UnpackRLEpToVRAM(g_DataScore_Colors,   g_ScreenColorLow   + (OFFSET_GAME_SCORE * 8));
+	UnpackGM2ToVRAM(g_DataScore_Patterns, g_ScreenPatternLow + (OFFSET_GAME_SCORE * 8));
+	UnpackGM2ToVRAM(g_DataScore_Colors,   g_ScreenColorLow   + (OFFSET_GAME_SCORE * 8));
 
 	// Load Referee data to VRAM
-	UnpackRLEpToVRAM(g_DataReferee_Patterns, g_ScreenPatternLow + (OFFSET_GAME_REFEREE * 8));
-	UnpackRLEpToVRAM(g_DataReferee_Colors,   g_ScreenColorLow   + (OFFSET_GAME_REFEREE * 8));
+	UnpackGM2ToVRAM(g_DataReferee_Patterns, g_ScreenPatternLow + (OFFSET_GAME_REFEREE * 8));
+	UnpackGM2ToVRAM(g_DataReferee_Colors,   g_ScreenColorLow   + (OFFSET_GAME_REFEREE * 8));
 
 	// Initialize font
 	Print_SetTextFont(g_DataFont, OFFSET_GAME_FONT);
@@ -2763,7 +2846,7 @@ void Launcher_Initialize()
 		// Load launcher pattern
 		u16 dst;
 		dst	= g_SpritePatternLow + (PATTERN_PLY_TOP_LINE1_H * 8); // Pattern #40 - #71
-		VDP_WriteVRAM_64K(g_DataLauncher0, dst, 8 * 8 *4);
+		UnpackSpriteToVRAM(g_DataLauncher0, dst);
 
 		// Setup launcher sprites
 		SetSprite(SPRITE_LAUNCHER_TOP_1, 128-8, (u8)(-4 +  0), PATTERN_PLY_TOP_LINE1_H +  0, COLOR_BLACK);			// Black 1&2
@@ -2771,13 +2854,16 @@ void Launcher_Initialize()
 		SetSprite(SPRITE_LAUNCHER_TOP_3, 128-8, (u8)(-4 +  0), PATTERN_PLY_TOP_LINE1_H + 16, COLOR_LIGHT_YELLOW);	// Yellow
 		SetSprite(SPRITE_LAUNCHER_TOP_4, 128-8, (u8)(-4 +  8), PATTERN_PLY_TOP_LINE1_H + 20, COLOR_MEDIUM_GREEN);	// Green
 		SetSprite(SPRITE_LAUNCHER_TOP_5, 128-8, (u8)(-4 + 16), PATTERN_PLY_TOP_LINE1_H + 24, COLOR_WHITE);			// White
+		VDP_SetSpritePositionY(SPRITE_LAUNCHER_TOP_6, 213);
+		VDP_SetSpritePositionY(SPRITE_LAUNCHER_TOP_7, 213);
+		VDP_SetSpritePositionY(SPRITE_LAUNCHER_TOP_8, 213);
 	}
 	else // if(g_TrainSide == SIDE_TOP)
 	{
 		// Load launcher pattern
 		u16 dst;
 		dst	= g_SpritePatternLow + (PATTERN_PLY_BOT_LINE1_H * 8); // Pattern #40 - #71
-		VDP_WriteVRAM_64K(g_DataLauncher1, dst, 8 * 8 *4);
+		UnpackSpriteToVRAM(g_DataLauncher1, dst);
 
 		// Setup launcher sprites
 		SetSprite(SPRITE_LAUNCHER_BOT_1, 128-8, (u8)(150 +  0), PATTERN_PLY_BOT_LINE1_H +  0, COLOR_BLACK);			// Black 1&2
@@ -2785,18 +2871,10 @@ void Launcher_Initialize()
 		SetSprite(SPRITE_LAUNCHER_BOT_3, 128-8, (u8)(150 -  1), PATTERN_PLY_BOT_LINE1_H + 16, COLOR_LIGHT_YELLOW);	// Yellow
 		SetSprite(SPRITE_LAUNCHER_BOT_4, 128-8, (u8)(150 +  3), PATTERN_PLY_BOT_LINE1_H + 20, COLOR_MEDIUM_GREEN);	// Green
 		SetSprite(SPRITE_LAUNCHER_BOT_5, 128-8, (u8)(150 + 15), PATTERN_PLY_BOT_LINE1_H + 24, COLOR_WHITE);			// White
+		VDP_SetSpritePositionY(SPRITE_LAUNCHER_BOT_6, 213);
+		VDP_SetSpritePositionY(SPRITE_LAUNCHER_BOT_7, 213);
+		VDP_SetSpritePositionY(SPRITE_LAUNCHER_BOT_8, 213);
 	}	
-}
-
-//-----------------------------------------------------------------------------
-///
-void HideLauncher()
-{
-	// VDP_SetSpritePositionY(SPRITE_LAUNCHER_1, 213);	// Black 1&2
-	// VDP_SetSpritePositionY(SPRITE_LAUNCHER_2, 213);	// Black 1&2
-	// VDP_SetSpritePositionY(SPRITE_LAUNCHER_3, 213);	// Yellow
-	// VDP_SetSpritePositionY(SPRITE_LAUNCHER_4, 213);	// Green
-	// VDP_SetSpritePositionY(SPRITE_LAUNCHER_5, 213);	// White
 }
 
 //-----------------------------------------------------------------------------
@@ -2940,41 +3018,35 @@ void InitService()
 
 //-----------------------------------------------------------------------------
 ///
-void HideScoreSprites()
-{
-	VDP_SetSpritePositionY(SPRITE_SCORE_1,  213);
-	VDP_SetSpritePositionY(SPRITE_SCORE_2,  213);
-	VDP_SetSpritePositionY(SPRITE_SCORE_3,  213);
-	VDP_SetSpritePositionY(SPRITE_SCORE_4,  213);
-	VDP_SetSpritePositionY(SPRITE_SCORE_5,  213);
-	VDP_SetSpritePositionY(SPRITE_SCORE_6,  213);
-}
-
-//-----------------------------------------------------------------------------
-///
 bool Event_WinPoint()
 {
 	g_EventFrame++;
 
-	// Display Referee
 	if(g_EventFrame == 1)
 	{
 		if(g_EventSub != EVENT_INOUT)
 		{
-			VDP_WriteLayout_GM2(g_DataReferee_Names, 0, 7, 12, 6);		
+			// Display Referee Image
+			Ball_Hide();
+			GM2_LAYOUT(g_DataReferee_Names, 0, 7, 12, 6);		
 
-			// Text
+			// Load Referee Text
 			u16 dst;
 			const u8* src = g_DataEvent + (g_EventSub * 8 * 8);
 			dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
 			VDP_WriteVRAM_64K(src, dst, 8 * 8);
+			
+			// Display Referee Sprite
 			SetSprite(SPRITE_SCORE_1, 58,    60,   PATTERN_SCORE_A, COLOR_WHITE);
 			SetSprite(SPRITE_SCORE_2, 58+16, 60,   PATTERN_SCORE_B, COLOR_WHITE);
 			SetSprite(SPRITE_SCORE_3, 58+1,  60+1, PATTERN_SCORE_A, COLOR_BLACK);
 			SetSprite(SPRITE_SCORE_4, 58+17, 60+1, PATTERN_SCORE_B, COLOR_BLACK);
+			VDP_HideSpriteFrom(SPRITE_SCORE_5);
 		}
 		else
+		{
 			g_EventFrame += EVENT_DELAY / 2;
+		}
 	}
 	if(g_EventFrame < EVENT_DELAY)
 	{
@@ -2984,29 +3056,27 @@ bool Event_WinPoint()
 	// Display Score
 	if(g_EventFrame == EVENT_DELAY)
 	{
+		// Draw Court
 		VDP_FillScreen_GM2(0);
-		VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
+		GM2_LAYOUT(g_DataCourt_Names, 3, 3, 27, 18);
 
-		// Load launcher pattern
-		const u8* src;
-		u16 dst;
-	
-		// Top Player
-		src = g_DataPoints + (g_Points[1] * 8 * 4);
-		dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
+		// Top Player Score
+		const u8* src = g_DataPoints + (g_Points[1] * 8 * 4);
+		u16 dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
 		SetSprite(SPRITE_SCORE_1, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_2, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_SHADE);
 		
-		// Top Player
+		// Top Player Score
 		src = g_DataPoints + (g_Points[0] * 8 * 4);
 		dst	= g_SpritePatternLow + (PATTERN_SCORE_B * 8); // Pattern #116
 		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
 		SetSprite(SPRITE_SCORE_3, 0, 213, PATTERN_SCORE_B, SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_4, 0, 213, PATTERN_SCORE_B, SCORE_SHADE);
 
-		// Player_Initialize(SIDE_BOTTOM, 0);
-		// Player_Initialize(SIDE_TOP, 1);
+		VDP_HideSpriteFrom(SPRITE_SCORE_5);
+
+		InitService();
 		Ball_Hide();
 	}
 	if(g_EventFrame < EVENT_DELAY+16)
@@ -3024,8 +3094,7 @@ bool Event_WinPoint()
 	if(g_EventFrame == EVENT_DELAY+50)
 	{
 		// Hide score sprites
-		HideScoreSprites();
-		InitService();
+		VDP_HideSpriteFrom(SPRITE_SCORE_1);
 		g_EventID = EVENT_NONE;
 	}
 	
@@ -3042,7 +3111,7 @@ bool Event_Default(u8 event)
 		{
 			const u8* src = g_DataEvent + (event * 8 * 8);
 			u16 dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
-			VDP_WriteVRAM_64K(src, dst, 8 * 8);		
+			VDP_WriteVRAM_64K(src, dst, 8 * 8);
 			SetSprite(SPRITE_SCORE_1, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_COLOR);
 			SetSprite(SPRITE_SCORE_2, 0, 213, PATTERN_SCORE_B, VDP_SPRITE_EC | SCORE_COLOR);
 			SetSprite(SPRITE_SCORE_3, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_SHADE);
@@ -3058,7 +3127,10 @@ bool Event_Default(u8 event)
 			SetSprite(SPRITE_SCORE_5, 0, 213, PATTERN_SCORE_PLY, SCORE_COLOR);
 			SetSprite(SPRITE_SCORE_6, 0, 213, PATTERN_SCORE_PLY, SCORE_SHADE);
 		}
-		
+
+		VDP_HideSpriteFrom(SPRITE_SCORE_BALL_1);		
+
+		InitService();
 		Ball_Hide();
 	}
 	if(g_EventFrame < 16)
@@ -3078,8 +3150,7 @@ bool Event_Default(u8 event)
 	if(g_EventFrame == 50)
 	{
 		// Hide score sprites
-		HideScoreSprites();
-		InitService();
+		VDP_HideSpriteFrom(SPRITE_SCORE_1);
 		g_EventID = EVENT_NONE;
 		if(event == EVENT_SET)
 			Game_SetState(State_ScoreStart);
@@ -3339,11 +3410,11 @@ bool State_TitleStart()
 
 	// Load screen data
 	VDP_FillScreen_GM2(0); // Don't set the Layout table yet
-	UnpackRLEpToVRAM(g_DataLogo_Patterns, g_ScreenPatternLow + (OFFSET_TITLE_LOGO * 8));
-	UnpackRLEpToVRAM(g_DataLogo_Colors,   g_ScreenColorLow   + (OFFSET_TITLE_LOGO * 8));
+	UnpackGM2ToVRAM(g_DataLogo_Patterns, g_ScreenPatternLow + (OFFSET_TITLE_LOGO * 8));
+	UnpackGM2ToVRAM(g_DataLogo_Colors,   g_ScreenColorLow   + (OFFSET_TITLE_LOGO * 8));
 
 	// Load sprites data
-	VDP_WriteVRAM_64K(g_DataLogoBall, g_SpritePatternLow, 8 * 32);
+	UnpackSpriteToVRAM(g_DataLogoBall, g_SpritePatternLow);
 
 	// Initialize sprite attributes
 	SetSprite(0, 0, 0, 0,  VDP_SPRITE_EC | COLOR_LIGHT_YELLOW);
@@ -3356,7 +3427,7 @@ bool State_TitleStart()
 	SetSprite(7, 0, 0, 28, VDP_SPRITE_EC | COLOR_DARK_RED);
 	VDP_HideSpriteFrom(8);
 
-	HideScoreSprites();
+	VDP_HideSpriteFrom(SPRITE_SCORE_1);
 
 	// Initialize font
 	Print_SetTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
@@ -3417,10 +3488,11 @@ bool State_TitleUpdate()
 		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
 		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
 		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
-		VDP_WriteLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
+		GM2_LAYOUT(g_DataLogo_Names, 4, 2, 19, 10);
 	}
 	else if(g_EventFrame == 64) // Title
 	{
+		PT3_InitSong(g_DataMusic);
 		PT3_Resume();
 
 		Print_SelectTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
@@ -3447,13 +3519,14 @@ bool State_TitleUpdate()
 	
 	if(bPressed) // Skip
 	{
+		PT3_InitSong(g_DataMusic);
 		PT3_Resume();
 
 		VDP_SetColor(COLOR_BLACK);
 		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
 		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
 		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
-		VDP_WriteLayout_GM2(g_DataLogo_Names, 4, 2, 19, 10);
+		GM2_LAYOUT(g_DataLogo_Names, 4, 2, 19, 10);
 
 		MoveLogoBall(24 * 8);
 
@@ -3486,8 +3559,8 @@ bool State_ScoreStart()
 {
 	// Display Score board
 	VDP_FillScreen_GM2(0);
-	VDP_WriteLayout_GM2(g_DataScore_Names, 3, SCORE_BOARD_Y, 27, 10);
-	VDP_WriteLayout_GM2(g_DataScoreL1_Names, 16, SCORE_BOARD_Y+10, 14, 12);
+	GM2_LAYOUT(g_DataScore_Names, 3, SCORE_BOARD_Y, 27, 10);
+	GM2_LAYOUT(g_DataScoreL1_Names, 16, SCORE_BOARD_Y+10, 14, 12);
 
 	// Hide sprites
 	for(u8 s = 0; s < SPRITE_SCORE_BALL_1; ++s)
@@ -3556,8 +3629,11 @@ bool State_VictoryStart()
 	SetSprite(SPRITE_CUP_BODY,    50-8, (u8)(164-33), PATTERN_CUP_BODY,     COLOR_LIGHT_YELLOW);
 	
 	if(g_PlayMusic)
+	{
+		PT3_InitSong(g_DataMusic);
 		PT3_Resume();
-
+	}
+	
 	return false;
 }
 
@@ -3601,7 +3677,7 @@ bool State_CourtRestore()
 {
 	// Restore Court
 	VDP_FillScreen_GM2(0);
-	VDP_WriteLayout_GM2(g_DataCourt_Names, 3, 3, 27, 18);
+	GM2_LAYOUT(g_DataCourt_Names, 3, 3, 27, 18);
 	
 	Game_SetState(State_MatchUpdate);
 	return false;
@@ -3614,9 +3690,6 @@ bool State_MatchStart()
 	VDP_EnableDisplay(false);
 
 	InitializeCourt();
-	// Player_Initialize(SIDE_BOTTOM, 0);
-	// Player_Initialize(SIDE_TOP, 1);
-	HideLauncher();
 	
 	// Initialize score
 	g_ScoreFct = MatchScore;
@@ -3754,8 +3827,10 @@ bool State_TrainingStart()
 	VDP_EnableDisplay(false);
 
 	InitializeCourt();
-	Player_Initialize(SIDE_BOTTOM, g_TrainSide);
-	Player_Initialize(SIDE_TOP, 1-g_TrainSide);
+	if(g_TrainSide == SIDE_BOTTOM)
+		Player_Initialize(SIDE_BOTTOM, g_TrainSide);
+	else
+		Player_Initialize(SIDE_TOP, 1-g_TrainSide);
 	Launcher_Initialize();
 	
 	// Initialize score board
@@ -3763,13 +3838,13 @@ bool State_TrainingStart()
 	g_ScoreFct = TrainingScore;
 	if(g_TrainSide == SIDE_BOTTOM)
 	{
-		VDP_WriteLayout_GM2(g_DataScoreL2_Names, 0, 0, 9, 3);
-		VDP_WriteLayout_GM2(g_DataScoreL3_Names, 32-9, 0, 9, 3);
+		GM2_LAYOUT(g_DataScoreL2_Names, 0, 0, 9, 3);
+		GM2_LAYOUT(g_DataScoreL3_Names, 32-9, 0, 9, 3);
 	}
 	else // if(g_TrainSide == SIDE_TOP)
 	{
-		VDP_WriteLayout_GM2(g_DataScoreL4_Names, 0, 22, 9, 2);
-		VDP_WriteLayout_GM2(g_DataScoreL5_Names, 32-9, 22, 9, 2);
+		GM2_LAYOUT(g_DataScoreL4_Names, 0, 22, 9, 2);
+		GM2_LAYOUT(g_DataScoreL5_Names, 32-9, 22, 9, 2);
 	}
 	DisplayTrainingScore();
 

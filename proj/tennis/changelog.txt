@@ -9,6 +9,17 @@ T:	Type of pattern (2-bits)
 	3: N blocks of uncompressed data
 N:	Number of repetition of the blocks (6-bits: 1-64)
 
+BBF7
+BA4E
+BC7E
+
+0.2.17
+- Compressed GM2 layout table using RLEp
+
+0.2.16
+- Added training difficulty
+- Added code generated trainging target area data
+
 0.2.13
 - Repartition of static sprite data in VRAM
 - Added victory screen with animated player

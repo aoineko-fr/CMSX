@@ -29,9 +29,29 @@ cd .\datasrc
 	-l i16 0 8 1 1 0xFFFFFF 0x7F7F7F ^
 	-l i16 0 8 1 1 0xFF897D 0x7F453F
 	
-..\..\..\tools\CMSXimg\CMSXimg.exe logo_ball.png -out ..\content\data_logo_ball.h -mode sprt -name g_DataLogoBall -pos 164 41 -size 16 16 -num 2 2  -at %errorlevel% ^
+..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\content\data_launcher0.h -mode sprt -name g_DataLauncher0 -pos 160 88 -size 16 40 -num 1 1 -compress rlep -at %errorlevel% ^
+	-l i16 0  0 1 2 0x010101 ^
+	-l i16 0  0 1 2 0x010101 0x706944 0x1F5C24 0x7F7F7F ^
+	-l i16 0  0 1 1 0xDED087 0x706944 ^
+	-l i16 0  8 1 1 0x3EB849 0x1F5C24 ^
+	-l i16 0 16 1 1 0xFFFFFF 0x7F7F7F
+
+..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\content\data_launcher1.h -mode sprt -name g_DataLauncher1 -pos 176 88 -size 16 40 -num 1 1 -compress rlep -at %errorlevel% ^
+	-l i16 0  8 1 2 0x010101 ^
+	-l i16 0  8 1 2 0x010101 0x706944 0x1F5C24 0x7F7F7F ^
+	-l i16 0  7 1 1 0xDED087 0x706944 ^
+	-l i16 0 11 1 1 0x3EB849 0x1F5C24 ^
+	-l i16 0 23 1 1 0xFFFFFF 0x7F7F7F
+
+@echo.
+@echo -----------------------------------------------------------------------------
+@echo  Convert Misc...
+
+..\..\..\tools\CMSXimg\CMSXimg.exe logo_ball.png -out ..\content\data_logo_ball.h -mode sprt -name g_DataLogoBall -pos 164 41 -size 16 16 -num 2 2 -compress rlep -at %errorlevel% ^
 	-l i16 0 0 1 1 0xDED087 ^
 	-l i16 0 0 1 1 0xB95E51
+
+..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\content\data_referee.h -mode gm2   -compress rlep	-name g_DataReferee -pos 0 0   -size 96  48  -offset 208 -at %errorlevel%
 
 @echo.
 @echo -----------------------------------------------------------------------------
@@ -60,9 +80,6 @@ cd .\datasrc
 @echo %errorlevel%
                                                                                                             
 ..\..\..\tools\CMSXimg\CMSXimg.exe court.png -out ..\content\data_court.h   -mode gm2   -compress rlep	-name g_DataCourt   -pos 24 24 -size 216 144 -offset 0
-@echo %errorlevel%
-
-..\..\..\tools\CMSXimg\CMSXimg.exe misc.png  -out ..\content\data_referee.h -mode gm2   -compress rlep	-name g_DataReferee -pos 0 0   -size 96  48  -offset 208
 @echo %errorlevel%
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe score.png -out ..\content\data_board.h   -mode gm2   -compress rlep	-name g_DataScore   -pos 0 0   -size 216 80  -offset 160 ^
@@ -99,20 +116,5 @@ cd .\datasrc
 
 ..\..\..\tools\CMSXimg\CMSXimg.exe misc.png    -out ..\content\data_cursor.h  -mode sprt -name g_DataCursor  -pos 128 232 -size 16 16 -num 3 1 -l i16 0 0 1 1 0x5955E0
 
-..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\content\data_launcher0.h -mode sprt -name g_DataLauncher0 -pos 160 88 -size 16 40 -num 1 1 ^
-	-l i16 0  0 1 2 0x010101 ^
-	-l i16 0  0 1 2 0x010101 0x706944 0x1F5C24 0x7F7F7F ^
-	-l i16 0  0 1 1 0xDED087 0x706944 ^
-	-l i16 0  8 1 1 0x3EB849 0x1F5C24 ^
-	-l i16 0 16 1 1 0xFFFFFF 0x7F7F7F
-
-..\..\..\tools\CMSXimg\CMSXimg.exe players.png -out ..\content\data_launcher1.h -mode sprt -name g_DataLauncher1 -pos 176 88 -size 16 40 -num 1 1 ^
-	-l i16 0  8 1 2 0x010101 ^
-	-l i16 0  8 1 2 0x010101 0x706944 0x1F5C24 0x7F7F7F ^
-	-l i16 0  7 1 1 0xDED087 0x706944 ^
-	-l i16 0 11 1 1 0x3EB849 0x1F5C24 ^
-	-l i16 0 23 1 1 0xFFFFFF 0x7F7F7F
-
-
-pause
+REM pause
 cd ..
