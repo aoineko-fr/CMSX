@@ -108,7 +108,7 @@ void main()
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 
-	Print_Initialize(null);
+	Print_SetBitmapFont(null);
 	Print_SetFont(g_Font_CMSX_Std0);
 	Print_SetPosition(4, 4);
 	Print_DrawText("PT3 PLAYER SAMPLE");
@@ -131,7 +131,7 @@ void main()
 
 	Print_SetColor(0xF, 0x5);
 	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 	// Previous
 	Print_SetPosition(31, 33);
 	Print_DrawChar(CHR_PREV);
@@ -151,7 +151,7 @@ void main()
 	// INIT PT3
 
 	PT3_Init();
-	PT3_SetNoteTable(NT);
+	PT3_SetNoteTable(PT3_NT2);
 	PT3_SetLoop(true);
 	//PT3_SetFinishCB(Stop);
 
@@ -334,7 +334,7 @@ void DrawVUMeter()
 void Play()
 {
 	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 	
 	Print_SetColor(0x9, 0x5);
 	Print_SetPosition(1, 33);
@@ -353,7 +353,7 @@ void Play()
 void Pause()
 {
 	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 
 	Print_SetColor(0x9, 0x5);
 	Print_SetPosition(11, 33);
@@ -372,7 +372,7 @@ void Pause()
 void Stop()
 {
 	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 
 	Print_SetColor(0x9, 0x5);
 	Print_SetPosition(11, 33);
@@ -392,7 +392,7 @@ void Stop()
 void Loop(bool enable) __FASTCALL
 {
 	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 	Print_SetColor(enable ? 0x9 : 0xF, 0x5);
 	Print_SetPosition(51, 33);
 	Print_DrawChar(CHR_LOOP);
@@ -406,7 +406,7 @@ void Mute(u8 chan, bool bMute)
 {
 	g_Mute[chan] = bMute;
 	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 	Print_SetColor(bMute ? 0x9 : 0xF, 0x4);
 	Print_SetPosition(64, 64 + 8 + 8*chan);
 	Print_DrawChar(bMute ? CHR_MUTE : CHR_SOUND);

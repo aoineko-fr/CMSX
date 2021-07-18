@@ -148,7 +148,7 @@ void main()
 	VDP_SetPaletteEntry(8, RGB16(2, 0, 0));
 	VDP_SetPaletteEntry(9, RGB16(7, 0, 0));
 
-	Print_Initialize(g_Font_CMSX_Std0);
+	Print_SetBitmapFont(g_Font_CMSX_Std0);
 	Print_SetColor(0xFF, 0x11);
 	Print_Clear();
 	Print_SetPosition(4, 4);
@@ -167,7 +167,7 @@ void main()
 	Clock_Initialize();
 
 	Print_SetFont(g_Font_CMSX_Digit2);
-	Print_SetMode(PRINT_MODE_TRANSPARENT);
+	Print_SetMode(PRINT_MODE_BITMAP_TRANS);
 
 	Print_SetColor(0x8, 0x1);
 	Print_SetPosition(DIGIT_DATE, DIGIT_Y);

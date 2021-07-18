@@ -115,7 +115,7 @@ void Mem_Copy(const void* src, void* dest, u16 size)
 
 //-----------------------------------------------------------------------------
 /// Fill a memory block with a given value
-void Mem_Set(void* dest, u8 val, u16 size)
+void Mem_Set(u8 val, void* dest, u16 size)
 {
 	val, dest, size;
 	__asm
@@ -123,9 +123,9 @@ void Mem_Set(void* dest, u8 val, u16 size)
 		push	ix
 		ld		ix, #0
 		add		ix, sp
-		ld		l, 4(ix)
-		ld		h, 5(ix)
-		ld		e, 6(ix)
+		ld		l, 5(ix)
+		ld		h, 6(ix)
+		ld		e, 4(ix)
 		ld		c, 7(ix)
 		ld		b, 8(ix)
 		pop		ix

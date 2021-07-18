@@ -46,7 +46,8 @@ void main()
 	// Address of Patern Table in VRAM = 0800h
 	// Address of Sprite Attribute Table in VRAM = 1000h
 	// Address of Sprite Pattern Table in VRAM = 0000h
-	VDP_SetModeGraphic1();
+	//VDP_SetModeGraphic1();
+	VDP_SetMode(VDP_MODE_GRAPHIC1);
 	VDP_EnableDisplay(false);
 	VDP_SetColor(1);
 	

@@ -36,8 +36,8 @@
 #if (TARGET_TYPE == TARGET_TYPE_BIN)
 	#define SPRITE_2X_LINE		63-9
 	#define SPRITE_8_LINE		113-9
-	#undef  SPRITE_8_NUM
-	#define SPRITE_8_NUM		(u8)23
+	// #undef  SPRITE_8_NUM
+	// #define SPRITE_8_NUM		(u8)23
 #elif (TARGET_TYPE == TARGET_TYPE_ROM)
 	#define SPRITE_2X_LINE		63-4
 	#define SPRITE_8_LINE		113-4
@@ -159,25 +159,10 @@ struct SpriteData
 
 struct SpriteData g_Sprite[32];
 
-struct Test
-{ 
-	u8 a : 3;
-	u8 b : 2;
-	u8 c : 3;
-};
-
 //-----------------------------------------------------------------------------
 // Program entry point
 void main()
 {
-	struct Test T;
-	
-	T.a = 1;
-	T.b = 1;
-	T.c = 1;
-	
-	g_Frame = T.a + T.b + T.c;
-	
 	// Setup screen
 	VDP_SetMode(VDP_MODE_SCREEN5);
 	VDP_SetColor(0x4);
@@ -252,7 +237,7 @@ void main()
 	VDP_HideSpriteFrom(SPRITE_16_1ST + 7);
 
 	// Setup print
-	Print_Initialize(g_Font_CMSX_Std0);
+	Print_SetBitmapFont(g_Font_CMSX_Std0);
 	Print_SetColor(0xF, 0x4);
 	Print_SetPosition(4, 2);
 	Print_DrawText("VDP SPRITE SAMPLE (G4)");
@@ -292,35 +277,27 @@ void main()
 	bool bContinue = true;
 	while(bContinue)
 	{
-		PROFILE_FRAME_START();
-
-		PROFILE_SECTION_START(10, 0);
 		WaitVBlank();
-		PROFILE_SECTION_END(10, 0);
 
 		// VDP_SetColor(0x4);
 	
-		Print_SetPosition(248, 2);
-		Print_DrawChar(chrAnim[g_Frame & 0x03]);
+		// Print_SetPosition(248, 2);
+		// Print_DrawChar(chrAnim[g_Frame & 0x03]);
 
-		PROFILE_SECTION_START(20, 0);
-		
 		struct SpriteData* sprt = &g_Sprite[0];
+		u8 sprtIdx = SPRITE_8_1ST;
 		for(u8 i = 0; i < SPRITE_8_NUM; i++)
 		{
-			sprt->X += DirMove[i & 0x7].x;
-			sprt->Y += DirMove[i & 0x7].y;
+			const Vector* mov = &DirMove[i & 0x7];
+			sprt->X += mov->x;
+			sprt->Y += mov->y;
 			if(sprt->Y > 212)
 				sprt->Y -= 98;
 			if(sprt->Y < 114)
 				sprt->Y += 98;
 
-			VDP_SetSpriteData(SPRITE_8_1ST + i, (u8*)sprt);
-			sprt++;
+			VDP_SetSpriteData(sprtIdx++, (u8*)sprt++);
 		}
-
-		PROFILE_SECTION_END(20, 0);
-		PROFILE_SECTION_START(30, 0);
 
 		u8 frame = (g_Frame >> 2) % 6;
 		data1->X++;
@@ -345,14 +322,8 @@ void main()
 
 		VDP_SetSpriteMultiColor(SPRITE_16OR_1ST + 4, ColorTab + ((g_Frame >> 2) & 0x07));
 		
-		PROFILE_SECTION_END(30, 0);
-		PROFILE_SECTION_START(40, 0);
-
 		if(Keyboard_IsKeyPressed(KEY_ESC))
 			bContinue = false;
-
-		PROFILE_SECTION_END(40, 0);
-		PROFILE_FRAME_END();
 	}
 
 	Bios_ClearHook(H_TIMI);

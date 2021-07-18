@@ -17,6 +17,7 @@
 //-----------------------------------------------------------------------------
 #include "vdp.h"
 #include "bios_port.h"
+#include "color.h"
 
 //-----------------------------------------------------------------------------
 // DEFINES
@@ -875,12 +876,60 @@ void VDP_SetPalette(const u8* pal) __FASTCALL
 		ei  //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a
 
-//		ld		hl, #_g_PlayerSprite_palette
 		ld		c, #P_VDP_PAL
 		ld		b, #30
 		otir
 	__endasm;
 }
+
+#if (USE_DEFAULT_PALETTE)
+const u16 VDP_DefaulPalette[15] = {
+	RGB16(0, 0, 0),
+	RGB16(1, 6, 1),
+	RGB16(3, 7, 3),
+	RGB16(1, 1, 7),
+	RGB16(2, 3, 7),
+	RGB16(5, 1, 1),
+	RGB16(2, 6, 7),
+	RGB16(7, 1, 1),
+	RGB16(7, 3, 3),
+	RGB16(6, 6, 1),
+	RGB16(6, 6, 4),
+	RGB16(1, 4, 1),
+	RGB16(6, 2, 5),
+	RGB16(5, 5, 5),
+	RGB16(7, 7, 7)
+};
+void VDP_SetDefaultPalette()
+{
+	VDP_SetPalette((u8*)VDP_DefaulPalette);
+}
+#endif // USE_DEFAULT_PALETTE
+
+
+#if (USE_MSX1_PALETTE)
+const u16 VDP_MSX1Palette[15] = {
+	RGB16(0, 0, 0),
+	RGB16(1, 5, 1),
+	RGB16(3, 6, 3),
+	RGB16(2, 2, 6),
+	RGB16(3, 3, 7),
+	RGB16(5, 2, 2),
+	RGB16(2, 6, 7),
+	RGB16(6, 2, 2),
+	RGB16(6, 3, 3),
+	RGB16(5, 5, 2),
+	RGB16(6, 6, 3),
+	RGB16(1, 4, 1),
+	RGB16(5, 2, 5),
+	RGB16(5, 5, 5),
+	RGB16(7, 7, 7)
+};
+void VDP_SetMSX1Palette()
+{
+	VDP_SetPalette((u8*)VDP_MSX1Palette);
+}
+#endif // USE_MSX1_PALETTE
 
 //-----------------------------------------------------------------------------
 /// Set a given color entry in the palette [MSX2/2+/TR]

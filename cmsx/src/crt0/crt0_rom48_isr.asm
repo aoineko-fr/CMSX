@@ -17,6 +17,7 @@
 .globl  s__INITIALIZER
 .globl  s__HEAP
 
+SLTSL  = #0xFFFF
 HIMEM  = #0xFC4A
 ROMVER = #0x002B
 MSXVER = #0x002D
@@ -99,28 +100,54 @@ init:
 	ld		a, (MSXVER)
 	ld		(#_g_VersionMSX), a
 
-	; Set Page 0 & 2 slot equal to Page 1 slot
+	; Set all pages slot equal to Page 1 slot
 	in		a, (PPI_A)				; Get primary slots info [P3|P2|P1|P0]
 	ld		b, a					; Backup full slots info
-	and		a, #0xCC				; Mask P0 & P2 slots [P3|00|P1|00]
-	ld		c, a					; Backup P1 & P3 slots
+	and		a, #0b00001100			; Mask all pages slots but P1 [00|00|P1|00]
+	ld		c, a					; Backup P1
 
-	ld		a, b					; Retreive primary slots info again
-	and		a, #0x0C				; Mask all but P1 slots
-	add		a, a					; 
-	add		a, a					; P1<<2
-	or		a, c					; [P3|P1<<2|P1|00]
-	ld		c, a					; Backup [P3|P1<<2|P1|00]
+	rrca							; P1>>1
+	rrca							; P1>>1
+	or		a, c					; Merge [00|00|P1|P1>>2]
+	ld		c, a					; Backup [00|00|P1|P0]
 
-	ld		a, b					; Retreive primary slots info again
-	and		a, #0x0C				; Mask all but P2 slots
-	rrca
-	rrca
-	and		a, #0x3F				; P1>>2
-	or		a, c					; [P3|P2|P1|P1>>2]
+	add		a, a					; P1<<1
+	add		a, a					; P1<<1
+	add		a, a					; P1<<1
+	add		a, a					; P1<<1
+	or		a, c					; Merge [P1<<4|P1<<2|P1|P0]
+
+	out		(PPI_A), a				; Set primary slots info
+	ld		d, a					; Backup new slots
+
+	; Set all pages subslot equal to Page 1 subslot
+	ld		a, (SLTSL)				; Read secondary slots register of selected primary slot
+	cpl								; Reverses the bits
+	and		a, #0b00001100			; Mask all pages slots but P1 [00|00|P1|00]
+	ld		c, a					; Backup P1
+
+	rrca							; P1>>1
+	rrca							; P1>>1
+	or		a, c					; Merge [00|00|P1|P1>>2]
+	ld		c, a					; Backup [00|00|P1|P0]
+
+	add		a, a					; P1<<1
+	add		a, a					; P1<<1
+	or		a, c					; Merge [00|P1<<2|P1|P0]
 	
+	ld		(SLTSL), a				; 
+
+	; Restore initial Page 3 slot
+	ld		a, b					; Restore initiale slots
+	and		a, #0b11000000			; 
+	ld		b, a					;
+
+	ld		a, d					; 
+	and		a, #0b00111111			; 
+	or		a, b
+
 	out		(PPI_A), a
-	
+
 	; Initialize heap address
 	ld		hl, #s__HEAP
 	ld		(#_g_HeapStartAddress), hl

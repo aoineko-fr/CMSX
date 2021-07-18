@@ -117,9 +117,9 @@ void main()
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 
-	Print_Initialize(null);
+	Print_SetBitmapFont(null);
 	Print_SetFont(g_Font_CMSX_Std0);
-	Print_SetMode(PRINT_MODE_TRANSPARENT);
+	Print_SetMode(PRINT_MODE_BITMAP_TRANS);
 	Print_SetColor(0xF, 0);
 	Print_SetPosition(4, 4);
 	Print_DrawText("PSG SAMPLE");
@@ -128,7 +128,7 @@ void main()
 	// INIT PT3
 
 	PT3_Init();
-	PT3_SetNoteTable(NT);
+	PT3_SetNoteTable(PT3_NT2);
 	PT3_SetLoop(true);
 	PT3_InitSong(g_Beg_nsum);
 

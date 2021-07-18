@@ -141,7 +141,7 @@ void DisplayPage()
 	VDP_SetPaletteEntry(2, RGB16(1, 1, 4));
 	VDP_SetPaletteEntry(3, RGB16(2, 2, 7));
 
-	Print_Initialize(src->Font);
+	Print_SetBitmapFont(src->Font);
 	Print_SetColor(src->Text, src->Background);
 	
 	Print_SetPosition(4, 2);

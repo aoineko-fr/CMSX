@@ -4,6 +4,9 @@
 //-----------------------------------------------------------------------------
 #include "cmsx.h"
 
+#include "bios.h"
+#include "input.h"
+
 //-----------------------------------------------------------------------------
 // Data
 
@@ -11,28 +14,6 @@
 #include "font\font_cmsx_std0.h"
 // Animation characters
 const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
-
-const u8 TestByte = 0xFF;
-const u16 TestWord = 0xFFFF;
-const c8 TestString[] = "ABCDEFG";
-
-__at(0x7000) const u8 TestData[] = { 13, 24, 75, 96 };
-
-__at(0xE000) u8 TestRAM[4];
-
-void TestFunc();
-
-void DummyFunc() __naked
-{
-	__asm
-		.area	_MYAREA(ABS)
-		.org	0x7800
-	_TestFunc::
-		ld		HL, #_TestData
-		inc		(HL)
-		.area	_CODE
-	__endasm;
-}
 
 //-----------------------------------------------------------------------------
 // Program entry point
@@ -44,10 +25,10 @@ void main()
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 
-	Print_Initialize(g_Font_CMSX_Std0);
-	Print_SetPosition(3, 2);
+	Print_SetBitmapFont(g_Font_CMSX_Std0);
+	Print_SetPosition(4, 4);
 	Print_DrawText("HELLO WORLD");
-	Draw_Box(0, 0, 255, 16, 0, 0x0F);
+	Draw_Box(0, 0, 255, 16, 0x0F, 0);
 
 	u8 count = 0;
 	while(!Keyboard_IsKeyPressed(KEY_ESC))

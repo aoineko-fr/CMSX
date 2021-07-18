@@ -120,7 +120,7 @@ void PrintHeader()
 	VDP_SetColor(g_Modes[g_ModeIndex].ColorBG);
 	VDP_EnableSprite(false);
 	
-	Print_Initialize(null);
+	Print_Initialize();
 	Print_Clear();
 	Print_SetTabSize(16);
 
@@ -261,7 +261,7 @@ void PrintEffect()
 	Print_Return();
 
 	// Sprite font
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
 
 	Print_DrawText("Sprite: ");
@@ -284,7 +284,7 @@ void PrintEffect()
 	Print_DrawText("Disabled! (see config)");
 #endif
 
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 	PrintFooter();
 }
 
@@ -322,7 +322,7 @@ void PrintBenchmark()
 	Print_DrawInt(elapsedTime);
 	////////////////////////
 	
-	Print_SetMode(PRINT_MODE_DEFAULT);
+	Print_SetMode(PRINT_MODE_BITMAP);
 	PrintFooter();
 }
 

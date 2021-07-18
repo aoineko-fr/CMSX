@@ -138,7 +138,7 @@ void DisplayPage()
 
 	VDP_EnableSprite(false);
 
-	Print_Initialize(src->Font);
+	Print_SetBitmapFont(src->Font);
 	Print_SetColor(src->Text, src->Background);
 	
 	Print_SetPosition(4, 2);

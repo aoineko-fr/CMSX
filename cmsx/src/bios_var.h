@@ -941,4 +941,4 @@ const u8 __at(M_SVFFFD) g_SVFFFD[2];
 //  Bits 5-4 = Extended slot on page 2 (8000h~BFFFh)
 //  Bits 7-6 = Extended slot on page 3 (C000h~FFFFh)
 // Note: Read value has the INVERTED bits of previous written value.
-const u8 __at(M_SLTSL) g_SLTSL;
+u8 __at(M_SLTSL) g_SLTSL;

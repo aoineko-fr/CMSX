@@ -39,15 +39,6 @@ enum COLOR_BPC
 #define COLOR_MERGE(f, b)	(u8)((f) << 4 | (b))
 
 //-----------------------------------------------------------------------------
-// 16-BITS RGB COLORS
-//-----------------------------------------------------------------------------
-// Format : [00000|G:3] [0|R:3|0|B:3]
-
-// Helper macros
-#define RGB16(r, g, b)		(u16)(((u16)(g & 0x07) << 8) + ((r & 0x07) << 4) + (b & 0x07))
-#define GRB16(g, r, b)		(u16)(((u16)(g & 0x07) << 8) + ((r & 0x07) << 4) + (b & 0x07))
-
-//-----------------------------------------------------------------------------
 // 8-BITS RGB COLORS
 //-----------------------------------------------------------------------------
 // Format : [G:3|R:3|B:2]
@@ -108,3 +99,46 @@ enum COLOR_BPC
 #define COLOR8_DEFAULT13	RGB8(6,2,2)
 #define COLOR8_DEFAULT14	RGB8(5,5,2)
 #define COLOR8_DEFAULT15	RGB8(7,7,3)
+
+//-----------------------------------------------------------------------------
+// 16-BITS RGB COLORS
+//-----------------------------------------------------------------------------
+// Format : [00000|G:3] [0|R:3|0|B:3]
+
+// Helper macros
+#define RGB16(r, g, b)		(u16)(((u16)(g & 0x07) << 8) + ((r & 0x07) << 4) + (b & 0x07))
+#define GRB16(g, r, b)		(u16)(((u16)(g & 0x07) << 8) + ((r & 0x07) << 4) + (b & 0x07))
+
+#define COLOR16_DEFAULT_0	RGB16(0, 0, 0)
+#define COLOR16_DEFAULT_1	RGB16(0, 0, 0)
+#define COLOR16_DEFAULT_2	RGB16(1, 6, 1)
+#define COLOR16_DEFAULT_3	RGB16(3, 7, 3)
+#define COLOR16_DEFAULT_4	RGB16(1, 1, 7)
+#define COLOR16_DEFAULT_5	RGB16(2, 3, 7)
+#define COLOR16_DEFAULT_6	RGB16(5, 1, 1)
+#define COLOR16_DEFAULT_7	RGB16(2, 6, 7)
+#define COLOR16_DEFAULT_8	RGB16(7, 1, 1)
+#define COLOR16_DEFAULT_9	RGB16(7, 3, 3)
+#define COLOR16_DEFAULT_10	RGB16(6, 6, 1)
+#define COLOR16_DEFAULT_11	RGB16(6, 6, 4)
+#define COLOR16_DEFAULT_12	RGB16(1, 4, 1)
+#define COLOR16_DEFAULT_13	RGB16(6, 2, 5)
+#define COLOR16_DEFAULT_14	RGB16(5, 5, 5)
+#define COLOR16_DEFAULT_15	RGB16(7, 7, 7)
+
+#define COLOR16_MSX1_0		RGB16(0, 0, 0)
+#define COLOR16_MSX1_1		RGB16(0, 0, 0)
+#define COLOR16_MSX1_2		RGB16(1, 5, 1)
+#define COLOR16_MSX1_3		RGB16(3, 6, 3)
+#define COLOR16_MSX1_4		RGB16(2, 2, 6)
+#define COLOR16_MSX1_5		RGB16(3, 3, 7)
+#define COLOR16_MSX1_6		RGB16(5, 2, 2)
+#define COLOR16_MSX1_7		RGB16(2, 6, 7)
+#define COLOR16_MSX1_8		RGB16(6, 2, 2)
+#define COLOR16_MSX1_9		RGB16(6, 3, 3)
+#define COLOR16_MSX1_10		RGB16(5, 5, 2)
+#define COLOR16_MSX1_11		RGB16(6, 6, 3)
+#define COLOR16_MSX1_12		RGB16(1, 4, 1)
+#define COLOR16_MSX1_13		RGB16(5, 2, 5)
+#define COLOR16_MSX1_14		RGB16(5, 5, 5)
+#define COLOR16_MSX1_15		RGB16(7, 7, 7)

@@ -25,4 +25,4 @@ void Mem_HeapFree(u16 size) __FASTCALL;
 void Mem_Copy(const void* src, void* dest, u16 size);
 
 /// Fill a memory block with a given value
-void Mem_Set(void* dest, u8 val, u16 size);
+void Mem_Set(u8 val, void* dest, u16 size);
