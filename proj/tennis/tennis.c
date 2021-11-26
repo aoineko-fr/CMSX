@@ -27,10 +27,11 @@
 
 //-----------------------------------------------------------------------------
 // CONFIG
-#define VERSION						"V0.2.18"
+#define VERSION						"V0.2.19"
 #define DEBUG						1
-#define MSX2_ENHANCE				0
-#define AUDIO_ENABLE				0
+#define MSX2_ENHANCE				1
+#define MUSIC_ENABLE				0
+#define SFX_ENABLE					0
 #define DISPLAY_CREDITS				1
 #define COMPRESS_NAMES				0
 
@@ -45,9 +46,11 @@
 #define UNIT_TO_PX(a)				(u8)((a) / 64)
 #define PX_TO_UNIT(a)				(i16)((a) * 64)
 
-#define MOVE_DIAG					PX_TO_UNIT(1.6 * 0.71)
-#define MOVE_MAIN					PX_TO_UNIT(1.6 * 1.00)
 #define GRAVITY						PX_TO_UNIT(0.2)
+
+#define SPEED_BASE					1.6
+#define MOVE_DIAG					PX_TO_UNIT(SPEED_BASE * 0.71)
+#define MOVE_UNIT					PX_TO_UNIT(SPEED_BASE * 1.00)
 
 #define PLY_MIN_X					PX_TO_UNIT(8)
 #define PLY_MAX_X					PX_TO_UNIT(255 - 8)
@@ -61,7 +64,8 @@
 #define SHOT_DETECT_SMASH			10
 
 // Menu layout
-#define MENU_ITEMS_X				12
+#define MENU_ITEMS_X				8
+#define MENU_ITEMS_X_GOTO			12
 #define MENU_ITEMS_Y				14
 #define MENU_ITEMS_H				(24-MENU_ITEMS_Y)
 
@@ -187,6 +191,15 @@ enum FUNCT
 	FUNCT_SERVE,
 	FUNCT_CUP,
 	FUNCT_MAX,
+};
+
+/// Frequence
+enum FREQ
+{
+	FREQ_60HZ,							// Force 60 Hz
+	FREQ_50HZ,							// Force 50 Hz
+	FREQ_AUTO,							// Use auto-detection
+	FREQ_MAX,
 };
 
 /// Sprite list
@@ -596,6 +609,7 @@ const char* Menu_CreditScroll(u8 op, i8 value);
 const char* Menu_SetInput(u8 op, i8 value);
 const char* Menu_SetMusic(u8 op, i8 value);
 const char* Menu_SetSFX(u8 op, i8 value);
+const char* Menu_SetFreq(u8 op, i8 value);
 
 // Input callback
 bool KB1_Hold_Up();
@@ -785,13 +799,44 @@ const ServeInfo g_ServeInfo[4] =
 const Vector16 g_Move[8] =
 {
 	{ -MOVE_DIAG, -MOVE_DIAG }, // 🡤
-	{ -MOVE_MAIN,          0 }, // 🡠
+	{ -MOVE_UNIT,          0 }, // 🡠
 	{ -MOVE_DIAG,  MOVE_DIAG }, // 🡧
-	{          0, -MOVE_MAIN }, // 🡡
-	{          0,  MOVE_MAIN }, // 🡣
+	{          0, -MOVE_UNIT }, // 🡡
+	{          0,  MOVE_UNIT }, // 🡣
 	{  MOVE_DIAG, -MOVE_DIAG }, // 🡥
-	{  MOVE_MAIN,          0 }, // 🡢
+	{  MOVE_UNIT,          0 }, // 🡢
 	{  MOVE_DIAG,  MOVE_DIAG }, // 🡦
+};
+
+/// 
+const Shot g_Shots[12] =
+{
+	// Flat shot - Long
+	{ PX_TO_UNIT(3.0),	PX_TO_UNIT(3.5),	SPIN_FLAT },
+	// Flat shot - Med
+	{ PX_TO_UNIT(2.7),	PX_TO_UNIT(3.0),	SPIN_FLAT },
+	// Flat shot - Short
+	{ PX_TO_UNIT(2.0),	PX_TO_UNIT(2.5),	SPIN_FLAT },
+	// Flat shot - Smash
+	{ PX_TO_UNIT(4.0),	PX_TO_UNIT(-0.5),	SPIN_FLAT },
+	
+	// High shot - Long
+	{ PX_TO_UNIT(2.3),	PX_TO_UNIT(5.0),	SPIN_FLAT },	// Lob
+	// High shot - Med
+	{ PX_TO_UNIT(2.2),	PX_TO_UNIT(4.0),	SPIN_FLAT },
+	// High shot - Short
+	{ PX_TO_UNIT(1.7),	PX_TO_UNIT(3.0),	SPIN_BACK },	// Down shot
+	// High shot - Smash
+	{ PX_TO_UNIT(4.0),	PX_TO_UNIT(0.0),	SPIN_FLAT },
+	
+	// Attack shot - Long
+	{ PX_TO_UNIT(3.5),	PX_TO_UNIT(2.0),	SPIN_TOP },
+	// Attack shot - Med
+	{ PX_TO_UNIT(3.0),	PX_TO_UNIT(2.0),	SPIN_TOP },
+	// Attack shot - Short
+	{ PX_TO_UNIT(2.0),	PX_TO_UNIT(2.5),	SPIN_FLAT },
+	// Attack shot - Smash
+	{ PX_TO_UNIT(5.0),	PX_TO_UNIT(-0.5),	SPIN_FLAT },
 };
 
 ///
@@ -832,7 +877,8 @@ const MenuEntry g_MenuMain[] =
 	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
 	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
 	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
-	{ VERSION,   	MENU_ITEM_DISABLE, 0, 0 },
+	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
+	{ VERSION,   	MENU_ITEM_TEXT, 0, 4 },
 };
 
 // Menu 1 - Match 1P
@@ -883,9 +929,10 @@ const MenuEntry g_MenuTraining[] =
 // Menu 4 - Option
 const MenuEntry g_MenuOption[] =
 {
-	{ "MUSIC",		MENU_ITEM_ACTION, &Menu_SetMusic, 0 },
+	// { "MUSIC",		MENU_ITEM_ACTION, &Menu_SetMusic, 0 },
 	{ "SFX",		MENU_ITEM_ACTION, &Menu_SetSFX, 0 },
 	{ "SHADE",		MENU_ITEM_BOOL, &g_FlickerShadow, 0 },
+	{ "FREQ",		MENU_ITEM_ACTION, Menu_SetFreq, 0 },
 	{ "P1 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 0 },
 	{ "P2 INPUT",	MENU_ITEM_ACTION, Menu_SetInput, 1 },
 	{ "",			MENU_ITEM_DISABLE, 0, 0 },
@@ -898,14 +945,15 @@ const MenuEntry g_MenuOption[] =
 // Menu 5 - Credits
 const MenuEntry g_MenuCredits[] =
 {
-	{ "PIXEL PHENIX # 2021",	MENU_ITEM_TEXT, 0, (i8)-5 },
+	{ "PIXEL PHENIX # 2021",	MENU_ITEM_TEXT, 0, (i8)-1 },
 	{ "",						MENU_ITEM_DISABLE, 0, 0 },
-	{ "CODE:  AOINEKO",			MENU_ITEM_TEXT, 0, (i8)-6 },
-	{ "GRAPH: AOINEKO & GFX",	MENU_ITEM_TEXT, 0, (i8)-6 },
-	{ "MUSIC: ???",				MENU_ITEM_TEXT, 0, (i8)-6 },
-	{ "SFX:   ???",				MENU_ITEM_TEXT, 0, (i8)-6 },
+	{ "CODE:  AOINEKO",			MENU_ITEM_TEXT, 0, (i8)-2 },
+	{ "GRAPH: AOINEKO & GFX",	MENU_ITEM_TEXT, 0, (i8)-2 },
+	// { "MUSIC: ???",				MENU_ITEM_TEXT, 0, (i8)-2 },
+	{ "SFX:   AYFX SAMPLE",		MENU_ITEM_TEXT, 0, (i8)-2 },
 	{ "",						MENU_ITEM_DISABLE, 0, 0 },
-	{ "",						MENU_ITEM_UPDATE, Menu_CreditScroll, (i8)-6 },
+	{ "",						MENU_ITEM_DISABLE, 0, 0 },
+	{ "",						MENU_ITEM_UPDATE, Menu_CreditScroll, (i8)-2 },
 	{ "",						MENU_ITEM_DISABLE, 0, 0 },
 	{ "<BACK",					MENU_ITEM_GOTO|MENU_MAIN, 0, 0 },
 };
@@ -922,39 +970,6 @@ const Menu g_Menus[MENU_MAX] =
 };
 
 ///
-const Shot g_Shots[] =
-{
-	//	ZY				Z				Spin
-	// Flat shot - Long
-	{ PX_TO_UNIT(3.0), PX_TO_UNIT(3.5), SPIN_FLAT },
-	// Flat shot - Med
-	{ PX_TO_UNIT(2.7), PX_TO_UNIT(3.0), SPIN_FLAT },
-	// Flat shot - Short
-	{ PX_TO_UNIT(2.0), PX_TO_UNIT(2.5), SPIN_FLAT },
-	// Flat shot - Smash
-	{ PX_TO_UNIT(4.0), PX_TO_UNIT(-0.5), SPIN_FLAT },
-	
-	// High shot - Long
-	{ PX_TO_UNIT(2.3), PX_TO_UNIT(5.0), SPIN_FLAT },	// Lob
-	// High shot - Med
-	{ PX_TO_UNIT(2.2), PX_TO_UNIT(4.0), SPIN_FLAT },
-	// High shot - Short
-	{ PX_TO_UNIT(1.7), PX_TO_UNIT(3.0), SPIN_BACK },	// Down shot
-	// High shot - Smash
-	{ PX_TO_UNIT(4.0), PX_TO_UNIT(0.0), SPIN_FLAT },
-	
-	// Attack shot - Long
-	{ PX_TO_UNIT(3.5), PX_TO_UNIT(2.0), SPIN_TOP },
-	// Attack shot - Med
-	{ PX_TO_UNIT(3.0), PX_TO_UNIT(2.3), SPIN_TOP },
-	// Attack shot - Short
-	{ PX_TO_UNIT(2.0), PX_TO_UNIT(2.7), SPIN_FLAT },
-	// Attack shot - Smash
-	{ PX_TO_UNIT(5.0), PX_TO_UNIT(-0.5), SPIN_FLAT },
-	
-};
-
-///
 const TrainSide g_TrainSideData[] = 
 {
 	{ { 128, 24     }, 44, 0,   PATTERN_PLY_TOP_LINE1_H },
@@ -965,11 +980,11 @@ const TrainSide g_TrainSideData[] =
 const Binding g_Binding[BIND_MAX] =
 {
 	// BIND_KB1A - Up, Left, Down, Right + Space, N
-	{ "[]SPACE",	KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1A_Button1,	KB1A_Button2 },
+	{ "[]+SPACE",	KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1A_Button1,	KB1A_Button2 },
 	// BIND_KB1B - Up, Left, Down, Right + Shift, Ctrl			
-	{ "[]SHFT",		KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1B_Button1,	KB1B_Button2 },
+	{ "[]+SHFT",	KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1B_Button1,	KB1B_Button2 },
 	// BIND_KB1C - Up, Left, Down, Right + Return, BS			
-	{ "[]RET",		KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1C_Button1,	KB1C_Button2 },
+	{ "[]+RET",		KB1_Hold_Up,	KB1_Hold_Down,	KB1_Hold_Left,	KB1_Hold_Right,		KB1_Press_Up,	KB1_Press_Down,		KB1_Press_Left,		KB1_Press_Right,	KB1C_Button1,	KB1C_Button2 },
 	// BIND_KB2  - E, S, D, F + Shift, Ctrl			
 	{ "ESDF+SHFT",	KB2_Hold_Up,	KB2_Hold_Down,	KB2_Hold_Left,	KB2_Hold_Right,		KB2_Press_Up,	KB2_Press_Down,		KB2_Press_Left,		KB2_Press_Right,	KB1B_Button1,	KB1B_Button2 },
 	// BIND_JOY1 - Joystick 1 stick + triggers
@@ -1013,6 +1028,9 @@ u8			g_PlayMusic = false;
 u8			g_PlaySFX = false;
 u8			g_InputBinding[2];
 u8			g_GameMode;
+u8			g_Freq;
+u8			g_FreqDetected;
+u8			g_FreqOpt = FREQ_AUTO;
 
 // System
 #if (MSX2_ENHANCE)
@@ -1036,7 +1054,7 @@ u8			g_MenuID = 0;
 u8			g_MenuItem = 0; 
 
 // Match
-u8			g_Level = LEVEL_MEDIUM;	///< AI level (0=Easy, 1=Medium, 2=Hard)
+u8			g_Level = LEVEL_EASY;	///< AI level (0=Easy, 1=Medium, 2=Hard)
 u8			g_EventID;				///< Match event (@see EVENT enum)
 u8			g_EventSub;				///< Match event (@see EVENT enum)
 u8			g_EventTimer;			///< Match event timer (event start when timer is equal to 0)
@@ -1097,7 +1115,7 @@ const c8* Menu_StartMatch(u8 op, i8 value)
 		Game_SetState(State_MatchStart);
 		ayFX_PlayBank(17, 0);
 	}
-	return ""; 
+	return null; 
 }
 
 //-----------------------------------------------------------------------------
@@ -1110,7 +1128,7 @@ const c8* Menu_StartTrain(u8 op, i8 value)
 		Game_SetState(State_TrainingStart);
 		ayFX_PlayBank(17, 0);
 	}
-	return "";
+	return null;
 }
 
 //-----------------------------------------------------------------------------
@@ -1268,12 +1286,43 @@ const char* Menu_SetSide(u8 op, i8 value)
 
 //-----------------------------------------------------------------------------
 ///
+const char* Menu_SetFreq(u8 op, i8 value)
+{
+	switch(op)
+	{
+	case MENU_ACTION_SET:
+	case MENU_ACTION_INC: g_FreqOpt = (g_FreqOpt + 1) % FREQ_MAX; break;
+	case MENU_ACTION_DEC: g_FreqOpt = (g_FreqOpt + (FREQ_MAX - 1)) % FREQ_MAX; break;
+	}
+	
+	if(g_FreqOpt == FREQ_60HZ) 
+	{
+		g_Freq = FREQ_60HZ;
+		return "60 HZ";
+	}
+	else if(g_FreqOpt == FREQ_50HZ)
+	{
+		g_Freq = FREQ_50HZ;
+		return "50 HZ";
+	}
+	else
+	{
+		g_Freq = g_FreqDetected;
+		if(g_Freq == FREQ_50HZ)
+			return "AUTO (50 HZ)";
+		else
+			return "AUTO (60 HZ)";
+	}
+}
+
+//-----------------------------------------------------------------------------
+///
 const char* Menu_CreditScroll(u8 op, i8 value)
 {
 	if(op == MENU_ACTION_GET)
 	{	
 		u8 len = String_Length(g_CreditScroll);
-		for(u8 i=0; i < SCROLL_BUF_SIZE-1; i++)
+		for(u8 i=0; i < SCROLL_BUF_SIZE-1; ++i)
 		{
 			u8 j = (i + g_CreditScrollCnt) % len;
 			g_CreditScrollBuf[i] = g_CreditScroll[j];
@@ -1310,7 +1359,12 @@ void Menu_DisplayItem(u8 item) __FASTCALL
 		else
 			Print_SelectTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
 			
-		u8 x = MENU_ITEMS_X;
+		u8 x;
+		if((pCurEntry->type & MENU_ITEM_GOTO) != 0)
+			x = MENU_ITEMS_X_GOTO;
+		else
+			x = MENU_ITEMS_X;
+		 
 		u8 y = MENU_ITEMS_Y;
 		
 		if(pCurEntry->type == MENU_ITEM_TEXT)
@@ -1325,7 +1379,7 @@ void Menu_DisplayItem(u8 item) __FASTCALL
 		{
 			menuCallback cb = (menuCallback)pCurEntry->action;
 			const c8* str = cb(MENU_ACTION_GET, pCurEntry->value);
-			if(*str)
+			if(str)
 			{
 				if(g_MenuItem == item)
 					Print_DrawChar('<');
@@ -1376,7 +1430,7 @@ void Menu_Initialize(const Menu* menu) __FASTCALL
 	}
 	
 	// Display menu items
-	for(u8 item = 0; item < MENU_ITEMS_H; item++)
+	for(u8 item = 0; item < MENU_ITEMS_H; ++item)
 	{
 		Menu_DisplayItem(item);
 	}
@@ -1549,7 +1603,7 @@ void Menu_Update()
 	if((g_Frame & 0x07) == 0) // 8th frame
 	{
 		Print_SelectTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
-		for(u8 item = 0; item < g_CurrentMenu->itemNum; item++)
+		for(u8 item = 0; item < g_CurrentMenu->itemNum; ++item)
 		{
 			MenuEntry* pCurEntry = &g_CurrentMenu->items[item];
 			if(pCurEntry->type == MENU_ITEM_UPDATE)
@@ -1587,7 +1641,7 @@ void LoadMatchData()
 	{
 		const u8* src = g_DataBall;
 		u16 dst = g_SpritePatternLow + (PATTERN_BALL_LINE1 * 8);
-		for(i8 i = 0; i < 5; i++)
+		for(i8 i = 0; i < 5; ++i)
 		{
 			VDP_WriteVRAM_64K(src, dst, 8);
 			src += (1 * 8);
@@ -1599,7 +1653,7 @@ void LoadMatchData()
 	{
 		const u8* src = g_DataRacket;
 		u16 dst	= g_SpritePatternLow + (PATTERN_RACKET_R * 8) + 8;
-		for(u8 i = 0; i < 3; i++)
+		for(u8 i = 0; i < 3; ++i)
 		{
 			VDP_WriteVRAM_64K(src, dst, 8);
 			src += 8;
@@ -1610,7 +1664,7 @@ void LoadMatchData()
 	// Generate cursor sprites
 	{
 		u16 dst = g_SpritePatternLow + (PATTERN_CURSOR1 * 8);
-		for(u8 i = 0; i < 8 * 2; i++)
+		for(u8 i = 0; i < 8 * 2; ++i)
 		{
 			VDP_FillVRAM_64K(0x55, dst + 4 * 8, 1);
 			VDP_FillVRAM_64K(0xAA, dst++, 1);
@@ -1887,15 +1941,17 @@ void Ball_Update()
 
 			if(g_Ball.bounce == 1)
 			{
-				ayFX_PlayBank(12, 0);
-
 				if(Ball_CheckField() && (g_Ball.point == POINT_PENDING))
 				{
 					g_Ball.point = POINT_VALIDATED;
 					g_ScoreFct(EVENT_IN);
+					ayFX_PlayBank(12, 0);
 				}
 				else
+				{
 					g_ScoreFct(EVENT_OUT);
+					ayFX_PlayBank(2, 0);
+				}
 			}
 			else if(g_Ball.bounce == 2)
 			{
@@ -2972,7 +3028,7 @@ void DisplayScore()
 		// Previous sets
 		if(g_CurSet > 0)
 		{
-			for(u8 i = 0; i < g_CurSet; i++)
+			for(u8 i = 0; i < g_CurSet; ++i)
 			{
 				Print_SetPosition(5 + (i * 2), y);
 				Print_DrawInt(g_Games[i][p]);
@@ -3388,13 +3444,13 @@ bool State_Init()
 	PT3_SetLoop(true);
 	PT3_InitSong(g_DataMusic);
 	PT3_Pause();
-	g_PlayMusic = AUDIO_ENABLE;
+	g_PlayMusic = MUSIC_ENABLE;
 
 	// Initialize ayFX
 	ayFX_InitBank(g_DataSFX);
 	ayFX_SetChannel(PSG_CHANNEL_A);
 	ayFX_SetMode(AYFX_MODE_FIXED);
-	g_PlaySFX = AUDIO_ENABLE;
+	g_PlaySFX = SFX_ENABLE;
 
 	Game_SetState(State_TitleStart);
 	return false;
@@ -3468,6 +3524,9 @@ void MoveLogoBall(u8 x) __FASTCALL
 ///
 bool State_TitleUpdate()
 {
+	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+		return true;
+
 	UpdateInput();
 
 	if(g_EventFrame < 25) // Ball movement
@@ -3531,6 +3590,9 @@ bool State_TitleUpdate()
 		MoveLogoBall(24 * 8);
 
 		Game_SetState(State_MenuStart);
+
+		u16 dst = g_ScreenLayoutLow + (12 * 32);
+		VDP_FillVRAM_64K(0, dst, 12 * 32);
 	}
 	return true;
 }
@@ -3548,6 +3610,9 @@ bool State_MenuStart()
 ///
 bool State_MenuUpdate()
 {
+	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+		return true;
+
 	UpdateInput();
 	Menu_Update();
 	return true;
@@ -3581,6 +3646,9 @@ bool State_ScoreStart()
 ///
 bool State_ScoreUpdate()
 {
+	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+		return true;
+
 	UpdateInput();
 
 	i16 dy = g_Cosinus64[(g_Frame % 32) * 2] / 32;
@@ -3642,6 +3710,9 @@ bool State_VictoryStart()
 ///
 bool State_VictoryUpdate()
 {
+	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+		return true;
+
 	u8 pat = PATTERN_CUP_OUTLINE1;
 	if(g_FlickerShadow && (g_Frame & 0x1))
 		pat += 4;
@@ -3736,6 +3807,9 @@ bool State_MatchUpdate()
 
 // VDP_SetColor(COLOR_LIGHT_GREEN);
 
+	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+		return true;
+
 	//---------------------------------------------------------------------
 	// Handle match event
 	
@@ -3828,9 +3902,17 @@ bool State_TrainingStart()
 
 	InitializeCourt();
 	if(g_TrainSide == SIDE_BOTTOM)
+	{
+		g_ServeZone = 0;
+		g_Server = SIDE_BOTTOM;
 		Player_Initialize(SIDE_BOTTOM, g_TrainSide);
+	}
 	else
+	{
+		g_ServeZone = 2;
+		g_Server = SIDE_TOP;
 		Player_Initialize(SIDE_TOP, 1-g_TrainSide);
+	}
 	Launcher_Initialize();
 	
 	// Initialize score board
@@ -3872,6 +3954,9 @@ bool State_TrainingUpdate()
 		Player_SwitchSprites(&g_Player[SIDE_TOP]);
 	Launcher_SwitchSprites();
 	Ball_SwitchSprites();
+
+	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+		return true;
 
 	//---------------------------------------------------------------------
 	// Update input
@@ -3915,6 +4000,14 @@ bool State_TrainingUpdate()
 				Print_DrawText("LST:");
 				Print_SetPosition(1, y++);
 				Print_DrawText("STA:");
+
+				Print_SetPosition(1, 19);
+				if(g_Freq == FREQ_50HZ)
+					Print_DrawText("FREQ:50HZ");
+				else if(g_Freq == FREQ_60HZ)
+					Print_DrawText("FREQ:60HZ");
+				else
+					Print_DrawText("FREQ:???");
 
 				#if (TARGET_TYPE == TARGET_TYPE_ROM)
 					Print_SetPosition(1, 20);
@@ -4014,6 +4107,9 @@ void VDP_InterruptHandler()
 /// Main loop
 void VSyncCallback()
 {
+	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+		return;
+
 	if(g_PlayMusic)
 		PT3_Decode();
 	if(g_PlaySFX)
@@ -4033,13 +4129,23 @@ void main()
 	else
 		g_VersionVDP = VDP_GetVersion();
 	#endif
+	
+	#if (TARGET_TYPE == TARGET_TYPE_ROM)
+	if(g_VersionROM & 0x80)
+		g_FreqDetected = FREQ_50HZ;
+	else
+		g_FreqDetected = FREQ_60HZ;
+	g_Freq = g_FreqDetected;
+	#endif
 
 	Game_Initialize();
 	Game_SetVSyncCallback(VSyncCallback);
 	Game_SetState(State_Init);
 
 	while(1)
+	{
 		Game_Update();
+	}
 }
 
 void Bios_SetHookCallback(u16 hook, callback cb) {}

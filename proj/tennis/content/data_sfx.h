@@ -4,7 +4,7 @@
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██▄▀ ██ ██ █
 // _____________________________________________________________________________
 // CMSXbin 1.2.0 by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
-// File generated on Thu Jun 17 23:15:38 2021
+// File generated on Thu Aug 19 21:16:36 2021
 // Soure file: ayfx_bank.afb
 __at(0x3536) const unsigned char g_DataSFX[] = {
 	0x13, 0x25, 0x00, 0x56, 0x00, 0x8D, 0x00, 0xB6, 0x00, 0xCA, 0x00, 0xDC, 0x00, 0x64, 0x01, 0x99, //      0

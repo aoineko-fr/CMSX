@@ -3,7 +3,7 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.12.0 on Thu Jun 17 23:15:38 2021
+// Data generated using CMSXimg 1.12.0 on Thu Aug 19 21:16:36 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     logo.png
@@ -28,7 +28,7 @@ const unsigned char g_DataLogo_Names[] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x3E, 0x3F, 0x40, 0x41, 0x00, 0x42, 0x00, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61, 0x62, 0x63, 0x64, 0x00, 
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x65, 0x66, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x65, 0x66, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 
 };
 // Names size: 190 Bytes
 
@@ -830,11 +830,58 @@ const unsigned char g_DataLogo_Patterns[] =
 	0xC1, // Type=3, Length=1
 	0x3F, /* ..###### */ 
 // Chunk[234]
-	0x07, // Type=0, Length=7
+	0x08, // Type=0, Length=8
+// Chunk[235]
+	0xC3, // Type=3, Length=3
+	0x22, /* ..#...#. */ 
+	0x36, /* ..##.##. */ 
+	0x2A, /* ..#.#.#. */ 
+// Chunk[236]
+	0x42, // Type=1, Length=2
+	0x22, /* ..#...#. */ 
+// Chunk[237]
+	0x03, // Type=0, Length=3
+// Chunk[238]
+	0xC5, // Type=3, Length=5
+	0x74, /* .###.#.. */ 
+	0x7D, /* .#####.# */ 
+	0x61, /* .##....# */ 
+	0x12, /* ...#..#. */ 
+	0x1B, /* ...##.## */ 
+// Chunk[239]
+	0x02, // Type=0, Length=2
+// Chunk[240]
+	0xC6, // Type=3, Length=6
+	0x04, /* .....#.. */ 
+	0x44, /* .#...#.. */ 
+	0x73, /* .###..## */ 
+	0x15, /* ...#.#.# */ 
+	0x6A, /* .##.#.#. */ 
+	0x4C, /* .#..##.. */ 
+// Chunk[241]
+	0x03, // Type=0, Length=3
+// Chunk[242]
+	0xC5, // Type=3, Length=5
+	0x01, /* .......# */ 
+	0x2A, /* ..#.#.#. */ 
+	0x2B, /* ..#.#.## */ 
+	0x14, /* ...#.#.. */ 
+	0x37, /* ..##.### */ 
+// Chunk[243]
+	0x03, // Type=0, Length=3
+// Chunk[244]
+	0xC5, // Type=3, Length=5
+	0x62, /* .##...#. */ 
+	0x16, /* ...#.##. */ 
+	0x22, /* ..#...#. */ 
+	0x42, /* .#....#. */ 
+	0x77, /* .###.### */ 
+// Chunk[245]
+	0x02, // Type=0, Length=2
 // Zero terminator
 	0x00, // 
 };
-// Patterns size: 562 Bytes
+// Patterns size: 598 Bytes
 
 // Colors Table
 const unsigned char g_DataLogo_Colors[] =
@@ -1821,11 +1868,61 @@ const unsigned char g_DataLogo_Colors[] =
 	0xC1, // Type=3, Length=1
 	0x16, /* ...#.##. */ 
 // Chunk[293]
-	0x47, // Type=1, Length=7
+	0x48, // Type=1, Length=8
+	0x11, /* ...#...# */ 
+// Chunk[294]
+	0x45, // Type=1, Length=5
+	0xF1, /* ####...# */ 
+// Chunk[295]
+	0x43, // Type=1, Length=3
+	0x11, /* ...#...# */ 
+// Chunk[296]
+	0xC2, // Type=3, Length=2
+	0xF1, /* ####...# */ 
+	0x1F, /* ...##### */ 
+// Chunk[297]
+	0x42, // Type=1, Length=2
+	0xF1, /* ####...# */ 
+// Chunk[298]
+	0xC1, // Type=3, Length=1
+	0x1F, /* ...##### */ 
+// Chunk[299]
+	0x42, // Type=1, Length=2
+	0x11, /* ...#...# */ 
+// Chunk[300]
+	0x42, // Type=1, Length=2
+	0xF1, /* ####...# */ 
+// Chunk[301]
+	0xC4, // Type=3, Length=4
+	0x1F, /* ...##### */ 
+	0xF1, /* ####...# */ 
+	0x1F, /* ...##### */ 
+	0xF1, /* ####...# */ 
+// Chunk[302]
+	0x43, // Type=1, Length=3
+	0x11, /* ...#...# */ 
+// Chunk[303]
+	0xC1, // Type=3, Length=1
+	0xF1, /* ####...# */ 
+// Chunk[304]
+	0x42, // Type=1, Length=2
+	0x1F, /* ...##### */ 
+// Chunk[305]
+	0xC2, // Type=3, Length=2
+	0xF1, /* ####...# */ 
+	0x1F, /* ...##### */ 
+// Chunk[306]
+	0x43, // Type=1, Length=3
+	0x11, /* ...#...# */ 
+// Chunk[307]
+	0x45, // Type=1, Length=5
+	0xF1, /* ####...# */ 
+// Chunk[308]
+	0x42, // Type=1, Length=2
 	0x11, /* ...#...# */ 
 // Zero terminator
 	0x00, // 
 };
-// Colors size: 691 Bytes
+// Colors size: 726 Bytes
 
-// Total size: 1443 Bytes
+// Total size: 1514 Bytes
