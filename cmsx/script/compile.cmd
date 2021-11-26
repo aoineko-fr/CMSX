@@ -25,7 +25,7 @@ if %Optim%==Speed (set CompileOpt=--opt-code-speed)
 if %Optim%==Size (set CompileOpt=--opt-code-size)
 
 REM set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src --opt-code-speed --max-allocs-per-node20000 %File% -o %OutDir%\
-set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src %CompileOpt% --constseg RODATA %File% -o %OutDir%\
+set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -I%ProjDir% -I%LibDir%\src %CompileOpt% --constseg RODATA --sdcccall 0 %File% -o %OutDir%\
 set ASMParam=-o -l -s -I%ProjDir% -I%LibDir%\src %File%
 
 if /I %FileExt%==.c (
