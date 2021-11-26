@@ -33,8 +33,8 @@
 	#include "font/font_cmsx_neon1b.h"
 	#include "font/font_acme.h"
 	#include "font/font_darkrose.h"
-	#include "font/font_oxygene.h"
-	#include "font/font_tsm9900.h"
+//	#include "font/font_oxygene.h"
+//	#include "font/font_tsm9900.h"
 #endif
 #include "font/font_ibm.h"
 
@@ -80,8 +80,8 @@ struct FontEntry g_Fonts[] =
 	{ "C-MSX Neon 1B [8*8]",	g_Font_CMSX_Neon1B },
 	{ "ACME [8*8]",				g_Font_Acme },
 	{ "Darkrose [8*8]",			g_Font_Darkrose },
-	{ "OXYGENE [8*8]",			g_Font_Oxygene },
-	{ "TMS9900 [6*8]",			g_Font_TMS9900 },
+//	{ "OXYGENE [8*8]",			g_Font_Oxygene },
+//	{ "TMS9900 [6*8]",			g_Font_TMS9900 },
 #endif
 	{ "IBM VGA [8*8]",			g_Font_IBM },
 };
@@ -185,7 +185,7 @@ void PrintSample()
 	Print_SetPosition(0, 40);
 	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
 	const struct Print_Data* data = Print_GetFontInfo();
-	for(u16 i = data->FontFirst; i <= data->FontLast; ++i)
+	for(u16 i = data->CharFirst; i <= data->CharLast; ++i)
 		Print_DrawChar(i);
 
 	Print_Return();

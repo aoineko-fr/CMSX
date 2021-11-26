@@ -36,8 +36,6 @@
 #if (TARGET_TYPE == TARGET_TYPE_BIN)
 	#define SPRITE_2X_LINE		63-9
 	#define SPRITE_8_LINE		113-9
-	// #undef  SPRITE_8_NUM
-	// #define SPRITE_8_NUM		(u8)23
 #elif (TARGET_TYPE == TARGET_TYPE_ROM)
 	#define SPRITE_2X_LINE		63-4
 	#define SPRITE_8_LINE		113-4
@@ -92,18 +90,18 @@ u8 g_Phase = 0;
 /// H-Blank interrupt hook
 void HBlankHook()
 {
-	// VDP_SetColor(0);
+	// VDP_SetColor(COLOR_BLACK);
 	if(g_Phase == 0)
 	{
 		VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 + VDP_SPRITE_SCALE_2);
 		VDP_SetHBlankLine(SPRITE_8_LINE);
 		g_Phase++;
-		// VDP_SetColor(12);
+		// VDP_SetColor(COLOR_DARK_GREEN);
 	}
 	else
 	{
 		VDP_SetSpriteFlag(VDP_SPRITE_SIZE_8);
-		// VDP_SetColor(6);
+		// VDP_SetColor(COLOR_DARK_RED);
 	}
 }
 
@@ -165,9 +163,8 @@ void main()
 {
 	// Setup screen
 	VDP_SetMode(VDP_MODE_SCREEN5);
-	VDP_SetColor(0x4);
-	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
-	VDP_CommandHMMV(0, 212, 256, 1024, 0); // Clear VRAM
+	VDP_SetColor(COLOR_DARK_BLUE);
+	VDP_CommandHMMV(0, 0, 256, 1024, COLOR_MERGE(COLOR_DARK_BLUE, COLOR_DARK_BLUE)); // Clear VRAM
 	VDP_CommandWait();
 	
 	// Setup sprite
@@ -232,7 +229,7 @@ void main()
 	VDP_SetPaletteEntry(5, RGB16(7, 5, 5));
 	VDP_SetPaletteEntry(6, RGB16(5, 3, 3));
 	VDP_SetPaletteEntry(7, RGB16(3, 1, 1));
-	VDP_SetSpriteExMultiColor(SPRITE_16OR_1ST + 4, (u8)256-32, 64+8, PATTERN_8_1ST + 16, ColorTab);
+	VDP_SetSpriteExMultiColor(SPRITE_16OR_1ST + 4, (u8)(256-32), 64+8, PATTERN_8_1ST + 16, ColorTab);
 
 	VDP_HideSpriteFrom(SPRITE_16_1ST + 7);
 
@@ -277,9 +274,9 @@ void main()
 	bool bContinue = true;
 	while(bContinue)
 	{
+		VDP_SetColor(COLOR_BLACK);
 		WaitVBlank();
-
-		// VDP_SetColor(0x4);
+		VDP_SetColor(COLOR_DARK_BLUE);
 	
 		// Print_SetPosition(248, 2);
 		// Print_DrawChar(chrAnim[g_Frame & 0x03]);

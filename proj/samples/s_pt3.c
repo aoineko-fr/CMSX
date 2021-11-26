@@ -45,13 +45,13 @@ typedef struct {
 // Music
 #include "data\pt3\!ndiffer.h"
 #include "data\pt3\Beg!nsum.h"
-#include "data\pt3\Fret.h"
+//#include "data\pt3\Fret.h"
 
 // Songs data table
 SongData g_SongData[] = {
 	{ g__ndiffer, 	"!ndiffer",		sizeof(g__ndiffer) },
 	{ g_Beg_nsum, 	"Beg!nsum",		sizeof(g_Beg_nsum) },
-	{ g_Fret,     	"Fret",			sizeof(g_Fret) },
+	// { g_Fret,     	"Fret",			sizeof(g_Fret) },
 };
 u8 g_CurrentSong = 0;
 
