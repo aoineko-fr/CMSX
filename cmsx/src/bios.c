@@ -148,7 +148,7 @@ inline void Bios_Startup() { Bios_MainCall(R_CHKRAM); }
 // Registers: AF, C, DE
 // Remark   : Can be call directly from MSX-DOS
 //            This routine turns off the interupt, but won't turn it on again
-u8 Bios_InterSlotRead(u8 slot, u16 addr)
+u8 Bios_InterSlotRead(u8 slot, u16 addr) __sdcccall(0)
 {
 	slot, addr;
 	__asm
@@ -203,7 +203,7 @@ u8 Bios_MainROMRead(u16 addr) __FASTCALL
 // Registers: AF, BC, D
 // Remark   : Can be call directly from MSX-DOS
 //            This routine turns off the interupt, but won't turn it on again
-void Bios_InterSlotWrite(u8 slot, u16 addr, u8 value)
+void Bios_InterSlotWrite(u8 slot, u16 addr, u8 value) __sdcccall(0)
 {
 	slot, addr, value;
 	
@@ -239,7 +239,7 @@ void Bios_InterSlotWrite(u8 slot, u16 addr, u8 value)
 //            IX - The address that will be called
 // Remark   : Can be call directly from MSX-DOS
 //            Variables can never be given in alternative registers or IX and IY
-void Bios_InterSlotCall(u8 slot, u16 addr)
+void Bios_InterSlotCall(u8 slot, u16 addr) __sdcccall(0)
 {
 	slot, addr;
 	__asm
@@ -374,7 +374,7 @@ inline void Bios_EnableScreen() { Bios_MainCall(R_ENASCR); }
 //            C  - Number of the register
 // Registers: AF, BC
 // Remark   : Call Sub-ROM on MSX2 or later if the bit EV of VDP register 0 is changed or if register number is greater than 7
-void Bios_WriteVDP(u8 reg, u8 value)
+void Bios_WriteVDP(u8 reg, u8 value) __sdcccall(0)
 {
 	reg, value;
 
@@ -431,7 +431,7 @@ u8 Bios_ReadVRAM(u16 addr) __FASTCALL
 //            A  - Value write
 // Registers: AF
 // Remark   : Routine for MSX1, so only the 14 low order bits of the VRAM address are valid. To use all bits, call NWRVRM (00177h)
-void Bios_WriteVRAM(u16 addr, u8 value)
+void Bios_WriteVRAM(u16 addr, u8 value) __sdcccall(0)
 {
 	addr, value;
 	__asm
@@ -513,7 +513,7 @@ void Bios_SetAddressForWrite(u16 addr) __FASTCALL
 //            A  - Data byte
 // Registers: AF, BC
 // Remark   : Routine for MSX1, so only the 14 low order bits of the VRAM address are valid. To use all bits, call BIGFIL (0016Bh)
-void Bios_FillVRAM(u16 addr, u16 length, u8 value)
+void Bios_FillVRAM(u16 addr, u16 length, u8 value) __sdcccall(0)
 {
 	addr, length, value;
 	__asm
@@ -547,7 +547,7 @@ void Bios_FillVRAM(u16 addr, u16 length, u8 value)
 //            BC - Block length
 // Registers: All
 // Remark   : In screen modes other than MSX1. The variable ACPAGE (0FAF6h) indicates the page from which the transfer must take place
-void Bios_TransfertVRAMtoRAM(u16 vram, u16 ram, u16 length)
+void Bios_TransfertVRAMtoRAM(u16 vram, u16 ram, u16 length) __sdcccall(0)
 {
 	ram, vram, length;
 	__asm
@@ -582,7 +582,7 @@ void Bios_TransfertVRAMtoRAM(u16 vram, u16 ram, u16 length)
 //            BC - Block length
 // Registers: All
 // Remark   : In screen modes other than MSX1. The variable ACPAGE (0FAF6h) indicates the page from which the transfer must take place
-void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length)
+void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length) __sdcccall(0)
 {
 	ram, vram, length;
 	__asm
@@ -642,7 +642,7 @@ void Bios_ChangeMode(u8 screen) __FASTCALL
 //            Border color in BDRCLR
 // Registers: All
 // Remark   : Same function as CHGCLR (00111h in Sub-ROM)
-void Bios_ChangeColor(u8 text, u8 back, u8 border)
+void Bios_ChangeColor(u8 text, u8 back, u8 border) __sdcccall(0)
 {
 	text, back, border;
 	__asm
@@ -955,7 +955,7 @@ inline void Bios_InitPSG()
 // Input    : A  - PSG register number
 //            E  - Data write
 // Remarks  : See https://www.msx.org/wiki/SOUND#Registers_Description
-void Bios_WritePSG(u8 reg, u8 value)
+void Bios_WritePSG(u8 reg, u8 value) __sdcccall(0)
 {
 	reg, value;
 	__asm

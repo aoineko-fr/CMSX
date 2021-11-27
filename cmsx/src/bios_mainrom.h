@@ -121,7 +121,7 @@ inline void Bios_Startup();
 //-----------------------------------------------------------------------------
 // RDSLT	#000C	Reads the value of an address in another slot
 #define R_RDSLT		0x000C // Reads the value of an address in another slot
-u8 Bios_InterSlotRead(u8 slot, u16 addr);
+u8 Bios_InterSlotRead(u8 slot, u16 addr) __sdcccall(0);
 u8 Bios_MainROMRead(u16 addr) __FASTCALL;
 
 //-----------------------------------------------------------------------------
@@ -131,7 +131,7 @@ u8 Bios_MainROMRead(u16 addr) __FASTCALL;
 //-----------------------------------------------------------------------------
 // WRSLT	#0014	Writes a value to an address in another slot
 #define R_WRSLT		0x0014 // Writes a value to an address in another slot
-void Bios_InterSlotWrite(u8 slot, u16 addr, u8 value);
+void Bios_InterSlotWrite(u8 slot, u16 addr, u8 value) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // OUTDO	#0018	Output to current output channel (printer, file, etc.)
@@ -140,7 +140,7 @@ void Bios_InterSlotWrite(u8 slot, u16 addr, u8 value);
 //-----------------------------------------------------------------------------
 // CALSLT	#001C	Executes inter-slot call
 #define R_CALSLT	0x001C // Executes inter-slot call
-void Bios_InterSlotCall(u8 slot, u16 addr);
+void Bios_InterSlotCall(u8 slot, u16 addr) __sdcccall(0);
 void Bios_MainROMCall(u16 addr) __FASTCALL;
 
 //-----------------------------------------------------------------------------
@@ -203,7 +203,7 @@ inline void Bios_EnableScreen();
 //-----------------------------------------------------------------------------
 // WRTVDP	#0047	Write data in the VDP-register
 #define R_WRTVDP	0x0047 // Write data in the VDP-register
-void Bios_WriteVDP(u8 reg, u8 value);
+void Bios_WriteVDP(u8 reg, u8 value) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // RDVRM	#004A	Reads the content of VRAM
@@ -213,7 +213,7 @@ u8 Bios_ReadVRAM(u16 addr) __FASTCALL;
 //-----------------------------------------------------------------------------
 // WRTVRM	#004D	Writes data in VRAM
 #define R_WRTVRM	0x004D // Writes data in VRAM
-void Bios_WriteVRAM(u16 addr, u8 value);
+void Bios_WriteVRAM(u16 addr, u8 value) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // SETRD	#0050	Sets VRAM address to read a byte or more
@@ -228,17 +228,17 @@ void Bios_SetAddressForWrite(u16 addr) __FASTCALL;
 //-----------------------------------------------------------------------------
 // FILVRM	#0056	Fills the specified VRAM area with the same data
 #define R_FILVRM	0x0056 // Fill VRAM with value
-void Bios_FillVRAM(u16 addr, u16 length, u8 value);
+void Bios_FillVRAM(u16 addr, u16 length, u8 value) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // LDIRMV	#0059	Block transfer from VRAM to memory
 #define R_LDIRMV	0x0059 // Block transfer to memory from VRAM
-void Bios_TransfertVRAMtoRAM(u16 vram, u16 ram, u16 length);
+void Bios_TransfertVRAMtoRAM(u16 vram, u16 ram, u16 length) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // LDIRVM	#005C	Block transfer from memory to VRAM
 #define R_LDIRVM	0x005C // Block transfer to VRAM from memory
-void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length);
+void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // CHGMOD	#005F	Switches to given screen mode
@@ -248,7 +248,7 @@ void Bios_ChangeMode(u8 screen) __FASTCALL;
 //-----------------------------------------------------------------------------
 // CHGCLR	#0062	Changes the screen colors
 #define R_CHGCLR	0x0062 // Changes the screencolors
-void Bios_ChangeColor(u8 text, u8 back, u8 border);
+void Bios_ChangeColor(u8 text, u8 back, u8 border) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // CLRSPR	#0069	Initialises all sprites
@@ -346,7 +346,7 @@ inline void Bios_InitPSG();
 //-----------------------------------------------------------------------------
 // WRTPSG	#0093	Writes data to PSG register
 #define R_WRTPSG	0x0093 // Writes data to PSG-register
-void Bios_WritePSG(u8 reg, u8 value);
+void Bios_WritePSG(u8 reg, u8 value) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 // RDPSG	#0096	Reads value from PSG register

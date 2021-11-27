@@ -153,8 +153,10 @@
 // Random method
 // - RANDOM_LFSR_LCG_16 ........... Combined LFSR/LCG (16-bit seeds)
 // - RANDOM_LFSR_LCG_32 ........... Combined LFSR/LCG (32-bit seeds)
-// - RANDOM_XORSHIFT .............. Xorshift RNGs (16-bit seeds)
-#define RANDOM_METHOD				RANDOM_XORSHIFT
+// - RANDOM_XORSHIFT .............. XOR Shift RNGs (16-bit seeds)
+// - RANDOM_GNU ................... GNU C Library function (16-bit seed)
+// - RANDOM_LINEAR ................ Linear congruential generator
+#define RANDOM_METHOD				RANDOM_LINEAR
 
 //-----------------------------------------------------------------------------
 // MISC

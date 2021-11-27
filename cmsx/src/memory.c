@@ -50,7 +50,7 @@ void Mem_HeapFree(u16 size) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Copy a memory block from a source address to an other
-void Mem_Copy(const void* src, void* dest, u16 size)
+void Mem_Copy(const void* src, void* dest, u16 size) __sdcccall(0)
 {
 	src, dest, size;
 	__asm
@@ -115,7 +115,7 @@ void Mem_Copy(const void* src, void* dest, u16 size)
 
 //-----------------------------------------------------------------------------
 /// Fill a memory block with a given value
-void Mem_Set(u8 val, void* dest, u16 size)
+void Mem_Set(u8 val, void* dest, u16 size) __sdcccall(0)
 {
 	val, dest, size;
 	__asm

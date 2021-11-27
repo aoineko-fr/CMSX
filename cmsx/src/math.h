@@ -66,6 +66,9 @@ u8 Math_Flip(u8 val) __FASTCALL;
 /// Bits flip routine
 u16 Math_Flip_16b(u16 val) __FASTCALL;
 
+/// Initialize random generator seed
+void Math_SetRandomSeed(u16 seed);
+
 /// Generates 16-bit pseudorandom numbers with a period of 65535
 u16 Math_GetRandom();
 

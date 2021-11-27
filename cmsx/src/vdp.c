@@ -291,7 +291,7 @@ void VDP_SetModeGraphic2()
 /// @param		src			Source data address in RAM
 /// @param		dest		Destiation address in VRAM (14bits address form 16KB VRAM)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count)
+void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count) __sdcccall(0)
 {
 	src, dest, count;
 	__asm
@@ -361,7 +361,7 @@ void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count)
 /// @param		value		Byte value to copy in VRAM
 /// @param		dest		Destiation address in VRAM (14bits address form 16KB VRAM)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count)
+void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count) __sdcccall(0)
 {
 	dest, value, count;
 	__asm
@@ -400,7 +400,7 @@ void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count)
 /// @param		src			Source address in VRAM (14bits address form 16KB VRAM)
 /// @param		dst			Desitation data address in RAM
 /// @param		count		Nomber of byte to copy from VRAM
-void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count)
+void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count) __sdcccall(0)
 {
 	src, dest, count;
 	__asm
@@ -486,7 +486,7 @@ void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count)
 /// @param	src		Address of the data to be write into the registers
 /// @param	count	Number of registers to be write
 /// @param	reg		First register to be write (will be automaticaly incremented at each write)
-void VDP_RegIncWrite(u16 src, u8 count, u8 reg)
+void VDP_RegIncWrite(u16 src, u8 count, u8 reg) __sdcccall(0)
 {
 	src, count, reg;
 	
@@ -992,7 +992,7 @@ void VDP_SetPageAlternance(bool enable) __FASTCALL
 /// @param		destLow		Destiation address in VRAM (16 LSB of 17-bits VRAM address)
 /// @param		destHigh	Destiation address in VRAM (1 MSB of 17-bits VRAM address)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count)
+void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count) __sdcccall(0)
 {
 	src, destLow, destHigh, count;
 	__asm
@@ -1052,7 +1052,7 @@ void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count)
 /// @param		destLow		Destiation address in VRAM (16 LSB of 17-bits VRAM address)
 /// @param		destHigh	Destiation address in VRAM (1 MSB of 17-bits VRAM address)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count)
+void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count) __sdcccall(0)
 {
 	destLow, destHigh, value, count;
 	__asm
@@ -1104,7 +1104,7 @@ void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count)
 /// @param		srcHigh		Source address in VRAM (1 MSB of 17-bits VRAM address)
 /// @param		dst			Desitation data address in RAM
 /// @param		count		Nomber of byte to copy from VRAM
-void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count)
+void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count) __sdcccall(0)
 {
 	srcLow, srcHigh, dest, count;
 	__asm

@@ -171,6 +171,10 @@
 	#define PROFILE_LEVEL				10
 #endif
 
+// RANDOM
+#if !defined(RANDOM_METHOD)
+#define RANDOM_METHOD RANDOM_XORSHIFT
+#endif
 
 //-----------------------------------------------------------------------------
 //

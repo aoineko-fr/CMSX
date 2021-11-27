@@ -11,8 +11,8 @@ set ToolsDir=..\..\tools
 rem ***************************************************************************
 rem * TOOLS SETTINGS                                                          *
 rem ***************************************************************************
-set SDCC=%ToolsDir%\SDCC4112_CALL0\bin\sdcc.exe
-set SDASZ80=%ToolsDir%\SDCC4112_CALL0\bin\sdasz80.exe
+set SDCC=%ToolsDir%\SDCC4112\bin\sdcc.exe
+set SDASZ80=%ToolsDir%\SDCC4112\bin\sdasz80.exe
 set HEX2BIN=%ToolsDir%\Hex2bin\hex2bin.exe
 set FILLFILE=%ToolsDir%\MakeROM\fillfile.exe
 set EMUL=%ToolsDir%\OpenMSX\openmsx.exe

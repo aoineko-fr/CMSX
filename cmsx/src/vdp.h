@@ -227,13 +227,13 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
 
 /// Write data from RAM to VRAM
-void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count);
+void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count) __sdcccall(0);
 
 /// Fill VRAM area with a given value
-void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count);
+void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count) __sdcccall(0);
 
 /// Read data from VRAM to RAM
-void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count);
+void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
 #if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_16)
@@ -245,13 +245,13 @@ void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count);
 #else // (MSX_VERSION >= MSX_2)
 
 	/// Write data from RAM to VRAM
-	void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count);
+	void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count) __sdcccall(0);
 
 	/// Fill VRAM area with a given value
-	void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count);
+	void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count) __sdcccall(0);
 
 	/// Read data from VRAM to RAM
-	void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count);
+	void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count) __sdcccall(0);
 
 #endif
 
