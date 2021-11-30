@@ -71,4 +71,3 @@ void Math_SetRandomSeed(u16 seed);
 
 /// Generates 16-bit pseudorandom numbers with a period of 65535
 u16 Math_GetRandom();
-

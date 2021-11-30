@@ -14,3 +14,4 @@
 #include "CMSXtk_string.h"
 #include "CMSXtk_data.h"
 #include "CMSXtk_export.h"
+#include "CMSXtk_file.h"

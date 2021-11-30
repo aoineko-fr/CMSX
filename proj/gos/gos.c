@@ -15,6 +15,7 @@
 #include "math.h"
 #include "print.h"
 #include "draw.h"
+#include "profile.h"
 #include "pt3/pt3_player.h"
 #include "ayfx/ayfx_player.h"
 // GoS
@@ -28,13 +29,16 @@
 
 //-----------------------------------------------------------------------------
 // DEFINES
-#define VERSION			"V0.3.9"
+#define VERSION			"V0.4.0"
 
-#define CHARA_NB 		14
-#define BALL_ID			CHARA_NB
-
+#define USE_AUDIO		0
 #define LINE_NB			212	// 192 or 212
 #define FIELD_SIZE		384 // 256 or 384
+
+#define TEAM_PLAYERS 	7
+#define BALL_ID			TEAM_PLAYERS*2
+#define INVALID_ID		0xF
+
 #define TEAM_BMP_X		128
 #define TEAM_BMP_Y		384
 #define BALL_BMP_X		240
@@ -44,6 +48,10 @@
 #define SPRT_OFS_X		(-7)
 #define SPRT_OFS_Y		(-15)
 #define MIN_DIFF		8
+
+#define GOAL_LENGTH		48
+#define GOAL_HEIGHT		20
+#define SPRT_TXT_Y		2
 
 #if (TARGET_TYPE == TARGET_TYPE_BIN)
 	#define HBLANK_LINE		(u8)(255-9)
@@ -79,44 +87,9 @@ typedef struct
 	u16			x, y;	
 } Vector16;
 
-typedef struct
-{
-	Vector816	sprtPos;		///< 
-	Vector8		sprtSize;		///<
-	
-} CharaRender;
-
-/// Character information structure
-typedef struct
-{
-	Vector816	loc;			///< Position
-	Vector816	target;			///< Position
-	
-	u8			dir     : 3;	///< Direction (0-7)
-	u8			pos     : 4;	///< Character position team ID (0-15)
-	u8			nearest : 1;	///< Is the nearest character from the ball
-	
-	u8			action  : 4;	///< Action ID (0-15): 0=idle, 1=run, 2=tackle @see ACTION_ID
-	u8			team    : 1;	///< Team ID (0 or 1)
-	u8			hasball : 1;	///< Is having ball?
-	u8			moving  : 1;	///< Is moving?: 0=false, 1=true
-	u8			display : 1;	///< Should be displayed: 0=false, 1=true
-	
-	u8			visible : 1;	///< Is character visible
-	u8			drawn   : 1;	///< Has character been drawn
-	u8			sprtIdX : 3;	///< 
-	u8			sprtIdY : 3;	///< 
-
-	u8			minX    : 4;	///< 
-	u8			minY    : 4;	///< 
-	
-	u8			id;
-
-	CharaRender	render[2];
-	
-} CharaInfo;
 
 
+/// Actor render backup data structure
 typedef struct
 {
 	u8			drawn   : 1;	///< Actor have been drawn
@@ -126,51 +99,74 @@ typedef struct
 	
 } ActorRender;
 
-
+/// Actor base datastructure
 typedef struct
 {
 	u8			id;				///< Actor ID
 	u8			visible : 1;	///< Actor have to be drawn
-	u8			dummy_  : 7;	///< 
+	u8			dir     : 3;	///< Player Direction (0-7)
+	u8			dummy_  : 4;	///< 
 	Vector816	pos;			///< Position
 	Vector816	srcPos;			///< Bitmap source coordinate	
 	ActorRender	render;			///< Bitmap render info
 	ActorRender	prevRender;		///< Bitmap render info of frame N-1
+
 } Actor;
 
-typedef struct
-{
-	Actor		actor;			///< Actor data (must be first strcture member)
-} BallActor;
-
+/// Player actor data structure
 typedef struct
 {
 	Actor		actor;			///< Actor data (must be first strcture member)
 
 	u8			team    : 1;	///< Team ID (0 or 1)
 	u8			hasball : 1;	///< Is having ball?
-	u8			__10    : 2;
+	u8			moving  : 1;	///< Is moving?: 0=false, 1=true
+	u8			__10    : 1;
 	u8			role    : 4;	///< Character position team ID (0-15)
 
-	u8			dir     : 3;	///< Player Direction (0-7)
-	u8			moving  : 1;	///< Is moving?: 0=false, 1=true
-	u8			nearest : 1;	///< Is the nearest player from the ball
-	u8			__20    : 3;
-	
-	u8			sprtIdX : 3;	///< 
-	u8			sprtIdY : 3;	///< 
-	u8			__30    : 2;
-
-	u8			minX    : 4;	///< 
-	u8			minY    : 4;	///< 
+	u8			sprtId  : 3;	///< Sprite ID (0-7)
+	u8			__30    : 5;
 
 	// Behavior
 	u8			behavior : 4;	///< Current hebavior ID (@see AIBehavior)
 	u8			action   : 4;	///< Current action ID (@see PlayerAction)
+	u8			actStep;		///< Current step into the action
 	Vector816	target;			///< Target position
-
 	
 } PlayerActor;
+
+/// Ball actor data structure
+typedef struct
+{
+	Actor		actor;			///< Actor data (must be first strcture member)
+	Actor*		owner;			///< ID of the actor owning the ball (INVALID_ID if no one have it)
+	u8			speed;			///< Ball speed (in Q4.4 format)
+	u8			height;			///< Ball height (in Q4.4 format)
+	
+} BallActor;
+
+// Team data structure
+typedef struct
+{
+	u8			score;			///< Actor data (must be first strcture member)
+	u8			attack   : 1;	///< Team has ball and is attacking
+	u8			field    : 1;	///< Field part. 0: top, 1: bottom
+	u8			__10     : 6;
+	u8          nearestPly;
+	u16         nearestDist;
+
+} Team;
+
+// Inpur contoller data structure
+typedef struct
+{
+	u8			id       : 2;	///< Controller ID (0-3)
+	u8			input    : 2;	///< Controller input (@see ControllerInput)
+	u8			actor    : 4;	///< Controlled actor ID (0-15)
+
+} Controller;
+
+
 
 
 //=============================================================================
@@ -194,18 +190,29 @@ typedef struct
 
 u8 g_DisplayPage = 0;	///< Index of the current VDP display page (will be switch after V-Blank)
 u8 g_WritePage = 1;		///< Index of the current VDP work page (will be switch after V-Blank)
-u8 g_VBlank = 0;		///< Flag to inform game thread that a V-Blank occured
-u8 g_Frame = 0;			///< Render Frame counter
-u8 g_FrameGP = 0;		///< Gamplay Frame counter
+u8 g_VSynch = false;	///< Flag to inform game thread that a V-Blank occured
+u8 g_FrameCount = 0;	///< Render frames counter
+
+u8 g_LastFrame = 0;		///< Last render frames counter
+u8 g_ElapsFrame = 0;	///< Last render frames counter
+u8 g_LoopCount = 0;		///< Gameplay loop counter
 
 u8 g_ScrollOffset = 0;
 u8 g_PrevScrollOffset = 0;
+u8 g_BallArea = 0;
 
-u8 g_PlayerChara = 6;
+u8 g_KeyRow6;
+u8 g_KeyPrevRow6;
+u8 g_KeyRow8;
+u8 g_KeyPrevRow8;
 
-/// Players information
-CharaInfo g_Chara[2][CHARA_NB];
-CharaInfo g_Ball[2];
+/// Actors
+BallActor	g_Ball;
+PlayerActor	g_Players[14];
+Team		g_Teams[2];
+Controller	g_Controllers[4];
+
+u8			g_SortedId[TEAM_PLAYERS*2];
 
 /// Table to convert direction flag to direction index (from 0 to 7)
 static const u8 DirToIdx[16] = 
@@ -317,72 +324,56 @@ void InterruptHook()
 void VBlankHook()
 {
 	VDP_SetPage(V8(g_DisplayPage) * 2);
-	g_VBlank = 1;
-	g_FrameGP++;
+	g_VSynch = true;
+	g_FrameCount++;
 	
-	// Call((u16)HookBackup_KEYI);
-	CharaInfo* p = &g_Chara[g_DisplayPage][g_PlayerChara];			
-	VDP_SetSpritePosition(SPRITE_Player1, p->loc.x - 2, p->loc.y - 19);
-	
-	PT3_Decode();
-	ayFX_Update();
-	PT3_UpdatePSG();
+	#if (USE_AUDIO)
+		PT3_Decode();
+		ayFX_Update();
+		PT3_UpdatePSG();
+	#endif
 }
 
 /// Wait for V-Blank period
 void WaitVBlank()
 {
-	while(g_VBlank == 0) {}
+PROFILE_SECTION_START(10, 0);
+	
+	while(g_VSynch == false) {}
 	g_WritePage = 1 - g_WritePage;
 	g_DisplayPage = 1 - g_DisplayPage;
 	VDP_SetPage(V8(g_DisplayPage) * 2);
-	g_Frame++;
+	g_LoopCount++;
+	g_ElapsFrame = g_FrameCount - g_LastFrame;
+	g_LastFrame = g_FrameCount;
+
+PROFILE_SECTION_END(10, 0);
 }
 
 /// Compute target position.
 /// @param		p		The player to compute
 /// @param		area	The ball position (from 0 to 5)
-void Player_ComputeTaget(CharaInfo* p, u8 area)
+void Player_ComputeTaget(PlayerActor* p, u8 area)
 {
+PROFILE_SECTION_START(20, 0);
+
+	Actor* a = (Actor*)p;
 	if(p->team == 0)
 	{
-		/*switch(area)
-		{
-		// case 5:
-		// case 4:
-		default:
-			p->target = FormationDef[p->pos];
-			break;
-		case 3:
-			p->target.x = (FormationDef[p->pos].x * 3 + FormationAtt[p->pos].x) / 4;
-			p->target.y = (FormationDef[p->pos].y * 3 + FormationAtt[p->pos].y) / 4;
-			break;
-		case 2:
-			p->target.x = (FormationDef[p->pos].x + FormationAtt[p->pos].x) / 2;
-			p->target.y = (FormationDef[p->pos].y + FormationAtt[p->pos].y) / 2;
-			break;
-		case 1:
-			p->target.x = (FormationDef[p->pos].x + FormationAtt[p->pos].x * 3) / 4;
-			p->target.y = (FormationDef[p->pos].y + FormationAtt[p->pos].y * 3) / 4;
-			break;
-		case 0:
-			p->target = FormationAtt[p->pos];
-			break;
-		};*/
 		switch(area)
 		{
 		case 5:
 		case 4:
 		case 3:
-			p->target = FormationDef[p->pos];
+			p->target = FormationDef[p->role];
 			break;
 		case 2:
-			p->target.x = (FormationDef[p->pos].x + FormationAtt[p->pos].x) / 2;
-			p->target.y = (FormationDef[p->pos].y + FormationAtt[p->pos].y) / 2;
+			p->target.x = (FormationDef[p->role].x + FormationAtt[p->role].x) / 2;
+			p->target.y = (FormationDef[p->role].y + FormationAtt[p->role].y) / 2;
 			break;
 		case 1:
 		case 0:
-			p->target = FormationAtt[p->pos];
+			p->target = FormationAtt[p->role];
 			break;
 		};
 	}
@@ -393,74 +384,54 @@ void Player_ComputeTaget(CharaInfo* p, u8 area)
 		case 0:
 		case 1:
 		case 2:
-			p->target.x = 255 - FormationDef[p->pos].x;
-			p->target.y = 383 - FormationDef[p->pos].y;
+			p->target.x = 255 - FormationDef[p->role].x;
+			p->target.y = 383 - FormationDef[p->role].y;
 			break;
 		case 3:
-			p->target.x = 255 - (FormationDef[p->pos].x + FormationAtt[p->pos].x) / 2;
-			p->target.y = 383 - (FormationDef[p->pos].y + FormationAtt[p->pos].y) / 2;
+			p->target.x = 255 - (FormationDef[p->role].x + FormationAtt[p->role].x) / 2;
+			p->target.y = 383 - (FormationDef[p->role].y + FormationAtt[p->role].y) / 2;
 			break;
 		case 4:
 		case 5:
-			p->target.x = 255 - FormationAtt[p->pos].x;
-			p->target.y = 383 - FormationAtt[p->pos].y;
+			p->target.x = 255 - FormationAtt[p->role].x;
+			p->target.y = 383 - FormationAtt[p->role].y;
 			break;
 		};
-
-		/*switch(area)
-		{
-		// case 0:
-		// case 1:
-		default:
-			p->target.x = 255 - FormationDef[p->pos].x;
-			p->target.y = 383 - FormationDef[p->pos].y;
-			break;
-		case 2:
-			p->target.x = 255 - (FormationDef[p->pos].x * 3 + FormationAtt[p->pos].x) / 4;
-			p->target.y = 383 - (FormationDef[p->pos].y * 3 + FormationAtt[p->pos].y) / 4;
-			break;
-		case 3:
-			p->target.x = 255 - (FormationDef[p->pos].x + FormationAtt[p->pos].x) / 2;
-			p->target.y = 383 - (FormationDef[p->pos].y + FormationAtt[p->pos].y) / 2;
-			break;
-		case 4:
-			p->target.x = 255 - (FormationDef[p->pos].x + FormationAtt[p->pos].x * 3) / 4;
-			p->target.y = 383 - (FormationDef[p->pos].y + FormationAtt[p->pos].y * 3) / 4;
-			break;
-		case 5:
-			p->target.x = 255 - FormationAtt[p->pos].x;
-			p->target.y = 383 - FormationAtt[p->pos].y;
-			break;
-		};*/
 	}
+PROFILE_SECTION_END(20, 0);
 }
 
 /// Draw game field
-void DrawField(u16 y) __FASTCALL
+void DrawField()
 {
 	// Field
 	for(u8 j = 0; j < 24; ++j)
 	{
 		u8 col = (j & 1) ? 0xDD : 0xEE;
-		VDP_CommandHMMV(0, (j * 16) + y, 256, 16, col);
+		VDP_CommandHMMV(0, (j * 16), 256, 16, col);
 	}
 	// Lines
-	VDP_CommandHMMV(8,   8 + y, 240, 2, 0xFF); // Top
-	VDP_CommandHMMV(8, (FIELD_SIZE/2 - 1) + y, 240, 2, 0xFF); // Mid
-	VDP_CommandHMMV(8, FIELD_SIZE-8 + y, 240, 2, 0xFF); // Bot
-	VDP_CommandHMMV(8,   8 + y, 2, FIELD_SIZE-16, 0xFF); // Left
-	VDP_CommandHMMV(246, 8 + y, 2, FIELD_SIZE-16, 0xFF); // Right
+	VDP_CommandHMMV(8,   8, 240, 2, 0xFF); // Top
+	VDP_CommandHMMV(8, (FIELD_SIZE/2 - 1), 240, 2, 0xFF); // Mid
+	VDP_CommandHMMV(8, FIELD_SIZE-8, 240, 2, 0xFF); // Bot
+	VDP_CommandHMMV(8,   8, 2, FIELD_SIZE-16, 0xFF); // Left
+	VDP_CommandHMMV(246, 8, 2, FIELD_SIZE-16, 0xFF); // Right
 	// Goal area
-	VDP_CommandHMMV(64,  8 + y, 2,  48, 0xFF);
-	VDP_CommandHMMV(190, 8 + y, 2,  48, 0xFF);
-	VDP_CommandHMMV(64, 56 + y, 128, 2, 0xFF);
+	VDP_CommandHMMV(64,  8, 2,  48, 0xFF);
+	VDP_CommandHMMV(190, 8, 2,  48, 0xFF);
+	VDP_CommandHMMV(64, 56, 128, 2, 0xFF);
 	// Goal area
-	VDP_CommandHMMV(64,  384-56 + y, 2,  48, 0xFF);
-	VDP_CommandHMMV(190, 384-56 + y, 2,  48, 0xFF);
-	VDP_CommandHMMV(64,  384-56 + y, 128, 2, 0xFF);
+	VDP_CommandHMMV(64,  384-56, 2,  48, 0xFF);
+	VDP_CommandHMMV(190, 384-56, 2,  48, 0xFF);
+	VDP_CommandHMMV(64,  384-56, 128, 2, 0xFF);
 	// Circle
-	Draw_Circle(128, 192 + y, 31, 0xF, 0);
-	Draw_Circle(128, 192 + y, 32, 0xF, 0);
+	Draw_Circle(128, 192, 26, 0xF, 0);
+	Draw_Circle(128, 192, 27, 0xF, 0);
+	Draw_Circle(128, 192, 1,  0xF, 0);
+	Draw_Circle(128, 192, 2,  0xF, 0);
+
+	// Copy field in page 2&3
+	VDP_CommandYMMM(0, 0, 512, FIELD_SIZE, 0);
 }
 
 ///
@@ -492,11 +463,11 @@ void InitializeHWSprite()
 	Print_SetFontSprite(g_Font_Carwar, 48, 0);
 	// Score sprites
 	Print_SetSpriteID(SPRITE_Score);
-	Print_SetPosition(2, 2);
+	Print_SetPosition(2, SPRT_TXT_Y);
 	Print_DrawText("3-0");
 	// Timer sprites
 	Print_SetSpriteID(SPRITE_Timer);
-	Print_SetPosition(256-2-5*8, 2);
+	Print_SetPosition(256-2-5*8, SPRT_TXT_Y);
 	Print_DrawText("43:25");
 	
 	// Player selection sprite
@@ -506,217 +477,114 @@ void InitializeHWSprite()
 	// VDP_SetSpriteExUniColor(SPRITE_Player3, 0, 216, 32, 3);
 	// VDP_SetSpriteExUniColor(SPRITE_Player4, 0, 216, 32, 3);
 
-	// Goal (horizontal bar)
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+0,  96, 216/*352*/, 40, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+1, 104, 352, 41, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+2, 112, 352, 41, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+3, 120, 352, 41, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+4, 128, 352, 41, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+5, 136, 352, 41, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+6, 144, 352, 41, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalH+7, 152, 352, 42, 0xF);
+	// // Goal (horizontal bar)
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+0,  96, 216/*352*/, 40, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+1, 104, 352, 41, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+2, 112, 352, 41, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+3, 120, 352, 41, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+4, 128, 352, 41, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+5, 136, 352, 41, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+6, 144, 352, 41, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalH+7, 152, 352, 42, 0xF);
 
-	// Goal (left post)
-	VDP_SetSpriteExUniColor(SPRITE_GoalL+0,  96, 360, 43, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalL+1,  96, 368, 43, 0xF);
+	// // Goal (left post)
+	// VDP_SetSpriteExUniColor(SPRITE_GoalL+0,  96, 360, 43, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalL+1,  96, 368, 43, 0xF);
 
-	// Goal (right post)
-	VDP_SetSpriteExUniColor(SPRITE_GoalR+0, 152, 360, 44, 0xF);
-	VDP_SetSpriteExUniColor(SPRITE_GoalR+1, 152, 368, 44, 0xF);
+	// // Goal (right post)
+	// VDP_SetSpriteExUniColor(SPRITE_GoalR+0, 152, 360, 44, 0xF);
+	// VDP_SetSpriteExUniColor(SPRITE_GoalR+1, 152, 368, 44, 0xF);
 }
 
 ///
 void UpdateHWSprite()
 {
+PROFILE_SECTION_START(30, 0);
+
 	if(g_ScrollOffset != g_PrevScrollOffset)
 	{
 		loop(i, 8)
-			VDP_SetSpritePositionY(SPRITE_Score + i, 2 + g_ScrollOffset);				
+			VDP_SetSpritePositionY(SPRITE_Score + i, SPRT_TXT_Y + g_ScrollOffset);				
 	}
 
-	if((g_PrevScrollOffset < 140) && (g_ScrollOffset >= 140))
-	{
-		VDP_SetSpritePositionY(SPRITE_GoalH+0, 352);
-	}
-	else if((g_PrevScrollOffset >= 140) && (g_ScrollOffset < 140))
-	{
-		VDP_SetSpritePositionY(SPRITE_GoalH+0, 216);
-	}
+	// if((g_PrevScrollOffset < 140) && (g_ScrollOffset >= 140))
+	// {
+		// VDP_SetSpritePositionY(SPRITE_GoalH+0, 352);
+	// }
+	// else if((g_PrevScrollOffset >= 140) && (g_ScrollOffset < 140))
+	// {
+		// VDP_SetSpritePositionY(SPRITE_GoalH+0, 216);
+	// }
+	
+	VDP_SetSpriteExUniColor(31, 128, g_ScrollOffset+32, 64 + g_ElapsFrame, 0xF);
+
+PROFILE_SECTION_END(30, 0);
 }
 
 //-----------------------------------------------------------------------------
+//
 // BITMAP SPRITES
+//
 //-----------------------------------------------------------------------------
-
-///
-void RestaureBG(CharaInfo* p) __FASTCALL
-{
-	// Do restore
-	if(p->drawn)
-	{
-		VDP_CommandHMMM(
-			BACK_X + (p->id * 16),
-			BACK_Y + (16 * g_WritePage), 
-			p->render[0].sprtPos.x,
-			p->render[0].sprtPos.y,
-			p->render[0].sprtSize.x + 2, 
-			p->render[0].sprtSize.y);
-		p->drawn = 0;
-	}
-
-	if(p->id == BALL_ID)
-		g_Ball[g_WritePage] = g_Ball[g_DisplayPage]; // swap player data
-	else
-		g_Chara[g_WritePage][p->id] = g_Chara[g_DisplayPage][p->id]; // swap player data
-}
-
-///
-void ComputeCharaSprite(CharaInfo* p) __FASTCALL
-{
-	const u8* ptr = g_PlayerSprite + g_PlayerSprite_index[p->sprtIdX + (p->sprtIdY << 3)];
-	u8 minX = *ptr >> 4;
-	u8 maxX = *ptr & 0x0F;
-	++ptr;
-	u8 minY = *ptr >> 4;
-	u8 maxY = *ptr & 0x0F;
-
-	p->minX = minX;
-	p->minY = minY;
-	p->render[0].sprtPos.x = p->loc.x + SPRT_OFS_X + minX;
-	p->render[0].sprtPos.y = p->loc.y + SPRT_OFS_Y + (512 * g_WritePage) + minY;
-	p->render[0].sprtSize.x = (maxX - minX + 1);
-	p->render[0].sprtSize.y = (maxY - minY + 1);
-}
-
-void ComputeBallSprite()
-{
-	CharaInfo* p = &g_Ball[g_WritePage];
-	p->render[0].sprtPos.x = p->loc.x - 2;
-	p->render[0].sprtPos.y = p->loc.y - 2;
-	p->render[0].sprtSize.x = 4;
-	p->render[0].sprtSize.y = 4;
-}
-
-///
-void BackupBG(CharaInfo* p) __FASTCALL
-{
-	// Do backup
-	p->visible = 0;
-	//if((p->loc.y + SPRT_OFS_Y + 16 >= g_ScrollOffset) && (p->loc.y + SPRT_OFS_Y <= g_ScrollOffset + LINE_NB))
-	{
-		p->visible = 1;
-		VDP_CommandHMMM(
-			p->render[0].sprtPos.x,
-			p->render[0].sprtPos.y,
-			BACK_X + (p->id * 16), 
-			BACK_Y + (16 * g_WritePage), 
-			p->render[0].sprtSize.x + 2, 
-			p->render[0].sprtSize.y);
-	}
-}
-
-///
-void DrawCharaSprite(CharaInfo* p) __FASTCALL
-{
-	if(p->visible)
-	{
-		// Do draw
-		VDP_CommandLMMM(
-			(TEAM_BMP_X * p->team) + (p->sprtIdX * 16) + p->minX, 
-			TEAM_BMP_Y + (p->sprtIdY * 16) + p->minY, 
-			p->render[0].sprtPos.x,
-			p->render[0].sprtPos.y,
-			p->render[0].sprtSize.x, 
-			p->render[0].sprtSize.y, 
-			VDP_OP_TIMP);
-			
-		p->drawn = 1;
-	}
-}
-
-///
-void DrawBallSprite()
-{
-	CharaInfo* p = &g_Ball[g_WritePage];
-	if(p->visible)
-	{
-		// Do draw
-		VDP_CommandLMMM(
-			BALL_BMP_X + 4 * (g_FrameGP & 0x3), 
-			BALL_BMP_Y, 
-			p->render[0].sprtPos.x,
-			p->render[0].sprtPos.y,
-			p->render[0].sprtSize.x, 
-			p->render[0].sprtSize.y, 
-			VDP_OP_TIMP);
-			
-		p->drawn = 1;
-	}
-}
-
-
-
-
-
-
 
 /// Restaure N-2 frame background if needed
 void Actor_RestaureBG(Actor* a) __FASTCALL
 {
+PROFILE_SECTION_START(40, 0);
+
 	if(a->prevRender.drawn)
 	{
+		u8 dx = a->prevRender.destPos.x;
+		u8 nx = dx + a->prevRender.size.x;
+		dx &= 0xFE;
+		nx -= dx;
+		nx++;
+		nx &= 0xFE;		
+		
 		VDP_CommandHMMM(
 			BACK_X + (a->id * 16),
 			BACK_Y + (16 * g_WritePage), 
-			a->prevRender.destPos.x & 0xFE,
+			dx,
 			a->prevRender.destPos.y,
-			a->prevRender.size.x + 2, // @todo Could be optimized
+			nx, 
 			a->prevRender.size.y);
 	}
 	a->prevRender = a->render;
-}
 
-/// Update actor
-void Actor_Update(Actor* a) __FASTCALL
-{
-	a->pos.x++;
-	a->pos.y++;
-	if(a->pos.y >= 384)
-		a->pos.y = 0;
-
-	a->srcPos.x = BALL_BMP_X + 4 * ((g_FrameGP >> 2) & 0x3);
-	a->srcPos.y = BALL_BMP_Y;
-
-	a->render.destPos.x = a->pos.x;
-	a->render.destPos.y = a->pos.y - 2 + (512 * g_WritePage);
-	a->render.size.x = 4; 
-	a->render.size.y = 4;
-	
-	a->visible = 1;
-
-	u8 row6 = Keyboard_Read(KEY_ROW(KEY_GRAPH));
-	if((row6 & KEY_FLAG(KEY_GRAPH)) == 0)
-		a->visible = 0;
+PROFILE_SECTION_END(40, 0);
 }
 
 /// Backup actor background
 void Actor_Backup(Actor* a) __FASTCALL
 {
+PROFILE_SECTION_START(50, 0);
+
 	if(a->visible)
 	{
+		u8 dx = a->render.destPos.x;
+		u8 nx = dx + a->render.size.x;
+		dx &= 0xFE;
+		nx -= dx;
+		nx++;
+		nx &= 0xFE;
+
 		VDP_CommandHMMM(
-			a->render.destPos.x & 0xFE,
+			dx,
 			a->render.destPos.y,
 			BACK_X + (a->id * 16), 
 			BACK_Y + (16 * g_WritePage), 
-			a->render.size.x + 2,  // @todo Could be optimized
+			nx,
 			a->render.size.y);
 	}
+
+PROFILE_SECTION_END(50, 0);
 }
 
 /// Backup actor background
 void Actor_Draw(Actor* a) __FASTCALL
 {
+PROFILE_SECTION_START(60, 0);
+
 	a->render.drawn = 0;
 	if(a->visible)
 	{
@@ -731,14 +599,305 @@ void Actor_Draw(Actor* a) __FASTCALL
 							
 		a->render.drawn = 1;
 	}
+
+PROFILE_SECTION_END(60, 0);
 }
 
+//-----------------------------------------------------------------------------
+//
+// ACTOR UPDATE
+//
+//-----------------------------------------------------------------------------
+
+///
+void Ball_Reset()
+{
+	PROFILE_SECTION_START(70, 0);
+
+	g_Ball.actor.pos.x = 128;
+	g_Ball.actor.pos.y = FIELD_SIZE/2;
+	g_Ball.speed = 0;
+	g_Ball.owner = null;
+
+	PROFILE_SECTION_END(70, 0);
+}
+
+/// Update actor
+void Ball_Update()
+{
+	PROFILE_SECTION_START(80, 0);
+
+	if(g_Ball.owner == null)
+	{
+		if(g_Ball.speed > 0)
+		{
+			g_Ball.actor.pos.x += ((RunMove[g_Ball.actor.dir].x - 1) * g_Ball.speed) >> 4;
+			g_Ball.actor.pos.y += ((RunMove[g_Ball.actor.dir].y - 1) * g_Ball.speed) >> 4;
+			g_Ball.speed--;
+
+			if(g_Ball.actor.pos.x < 8)
+				Ball_Reset();
+			else if(g_Ball.actor.pos.x > (u8)(255 - 8))
+				Ball_Reset();
+			else if(g_Ball.actor.pos.y < 8)
+				Ball_Reset();
+			else if(g_Ball.actor.pos.y > FIELD_SIZE-8)
+				Ball_Reset();
+		}
+
+		if(g_Ball.speed < (1 << 4))
+		{
+			PlayerActor* p = &g_Players[0];
+			loop(i, TEAM_PLAYERS*2)
+			{
+				u16 sqrDist = GetSqrDistance(&(p->actor.pos), &g_Ball.actor.pos);
+				if(sqrDist < 3*3)
+				{
+					g_Ball.owner = (Actor*)p;
+					p->hasball = true;
+					break;
+				}
+				p++;
+			}
+		}
+	}
+	else
+	{
+		g_Ball.actor.pos.x = g_Ball.owner->pos.x + 4 * (RunMove[g_Ball.owner->dir].x - 1);
+		g_Ball.actor.pos.y = g_Ball.owner->pos.y + 4 * (RunMove[g_Ball.owner->dir].y - 1);
+	}
+	
+	g_Ball.actor.visible = 1;
+
+	PROFILE_SECTION_END(80, 0);
+}
+
+/// Update actor
+void Ball_Prepare(Actor* a) __FASTCALL
+{
+	PROFILE_SECTION_START(90, 0);
+
+	if(a->visible)
+	{
+		a->srcPos.x = BALL_BMP_X + 4 * ((g_FrameCount >> 2) & 0x3);
+		a->srcPos.y = BALL_BMP_Y;
+
+		a->render.destPos.x = a->pos.x - 2;
+		a->render.destPos.y = a->pos.y - 3 + (512 * g_WritePage);
+		a->render.size.x = 4; 
+		a->render.size.y = 4;
+	}
+
+	PROFILE_SECTION_END(90, 0);
+}
+
+/// Update sight information
+void Player_UpdateSight(PlayerActor* p) __FASTCALL
+{
+	PROFILE_SECTION_START(100, 0);
+
+	Team* t = &g_Teams[p->team];
+
+	u16 sqrDist = GetSqrDistance(&(p->actor.pos), &g_Ball.actor.pos);
+	if((sqrDist < t->nearestDist) || (t->nearestDist == 0xFFFF))
+	{
+		t->nearestDist = sqrDist;
+		t->nearestPly = p->actor.id;				
+	}
+
+	PROFILE_SECTION_END(100, 0);
+}
+
+/// Update actor
+void Player_UpdateAction(PlayerActor* p) __FASTCALL
+{
+	PROFILE_SECTION_START(110, 0);
+
+	Actor* a = (Actor*)p;
+	u8 dir = 0;
+	if(a->id == g_Controllers[0].actor) // Input controller
+	{
+PROFILE_SECTION_START(112, 0);
+		if(IS_KEY_PRESSED(g_KeyRow8, KEY_UP))
+			dir |= JOY_INPUT_DIR_UP;
+		else if(IS_KEY_PRESSED(g_KeyRow8, KEY_DOWN))
+			dir |= JOY_INPUT_DIR_DOWN;
+		if(IS_KEY_PRESSED(g_KeyRow8, KEY_RIGHT))
+			dir |= JOY_INPUT_DIR_RIGHT;
+		else if(IS_KEY_PRESSED(g_KeyRow8, KEY_LEFT))
+			dir |= JOY_INPUT_DIR_LEFT;
 
 
+		// Apply movement
+		if(dir != 0)
+		{
+			p->action = ACTION_Run;
+			a->dir = DirToIdx[dir];
+			a->pos.x += RunMove[a->dir].x - 1;
+			a->pos.y += RunMove[a->dir].y - 1;
+		}
+		else
+			p->action = ACTION_Idle;
+PROFILE_SECTION_END(112, 0);
+	}
+	else // AI controller
+	{
+PROFILE_SECTION_START(114, 0);
+		Vector816* t;
+		if(a->id == g_Teams[p->team].nearestPly)
+			t = &g_Ball.actor.pos;
+		else
+		{
+			Player_ComputeTaget(p, g_BallArea);
+			t = &p->target;
+		}
+		
+		//u16 sqrDist = GetSqrDistance(&(a->pos), t);
+		// if (sqrDist > 8*8) // Move
+		{
+			p->action = ACTION_Run;
+			// Turn toward movement
+			if(a->pos.x < t->x)
+				dir += JOY_INPUT_DIR_RIGHT;
+			else if(a->pos.x > t->x)
+				dir += JOY_INPUT_DIR_LEFT;
+			if(a->pos.y > t->y)
+				dir += JOY_INPUT_DIR_UP;
+			else if(a->pos.y < t->y)
+				dir += JOY_INPUT_DIR_DOWN;
+			a->dir = DirToIdx[dir];
+			// Move
+			a->pos.x += RunMove[a->dir].x - 1;
+			a->pos.y += RunMove[a->dir].y - 1;
+		}
+		// else // Idle
+		// {
+			// Vector816* b = &g_Ball.actor.pos;
+			// p->action = ACTION_Idle;
+			// // Turn toward ball
+			// u8 dx = 128 + a->pos.x - b->x;
+			// if(dx < 128 + -MIN_DIFF)
+				// dir += JOY_INPUT_DIR_RIGHT;
+			// else if(dx > 128 + MIN_DIFF)
+				// dir += JOY_INPUT_DIR_LEFT;
+			// u8 dy = 128 + a->pos.y - b->y;
+			// if(dy > 128 + MIN_DIFF)
+				// dir += JOY_INPUT_DIR_UP;
+			// else if(dy < 128 + -MIN_DIFF)
+				// dir += JOY_INPUT_DIR_DOWN;
+			// a->dir = DirToIdx[dir];	
+		// }
+PROFILE_SECTION_END(114, 0);
+	}
+PROFILE_SECTION_START(116, 0);
 
+	// Validate new position
+	if(a->pos.x < 8)
+		a->pos.x = 8;
+	else if(a->pos.x > (u8)(255 - 8))
+		a->pos.x = (u8)(255 - 8);
+	if(a->pos.y < 16)
+		a->pos.y = 16;
+	else if(a->pos.y > FIELD_SIZE-1)
+		a->pos.y = FIELD_SIZE-1;
 
+	if((a->pos.y < g_ScrollOffset) || (a->pos.y - 15 > (g_ScrollOffset + LINE_NB)))
+		a->visible = 0;
+	else
+		a->visible = 1;
 
+	// Compute sprite ID
+	if(p->action == ACTION_Idle)
+		p->sprtId = 0;
+	else //if(p->action == ACTION_Run)
+		p->sprtId = Anim_RunFrames[(g_FrameCount >> 1) & 0x03];
+PROFILE_SECTION_END(116, 0);
 
+	PROFILE_SECTION_END(110, 0);
+}
+
+/// Perpare actor
+void Player_Prepare(PlayerActor* p) __FASTCALL
+{
+	PROFILE_SECTION_START(120, 0);
+
+	Actor* a = (Actor*)p;
+
+	if(a->visible)
+	{
+		const u8* ptr = g_PlayerSprite + g_PlayerSprite_index[p->sprtId + (a->dir << 3)];
+		u8 minX = *ptr >> 4;
+		u8 maxX = *ptr & 0x0F;
+		++ptr;
+		u8 minY = *ptr >> 4;
+		u8 maxY = *ptr & 0x0F;
+
+		a->srcPos.x = minX + (TEAM_BMP_X * p->team) + (16 * p->sprtId);
+		a->srcPos.y = minY + TEAM_BMP_Y + (16 * a->dir);
+
+		a->render.destPos.x = a->pos.x + SPRT_OFS_X + minX;
+		a->render.destPos.y = a->pos.y + SPRT_OFS_Y + minY + (512 * g_WritePage);
+		a->render.size.x = (maxX - minX + 1);
+		a->render.size.y = (maxY - minY + 1);
+	}
+
+	PROFILE_SECTION_END(120, 0);
+}
+
+///
+void UpdateController()
+{
+	PROFILE_SECTION_START(130, 0);
+
+	if(g_Controllers[0].actor != INVALID_ID)
+	{
+		PlayerActor* p = &g_Players[g_Controllers[0].actor];
+		Actor* a = (Actor*)p;
+
+		if(IS_KEY_PRESSED(g_KeyRow8, KEY_SPACE) && !IS_KEY_PRESSED(g_KeyPrevRow8, KEY_SPACE))
+		{
+			if(p->hasball) // shoot
+			{
+				p->hasball = false;
+				g_Ball.actor.dir = a->dir;
+				g_Ball.owner = null;
+				g_Ball.speed = 5 << 4;
+				#if (USE_AUDIO)
+					ayFX_PlayBank(1, 0);
+				#endif
+			}
+			else // tacle
+			{
+				
+			}
+		}
+		else if(IS_KEY_PRESSED(g_KeyRow6, KEY_GRAPH) && !IS_KEY_PRESSED(g_KeyPrevRow6, KEY_GRAPH))
+		{
+			if(p->hasball) // pass
+			{
+				p->hasball = false;
+				g_Ball.actor.dir = a->dir;
+				g_Ball.owner = null;
+				g_Ball.speed = 3 << 4;
+				#if (USE_AUDIO)
+					ayFX_PlayBank(6, 0);
+				#endif
+			}
+			else // player change
+			{
+				g_Controllers[0].actor++;
+				g_Controllers[0].actor %= TEAM_PLAYERS;
+				#if (USE_AUDIO)
+					ayFX_PlayBank(0, 0);
+				#endif
+			}
+		}
+		
+		VDP_SetSpritePosition(SPRITE_Player1, a->pos.x - 2, a->pos.y - 19);
+	}
+
+	PROFILE_SECTION_END(130, 0);
+}
 
 
 //=============================================================================
@@ -762,8 +921,8 @@ void MainLoop()
 	VDP_EnableDisplay(false);
 	
 	// Field
-	DrawField(0);					// Page 0-1
-	DrawField(512);					// Page 2-3
+	DrawField();
+	
 	// Buffer 	
 	VDP_CommandHMMV(0, 384, 256, 128, 0);	// Page 1
 	VDP_CommandHMMV(0, 896, 256, 128, 0);	// Page 3
@@ -811,113 +970,114 @@ void MainLoop()
 	
 	//-------------------------------------------------------------------------
 	// Initialize players
-	for(u8 j = 0; j < 2; ++j)
-	{
-		CharaInfo* p = &g_Chara[j][0];
-		for(u8 i = 0; i < CHARA_NB; ++i)
-		{	
-			p->id = i;
-			p->pos = i % 7;
-			if(i < CHARA_NB / 2)
-			{
-				p->dir = 0;
-				p->team = 0;
-			}
-			else
-			{
-				p->dir = 4;
-				p->team = 1;
-			}
-
-			Player_ComputeTaget(p, 5);
-			p->loc = p->target;
-			
-			p->action = ACTION_Idle;
-			p->hasball = false;
-			p->moving = false;
-			p->display = true;
-			p->nearest = false;
-			p->drawn = 0;
-			p++;
+	PlayerActor* p = g_Players;
+	for(u8 i = 0; i < TEAM_PLAYERS*2; ++i)
+	{		
+		p->role = i % 7;
+		if(i < TEAM_PLAYERS) // Team A (0)
+		{
+			// a->dir = 0;
+			p->team = 0;
 		}
+		else                 // Team B (1)
+		{
+			// a->dir = 4;
+			p->team = 1;
+		}
+		
+		p->action = ACTION_Idle;
+		p->hasball = false;
+		p->moving = false;
 
-		p = &g_Ball[j];
-		p->id = BALL_ID;
-		p->loc.x = 100;
-		p->loc.y = 100;
-		p->display = true;
-		p->drawn = 0;
+		Player_ComputeTaget(p, 5);
+
+		Actor* a = (Actor*)p;
+		a->id = i;
+		a->pos = p->target;
+		a->render.drawn = 0;
+		a->prevRender.drawn = 0;
+
+		p++;
 	}
+
+	// Initialize ball
+	Actor* b = (Actor*)&g_Ball;
+	b->id = BALL_ID;
+	b->render.drawn = 0;
+	b->prevRender.drawn = 0;
+	Ball_Reset();
+	
+	// Initialize controller
+	Controller* ctrP1 = &g_Controllers[0];
+	ctrP1->id = 0;
+	ctrP1->input = INPUT_Keyboard1;
+	ctrP1->actor = 6; // team #0, player #6
 	
 	VDP_SetHBlankLine(HBLANK_LINE);
-	u8 ballArea = 0;
+	g_BallArea = 0;
 	Vector816 ballPosition;
 
-	CharaInfo* p;			
+	// PlayerActor* p;			
+	// Actor* a;			
 	u8 dir;
 		
 	// Initialize hardware sprites
 	InitializeHWSprite();
 
-	// INIT PT3
-	PT3_Init();
-	PT3_SetNoteTable(PT3_NT2);
-	PT3_SetLoop(true);
-	PT3_InitSong(g_Music00);
-	// PT3_Play();
+	#if (USE_AUDIO)
+		// INIT PT3
+		PT3_Init();
+		PT3_SetNoteTable(PT3_NT2);
+		PT3_SetLoop(true);
+		PT3_InitSong(g_Music00);
+		PT3_Play();
+		
+		// INIT ayFX
+		ayFX_InitBank(g_ayfx_bank);
+		ayFX_SetChannel(PSG_CHANNEL_C);
+		ayFX_SetMode(AYFX_MODE_FIXED);
+		ayFX_PlayBank(0, 0);
+	#endif
 	
-	// INIT ayFX
-	ayFX_InitBank(g_ayfx_bank);
-	ayFX_SetChannel(PSG_CHANNEL_C);
-	ayFX_SetMode(AYFX_MODE_FIXED);
-	ayFX_PlayBank(0, 0);
-
 	Bios_SetHookCallback(H_KEYI, InterruptHook);
 	Bios_SetHookCallback(H_TIMI, VBlankHook);
 
 	u8 prevRow6 = 0xFF;
 
 
-	// Actor aBall;
-	// aBall.id = 14;
-	// aBall.pos.x = 100;
-	// aBall.pos.y = 100;
-	// aBall.render.drawn = 0;
-	// aBall.prevRender.drawn = 0;
-
-
 	VDP_EnableDisplay(true);
 	while(1)
 	{
-		//---------------------------------------------------------------------
-		g_VBlank = 0;
-		WaitVBlank();
-		
-		
-		// Actor_RestaureBG(&aBall);
-		// Actor_Update(&aBall);
-		// Actor_Backup(&aBall);
-		// Actor_Draw(&aBall);
-	
-		
-		
-		
+PROFILE_FRAME_START();
 
-		// ballPosition = aBall.pos;
-		ballPosition = g_Chara[g_DisplayPage][g_PlayerChara].loc;
-		ballArea = ballPosition.y >> 6;
+		//---------------------------------------------------------------------
+		g_VSynch = false;
+		WaitVBlank();
+
+		ballPosition = b->pos;
+		g_BallArea = ballPosition.y >> 6;
 		
 		//---------------------------------------------------------------------
 		// SCROLLING
 		//---------------------------------------------------------------------
+PROFILE_SECTION_START(140, 0);
 		
 		// Follow the ball Y position
-		if(ballPosition.y < (LINE_NB / 2))
-			g_ScrollOffset = 0;
-		else if(ballPosition.y > FIELD_SIZE - (LINE_NB / 2))
-			g_ScrollOffset = (u8)(FIELD_SIZE - LINE_NB);
-		else
-			g_ScrollOffset = (u8)ballPosition.y - (LINE_NB / 2);
+		i16 newOffset = ((i16)ballPosition.y - (LINE_NB / 2));
+		if(newOffset < 0)
+			newOffset = 0;
+		else if(newOffset > FIELD_SIZE - LINE_NB)
+			newOffset = FIELD_SIZE - LINE_NB;
+			
+		u8 scrollSpeed = Abs8((i8)(g_ScrollOffset - newOffset));
+		scrollSpeed >>= 3;
+		scrollSpeed++;
+
+		if (g_ScrollOffset > newOffset)
+			g_ScrollOffset -= scrollSpeed;
+		else if (g_ScrollOffset < newOffset)
+			g_ScrollOffset += scrollSpeed;
+
 		// Handle scroll events
 		if((g_PrevScrollOffset < 256 - LINE_NB) && (g_ScrollOffset >= 256 - LINE_NB))
 			VDP_EnableHBlank(true);
@@ -925,160 +1085,115 @@ void MainLoop()
 			VDP_EnableHBlank(false);
 		// Set the screen scrolling offset
 		VDP_SetVerticalOffset(g_ScrollOffset);
-		
+
 		UpdateHWSprite(); // Need to be called before g_PrevScrollOffset = g_ScrollOffset
 				
 		// Backup previous scrolling offset
 		g_PrevScrollOffset = g_ScrollOffset;
 
+PROFILE_SECTION_END(140, 0);
+
 		//---------------------------------------------------------------------
 		// RESTORE BACKGROUND
 		//---------------------------------------------------------------------
-		u8 nearestPly = 0xFF;
-		u16 nearestDist = 0xFFFF;
-		p = &g_Chara[g_WritePage][0];
-		u8 i;		
-		for(i = 0; i < CHARA_NB; ++i)
-		{
-			RestaureBG(p);
-			
-			if(p->team == 1)
-			{
-				u16 sqrDist = GetSqrDistance(&(p->loc), &ballPosition);
-				if((sqrDist < nearestDist) || (nearestDist == 0xFFFF))
-				{
-					nearestDist = sqrDist;
-					nearestPly = i;				
-				}
-			}
-			p->nearest = false;
-			p++;
-		}
-		if(nearestPly != 0xFF)
-			g_Chara[g_WritePage][nearestPly].nearest = true;
+PROFILE_SECTION_START(150, 0);
 
-		// RestaureBG(&g_Ball[g_WritePage]);
+		loop(i, TEAM_PLAYERS*2)
+		{
+			PlayerActor* p = &g_Players[i];
+			
+			Actor_RestaureBG((Actor*)p);
+			Player_UpdateAction(p);
+		}	
 		
-		//---------------------------------------------------------------------
-		// UPDATE PLAYERS & BACKUP BACKGROUND
-		//---------------------------------------------------------------------
-		p = &g_Chara[g_WritePage][0];			
-		for(i = 0; i < CHARA_NB; ++i)
-		{
-			if(i == g_PlayerChara) // controller 1
-			{			
-				// Move & tackle
-				u8 row = Keyboard_Read(KEY_ROW(KEY_DOWN));
-				dir = 0;
-				if((row & KEY_FLAG(KEY_SPACE)) == 0)
-					dir = p->dir;
-				else if((row & KEY_FLAG(KEY_UP)) == 0)
-					dir |= JOY_INPUT_DIR_UP;
-				else if((row & KEY_FLAG(KEY_DOWN)) == 0)
-					dir |= JOY_INPUT_DIR_DOWN;
-				if((row & KEY_FLAG(KEY_RIGHT)) == 0)
-					dir |= JOY_INPUT_DIR_RIGHT;
-				else if((row & KEY_FLAG(KEY_LEFT)) == 0)
-					dir |= JOY_INPUT_DIR_LEFT;
+		Actor_RestaureBG((Actor*)&g_Ball);
+		Ball_Update();
 
-				if(dir != 0)
-				{
-					p->dir = DirToIdx[dir];
-					p->action = ACTION_Run;
-					p->loc.x += RunMove[p->dir].x - 1;
-					p->loc.y += RunMove[p->dir].y - 1;
-				}
-				else
-					p->action = ACTION_Idle;
-			}
-			else // AI
+PROFILE_SECTION_END(150, 0);
+
+		//---------------------------------------------------------------------
+		// UPDATE ACTORS & BACKUP BACKGROUND
+		//---------------------------------------------------------------------
+PROFILE_SECTION_START(160, 0);
+
+		loop(i, TEAM_PLAYERS*2)
+		{
+			PlayerActor* p = &g_Players[i];
+			g_SortedId[i] = i;
+			if(i > 0)
 			{
-				Vector816* t = &ballPosition;
-				if(p->nearest == 0)
+				for(u8 j = i-1; j != 255; --j)
 				{
-					Player_ComputeTaget(p, ballArea);
-					t = &p->target;
-				}
-				
-				u16 sqrD = GetSqrDistance(&(p->loc), t);
-				if (sqrD > 16*16) // Move
-				{
-					p->action = ACTION_Run;
-					// Turn toward movement
-					dir = 0;
-					if(p->loc.x < t->x)
-						dir += JOY_INPUT_DIR_RIGHT;
-					else if(p->loc.x > t->x)
-						dir += JOY_INPUT_DIR_LEFT;
-					if(p->loc.y > t->y)
-						dir += JOY_INPUT_DIR_UP;
-					else if(p->loc.y < t->y)
-						dir += JOY_INPUT_DIR_DOWN;
-					p->dir = DirToIdx[dir];
-					// Move
-					p->loc.x += RunMove[p->dir].x - 1;
-					p->loc.y += RunMove[p->dir].y - 1;
-				}
-				else // Idle
-				{
-					Vector816* b = &ballPosition;
-					p->action = ACTION_Idle;
-					// Turn toward ball
-					dir = 0;
-					u8 dx = 128 + p->loc.x - b->x;
-					if(dx < 128 + -MIN_DIFF)
-						dir += JOY_INPUT_DIR_RIGHT;
-					else if(dx > 128 + MIN_DIFF)
-						dir += JOY_INPUT_DIR_LEFT;
-					u8 dy = 128 + p->loc.y - b->y;
-					if(dy > 128 + MIN_DIFF)
-						dir += JOY_INPUT_DIR_UP;
-					else if(dy < 128 + -MIN_DIFF)
-						dir += JOY_INPUT_DIR_DOWN;
-					p->dir = DirToIdx[dir];
+					PlayerActor* p2 = &g_Players[g_SortedId[j]];
+					if(p->actor.pos.y < p2->actor.pos.y)
+					{
+						g_SortedId[j+1] = g_SortedId[j];
+						g_SortedId[j] = i;
+					}
+					else
+						break;
 				}
 			}
-			if(p->loc.x < 8)
-				p->loc.x = 8;
-			else if(p->loc.x > (u8)(255 - 8))
-				p->loc.x = (u8)(255 - 8);
-			if(p->loc.y < 16)
-				p->loc.y = 16;
-			else if(p->loc.y > FIELD_SIZE-1)
-				p->loc.y = FIELD_SIZE-1;
+			
+			Player_Prepare(p);
+			Actor_Backup((Actor*)p);
+		}	
 		
-			if(p->action == ACTION_Idle)
-				p->sprtIdX = 0;
-			else //if(p->action == ACTION_Run)
-				p->sprtIdX = Anim_RunFrames[(g_Frame >> 1) & 0x03];
-			p->sprtIdY = p->dir;
-			
-			ComputeCharaSprite(p);
-			BackupBG(p);
-			
-			p++;
-		}
+		Ball_Prepare((Actor*)&g_Ball);
+		Actor_Backup((Actor*)&g_Ball);
 
-		// ComputeBallSprite();
-		// BackupBG(&g_Ball[g_WritePage]);
+		g_KeyPrevRow6 = g_KeyRow6;
+		g_KeyRow6 = Keyboard_Read(6); // SHIFT CTRL GRAPH CAPS CODE F1 F2 F3
 
-		// Player change
-		u8 row6 = Keyboard_Read(KEY_ROW(KEY_GRAPH));
-		if(((row6 & KEY_FLAG(KEY_GRAPH)) == 0) && ((prevRow6 & KEY_FLAG(KEY_GRAPH)) != 0))
-		{
-			g_PlayerChara = (g_PlayerChara + 1) % (CHARA_NB / 2);
-			ayFX_PlayBank(0, 0);
-		}
-		prevRow6 = row6;
-			
+		g_KeyPrevRow8 = g_KeyRow8;
+		g_KeyRow8 = Keyboard_Read(8); // SPACE HOME INS DEL LEFT UP DOWN RIGHT
+
+PROFILE_SECTION_END(160, 0);
+
 		//---------------------------------------------------------------------
 		// DRAW PLAYERS
 		//---------------------------------------------------------------------
-		p = &g_Chara[g_WritePage][0];
-		loop(i, CHARA_NB)
+PROFILE_SECTION_START(170, 0);
+
+PROFILE_SECTION_START(200, 0);
+		Actor_Draw((Actor*)&g_Ball);
+PROFILE_SECTION_END(200, 0);
+	
+		loop(t, 2)
 		{
-			DrawCharaSprite(p++);
-		}	
-		//DrawBallSprite();
+			g_Teams[t].nearestPly = 0xFF;
+			g_Teams[t].nearestDist = 0xFFFF;
+		}
+
+PROFILE_SECTION_START(210, 0);
+		loop(i, TEAM_PLAYERS*2)
+		{
+			PlayerActor* p = &g_Players[g_SortedId[i]];			
+			// PlayerActor* p = &g_Players[i];
+			
+			Player_UpdateSight(p);
+			Actor_Draw((Actor*)p);
+		}
+PROFILE_SECTION_END(210, 0);
+
+PROFILE_SECTION_START(220, 0);
+		if(g_ScrollOffset < 10)
+		{
+			VDP_CommandHMMV(128 - GOAL_LENGTH/2+1, 1 + (512 * g_WritePage), 2, 8, 0xFF);
+			VDP_CommandHMMV(128 + GOAL_LENGTH/2-1, 1 + (512 * g_WritePage), 2, 8, 0xFF);
+		}
+		else if(g_ScrollOffset > 144)
+		{
+			VDP_CommandHMMV(128 - GOAL_LENGTH/2+1, 384 - 8 - GOAL_HEIGHT + (512 * g_WritePage), GOAL_LENGTH,  2, 0xFF);
+			VDP_CommandHMMV(128 - GOAL_LENGTH/2+1, 384 - 6 - GOAL_HEIGHT + (512 * g_WritePage), 2, GOAL_HEIGHT-1, 0xFF);
+			VDP_CommandHMMV(128 + GOAL_LENGTH/2-1, 384 - 6 - GOAL_HEIGHT + (512 * g_WritePage), 2, GOAL_HEIGHT-1, 0xFF);
+		}
+PROFILE_SECTION_END(220, 0);
+
+PROFILE_SECTION_END(170, 0);
+		
+		UpdateController();
+
+PROFILE_FRAME_END();
 	}
 }

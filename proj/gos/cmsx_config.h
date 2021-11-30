@@ -120,6 +120,39 @@
 #define PRINT_HEIGHT				PRINT_HEIGHT_8
 
 //-----------------------------------------------------------------------------
+// PRINT MODULE
+//-----------------------------------------------------------------------------
+
+// Print module setting
+#define USE_PRINT_BITMAP			0	// Allow use of Bitmap font (G4-G7)
+#define USE_PRINT_VRAM				0	// Allow use of VRAM stored font (G4-G7)
+#define USE_PRINT_SPRITE			1	// Allow use of Sprite font (G3-G7)
+#define USE_PRINT_TEXT				0	// Allow use of Text font (T1-T2, G1-G3)
+#define USE_PRINT_FX_SHADOW			0	// [Bitmap] Allow use of text shadow
+#define USE_PRINT_FX_OUTLINE		0	// [Bitmap] Allow use of text outline
+#define USE_PRINT_VALIDATOR			0	// Add validator character code
+#define USE_PRINT_UNIT				0	// Display integer type (h: hexadecimal, b: binary)
+#define PRINT_COLOR_NUM				1	// 1 color per line
+// - PRINT_WIDTH_6
+// - PRINT_WIDTH_8
+// - PRINT_WIDTH_X
+#define PRINT_WIDTH					PRINT_WIDTH_8
+// - PRINT_HEIGHT_8
+// - PRINT_HEIGHT_X
+#define PRINT_HEIGHT				PRINT_HEIGHT_8
+
+
+//-----------------------------------------------------------------------------
+// GAME MODULE
+//-----------------------------------------------------------------------------
+
+// Game state setting
+#define USE_GAME_STATE				1
+#define USE_GAME_STATE_TRANSITION	1
+#define USE_GAME_VSYNC				1
+#define USE_GAME_LOOP				0
+
+//-----------------------------------------------------------------------------
 // MSXi MODULE
 //-----------------------------------------------------------------------------
 
@@ -144,3 +177,15 @@
 // - RANDOM_LFSR_LCG_32 ........... Combined LFSR/LCG (32-bit seeds)
 // - RANDOM_XORSHIFT .............. Xorshift RNGs (16-bit seeds)
 #define RANDOM_METHOD				RANDOM_XORSHIFT
+
+
+//-----------------------------------------------------------------------------
+// MISC
+//-----------------------------------------------------------------------------
+
+// Profiler method
+// - PROFILE_DISABLE .............. No profiler
+// - PROFILE_OPENMSX_G ............ Grauw profile script for OpenMSX
+// - PROFILE_OPENMSX_S ............ Salutte profile script for OpenMSX
+#define PROFILE_MODE				PROFILE_OPENMSX_G
+#define PROFILE_LEVEL				10 
