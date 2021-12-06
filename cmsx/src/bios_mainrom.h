@@ -697,7 +697,7 @@ u8 Bios_GetKeyboardMatrix(u8 line) __FASTCALL;
 //=============================================================================
 // MSX 2+
 //=============================================================================
-#if (MSX_VERSION >= MSX_2Plus)
+#if (MSX_VERSION >= MSX_2P)
 
 //-----------------------------------------------------------------------------
 // RDRES	#017A	Read value of I/O port #F4
@@ -707,12 +707,12 @@ u8 Bios_GetKeyboardMatrix(u8 line) __FASTCALL;
 // WRRES	#017D	Write value to I/O port #F4
 #define R_WRRES		0x017D // Write value to I/O port #F4
 
-#endif // (MSX_VERSION >= MSX_2Plus)
+#endif // (MSX_VERSION >= MSX_2P)
 
 //=============================================================================
 // MSX turbo R
 //=============================================================================
-#if (MSX_VERSION == MSX_TurboR)
+#if (MSX_VERSION == MSX_TR)
 
 #define CPU_MODE_Z80		0x00
 #define CPU_MODE_R800_ROM	0x01
@@ -737,5 +737,5 @@ u8 Bios_GetCPUMode();
 // PCMREC	#0189	Records audio using the PCM chip into the specified memory area
 #define R_PCMREC	0x0189 // Records audio using the PCM chip into the specified memory area
 
-#endif // (MSX_VERSION == MSX_TurboR)
+#endif // (MSX_VERSION == MSX_TR)
 

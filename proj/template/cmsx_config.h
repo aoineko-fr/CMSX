@@ -1,9 +1,8 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
-// Library configuration
-//-----------------------------------------------------------------------------
+// ___________________________________________________________________________
+// ██▀█▀██▀▀▀█▀▀███   ▄▄             ▄▄  ▄  
+// █  ▄ █  ███  ███  ██ ▀ ▄█▀▄ ██▀▄ ██ ▀ ▄  ▄▀██ 
+// █  █ █▄ ▀ █  ▀▀█  ▀█▄▀ ▀█▄▀ ██ █ ██▀  ██  ▀██ 
+// ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀──────────────────────────▀▀───────────────────────────────
 #pragma once
 
 //-----------------------------------------------------------------------------
@@ -30,9 +29,9 @@
 // MSX version
 // - MSX_1 ........................ MSX
 // - MSX_2 ........................ MSX 2
-// - MSX_2P ....................... MSX 2+
-// - MSX_TR ....................... MSX Turbo-R
-// TARGET_TYPE is defined by the build tool
+// - MSX_2Plus .................... MSX 2+
+// - MSX_TurboR ................... MSX Turbo-R
+#define MSX_VERSION					MSX_1
 
 //-----------------------------------------------------------------------------
 // BIOS MODULE
@@ -64,26 +63,26 @@
 // VRAM address unit
 // - VDP_VRAM_ADDR_16 ............. Use 16-bits VRAM address (u16 parameter; for VRAM <= 64K)
 // - VDP_VRAM_ADDR_17 ............. Use 17-bits VRAM address (u32 parameter; for VRAM > 64K)
-#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_17
+#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_16
 
 // VDP X/Y units
 // - VDP_UNIT_U8 .................. X and Y use 8-bits values
 // - VDP_UNIT_X16 ................. X use 16-bits and Y use 8-bits values
 // - VDP_UNIT_Y16 ................. X use 8-bits and Y use 16-bits values
 // - VDP_UNIT_U16 ................. X and Y use 16-bits values
-#define VDP_UNIT					VDP_UNIT_U16
+#define VDP_UNIT					VDP_UNIT_U8
 
 // VDP screen modes (additionnal limitations come from the selected MSX_VERSION)
 #define USE_VDP_MODE_T1				1	// MSX1		Screen 0 Width 40
 #define USE_VDP_MODE_MC				1	// MSX1		Screen 3
 #define USE_VDP_MODE_G1				1	// MSX1		Screen 1
 #define USE_VDP_MODE_G2				1	// MSX1		Screen 2
-#define USE_VDP_MODE_T2				1	// MSX2		Screen 0 Width 80
-#define USE_VDP_MODE_G3				1	// MSX2		Screen 4
-#define USE_VDP_MODE_G4				1	// MSX2		Screen 5
-#define USE_VDP_MODE_G5				1	// MSX2		Screen 6
-#define USE_VDP_MODE_G6				1	// MSX2		Screen 7
-#define USE_VDP_MODE_G7				1	// MSX2/2+	Screen 8, 10, 11 & 12
+#define USE_VDP_MODE_T2				0	// MSX2		Screen 0 Width 80
+#define USE_VDP_MODE_G3				0	// MSX2		Screen 4
+#define USE_VDP_MODE_G4				0	// MSX2		Screen 5
+#define USE_VDP_MODE_G5				0	// MSX2		Screen 6
+#define USE_VDP_MODE_G6				0	// MSX2		Screen 7
+#define USE_VDP_MODE_G7				0	// MSX2/2+	Screen 8, 10, 11 & 12
 
 //-----------------------------------------------------------------------------
 // INPUT MODULE
@@ -103,16 +102,15 @@
 //-----------------------------------------------------------------------------
 
 // Print module setting
-#define USE_PRINT_BITMAP			1	// Allow use of Bitmap font (G4-G7)
-#define USE_PRINT_VRAM				1	// Allow use of VRAM stored font (G4-G7)
-#define USE_PRINT_SPRITE			1	// Allow use of Sprite font (G3-G7)
 #define USE_PRINT_TEXT				1	// Allow use of Text font (T1-T2, G1-G3)
-#define USE_PRINT_FX_SHADOW			1	// [Bitmap] Allow use of text shadow
-#define USE_PRINT_FX_OUTLINE		1	// [Bitmap] Allow use of text outline
+#define USE_PRINT_BITMAP			0	// Allow use of Bitmap font (G4-G7)
+#define USE_PRINT_VRAM				0	// Allow use of VRAM stored font (G4-G7)
+#define USE_PRINT_SPRITE			0	// Allow use of Sprite font (G3-G7)
+#define USE_PRINT_FX_SHADOW			0	// [Bitmap] Allow use of text shadow
+#define USE_PRINT_FX_OUTLINE		0	// [Bitmap] Allow use of text outline
 #define USE_PRINT_VALIDATOR			1	// Add validator character code
 #define USE_PRINT_UNIT				1	// Display integer type (h: hexadecimal, b: binary)
-#define PRINT_SKIP_SPACE			0	// Skill space character
-#define PRINT_COLOR_NUM				12	// 1 color per line
+#define PRINT_COLOR_NUM				8	// 1 color per line
 // - PRINT_WIDTH_6
 // - PRINT_WIDTH_8
 // - PRINT_WIDTH_X
@@ -157,7 +155,7 @@
 // - RANDOM_XORSHIFT .............. XOR Shift RNGs (16-bit seeds)
 // - RANDOM_GNU ................... GNU C Library function (16-bit seed)
 // - RANDOM_LINEAR ................ Linear congruential generator
-#define RANDOM_METHOD				RANDOM_XORSHIFT
+#define RANDOM_METHOD				RANDOM_LINEAR
 
 //-----------------------------------------------------------------------------
 // COMPRESS 

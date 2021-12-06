@@ -1746,7 +1746,7 @@ __endasm
 // MSX 2+
 //
 //=============================================================================
-#if (MSX_VERSION >= MSX_2Plus)
+#if (MSX_VERSION >= MSX_2P)
 
 //-----------------------------------------------------------------------------
 // RDRES
@@ -1766,7 +1766,7 @@ __endasm
 // Output   : None
 // Registers: None
 
-#endif // (MSX_VERSION >= MSX_2Plus)
+#endif // (MSX_VERSION >= MSX_2P)
 
 
 //=============================================================================
@@ -1774,7 +1774,7 @@ __endasm
 // MSX turbo R
 //
 //=============================================================================
-#if (MSX_VERSION == MSX_TurboR)
+#if (MSX_VERSION == MSX_TR)
 
 //-----------------------------------------------------------------------------
 // CHGCPU
@@ -1862,7 +1862,7 @@ u8 Bios_GetCPUMode()
 // Output   : Carry flag set when aborted with CTRL-STOP
 // Registers: All
 
-#endif // (MSX_VERSION == MSX_TurboR)
+#endif // (MSX_VERSION == MSX_TR)
 
 
 

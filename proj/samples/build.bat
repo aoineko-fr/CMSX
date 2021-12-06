@@ -22,9 +22,11 @@ set MSXDOS=%ToolsDir%\MSXDOS
 rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
-SET ProjName=%1
-SET ModuleList=bios,vdp,print,input,memory,math,draw,clock,pt3\pt3_player,ayfx\ayfx_player,compress
-REM SET ModuleList=wyz\wyz_player,psg
+SET ProjName=%~n1
+
+rem Get MSX version and modules list
+call %ProjName%.cmd
+
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
 rem  - ROM16	.rom	16KB ROM in page 1 (4000h ~ 7FFFh)
@@ -36,11 +38,14 @@ rem  - ROM48	.rom	48KB ROM in page 0-2 (0000h ~ BFFFh) No direct acces to Main-R
 rem  - DOS		.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOSARG	.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
 set Target=ROM32
+
 rem  Optim:
 rem  - Default
 rem  - Speed
 rem  - Size
 set Optim=Speed
+
+set Verbose=0
 
 rem ***************************************************************************
 rem * BUILD STEPS                                                             *

@@ -1,22 +1,20 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
-#pragma sdcc_hash +
+// ____________________________________________________________________________
+// ██▀█▀██▀▀▀█▀▀███   ▄▄▄                ▄▄       
+// █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
+// █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
+// ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
+//  Draw functiosn sample
 
-#include "core.h"
-#include "color.h"
-#include "input.h"
-#include "print.h"
-#include "vdp.h"
-#include "memory.h"
-#include "bios.h"
-#include "bios_mainrom.h"
-#include "math.h"
-#include "draw.h"
+// #pragma sdcc_hash +
 
-//-----------------------------------------------------------------------------
+//=============================================================================
+// INCLUDES
+//=============================================================================
+#include "cmsx.h"
+
+//=============================================================================
 // DEFINES
+//=============================================================================
 
 // Screen setting
 struct ScreenSetting
@@ -47,42 +45,44 @@ struct DrawData
 	u8 color;
 };
 
-//-----------------------------------------------------------------------------
-// DATA
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
 
 // Fonts
 #include "font\font_cmsx_std0.h"
 #include "font\font_ibm.h"
 
-// Bitmaps
-#include "data\data_bmp_2b.h"
-#include "data\data_bmp_4b.h"
-#include "data\data_bmp_8b.h"
-
-// Screen mode setting index
-u8 g_LMMC2b[16*16];
-u8 g_LMMC4b[16*16];
-
 // Screen mode settings
 const struct ScreenSetting g_Settings[] =
-{ //  Name              Mode              Width BPC Txt   BG    Red   White Gray  Black Font              Data      DataLMMC  Palette 
-	{ "Screen 5 (G4)",	VDP_MODE_SCREEN5, 256,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_CMSX_Std0, g_DataBmp4b, g_LMMC4b, null }, // 0
-	{ "Screen 6 (G5)",	VDP_MODE_SCREEN6, 512,	2,	0xFF, 0xAA, 0x55, 0xFF, 0xAA, 0x55, g_Font_IBM,       g_DataBmp2b, g_LMMC2b, null }, // 1
-	{ "Screen 7 (G6)",	VDP_MODE_SCREEN7, 512,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_IBM,       g_DataBmp4b, g_LMMC4b, null }, // 2
-	{ "Screen 8 (G7)",	VDP_MODE_SCREEN8, 256,	8,	0xFF, 0x47, 0x1C, 0xFF, 0x6D, 0x00, g_Font_CMSX_Std0, g_DataBmp8b, g_DataBmp8b, null }, // 3
+{ //  Name              Mode              Width BPC Txt   BG    Red   White Gray  Black Font              Data  DataLMMC Palette 
+	{ "Screen 5 (G4)",	VDP_MODE_SCREEN5, 256,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_CMSX_Std0, null, null, null }, // 0
+	{ "Screen 6 (G5)",	VDP_MODE_SCREEN6, 512,	2,	0xFF, 0xAA, 0x55, 0xFF, 0xAA, 0x55, g_Font_IBM,       null, null, null }, // 1
+	{ "Screen 7 (G6)",	VDP_MODE_SCREEN7, 512,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_IBM,       null, null, null }, // 2
+	{ "Screen 8 (G7)",	VDP_MODE_SCREEN8, 256,	8,	0xFF, 0x47, 0x1C, 0xFF, 0x6D, 0x00, g_Font_CMSX_Std0, null, null, null }, // 3
 };
 
+// Character animation
 const u8 chrAnim[] = { '|', '\\', '-', '/' };
+
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
 
 // Screen mode setting index
 u8 g_SrcModeIndex;
-static u8 g_VBlank = 0;
-static u8 g_Frame = 0;
+u8 g_VBlank = 0;
+u8 g_Frame = 0;
 
+// Draw data
 struct DrawData g_Data;
 
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
+
 //-----------------------------------------------------------------------------
-//
+/// Generate random data into a given frame
 void RandomizeData(u16 minX, u16 minY)
 {
 	u16 rnd = Math_GetRandom();
@@ -113,7 +113,7 @@ void RandomizeData(u16 minX, u16 minY)
 }
 
 //-----------------------------------------------------------------------------
-//
+// Display screen mode data
 void DisplayPage()
 {
 	const struct ScreenSetting* src = &g_Settings[g_SrcModeIndex];
@@ -142,7 +142,7 @@ void DisplayPage()
 	Print_SetColor(src->Text, src->Background);
 	
 	Print_SetPosition(4, 2);
-	Print_DrawText("DRAW SAMPLE - ");
+	Print_DrawText("MGL - DRAW SAMPLE - ");
 	Print_DrawText(src->Name);
 	Draw_HLine(0, src->Width - 1, 12, src->White, 0);
 	Draw_HLine(0, src->Width - 1, 114, src->White, 0);
@@ -189,12 +189,14 @@ void DisplayPage()
 	Print_DrawText("Circles");
 }
 
+//-----------------------------------------------------------------------------
 /// H_TIMI interrupt hook
 void VBlankHook()
 {
 	g_VBlank = 1;
 }
 
+//-----------------------------------------------------------------------------
 /// Wait for V-Blank period
 void WaitVBlank()
 {
@@ -202,34 +204,15 @@ void WaitVBlank()
 	g_VBlank = 0;
 	g_Frame++;
 }
+
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
+
 //-----------------------------------------------------------------------------
 // Program entry point
 void main()
 {
-	// Precalc
-	for(u16 i = 0; i < 256; ++i)
-	{
-		u8 c, b = g_DataBmp4b[i >> 1];
-		if((i & 0x1) == 0)
-			c = b >> 4;
-		else // if((i & 0x1) == 1)
-			c = b;		
-		g_LMMC4b[i] = c & 0x0F;
-	}
-	for(u16 i = 0; i < 256; ++i)
-	{
-		u8 c, b = g_DataBmp2b[i >> 2];
-		if((i & 0x3) == 0)
-			c = b >> 6;
-		else if((i & 0x3) == 1)
-			c = b >> 4;
-		else if((i & 0x3) == 2)
-			c = b >> 2;
-		else // if((i & 0x3) == 3)
-			c = b;
-		g_LMMC2b[i] = c  & 0x03;
-	}
-
 	// Init	
 	Bios_SetHookCallback(H_TIMI, VBlankHook);
 	g_SrcModeIndex = 3;

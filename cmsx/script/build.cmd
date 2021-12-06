@@ -16,6 +16,11 @@ setlocal EnableDelayedExpansion
 rem ***************************************************************************
 rem * TARGET SETTINGS                                                         *
 rem ***************************************************************************
+if /I %Version%==1	echo » Version: MSX 1
+if /I %Version%==2	echo » Version: MSX 2
+if /I %Version%==2P	echo » Version: MSX 2+
+if /I %Version%==TR	echo » Version: MSX Turbo-R
+
 call %LibDir%\script\target_config.cmd
 
 if defined %ForceDataAddr% do (

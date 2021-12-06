@@ -69,6 +69,9 @@ inline void EnableInterrupt() { __asm__("ei"); }
 /// Disable interruption
 inline void DisableInterrupt() { __asm__("di"); }
 
+/// Disable interruption
+inline void Halt() { __asm__("halt"); }
+
 //-----------------------------------------------------------------------------
 // PEEK & POKE
 //-----------------------------------------------------------------------------

@@ -287,6 +287,20 @@ void VDP_SetModeGraphic2()
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
+/// Clear the VRAM content
+void VDP_ClearVRAM()
+{
+	#if (MSX_VERSION == MSX_1)
+		VDP_FillVRAM(0, 0x0000, 0, 0x4000);  // Clear 16 KB of VRAM
+	#else
+		VDP_FillVRAM(0, 0x0000, 0, 0x8000); // Clear 128 KB of VRAM by 32 KB step
+		VDP_FillVRAM(0, 0x8000, 0, 0x8000);
+		VDP_FillVRAM(0, 0x0000, 1, 0x8000);
+		VDP_FillVRAM(0, 0x8000, 1, 0x8000);
+	#endif
+}
+
+//-----------------------------------------------------------------------------
 /// Write data from RAM to VRAM (16KB VRAM)
 /// @param		src			Source data address in RAM
 /// @param		dest		Destiation address in VRAM (14bits address form 16KB VRAM)
@@ -984,6 +998,7 @@ void VDP_SetPageAlternance(bool enable) __FASTCALL
 // VRAM ACCESS FUNCTIONS
 //
 //-----------------------------------------------------------------------------
+
 #if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
 
 //-----------------------------------------------------------------------------
@@ -1262,11 +1277,11 @@ void VPD_CommandWriteLoop(const u8* addr) __FASTCALL
 //
 //=============================================================================
 
-#if (MSX_VERSION >= MSX_2Plus)
+#if (MSX_VERSION >= MSX_2P)
 
 
 
-#endif // (MSX_VERSION >= MSX_2Plus)
+#endif // (MSX_VERSION >= MSX_2P)
 
 //=============================================================================
 //
@@ -1373,7 +1388,7 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 
 #endif // (MSX_VERSION >= MSX_2)
 
-#if (MSX_VERSION >= MSX_2Plus)
+#if (MSX_VERSION >= MSX_2P)
 
 #if (USE_VDP_MODE_G7)
 	case VDP_MODE_SCREEN10:
@@ -1392,7 +1407,7 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 		return;
 #endif // USE_VDP_MODE_G7
 
-#endif // (MSX_VERSION >= MSX_2Plus)
+#endif // (MSX_VERSION >= MSX_2P)
 	}
 }
 
@@ -1411,7 +1426,7 @@ bool VDP_IsBitmapMode(const u8 mode) __FASTCALL
 /// Get VDP version
 ///	@return					0: TMS9918A, 1: V9938, 2: V9958, x: VDP ID
 /// @note Code by Grauw (http://map.grauw.nl/sources/vdp_detection.php)
-u8 VDP_GetVersion() __naked
+u8 VDP_GetVersion() __naked __sdcccall(0)
 {
 	__asm
 		call	VDP_GetVersionAsm

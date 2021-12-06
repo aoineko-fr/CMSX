@@ -256,11 +256,13 @@ void Print_SetMode(u8 mode) __FASTCALL
 			}
 			break;
 		}
+		#if (USE_VDP_MODE_G4 || USE_VDP_MODE_G5 || USE_VDP_MODE_G6 || USE_VDP_MODE_G7)
 		case PRINT_MODE_BITMAP_TRANS:
 		{
 			g_PrintData.DrawChar = DrawChar_Trans;
 			break;
 		}
+		#endif
 	#endif
 	#if (USE_PRINT_VRAM)
 		case PRINT_MODE_BITMAP_VRAM:
@@ -306,7 +308,7 @@ void Print_SetMode(u8 mode) __FASTCALL
 void Print_SetFont(const u8* font) __FASTCALL
 {
 	if(font == null) // Use Bios font (if any)
-		Print_SetFontEx(8, 8, 6, 8, 0, 255, (const u8*)g_CGTABL);
+		Print_SetFontEx(8, 8, 6, 8, 1, 255, (const u8*)g_CGTABL + 8);
 	else
 		Print_SetFontEx(font[0] >> 4, font[0] & 0x0F, font[1] >> 4, font[1] & 0x0F, font[2], font[3], font+4);
 }
@@ -639,6 +641,7 @@ void DrawChar_2B(u8 chr) __FASTCALL
 }
 #endif // USE_VDP_MODE_G5
 
+#if (USE_VDP_MODE_G4 || USE_VDP_MODE_G5 || USE_VDP_MODE_G6 || USE_VDP_MODE_G7)
 //-----------------------------------------------------------------------------
 ///
 void DrawChar_Trans(u8 chr) __FASTCALL
@@ -723,6 +726,7 @@ void DrawChar_Trans(u8 chr) __FASTCALL
 		g_VDP_Command.DY++;
 	}
 }
+#endif // (USE_VDP_MODE_G4 || USE_VDP_MODE_G5 || USE_VDP_MODE_G6 || USE_VDP_MODE_G7)
 
 #endif // (USE_PRINT_BITMAP)
 
@@ -831,17 +835,20 @@ void DrawChar_VRAM512(u8 chr) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Set the current font and upload it to VRAM
-void Print_SetTextFont(const u8* font, u8 offset)
+void Print_SetTextFont(const u8* fontData, u8 offset)
 {
 	g_PrintData.PatternOffset = offset;
 
 	// Initialize font attributes
-	Print_SetFontEx(8, 8, 1, 1, font[2], font[3], font+4);
+	if(fontData == null) // Use Bios font (if any)
+		Print_SetFontEx(8, 8, 1, 1, 1, 255, (const u8*)g_CGTABL + 8); // @todo Should be [1, 255] to include all characters
+	else
+		Print_SetFontEx(8, 8, 1, 1, fontData[2], fontData[3], fontData+4);
 	Print_Initialize();
 	Print_SetMode(PRINT_MODE_TEXT);
 
 	// Load font data to VRAM
-	const u8* src = font + 4;
+	const u8* src = g_PrintData.FontPatterns;
 	u16 dst = (u16)g_ScreenPatternLow + (offset * 8);
 	VDP_WriteVRAM_64K(src, dst, g_PrintData.CharCount * 8);
 	
@@ -1083,12 +1090,14 @@ void Print_DrawText(const c8* str) __FASTCALL
 {
 	while(*str != 0)
 	{
-		if(*str == ' ')
-			Print_Space();
-		else if(*str == '\t')
+		if(*str == '\t')
 			Print_Tab();
 		else if(*str == '\n')
 			Print_Return();
+	#if (PRINT_SKIP_SPACE)
+		else if(*str == ' ')
+			Print_Space();
+	#endif
 		else
 			Print_DrawChar(*str);
 		str++;

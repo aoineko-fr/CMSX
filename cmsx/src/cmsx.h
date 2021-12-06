@@ -18,3 +18,4 @@
 #include "math.h"
 #include "color.h"
 #include "clock.h"
+#include "compress.h"

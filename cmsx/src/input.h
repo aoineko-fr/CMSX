@@ -69,6 +69,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define IS_KEY_PRESSED(row, key) ((row & KEY_FLAG(key)) == 0)
 #define IS_KEY_RELEASED(row, key) ((row & KEY_FLAG(key)) != 0)
 
+// Row #0 keys
 #define KEY_0			MAKE_KEY(0, 0)
 #define KEY_1			MAKE_KEY(0, 1)
 #define KEY_2			MAKE_KEY(0, 2)
@@ -77,25 +78,25 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_5			MAKE_KEY(0, 5)
 #define KEY_6			MAKE_KEY(0, 6)
 #define KEY_7			MAKE_KEY(0, 7)
-
+// Row #1 keys
 #define KEY_8			MAKE_KEY(1, 0)
 #define KEY_9			MAKE_KEY(1, 1)
-#define KEY_1_2			MAKE_KEY(1, 2)
-#define KEY_1_3			MAKE_KEY(1, 3)
-#define KEY_1_4			MAKE_KEY(1, 4)
-#define KEY_1_5			MAKE_KEY(1, 5)
-#define KEY_1_6			MAKE_KEY(1, 6)
-#define KEY_1_7			MAKE_KEY(1, 7)
-
-#define KEY_2_0			MAKE_KEY(2, 0)
-#define KEY_2_1			MAKE_KEY(2, 1)
-#define KEY_2_2			MAKE_KEY(2, 2)
-#define KEY_2_3			MAKE_KEY(2, 3)
-#define KEY_2_4			MAKE_KEY(2, 4)
-#define KEY_2_5			MAKE_KEY(2, 5)
+#define KEY_1_2			MAKE_KEY(1, 2) // Undefined ?
+#define KEY_1_3			MAKE_KEY(1, 3) // Undefined ?
+#define KEY_1_4			MAKE_KEY(1, 4) // Undefined ?
+#define KEY_1_5			MAKE_KEY(1, 5) // Undefined ?
+#define KEY_1_6			MAKE_KEY(1, 6) // Undefined ?
+#define KEY_1_7			MAKE_KEY(1, 7) // Undefined ?
+// Row #2 keys
+#define KEY_2_0			MAKE_KEY(2, 0) // Undefined ?
+#define KEY_2_1			MAKE_KEY(2, 1) // Undefined ?
+#define KEY_2_2			MAKE_KEY(2, 2) // Undefined ?
+#define KEY_2_3			MAKE_KEY(2, 3) // Undefined ?
+#define KEY_2_4			MAKE_KEY(2, 4) // Undefined ?
+#define KEY_2_5			MAKE_KEY(2, 5) // Undefined ?
 #define KEY_A			MAKE_KEY(2, 6)
 #define KEY_B			MAKE_KEY(2, 7)
-
+// Row #3 keys
 #define KEY_C			MAKE_KEY(3, 0)
 #define KEY_D			MAKE_KEY(3, 1)
 #define KEY_E			MAKE_KEY(3, 2)
@@ -104,7 +105,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_H			MAKE_KEY(3, 5)
 #define KEY_I			MAKE_KEY(3, 6)
 #define KEY_J			MAKE_KEY(3, 7)
-
+// Row #4 keys
 #define KEY_K			MAKE_KEY(4, 0)
 #define KEY_L			MAKE_KEY(4, 1)
 #define KEY_M			MAKE_KEY(4, 2)
@@ -113,7 +114,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_P			MAKE_KEY(4, 5)
 #define KEY_Q			MAKE_KEY(4, 6)
 #define KEY_R			MAKE_KEY(4, 7)
-
+// Row #5 keys
 #define KEY_S			MAKE_KEY(5, 0)
 #define KEY_T			MAKE_KEY(5, 1)
 #define KEY_U			MAKE_KEY(5, 2)
@@ -122,7 +123,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_X			MAKE_KEY(5, 5)
 #define KEY_Y			MAKE_KEY(5, 6)
 #define KEY_Z			MAKE_KEY(5, 7)
-
+// Row #6 keys
 #define KEY_SHIFT		MAKE_KEY(6, 0)
 #define KEY_CTRL		MAKE_KEY(6, 1)
 #define KEY_GRAPH		MAKE_KEY(6, 2)
@@ -131,7 +132,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_F1			MAKE_KEY(6, 5)
 #define KEY_F2			MAKE_KEY(6, 6)
 #define KEY_F3			MAKE_KEY(6, 7)
-
+// Row #7 keys
 #define KEY_F4			MAKE_KEY(7, 0)
 #define KEY_F5			MAKE_KEY(7, 1)
 #define KEY_ESC			MAKE_KEY(7, 2)
@@ -140,7 +141,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_BS			MAKE_KEY(7, 5)
 #define KEY_SELECT		MAKE_KEY(7, 6)
 #define KEY_RET			MAKE_KEY(7, 7)
-
+// Row #8 keys
 #define KEY_SPACE		MAKE_KEY(8, 0)
 #define KEY_HOME		MAKE_KEY(8, 1)
 #define KEY_INS			MAKE_KEY(8, 2)
@@ -149,7 +150,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_UP			MAKE_KEY(8, 5)
 #define KEY_DOWN		MAKE_KEY(8, 6)
 #define KEY_RIGHT		MAKE_KEY(8, 7)
-
+// Row #9 keys
 #define KEY_NUM_MUL		MAKE_KEY(9, 0)
 #define KEY_NUM_ADD		MAKE_KEY(9, 1)
 #define KEY_NUM_DIV		MAKE_KEY(9, 2)
@@ -158,7 +159,7 @@ inline u8 Joystick_GetTrigger(u8 port, u8 trigger)
 #define KEY_NUM_2		MAKE_KEY(9, 5)
 #define KEY_NUM_3		MAKE_KEY(9, 6)
 #define KEY_NUM_4		MAKE_KEY(9, 7)
-
+// Row #10 keys
 #define KEY_NUM_5		MAKE_KEY(10, 0)
 #define KEY_NUM_6		MAKE_KEY(10, 1)
 #define KEY_NUM_7		MAKE_KEY(10, 2)
@@ -294,6 +295,13 @@ extern IPM_Data g_IPM;
 
 // Initialize input manager
 void IPM_Initialize(IPM_Config* config);
+
+// Initialize input manager
+inline void IPM_SetTimer(u8 doubleClk, u8 hold)
+{
+	g_IPM.Config.DoubleClickTimer = doubleClk;
+	g_IPM.Config.HoldTimer = hold;
+}
 
 // Update device manager
 void IPM_Update();

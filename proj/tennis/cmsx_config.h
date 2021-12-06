@@ -30,9 +30,9 @@
 // MSX version
 // - MSX_1 ........................ MSX
 // - MSX_2 ........................ MSX 2
-// - MSX_2Plus .................... MSX 2+
-// - MSX_TurboR ................... MSX Turbo-R
-#define MSX_VERSION					MSX_2
+// - MSX_2P ....................... MSX 2+
+// - MSX_TR ....................... MSX Turbo-R
+// MSX_VERSION is defined by the build tool
 
 //-----------------------------------------------------------------------------
 // BIOS MODULE
@@ -62,8 +62,8 @@
 //-----------------------------------------------------------------------------
 
 // VRAM address unit
-// - VDP_VRAM_ADDR_16 ............. Use 16-bits VRAM address (u16)
-// - VDP_VRAM_ADDR_17 ............. Use 17-bits VRAM address (u32)
+// - VDP_VRAM_ADDR_16 ............. Use 16-bits VRAM address (u16 parameter; for VRAM <= 64K)
+// - VDP_VRAM_ADDR_17 ............. Use 17-bits VRAM address (u32 parameter; for VRAM > 64K)
 #define VDP_VRAM_ADDR				VDP_VRAM_ADDR_16
 
 // VDP X/Y units

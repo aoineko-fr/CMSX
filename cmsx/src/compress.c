@@ -57,7 +57,7 @@ u16 UnpackRLEpToRAM(const u8* src, u8* dst RLEP_FIXSIZE_PARAM)
 		else if(type == 2) // Chunk of same 2 bytes
 		{
 			count <<= 1;
-			for(i8 i = 0; i < count; ++i)
+			for(u8 i = 0; i < count; ++i)
 				dst[i] = src[i & 0x1];
 			src += 2;
 		}
@@ -68,7 +68,7 @@ u16 UnpackRLEpToRAM(const u8* src, u8* dst RLEP_FIXSIZE_PARAM)
 		}
 		dst += count;
 	}
-	return (dst - start);
+	return ((u16)dst - start);
 }
 
 #endif // (USE_COMPRESS_RLEP)

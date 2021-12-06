@@ -426,7 +426,7 @@ u16 Math_GetRandom()
 
 #elif (RANDOM_METHOD == RANDOM_LINEAR)
 
-u16 g_RandomSeed = 1;
+u16 g_RandomSeed = 0;
 
 //-----------------------------------------------------------------------------
 /// Initialize random generator seed
@@ -438,7 +438,7 @@ void Math_SetRandomSeed(u16 seed) { g_RandomSeed = seed; }
 u16 Math_GetRandom()
 {
 	g_RandomSeed *= 75; 
-	g_RandomSeed += 74;
+	g_RandomSeed += 0x4321;
 	return g_RandomSeed;
 }
 

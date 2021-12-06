@@ -1,143 +1,143 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
-// Joystick sample program
-//-----------------------------------------------------------------------------
-
-#pragma sdcc_hash +
-
-#include "core.h"
-#include "color.h"
-//#include "video.h"
-#include "bios_main.h"
-#include "print.h"
-#include "input.h"
+// ____________________________________________________________________________
+// ██▀█▀██▀▀▀█▀▀███   ▄▄▄                ▄▄       
+// █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
+// █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
+// ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
+//  Joystick sample program
 
 //=============================================================================
-//
-//   C O D E
-//
+// INCLUDES
 //=============================================================================
+#include "cmsx.h"
 
-void MainLoop();
-
-//-----------------------------------------------------------------------------
-/** Program entry point */
-void main()
-{
-	MainLoop();
-}
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
 
 // Log
-u8 LogX, LogY;
+u8 g_LogX, g_LogY;
 
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
+
+//-----------------------------------------------------------------------------
+/// 
 void JoystickEvent(u8 joy, u8 in, u8 evt)
 {
-	if(LogY >= 24)
+	if(g_LogY >= 24)
 	{
-		for(i8 i = 18; i < 24; i++) // clear
+		for(i8 i = 17; i < 24; i++) // clear
 		{
-			SetPrintPos(1, i);
-			PrintCharX(' ', 40);
+			Print_SetPosition(1, i);
+			Print_DrawCharX(' ', 40);
 		}
-		LogX = 1;
-		LogY = 18;
+		g_LogX = 1;
+		g_LogY = 17;
 	}
 
-	SetPrintPos(LogX, LogY);
-	PrintChar('J');
-	PrintInt(joy);
-	PrintChar('.');
+	Print_SetPosition(g_LogX, g_LogY);
+	Print_DrawChar('J');
+	Print_DrawInt(joy);
+	Print_DrawChar('.');
 	switch(in)
 	{
-	case IPM_INPUT_STICK:    PrintText("S"); break;
-	case IPM_INPUT_BUTTON_A: PrintText("A"); break;
-	case IPM_INPUT_BUTTON_B: PrintText("B"); break;
+	case IPM_INPUT_STICK:    Print_DrawText("S"); break;
+	case IPM_INPUT_BUTTON_A: Print_DrawText("A"); break;
+	case IPM_INPUT_BUTTON_B: Print_DrawText("B"); break;
 	}
-	PrintChar(':');
-	PrintText(IPM_GetEventName(evt));
-	PrintChar(' ');
+	Print_DrawChar(':');
+	Print_DrawText(IPM_GetEventName(evt));
+	Print_DrawChar(' ');
 	
-	LogX = g_CSRX;
-	LogY = g_CSRY;
+	g_LogX = g_PrintData.CursorX;
+	g_LogY = g_PrintData.CursorY;
 
 }
 
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
 
 //-----------------------------------------------------------------------------
-/** Main loop */
-void MainLoop()
+/// Program entry point
+void main()
 {
-	Bios_Beep();
-	
-	g_LINL40 = 40;
-	Bios_ChangeMode(SCREEN_0);
-	Bios_ChangeColor(COLOR_WHITE, COLOR_DARK_BLUE, COLOR_DARK_BLUE);
-	Bios_ClearScreen();
+	// Initialize screen
+	VDP_SetMode(VDP_MODE_SCREEN0);
+	VDP_ClearVRAM();
+	VDP_EnableVBlank(true);
 
-	LogX = 1;
-	LogY = 18;
-
+	// Initialize Input manager
 	IPM_Initialize(null);
+	IPM_SetTimer(4, 6);
 	IPM_RegisterEvent(IPM_DEVICE_JOYSTICK_1, IPM_INPUT_ANY, IPM_EVENT_CLICK, JoystickEvent);
 	IPM_RegisterEvent(IPM_DEVICE_JOYSTICK_1, IPM_INPUT_ANY, IPM_EVENT_HOLD, JoystickEvent);
 	IPM_RegisterEvent(IPM_DEVICE_JOYSTICK_1, IPM_INPUT_ANY, IPM_EVENT_DOUBLE_CLICK, JoystickEvent);
 	IPM_RegisterEvent(IPM_DEVICE_JOYSTICK_1, IPM_INPUT_ANY, IPM_EVENT_DOUBLE_CLICK_HOLD, JoystickEvent);
 
-	PrintBox(1, 1, 40, 3);
+	// Initialize font
+	Print_SetTextFont(PRINT_DEFAULT_FONT, 1);
 
-	SetPrintPos(3, 2);
-	PrintText("JOYSTICK SAMPLE");
+	// Draw static text
+	Print_SetPosition(0, 0);
+	Print_DrawText("MGL - JOYSTICK SAMPLE");
+	Print_SetPosition(0, 1);
+	Print_DrawCharX(0x17, 40);
 
-	PrintLineX(1, 7, 40);
-	SetPrintPos(3, 7);
-	PrintText(" Raw access ");
+	Print_SetPosition(0, 4);
+	Print_DrawCharX(0x17, 40);
+	Print_SetPosition(0, 5);
+	Print_DrawText("Raw access:");
 
-	PrintLineX(1, 13, 40);
-	SetPrintPos(3, 13);
-	PrintText(" JS Manager ");
+	Print_SetPosition(0, 10);
+	Print_DrawCharX(0x17, 40);
+	Print_SetPosition(0, 11);
+	Print_DrawText("JS Manager:");
 
-	// Events
-	SetPrintPos(1, 17);
-	PrintText("\x01\x47""Events log:");
+	Print_SetPosition(0, 15);
+	Print_DrawCharX(0x17, 40);
+	Print_SetPosition(0, 16);
+	Print_DrawText("Events log:");
 	
 	for(i8 joy = 0; joy < 2; joy++)
 	{
 		// ID
-		SetPrintPos(1 + (21 * joy), 5);
-		PrintText("Port#");
-		PrintInt(joy);
+		Print_SetPosition(21 * joy, 3);
+		Print_DrawText("Port#");
+		Print_DrawInt(joy);
 
 		// Raw access
 		// Status
-		SetPrintPos(1 + (21 * joy), 8);
-		PrintText("\x01\x47""Status");
+		Print_SetPosition(21 * joy, 6);
+		Print_DrawText("\7""Status");
 		// Direction
-		SetPrintPos(1 + (21 * joy), 9);
-		PrintText("\x01\x47""Direction");
+		Print_SetPosition(21 * joy, 7);
+		Print_DrawText("\7""Direction");
 		// Trigger A
-		SetPrintPos(1 + (21 * joy), 10);
-		PrintText("\x01\x47""Trig A");
+		Print_SetPosition(21 * joy, 8);
+		Print_DrawText("\7""Trig A");
 		// Trigger B
-		SetPrintPos(1 + (21 * joy), 11);
-		PrintText("\x01\x47""Trig B");
+		Print_SetPosition(21 * joy, 9);
+		Print_DrawText("\7""Trig B");
 
 		// Joystick Manager
 		// Stick
-		SetPrintPos(1 + (21 * joy), 14);
-		PrintText("\x01\x47""Stick");
+		Print_SetPosition(21 * joy, 12);
+		Print_DrawText("\7""Stick");
 		// Button A
-		SetPrintPos(1 + (21 * joy), 15);
-		PrintText("\x01\x47""Button A");
+		Print_SetPosition(21 * joy, 13);
+		Print_DrawText("\7""Button A");
 		// Button B
-		SetPrintPos(1 + (21 * joy), 16);
-		PrintText("\x01\x47""Button B");
+		Print_SetPosition(21 * joy, 14);
+		Print_DrawText("\7""Button B");
 	}
 
-	u8 timer;
-	
-	while(1)
+	g_LogX = 1;
+	g_LogY = 17;
+
+	// Main loop
+	while(!Keyboard_IsKeyPressed(KEY_ESC))
 	{
 		IPM_Update();
 		
@@ -146,95 +146,97 @@ void MainLoop()
 			// Raw access
 			
 			// Status
-			SetPrintPos(12 + (21 * joy), 8);
-			PrintHex8(Joystick_Read((joy == 0) ? JOY_PORT_1 : JOY_PORT_2));
+			Print_SetPosition(12 + (21 * joy), 6);
+			Print_DrawHex8(Joystick_Read((joy == 0) ? JOY_PORT_1 : JOY_PORT_2));
 			// Direction
-			SetPrintPos(12 + (21 * joy), 9);
+			Print_SetPosition(12 + (21 * joy), 7);
 			u8 dir = Joystick_GetDirection((joy == 0) ? JOY_PORT_1 : JOY_PORT_2);
-			PrintInt(dir);
-			PrintChar(' ');
+			Print_DrawInt(dir);
+			Print_DrawChar(' ');
 			// Trigger A
-			SetPrintPos(12 + (21 * joy), 10);
-			PrintInt(Joystick_GetTrigger((joy == 0) ? JOY_PORT_1 : JOY_PORT_2, JOY_INPUT_TRIGGER_A));
+			Print_SetPosition(12 + (21 * joy), 8);
+			Print_DrawInt(Joystick_GetTrigger((joy == 0) ? JOY_PORT_1 : JOY_PORT_2, JOY_INPUT_TRIGGER_A));
 			// Trigger B
-			SetPrintPos(12 + (21 * joy), 11);
-			PrintInt(Joystick_GetTrigger((joy == 0) ? JOY_PORT_1 : JOY_PORT_2, JOY_INPUT_TRIGGER_B));
+			Print_SetPosition(12 + (21 * joy), 9);
+			Print_DrawInt(Joystick_GetTrigger((joy == 0) ? JOY_PORT_1 : JOY_PORT_2, JOY_INPUT_TRIGGER_B));
 
 			// Joystick
-			SetPrintPos(16 + (21 * joy), 9);
-			PrintText("   ");		
-			SetPrintPos(16 + (21 * joy), 10);
-			PrintText(" O ");		
-			SetPrintPos(16 + (21 * joy), 11);
-			PrintText("   ");
+			Print_SetPosition(16 + (21 * joy), 7);
+			Print_DrawText("   ");		
+			Print_SetPosition(16 + (21 * joy), 8);
+			Print_DrawText(" O ");		
+			Print_SetPosition(16 + (21 * joy), 9);
+			Print_DrawText("   ");
 			switch(dir)
 			{
 			case JOY_INPUT_DIR_UP:
-				SetPrintPos(17 + (21 * joy), 9);
-				PrintChar('|');
+				Print_SetPosition(17 + (21 * joy), 7);
+				Print_DrawChar('|');
 				break;
 			case JOY_INPUT_DIR_DOWN:
-				SetPrintPos(17 + (21 * joy), 11);
-				PrintChar('|');
+				Print_SetPosition(17 + (21 * joy), 9);
+				Print_DrawChar('|');
 				break;
 			case JOY_INPUT_DIR_LEFT:
-				SetPrintPos(16 + (21 * joy), 10);
-				PrintChar('-');
+				Print_SetPosition(16 + (21 * joy), 8);
+				Print_DrawChar('-');
 				break;
 			case JOY_INPUT_DIR_RIGHT:
-				SetPrintPos(18 + (21 * joy), 10);
-				PrintChar('-');
+				Print_SetPosition(18 + (21 * joy), 8);
+				Print_DrawChar('-');
 				break;
 			case JOY_INPUT_DIR_UP_RIGTH:
-				SetPrintPos(18 + (21 * joy), 9);
-				PrintChar('/');
+				Print_SetPosition(18 + (21 * joy), 7);
+				Print_DrawChar('/');
 				break;
 			case JOY_INPUT_DIR_UP_LEFT:
-				SetPrintPos(16 + (21 * joy), 9);
-				PrintChar('\\');
+				Print_SetPosition(16 + (21 * joy), 7);
+				Print_DrawChar('\\');
 				break;
 			case JOY_INPUT_DIR_DOWN_RIGTH:
-				SetPrintPos(18 + (21 * joy), 11);
-				PrintChar('\\');
+				Print_SetPosition(18 + (21 * joy), 9);
+				Print_DrawChar('\\');
 				break;
 			case JOY_INPUT_DIR_DOWN_LEFT:
-				SetPrintPos(16 + (21 * joy), 11);
-				PrintChar('/');
+				Print_SetPosition(16 + (21 * joy), 9);
+				Print_DrawChar('/');
 				break;
 			}
 
 			// Stick
-			SetPrintPos(12 + (21 * joy), 14);
-			PrintHex8(IPM_GetStickDirection(joy));
-			SetPrintPos(16 + (21 * joy), 14);
-			timer = IPM_GetInputTimer(joy, IPM_INPUT_STICK);
-			PrintInt(timer);
-			if(timer < 100) PrintChar(' ');
-			if(timer < 10) PrintChar(' ');
+			Print_SetPosition(12 + (21 * joy), 12);
+			Print_DrawHex8(IPM_GetStickDirection(joy));
+			Print_SetPosition(16 + (21 * joy), 12);
+			u8 timer = IPM_GetInputTimer(joy, IPM_INPUT_STICK);
+			Print_DrawInt(timer);
+			if(timer < 100) Print_DrawChar(' ');
+			if(timer < 10) Print_DrawChar(' ');
 			// Button A
-			SetPrintPos(12 + (21 * joy), 15);
+			Print_SetPosition(12 + (21 * joy), 13);
 			switch(IPM_GetInputState(joy, IPM_INPUT_BUTTON_A) & IPM_STATE_PRESSMASK)
 			{
-			case IPM_STATE_OFF:     PrintText("OFF"); break;
-			case IPM_STATE_PRESS:   PrintText("PRE"); break;
-			case IPM_STATE_ON:      PrintText("ON "); break;
-			case IPM_STATE_RELEASE: PrintText("REL"); break;
+			case IPM_STATE_OFF:     Print_DrawText("OFF"); break;
+			case IPM_STATE_PRESS:   Print_DrawText("PRE"); break;
+			case IPM_STATE_ON:      Print_DrawText("ON "); break;
+			case IPM_STATE_RELEASE: Print_DrawText("REL"); break;
 			}
-			SetPrintPos(16 + (21 * joy), 15);
+			Print_SetPosition(16 + (21 * joy), 13);
 			timer = IPM_GetInputTimer(joy, IPM_INPUT_BUTTON_A);
-			PrintInt(timer);
-			if(timer < 100) PrintChar(' ');
-			if(timer < 10) PrintChar(' ');
+			Print_DrawInt(timer);
+			if(timer < 100) Print_DrawChar(' ');
+			if(timer < 10) Print_DrawChar(' ');
 			// Button B
-			SetPrintPos(12 + (21 * joy), 16);
-			PrintText(IPM_GetInputState(joy, IPM_INPUT_BUTTON_B) ? "ON " : "OFF");
-			SetPrintPos(16 + (21 * joy), 16);
+			Print_SetPosition(12 + (21 * joy), 14);
+			Print_DrawText(IPM_GetInputState(joy, IPM_INPUT_BUTTON_B) ? "ON " : "OFF");
+			Print_SetPosition(16 + (21 * joy), 14);
 			timer = IPM_GetInputTimer(joy, IPM_INPUT_BUTTON_B);
-			PrintInt(timer);
-			if(timer < 100) PrintChar(' ');
-			if(timer < 10) PrintChar(' ');
+			Print_DrawInt(timer);
+			if(timer < 100) Print_DrawChar(' ');
+			if(timer < 10) Print_DrawChar(' ');
 		}
 
-		//VDP_WaitRetrace();
+		Halt();
 	}
+
+	Bios_Exit(0);
 }

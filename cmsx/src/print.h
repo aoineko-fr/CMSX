@@ -15,7 +15,7 @@
 enum PRINT_MODE
 {
 	// Bitmap modes (from RAM)
-#if (USE_PRINT_BITMAP)
+#if ((USE_PRINT_BITMAP) || (USE_PRINT_VRAM))
 	PRINT_MODE_BITMAP		= 0,	///< Draw characters from RAM (R-T unpack font data and draw it)
 	PRINT_MODE_BITMAP_TRANS	= 1,	///< Draw characters from RAM with transparency (R-T unpack font data and draw it)
 #endif
@@ -49,7 +49,8 @@ enum PRINT_MODE
 	#define PRINT_H(a) a
 #endif
 
-#define PRINT_TAB_SIZE	24
+#define PRINT_TAB_SIZE		24
+#define PRINT_DEFAULT_FONT	null
 
 // Functions
 typedef void (*print_drawchar)(u8) __FASTCALL; ///< Draw char callback signature
@@ -79,7 +80,7 @@ struct Print_Data
 	u8 BGColor;					///< Background color
 	u8 CharFirst;				///< ASCII code of the first character of the current font
 	u8 CharLast;				///< ASCII code of the last character of the current font
-	u8 CharCount;				///< Characters count
+	u8 CharCount;				///< Characters count (/!\ max is 255)
 	print_drawchar DrawChar;	///< Default function to draw a character (depend of the current mode)
 	u8 SourceMode       : 4;	///< Character display mode : RAM, VRAM or Sprite (@see PRINT_MODE)
 	u16 ScreenWidth;			///< Screen width

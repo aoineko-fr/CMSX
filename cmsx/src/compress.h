@@ -21,7 +21,7 @@
 
 #if (USE_COMPRESS_RLEP_FIXSIZE)
 	#define RLEP_FIXSIZE_PARAM	, u8 size
-	#define RLEP_FIXSIZE_WHILE	while((dst - start) < size)
+	#define RLEP_FIXSIZE_WHILE	while(((u16)dst - start) < size)
 #else
 	#define RLEP_FIXSIZE_PARAM
 	#define RLEP_FIXSIZE_WHILE	while(*src != 0)

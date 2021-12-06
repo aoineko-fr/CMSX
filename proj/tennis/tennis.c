@@ -29,7 +29,7 @@
 // CONFIG
 #define VERSION						"V0.2.19"
 #define DEBUG						1
-#define MSX2_ENHANCE				1
+#define MSX2_ENHANCE				0
 #define MUSIC_ENABLE				0
 #define SFX_ENABLE					0
 #define DISPLAY_CREDITS				1

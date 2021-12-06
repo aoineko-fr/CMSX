@@ -22,14 +22,14 @@ set MSXDOS=%ToolsDir%\MSXDOS
 rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
-SET ProjName=gos
-SET ModuleList=bios,vdp,print,input,memory,math,draw,msxi\msxi_unpack,pt3\pt3_player,ayfx\ayfx_player
+SET ProjName=template
+SET ModuleList=bios,vdp,print,input,memory,math,draw
 rem  Version:
 rem  - 1		MSX 1
 rem  - 2		MSX 2
 rem  - 2P		MSX 2+
 rem  - TR		MSX TurboR
-SET Version=2
+SET Version=1
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
 rem  - ROM16	.rom	16KB ROM in page 1 (4000h ~ 7FFFh)

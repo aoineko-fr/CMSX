@@ -45,7 +45,7 @@
 //  │	│	│	│	│		└────── SI defines the sprite size. Write 1 to use 16x16 sprites, 0 to usinge 8x8 sprites
 //  │	│	│	└───┴────────────── M1-2 are bits are used with M3-5 bits of register 0 to define the VDP screen mode
 //  │	│	└────────────────────── IE0 enables (1) or disable (0) the vertical retrace interrupts that occur at just after each display of the screen (foreground)
-//  │	└────────────────────────── BL disables the screen display when reseted.VDP's commands work a bit faster as well. Screen display is displayed by default
+//  │	└────────────────────────── BL disables the screen display when reseted. VDP's commands work a bit faster as well. Screen display is displayed by default
 //  └────────────────────────────── 4/16K selects VRAM configuration. Write 1 if the VDP is not a V9938 nor V9958
 #define R01_MAG						(0b00000001)
 #define R01_ST						(0b00000010)
@@ -323,7 +323,7 @@
 
 #endif // (MSX_VERSION >= MSX_2)
 
-#if (MSX_VERSION >= MSX_2Plus)
+#if (MSX_VERSION >= MSX_2P)
 //-----------------------------------------------------------------------------
 // R#25
 //-----------------------------------------------------------------------------
@@ -352,7 +352,7 @@
 //						└───┴───┴──	HO0-HO8 bits specify the vertical line number of the screen to place the left most (HO8 bit is only useful if SP2 of register 25 is 1.
 //									In screen 6 and 7, the scrolling will be every two lines.) (These two registers are initially reseted.)
 
-#endif // (MSX_VERSION >= MSX_2Plus)
+#endif // (MSX_VERSION >= MSX_2P)
 
 //-----------------------------------------------------------------------------
 // R#32								Source X low register 

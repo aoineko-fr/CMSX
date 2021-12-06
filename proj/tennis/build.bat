@@ -25,17 +25,23 @@ rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=tennis
 SET ModuleList=vdp,print,input,memory,math,game,pt3\pt3_player,ayfx\ayfx_player
+rem  Version:
+rem  - 1		MSX 1
+rem  - 2		MSX 2
+rem  - 2P		MSX 2+
+rem  - TR		MSX TurboR
+SET Version=1
 rem  Target:
 rem  - BIN			.bin	BASIC binary program (8000h~)
 rem  - ROM16		.rom	see ROM16P1
 rem  - ROM16P1		.rom	16KB ROM in page 1 (4000h ~ 7FFFh)
 rem  - ROM16P2		.rom	16KB ROM in page 2 (8000h ~ BFFFh)
 rem  - ROM32		.rom	see ROM32P1
-rem  - ROM32P0		.rom	32KB ROM in page 0-1 (0000h ~ 7FFFh)
-rem  - ROM32P1		.rom	32KB ROM in page 1-2 (4000h ~ BFFFh)
-rem  - ROM48		.rom	48KB ROM in page 0-2 (0000h ~ BFFFh) No direct acces to Main-ROM
-rem  - ROM48_ISR	.rom	48KB ROM in page 0-2 (0000h ~ BFFFh) With ISR replacement
-rem  - ROM64_ISR	.rom	64KB ROM in page 0-3 (0000h ~ FFFFh) With ISR replacement
+rem  - ROM32P0		.rom	32KB ROM in pages 0-1 (0000h ~ 7FFFh)
+rem  - ROM32P1		.rom	32KB ROM in pages 1-2 (4000h ~ BFFFh)
+rem  - ROM48		.rom	48KB ROM in pages 0-2 (0000h ~ BFFFh) No direct acces to Main-ROM
+rem  - ROM48_ISR	.rom	48KB ROM in pages 0-2 (0000h ~ BFFFh) With ISR replacement
+rem  - ROM64_ISR	.rom	64KB ROM in pages 0-3 (0000h ~ FFFFh) With ISR replacement
 rem  - DOS			.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOSARG		.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
 set Target=ROM48_ISR

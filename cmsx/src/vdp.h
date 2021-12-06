@@ -178,7 +178,7 @@ enum VDP_MODE
 	VDP_MODE_SCREEN9_40 = VDP_MODE_SCREEN9,
 	VDP_MODE_SCREEN9_80,
 #endif
-#if (MSX_VERSION >= MSX_2Plus)
+#if (MSX_VERSION >= MSX_2P)
 	VDP_MODE_SCREEN10,
 	VDP_MODE_SCREEN11,
 	VDP_MODE_SCREEN12,
@@ -213,11 +213,14 @@ enum VDP_VERSION
 /// Set screen mode. @see VDP_MODE
 void VDP_SetMode(const u8 mode) __FASTCALL;
 
-/// Tell if the given screen mode is a bitmap mode (text mode otherwise)
+/// Tell if the given screen mode is a bitmap mode (pattern/text mode otherwise)
 bool VDP_IsBitmapMode(const u8 mode) __FASTCALL;
 
+/// Tell if the given screen mode is a pattern/text mode (bitmap mode otherwise)
+inline bool VDP_IsPatternMode(const u8 mode) { return !VDP_IsBitmapMode(mode); }
+
 /// Get VDP version
-u8 VDP_GetVersion() __naked;
+u8 VDP_GetVersion() __naked __sdcccall(0);
 
 /// Read default S#0 register
 u8 VDP_ReadDefaultStatus();
@@ -225,6 +228,8 @@ u8 VDP_ReadDefaultStatus();
 /// Read a given status register then reset status register to default (0)
 u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 
+/// Clear the VRAM content
+void VDP_ClearVRAM();
 
 /// Write data from RAM to VRAM
 void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count) __sdcccall(0);

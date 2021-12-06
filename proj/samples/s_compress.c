@@ -1,46 +1,76 @@
-//-----------------------------------------------------------------------------
-//  █▀▀ █▀▄▀█ █▀ ▀▄▀
-//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
-//-----------------------------------------------------------------------------
+// ____________________________________________________________________________
+// ██▀█▀██▀▀▀█▀▀███   ▄▄▄                ▄▄       
+// █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
+// █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
+// ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
+//  Uncompress data sample
+
+//=============================================================================
+// INCLUDES
+//=============================================================================
 #include "cmsx.h"
 
-#include "bios.h"
-#include "input.h"
-#include "compress.h"
-#include "memory.h"
+//=============================================================================
+// DEFINES
+//=============================================================================
 
-#include "data/rlep/lvl1.dat.h"
-#include "data/rlep/lvl3.dat.h"
-#include "data/rlep/lvl5.dat.h"
+// Compress type
+enum COMPRESS_TYPE
+{
+	COMPRESS_NONE = 0,
+	COMPRESS_RLEP,
+};
 
-//-----------------------------------------------------------------------------
-// Data
-
-// Fonts
-#include "font\font_cmsx_std0.h"
-// Animation characters
-const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
-
+// Compress data table
 struct Entry
 {
 	const u8* data;
 	const c8* name;
+	const u8  compressId;
 };
 
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
+
+// Sample compressed data
+#include "data/rlep/lvl1.dat.h"
+#include "data/rlep/lvl3.dat.h"
+#include "data/rlep/lvl5.dat.h"
+
+// Fonts
+#include "font\font_cmsx_std0.h"
+
+// Animation characters
+const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
+
+// Compressor name
+const c8* g_CompressorName[] =
+{
+	"None",
+	"RLEp",
+};
+
+// Data entries
 const struct Entry g_Tab[] = 
 { 
-	{ lvl1_dat, "lvl1_dat" },
-	{ lvl3_dat, "lvl3_dat" }, 
-	{ lvl5_dat, "lvl5_dat" },
+	{ lvl1_dat, "lvl1_dat", COMPRESS_RLEP },
+	{ lvl3_dat, "lvl3_dat", COMPRESS_RLEP }, 
+	{ lvl5_dat, "lvl5_dat", COMPRESS_RLEP },
 };
 
-//
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
+
+//-----------------------------------------------------------------------------
+/// Unpack RLEp data and display it on screen
 void DisplayRLEp(const struct Entry* entry)
 {
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 
 	Print_SetPosition(4, 4);
-	Print_DrawText("COMPRESS SAMPLE");
+	Print_DrawText("MGL - COMPRESS SAMPLE");
 	Draw_Box(0, 0, 255, 14, 0x0F, 0);
 	
 	u8* dst = (u8*)Mem_HeapAlloc(72);	
@@ -48,6 +78,9 @@ void DisplayRLEp(const struct Entry* entry)
 	
 	Print_SetPosition(4, 24);
 	Print_DrawText(entry->name);
+	Print_DrawText(" [");
+	Print_DrawText(g_CompressorName[entry->compressId]);
+	Print_DrawText("]");
 
 	for(i8 i = 0; i < 36; ++i)
 	{
@@ -62,6 +95,9 @@ void DisplayRLEp(const struct Entry* entry)
 	Print_DrawInt((i16)size);
 }
 
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Program entry point

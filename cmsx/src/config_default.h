@@ -181,42 +181,72 @@
 // V A L I D A T I O N
 //
 //-----------------------------------------------------------------------------
-#if ((MSX_VERSION == MSX_1) && (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17))
-	#warning VDP_VRAM_ADDR cant be equal to VDP_VRAM_ADDR_17 when MSX1 machine is selected! VDP_VRAM_ADDR_16 will be select instead
-	#undef  VDP_VRAM_ADDR
-	#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_16
-#endif
 
+// Check MSX 1 dependency
+#if (MSX_VERSION == MSX_1)
 
-#if (MSX_VERSION < MSX_2)
+	// Check for MSX1 supported 64K max VRAM size
+	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
+		#warning VDP_VRAM_ADDR cant be equal to VDP_VRAM_ADDR_17 when MSX1 machine is selected! VDP_VRAM_ADDR_16 will be select instead
+		#undef  VDP_VRAM_ADDR
+		#define VDP_VRAM_ADDR			VDP_VRAM_ADDR_16
+	#endif
+
+	// Check for MSX1 supported screen mode
 	#if (USE_VDP_MODE_T2)
 		#warning USE_VDP_MODE_T2 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
 		#undef  USE_VDP_MODE_T2
 		#define USE_VDP_MODE_T2			0
 	#endif
 	#if (USE_VDP_MODE_G3)
-		#warning USE_VDP_MODE_G3 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#warning USE_VDP_MODE_G3 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_G3 will be disable
 		#undef  USE_VDP_MODE_G3
 		#define USE_VDP_MODE_G3			0
 	#endif
 	#if (USE_VDP_MODE_G4)
-		#warning USE_VDP_MODE_G4 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#warning USE_VDP_MODE_G4 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_G4 will be disable
 		#undef  USE_VDP_MODE_G4
 		#define USE_VDP_MODE_G4			0
 	#endif
 	#if (USE_VDP_MODE_G5)
-		#warning USE_VDP_MODE_G5 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#warning USE_VDP_MODE_G5 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_G5 will be disable
 		#undef  USE_VDP_MODE_G5
 		#define USE_VDP_MODE_G5			0
 	#endif
 	#if (USE_VDP_MODE_G6)
-		#warning USE_VDP_MODE_G6 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#warning USE_VDP_MODE_G6 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_G6 will be disable
 		#undef  USE_VDP_MODE_G6
 		#define USE_VDP_MODE_G6			0
 	#endif
 	#if (USE_VDP_MODE_G7)
-		#warning USE_VDP_MODE_G7 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_T2 will be disable
+		#warning USE_VDP_MODE_G7 cant be use when MSX_VERSION < MSX2! USE_VDP_MODE_G7 will be disable
 		#undef  USE_VDP_MODE_G7
 		#define USE_VDP_MODE_G7			0
 	#endif
-#endif
+	#if (USE_PRINT_BITMAP)
+		#warning USE_PRINT_BITMAP cant be use on MSX 1! USE_PRINT_BITMAP will be disable
+		#undef  USE_PRINT_BITMAP
+		#define USE_PRINT_BITMAP		0
+	#endif
+#endif // (MSX_VERSION == MSX_1)
+
+// Check USE_PRINT_BITMAP dependency
+#if(!USE_PRINT_BITMAP)
+	#if(USE_PRINT_VRAM)
+		#warning USE_PRINT_VRAM need USE_PRINT_BITMAP to be set! USE_PRINT_VRAM will be disable
+		#undef  USE_PRINT_VRAM
+		#define USE_PRINT_VRAM			0
+	#endif
+
+	#if(USE_PRINT_FX_SHADOW)
+		#warning USE_PRINT_FX_SHADOW need USE_PRINT_BITMAP to be set! USE_PRINT_FX_SHADOW will be disable
+		#undef  USE_PRINT_FX_SHADOW
+		#define USE_PRINT_FX_SHADOW			0
+	#endif
+
+	#if(USE_PRINT_FX_OUTLINE)
+		#warning USE_PRINT_FX_OUTLINE need USE_PRINT_BITMAP to be set! USE_PRINT_FX_OUTLINE will be disable
+		#undef  USE_PRINT_FX_OUTLINE
+		#define USE_PRINT_FX_OUTLINE			0
+	#endif
+#endif // (!USE_PRINT_BITMAP)
