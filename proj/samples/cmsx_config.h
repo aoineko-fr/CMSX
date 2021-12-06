@@ -109,6 +109,7 @@
 #define USE_PRINT_TEXT				1	// Allow use of Text font (T1-T2, G1-G3)
 #define USE_PRINT_FX_SHADOW			1	// [Bitmap] Allow use of text shadow
 #define USE_PRINT_FX_OUTLINE		1	// [Bitmap] Allow use of text outline
+#define USE_PRINT_GRAPH				1	// Allow use of character lines and boxes
 #define USE_PRINT_VALIDATOR			1	// Add validator character code
 #define USE_PRINT_UNIT				1	// Display integer type (h: hexadecimal, b: binary)
 #define PRINT_SKIP_SPACE			0	// Skill space character
