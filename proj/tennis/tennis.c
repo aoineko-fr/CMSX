@@ -1348,7 +1348,7 @@ void Menu_DisplayItem(u8 item) __FASTCALL
 {
 	// Clean buttom-third
 	u16 dst = g_ScreenLayoutLow + ((MENU_ITEMS_Y + item) * 32);
-	VDP_FillVRAM_64K(0, dst, 32);
+	VDP_FillVRAM_16K(0, dst, 32);
 	
 	// Draw item
 	if(item < g_CurrentMenu->itemNum)
@@ -1633,9 +1633,9 @@ void Menu_Update()
 void LoadMatchData()
 {
 	 // Clear sprite attribute table
-	 VDP_FillVRAM_64K(0x00, g_SpriteAtributeLow, 32*4);
+	 VDP_FillVRAM_16K(0x00, g_SpriteAtributeLow, 32*4);
 	 // Clear sprite patterns table
-	 VDP_FillVRAM_64K(0x00, g_SpritePatternLow, 256*8);
+	 VDP_FillVRAM_16K(0x00, g_SpritePatternLow, 256*8);
 
 	// Load ball sprites
 	{
@@ -1643,7 +1643,7 @@ void LoadMatchData()
 		u16 dst = g_SpritePatternLow + (PATTERN_BALL_LINE1 * 8);
 		for(i8 i = 0; i < 5; ++i)
 		{
-			VDP_WriteVRAM_64K(src, dst, 8);
+			VDP_WriteVRAM_16K(src, dst, 8);
 			src += (1 * 8);
 			dst += (4 * 8);
 		}
@@ -1655,7 +1655,7 @@ void LoadMatchData()
 		u16 dst	= g_SpritePatternLow + (PATTERN_RACKET_R * 8) + 8;
 		for(u8 i = 0; i < 3; ++i)
 		{
-			VDP_WriteVRAM_64K(src, dst, 8);
+			VDP_WriteVRAM_16K(src, dst, 8);
 			src += 8;
 			dst += 8 * 4;
 		}
@@ -1666,17 +1666,17 @@ void LoadMatchData()
 		u16 dst = g_SpritePatternLow + (PATTERN_CURSOR1 * 8);
 		for(u8 i = 0; i < 8 * 2; ++i)
 		{
-			VDP_FillVRAM_64K(0x55, dst + 4 * 8, 1);
-			VDP_FillVRAM_64K(0xAA, dst++, 1);
-			VDP_FillVRAM_64K(0xAA, dst + 4 * 8, 1);
-			VDP_FillVRAM_64K(0x55, dst++, 1);
+			VDP_FillVRAM_16K(0x55, dst + 4 * 8, 1);
+			VDP_FillVRAM_16K(0xAA, dst++, 1);
+			VDP_FillVRAM_16K(0xAA, dst + 4 * 8, 1);
+			VDP_FillVRAM_16K(0x55, dst++, 1);
 		}
 	}
 
 	// Load net sprites
 	{
 		u16 dst = g_SpritePatternLow + (PATTERN_NET1 * 8);
-		VDP_WriteVRAM_64K(g_DataNet, dst, 8 * 4 * 5);
+		VDP_WriteVRAM_16K(g_DataNet, dst, 8 * 4 * 5);
 	}
 	
 	// Load score ball sprites
@@ -1685,7 +1685,7 @@ void LoadMatchData()
 		u16 dst = g_SpritePatternLow + (PATTERN_SERVER_BASE * 8);
 		for(u8 i = 0; i < 4; ++i)
 		{
-			VDP_WriteVRAM_64K(src, dst, 8);
+			VDP_WriteVRAM_16K(src, dst, 8);
 			src += 8;
 			dst += 8 * 4;
 		}
@@ -1697,7 +1697,7 @@ void LoadMatchData()
 		u16 dst = g_SpritePatternLow + (PATTERN_CUP_OUTLINE1 * 8);
 		for(u8 i = 0; i < 6; ++i)
 		{
-			VDP_WriteVRAM_64K(src, dst, 8);
+			VDP_WriteVRAM_16K(src, dst, 8);
 			src += 8;
 			dst += 8 * 2;
 		}
@@ -2516,35 +2516,35 @@ void DrawPlayerBottom()
 
 	src = g_DataPlayer1 + (frame * 224);
 	dst = g_SpritePatternLow + (PATTERN_PLY_BOT_LINE1_H * 8); // Pattern #0 - 20
-	VDP_WriteVRAM_64K(src, dst, 21 * 8);
+	VDP_WriteVRAM_16K(src, dst, 21 * 8);
 	
 	src += 21 * 8;
 	dst += (22 * 8); // Pattern #22
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 	
 	src += 8;
 	dst += (2 * 8); // Pattern #24
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 	
 	src += 8;
 	dst += (2 * 8); // Pattern #26
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #28
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #30
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #32
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #34
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 }
 
 //-----------------------------------------------------------------------------
@@ -2634,35 +2634,35 @@ void DrawPlayerTop() __FASTCALL
 		
 	src = g_DataPlayer2 + (frame * 224);
 	dst = g_SpritePatternLow + ((PATTERN_PLY_TOP_LINE1_H+1) * 8); // Pattern #41
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 	
 	src += 8;
 	dst += (2 * 8); // Pattern #43
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 	
 	src += 8;
 	dst += (2 * 8); // Pattern #45
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 	
 	src += 8;
 	dst += (2 * 8); // Pattern #47
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #49
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #51
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #53
-	VDP_WriteVRAM_64K(src, dst, 8);
+	VDP_WriteVRAM_16K(src, dst, 8);
 
 	src += 8;
 	dst += (2 * 8);  // Pattern #55 - #75
-	VDP_WriteVRAM_64K(src, dst, 21 * 8);
+	VDP_WriteVRAM_16K(src, dst, 21 * 8);
 }
 
 //-----------------------------------------------------------------------------
@@ -2698,22 +2698,22 @@ void UnpackGM2ToVRAM(const u8* src, u16 dst)
 		src++;
 		if(type == 0) // Chunk of zeros
 		{
-			VDP_FillVRAM_64K(0x00, dst + 0x0000, len);
-			VDP_FillVRAM_64K(0x00, dst + 0x0800, len);
-			VDP_FillVRAM_64K(0x00, dst + 0x1000, len);
+			VDP_FillVRAM_16K(0x00, dst + 0x0000, len);
+			VDP_FillVRAM_16K(0x00, dst + 0x0800, len);
+			VDP_FillVRAM_16K(0x00, dst + 0x1000, len);
 		}
 		else if(type == 1) // Chunk of same byte
 		{
-			VDP_FillVRAM_64K(*src, dst + 0x0000, len);
-			VDP_FillVRAM_64K(*src, dst + 0x0800, len);
-			VDP_FillVRAM_64K(*src, dst + 0x1000, len);
+			VDP_FillVRAM_16K(*src, dst + 0x0000, len);
+			VDP_FillVRAM_16K(*src, dst + 0x0800, len);
+			VDP_FillVRAM_16K(*src, dst + 0x1000, len);
 			src++;
 		}
 		else // type == 3 // Chcunk of uncompressed data
 		{
-			VDP_WriteVRAM_64K(src, dst + 0x0000, len);
-			VDP_WriteVRAM_64K(src, dst + 0x0800, len);
-			VDP_WriteVRAM_64K(src, dst + 0x1000, len);
+			VDP_WriteVRAM_16K(src, dst + 0x0000, len);
+			VDP_WriteVRAM_16K(src, dst + 0x0800, len);
+			VDP_WriteVRAM_16K(src, dst + 0x1000, len);
 			src += len;
 		}
 		dst += len;
@@ -2731,16 +2731,16 @@ void UnpackSpriteToVRAM(const u8* src, u16 dst)
 		src++;
 		if(type == 0) // Chunk of zeros
 		{
-			VDP_FillVRAM_64K(0x00, dst, len);
+			VDP_FillVRAM_16K(0x00, dst, len);
 		}
 		else if(type == 1) // Chunk of same byte
 		{
-			VDP_FillVRAM_64K(*src, dst, len);
+			VDP_FillVRAM_16K(*src, dst, len);
 			src++;
 		}
 		else // type == 3 // Chcunk of uncompressed data
 		{
-			VDP_WriteVRAM_64K(src, dst, len);
+			VDP_WriteVRAM_16K(src, dst, len);
 			src += len;
 		}
 		dst += len;
@@ -3090,7 +3090,7 @@ bool Event_WinPoint()
 			u16 dst;
 			const u8* src = g_DataEvent + (g_EventSub * 8 * 8);
 			dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
-			VDP_WriteVRAM_64K(src, dst, 8 * 8);
+			VDP_WriteVRAM_16K(src, dst, 8 * 8);
 			
 			// Display Referee Sprite
 			SetSprite(SPRITE_SCORE_1, 58,    60,   PATTERN_SCORE_A, COLOR_WHITE);
@@ -3119,14 +3119,14 @@ bool Event_WinPoint()
 		// Top Player Score
 		const u8* src = g_DataPoints + (g_Points[1] * 8 * 4);
 		u16 dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
+		VDP_WriteVRAM_16K(src, dst, 8 * 4);		
 		SetSprite(SPRITE_SCORE_1, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_2, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_SHADE);
 		
 		// Top Player Score
 		src = g_DataPoints + (g_Points[0] * 8 * 4);
 		dst	= g_SpritePatternLow + (PATTERN_SCORE_B * 8); // Pattern #116
-		VDP_WriteVRAM_64K(src, dst, 8 * 4);		
+		VDP_WriteVRAM_16K(src, dst, 8 * 4);		
 		SetSprite(SPRITE_SCORE_3, 0, 213, PATTERN_SCORE_B, SCORE_COLOR);
 		SetSprite(SPRITE_SCORE_4, 0, 213, PATTERN_SCORE_B, SCORE_SHADE);
 
@@ -3167,7 +3167,7 @@ bool Event_Default(u8 event)
 		{
 			const u8* src = g_DataEvent + (event * 8 * 8);
 			u16 dst	= g_SpritePatternLow + (PATTERN_SCORE_A * 8); // Pattern #112
-			VDP_WriteVRAM_64K(src, dst, 8 * 8);
+			VDP_WriteVRAM_16K(src, dst, 8 * 8);
 			SetSprite(SPRITE_SCORE_1, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_COLOR);
 			SetSprite(SPRITE_SCORE_2, 0, 213, PATTERN_SCORE_B, VDP_SPRITE_EC | SCORE_COLOR);
 			SetSprite(SPRITE_SCORE_3, 0, 213, PATTERN_SCORE_A, VDP_SPRITE_EC | SCORE_SHADE);
@@ -3179,7 +3179,7 @@ bool Event_Default(u8 event)
 			u8 ctrl = g_Player[g_Winner].control;
 			const u8* src = g_DataPoints + ((5 + ctrl) * 8 * 4); // 5: AI, 6: P1, 7: P2
 			u16 dst	= g_SpritePatternLow + (PATTERN_SCORE_PLY * 8); // Pattern #116
-			VDP_WriteVRAM_64K(src, dst, 8 * 4);
+			VDP_WriteVRAM_16K(src, dst, 8 * 4);
 			SetSprite(SPRITE_SCORE_5, 0, 213, PATTERN_SCORE_PLY, SCORE_COLOR);
 			SetSprite(SPRITE_SCORE_6, 0, 213, PATTERN_SCORE_PLY, SCORE_SHADE);
 		}
@@ -3489,9 +3489,9 @@ bool State_TitleStart()
 	Print_SetTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
 	Print_SetColorShade(g_ColorShadeDefault);
 	u16 dst = (u16)g_ScreenPatternLow + ((OFFSET_TITLE_FONT_DEF - '!' + '_') * 8); // clear '_' character
-	VDP_FillVRAM_64K(0, dst + 0 * 256 * 8, 8);
-	VDP_FillVRAM_64K(0, dst + 1 * 256 * 8, 8);
-	VDP_FillVRAM_64K(0, dst + 2 * 256 * 8, 8);
+	VDP_FillVRAM_16K(0, dst + 0 * 256 * 8, 8);
+	VDP_FillVRAM_16K(0, dst + 1 * 256 * 8, 8);
+	VDP_FillVRAM_16K(0, dst + 2 * 256 * 8, 8);
 
 	Print_SetTextFont(g_DataFont, OFFSET_TITLE_FONT_ALT);
 	Print_SetColorShade(g_ColorShadeSelect);
@@ -3537,16 +3537,16 @@ bool State_TitleUpdate()
 	{	
 		ayFX_PlayBank(13, 0);
 		VDP_SetColor(COLOR_WHITE);
-		VDP_FillVRAM_64K(0x0F, g_ScreenColorLow + (0 * 0x800),  8);
-		VDP_FillVRAM_64K(0x0F, g_ScreenColorLow + (1 * 0x800),  8);
-		VDP_FillVRAM_64K(0x0F, g_ScreenColorLow + (2 * 0x800),  8);
+		VDP_FillVRAM_16K(0x0F, g_ScreenColorLow + (0 * 0x800),  8);
+		VDP_FillVRAM_16K(0x0F, g_ScreenColorLow + (1 * 0x800),  8);
+		VDP_FillVRAM_16K(0x0F, g_ScreenColorLow + (2 * 0x800),  8);
 	}
 	else if(g_EventFrame == 29) // Title
 	{	
 		VDP_SetColor(COLOR_BLACK);
-		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
-		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
-		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
+		VDP_FillVRAM_16K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
+		VDP_FillVRAM_16K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
+		VDP_FillVRAM_16K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
 		GM2_LAYOUT(g_DataLogo_Names, 4, 2, 19, 10);
 	}
 	else if(g_EventFrame == 64) // Title
@@ -3582,9 +3582,9 @@ bool State_TitleUpdate()
 		PT3_Resume();
 
 		VDP_SetColor(COLOR_BLACK);
-		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
-		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
-		VDP_FillVRAM_64K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
+		VDP_FillVRAM_16K(0x01, g_ScreenColorLow + (0 * 0x800),  8);
+		VDP_FillVRAM_16K(0x01, g_ScreenColorLow + (1 * 0x800),  8);
+		VDP_FillVRAM_16K(0x01, g_ScreenColorLow + (2 * 0x800),  8);
 		GM2_LAYOUT(g_DataLogo_Names, 4, 2, 19, 10);
 
 		MoveLogoBall(24 * 8);
@@ -3592,7 +3592,7 @@ bool State_TitleUpdate()
 		Game_SetState(State_MenuStart);
 
 		u16 dst = g_ScreenLayoutLow + (12 * 32);
-		VDP_FillVRAM_64K(0, dst, 12 * 32);
+		VDP_FillVRAM_16K(0, dst, 12 * 32);
 	}
 	return true;
 }

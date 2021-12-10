@@ -61,7 +61,7 @@
 // VDP MODULE
 //-----------------------------------------------------------------------------
 
-// VRAM address unit
+// VRAM addressing unit
 // - VDP_VRAM_ADDR_16 ............. Use 16-bits VRAM address (u16 parameter; for VRAM <= 64K)
 // - VDP_VRAM_ADDR_17 ............. Use 17-bits VRAM address (u32 parameter; for VRAM > 64K)
 #define VDP_VRAM_ADDR				VDP_VRAM_ADDR_17
@@ -103,16 +103,16 @@
 //-----------------------------------------------------------------------------
 
 // Print module setting
+#define USE_PRINT_TEXT				1	// Allow use of Text font (T1-T2, G1-G3)
 #define USE_PRINT_BITMAP			1	// Allow use of Bitmap font (G4-G7)
 #define USE_PRINT_VRAM				1	// Allow use of VRAM stored font (G4-G7)
 #define USE_PRINT_SPRITE			1	// Allow use of Sprite font (G3-G7)
-#define USE_PRINT_TEXT				1	// Allow use of Text font (T1-T2, G1-G3)
 #define USE_PRINT_FX_SHADOW			1	// [Bitmap] Allow use of text shadow
 #define USE_PRINT_FX_OUTLINE		1	// [Bitmap] Allow use of text outline
 #define USE_PRINT_GRAPH				1	// Allow use of character lines and boxes
 #define USE_PRINT_VALIDATOR			1	// Add validator character code
 #define USE_PRINT_UNIT				1	// Display integer type (h: hexadecimal, b: binary)
-#define PRINT_SKIP_SPACE			0	// Skill space character
+#define PRINT_SKIP_SPACE			1	// Skill space character
 #define PRINT_COLOR_NUM				12	// 1 color per line
 // - PRINT_WIDTH_6
 // - PRINT_WIDTH_8

@@ -19,3 +19,4 @@
 #include "color.h"
 #include "clock.h"
 #include "compress.h"
+#include "string.h"

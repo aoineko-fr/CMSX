@@ -107,14 +107,16 @@
 //-----------------------------------------------------------------------------
 
 // Print module setting
+#define USE_PRINT_TEXT				1	// Allow use of Text font (T1-T2, G1-G3)
 #define USE_PRINT_BITMAP			0	// Allow use of Bitmap font (G4-G7)
 #define USE_PRINT_VRAM				0	// Allow use of VRAM stored font (G4-G7)
 #define USE_PRINT_SPRITE			0	// Allow use of Sprite font (G3-G7)
-#define USE_PRINT_TEXT				1	// Allow use of Text font (T1-T2, G1-G3)
 #define USE_PRINT_FX_SHADOW			0	// [Bitmap] Allow use of text shadow
 #define USE_PRINT_FX_OUTLINE		0	// [Bitmap] Allow use of text outline
-#define USE_PRINT_VALIDATOR			0	// Add validator character code
+#define USE_PRINT_GRAPH				0	// Allow use of character lines and boxes
+#define USE_PRINT_VALIDATOR			0	// Add character validator feature
 #define USE_PRINT_UNIT				0	// Display integer type (h: hexadecimal, b: binary)
+#define PRINT_SKIP_SPACE			1	// Skill space character
 #define PRINT_COLOR_NUM				8	// 1 color per line
 // - PRINT_WIDTH_6
 // - PRINT_WIDTH_8

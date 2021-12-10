@@ -41,7 +41,7 @@ void main()
 	u8 count = 0;
 	while(!Keyboard_IsKeyPressed(KEY_ESC))
 	{
-		Print_SetPosition(17, 0);
+		Print_SetPosition(25, 0);
 		Print_DrawChar(g_ChrAnim[count++ % 4]);
 		Halt();
 	}

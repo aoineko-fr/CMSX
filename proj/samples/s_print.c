@@ -3,22 +3,43 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
-#include "core.h"
-#include "color.h"
-#include "input.h"
-#include "print.h"
-#include "vdp.h"
-#include "memory.h"
-#include "bios.h"
-#include "bios_mainrom.h"
-#include "draw.h"
-#include "string.h"
+//  Print text sample
 
-//-----------------------------------------------------------------------------
-// DATA
-//-----------------------------------------------------------------------------
+//=============================================================================
+// INCLUDES
+//=============================================================================
+#include "cmsx.h"
 
-// Inclide font data
+//=============================================================================
+// DEFINES
+//=============================================================================
+
+// Font info
+struct FontEntry
+{
+	const c8* Name;
+	const u8* Font;
+};
+
+// Screen mode info
+struct ModeEntry
+{
+	const c8* Name;
+	const u8  Mode;
+	const u8* Font;
+	const u8  ColorText;
+	const u8  ColorBG;
+	const u8  ColorGray;
+	const u8  ColorAlt;
+	const u8  ColorShade[12];
+	const u8  ColorSprite[12];
+};
+
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
+
+// Include font data
 #include "font/font_cmsx_std0.h"
 #include "font/font_cmsx_symbol1.h"
 #if (TARGET_TYPE != TARGET_TYPE_BIN)
@@ -42,7 +63,7 @@
 // Trigo
 #include "mathtable/mt_trigo_32.inc"
 
-//-----------------------------------------------------------------------------
+//
 const c8* g_SampleText =
 	"\nEquation: (x+7)*42=(10h>>x)^2-3\n"
 	"\"Nous sommes au 21e siecle ; toute la Gaule est occupee par les PC, Mac, Xbox, Switch et autres Playstation..."
@@ -51,19 +72,15 @@ const c8* g_SampleText =
 	"entierement consacre au culte d'un standard fabuleux : le MSX !\"\n"
 	"Bienvenue au MSX Village, le site des irreductibles Gaulois du MSX !";
 
-//-----------------------------------------------------------------------------
+//
 const c8* g_SampleTextShort =
 	"Bienvenue au MSX Village, le site des irreductibles Gaulois du MSX !";
 
+//
 const c8* g_SpriteText = "SPRITE!";
 
-struct FontEntry
-{
-	const c8* Name;
-	const u8* Font;
-};
-
-struct FontEntry g_Fonts[] =
+// Font entries table
+const struct FontEntry g_Fonts[] =
 {
 	{ "Main-ROM [6*8]",			null },
 	{ "C-MSX Standard 0 [6*8]",	g_Font_CMSX_Std0 },
@@ -86,49 +103,53 @@ struct FontEntry g_Fonts[] =
 #endif
 	{ "IBM VGA [8*8]",			g_Font_IBM },
 };
-static u8 g_FontIndex = 0;
 
-struct ModeEntry
+//
+const struct ModeEntry g_Modes[] =
 {
-	const c8* Name;
-	const u8  Mode;
-	const u8* Font;
-	const u8  ColorText;
-	const u8  ColorBG;
-	const u8  ColorGray;
-	const u8  ColorAlt;
-	const u8  ColorShade[12];
-};
-
-struct ModeEntry g_Modes[] =
-{
-	{ "G4", VDP_MODE_GRAPHIC4, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
-	{ "G5", VDP_MODE_GRAPHIC5, g_Font_IBM,       0x3, 0x0, 0x2, 0x2, { 3, 3,  2, 2, 3, 3,  2, 2, 3, 3,  2, 2 } },
-	{ "G6", VDP_MODE_GRAPHIC6, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
+	{ "G4", VDP_MODE_GRAPHIC4, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 }, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
+	{ "G5", VDP_MODE_GRAPHIC5, g_Font_IBM,       0x3, 0x0, 0x2, 0x2, { 3, 3,  2, 2, 3, 3,  2, 2, 3, 3,  2, 2 }, { 15, 15, 10, 10, 15, 15, 10, 10, 15, 15, 10, 10 } },
+	{ "G6", VDP_MODE_GRAPHIC6, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 }, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
 	{ "G7",	VDP_MODE_GRAPHIC7, g_Font_CMSX_Std0, COLOR8_WHITE, COLOR8_BLACK, RGB8(4,4,2), RGB8(6,6,2), 
 		{ COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2, 
 		  COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2, 
-		  COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2 } },
+		  COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2 },
+		  { 12, 12, 4, 4, 12, 12, 4, 4, 12, 12, 4, 4 } },
 };
-static u8 g_ModeIndex = 0;
 
-static u8 g_StartTime = 0;
+// Character animation
+const u8 chrAnim[] = { '|', '\\', '-', '/' };
+
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
+
+u8 g_FontIndex = 0;
+u8 g_ModeIndex = 0;
+u8 g_StartTime = 0;
+
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
 
 //-----------------------------------------------------------------------------
+///
 void PrintHeader()
 {
 	VDP_SetMode(g_Modes[g_ModeIndex].Mode);
 	VDP_SetColor(g_Modes[g_ModeIndex].ColorBG);
 	VDP_EnableSprite(false);
-	
+	VDP_SetSpriteTables(0x1C000, 0x1CA00);
+
 	Print_Initialize();
+	Print_SetColor(0xF, 0x0);
 	Print_Clear();
 	Print_SetTabSize(16);
 
 	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
 	Print_SetFont(g_Modes[g_ModeIndex].Font);
 	Print_SetPosition(0, 0);
-	Print_DrawText("PRINT SAMPLE (");
+	Print_DrawText("MGL - PRINT SAMPLE (");
 	Print_DrawText(g_Modes[g_ModeIndex].Name);
 	Print_DrawText(")\n");
 	Draw_HLine(0, g_PrintData.ScreenWidth - 1, 12, 0xFF, 0);
@@ -137,6 +158,7 @@ void PrintHeader()
 }
 
 //-----------------------------------------------------------------------------
+///
 void PrintFooter()
 {
 	u8 elapsedTime = g_JIFFY - g_StartTime;
@@ -152,11 +174,12 @@ void PrintFooter()
 	Print_SetFont(g_Font_CMSX_Symbol1);
 	Print_DrawChar(60);
 	Print_SetFont(g_Modes[g_ModeIndex].Font);
-	Print_DrawText(" Mode #");
+	Print_DrawText(" Mode  #");
 	Print_DrawInt(elapsedTime);
 }
 
 //-----------------------------------------------------------------------------
+///
 void PrintList()
 {
 	PrintHeader();
@@ -174,6 +197,7 @@ void PrintList()
 }
 
 //-----------------------------------------------------------------------------
+///
 void PrintSample()
 {
 	PrintHeader();
@@ -197,6 +221,7 @@ void PrintSample()
 }
 
 //-----------------------------------------------------------------------------
+///
 void PrintEffect()
 {
 	PrintHeader();
@@ -207,6 +232,7 @@ void PrintEffect()
 
 	Print_SetFont(g_Fonts[g_FontIndex].Font);
 
+	//-------------------------------------------------------------------------
 	// Multi-color
 	Print_SetPosition(0, 40);
 	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
@@ -220,6 +246,7 @@ void PrintEffect()
 	Print_Return();
 	Print_Return();
 
+	//-------------------------------------------------------------------------
 	// Shadow
 	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
 	Print_DrawText("Shadow: ");
@@ -233,6 +260,7 @@ void PrintEffect()
 	Print_Return();
 	Print_Return();
 
+	//-------------------------------------------------------------------------
 	// Outine
 	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
 	Print_DrawText("Outline: ");
@@ -246,6 +274,7 @@ void PrintEffect()
 	Print_Return();
 	Print_Return();
 
+	//-------------------------------------------------------------------------
 	// VRAM font
 	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
 	Print_DrawText("VRAM: ");
@@ -261,23 +290,23 @@ void PrintEffect()
 	Print_Return();
 	Print_Return();
 
+	//-------------------------------------------------------------------------
 	// Sprite font
 	Print_SetMode(PRINT_MODE_BITMAP);
 	Print_SetColor(g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
 
 	Print_DrawText("Sprite: ");
 #if (USE_PRINT_SPRITE)
-	Print_DrawText("Loading...");
 	VDP_EnableSprite(true);
 	VDP_SetSpriteTables(0x1C000, 0x1CA00);
 	VDP_SetSpriteFlag(VDP_SPRITE_SCALE_2);
-	#if (PRINT_COLOR_NUM > 1)
-		Print_SetColorShade(g_Modes[g_ModeIndex].ColorShade);
-	#else
-		Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
-	#endif
+
 	Print_SetFontSprite(g_Fonts[g_FontIndex].Font, 0, 0);
-	Print_Backspace(String_Length("Loading..."));
+	#if (PRINT_COLOR_NUM > 1)
+		Print_SetColorShade(g_Modes[g_ModeIndex].ColorSprite);
+	#else
+		Print_SetColor(g_Modes[g_ModeIndex].ColorSprite[0], 0);
+	#endif	
 	Print_SetCharSize(g_PrintData.UnitX*2, g_PrintData.UnitY*2);
 	Print_SetPosition(64, 180);
 	Print_DrawText(g_SpriteText);
@@ -290,6 +319,7 @@ void PrintEffect()
 }
 
 //-----------------------------------------------------------------------------
+///
 void PrintBenchmark()
 {
 	PrintHeader();
@@ -298,6 +328,7 @@ void PrintBenchmark()
 	Print_DrawText("Font: ");
 	Print_DrawText(g_Fonts[g_FontIndex].Name);
 	
+#if (USE_PRINT_VRAM)
 	////////////////////////
     static const char text1[]="BONJOUR LE FUTUR\n";
     static const char text2[]="ICI LE MSX QUI VOUS PARLE\n";
@@ -322,15 +353,42 @@ void PrintBenchmark()
 	u8 elapsedTime = g_JIFFY - startTime;
 	Print_DrawInt(elapsedTime);
 	////////////////////////
+#endif
 	
 	Print_SetMode(PRINT_MODE_BITMAP);
 	PrintFooter();
 }
 
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
+
+u16 T = 0;
+void F() { T++; }
+
+
 //-----------------------------------------------------------------------------
-// Program entry point
+/// Program entry point
 void main()
 {
+	VDP_SetMode(VDP_MODE_SCREEN0);
+	VDP_ClearVRAM();
+
+	Print_SetTextFont(PRINT_DEFAULT_FONT, 1);
+	Print_DrawText("VRAM: ");
+	switch((g_MODE >> 1) & 0x3)
+	{
+		case 0b00: Print_DrawText("16kB");  break;
+		case 0b01: Print_DrawText("64kB");  break;
+		case 0b10: Print_DrawText("128kB"); break;
+		case 0b11: Print_DrawText("192kB"); break;
+	};
+
+	while(!Keyboard_IsKeyPressed(KEY_ESC))
+	{
+	}
+
+
 	callback cb = PrintList;
 	cb();
 
@@ -400,9 +458,9 @@ void main()
 		}
 
 		Print_SetPosition(g_PrintData.ScreenWidth - 8, 0);
-		static const u8 chrAnim[] = { '|', '\\', '-', '/' };
 		Print_DrawChar(chrAnim[count & 0x03]);
-		
+
+		#if (USE_PRINT_SPRITE)
 		if(cb == PrintEffect)
 		{
 			for(u8 i = 0; i < String_Length(g_SpriteText); ++i)
@@ -410,7 +468,11 @@ void main()
 				VDP_SetSpritePositionY(i, 155 + ((i16)(g_Sinus32[((count >> 2) + i) % 32]) >> 8));
 			}
 		}
+		#endif
+
 		count++;
+		
+		// Halt();
 	}
 
 	Bios_Exit(0);

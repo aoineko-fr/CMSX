@@ -83,9 +83,9 @@ inline void Halt() { __asm__("halt"); }
 //-----------------------------------------------------------------------------
 // Fastcall (__z88dk_fastcall)
 //-----------------------------------------------------------------------------
-// - 8-bit values are passed in L
-// - 16-bit values in HL
-// - 32-bit values in DEHL
+// - 8 bits values are passed in L
+// - 16 bits values in HL
+// - 32 bits values in DEHL
 #define __FASTCALL			__z88dk_fastcall
 // For 8 bits parameter
 #define FC8(a)				(u8)(a)					// L
@@ -100,6 +100,23 @@ inline void Halt() { __asm__("halt"); }
 #define FC8888(a, b, c, d)	(u32)(((u32)(a) << 24) + ((u32)(b) << 16) + ((u16)(c) << 8) + d)	// D, E, H, L
 
 //-----------------------------------------------------------------------------
+// SDCCCall 0 (__sdcccall(0))
+//-----------------------------------------------------------------------------
+#define __SDCCCALL0			__sdcccall(0)
+#define __SDCCCALL1			__sdcccall(1)
+// Return value:
+//	8 bits			A
+//	16 bits			DE
+//	32 bits			HL-DE
+// Parameters value:
+//	8 bits			A
+//	16 bits			HL
+//	32 bits			HL-DE
+//	8 + 8 bits		A + L
+//	8 + 16 bits		A + DE
+//	16 + 16 bits	HL + DE
+
+//-----------------------------------------------------------------------------
 // Bits handling
 //-----------------------------------------------------------------------------
 #define BIT_0	0x01	// LSB
@@ -109,7 +126,7 @@ inline void Halt() { __asm__("halt"); }
 #define BIT_4	0x10
 #define BIT_5	0x20
 #define BIT_6	0x40
-#define BIT_7	0x80	// 8-bits MSB
+#define BIT_7	0x80	// 8 bits MSB
 #define BIT_8	0x0100
 #define BIT_9	0x0200
 #define BIT_10	0x0400
@@ -117,7 +134,7 @@ inline void Halt() { __asm__("halt"); }
 #define BIT_12	0x1000
 #define BIT_13	0x2000
 #define BIT_14	0x4000
-#define BIT_15	0x8000	// 16-bits MSB
+#define BIT_15	0x8000	// 16 bits MSB
 
 #define BIT_SET(val, bit)	val |=  (1 << bit)  	///< Macro to set a given bit in an integer
 #define BIT_CLR(val, bit)	val &= ~(1 << bit)  	///< Macro to clear a given bit in an integer

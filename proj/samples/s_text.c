@@ -67,7 +67,7 @@ void DrawPage()
 		VDP_EnableSprite(false);
 	#endif
 	// Set blank character
-	VDP_FillVRAM_64K(0, g_ScreenPatternLow, 8);
+	VDP_FillVRAM(0, g_ScreenPatternLow, 0, 8);
 	switch(VDP_GetMode())
 	{
 	#if (USE_VDP_MODE_G2)
@@ -77,12 +77,12 @@ void DrawPage()
 		case VDP_MODE_GRAPHIC3:		// GRAPHIC 2 which can use sprite mode 2
 	#endif
 	#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
-		VDP_FillVRAM_64K(0, g_ScreenColorLow, 8);
-		VDP_FillVRAM_64K(0, g_ScreenColorLow + (256 * 8), 8);
-		VDP_FillVRAM_64K(0, g_ScreenColorLow + (512 * 8), 8);
+		VDP_FillVRAM(0, g_ScreenColorLow, 0, 8);
+		VDP_FillVRAM(0, g_ScreenColorLow + (256 * 8), 0, 8);
+		VDP_FillVRAM(0, g_ScreenColorLow + (512 * 8), 0, 8);
 
-		VDP_FillVRAM_64K(0, g_ScreenPatternLow + (256 * 8), 8);
-		VDP_FillVRAM_64K(0, g_ScreenPatternLow + (512 * 8), 8);
+		VDP_FillVRAM(0, g_ScreenPatternLow + (256 * 8), 0, 8);
+		VDP_FillVRAM(0, g_ScreenPatternLow + (512 * 8), 0, 8);
 		break;
 	#endif
 	};

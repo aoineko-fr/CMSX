@@ -54,8 +54,8 @@
 // VDP_VRAM_ADDR
 #ifndef VDP_VRAM_ADDR
 	#if (MSX_VERSION == MSX_1)
-		#warning VDP_VRAM_ADDR is not defined in "cmsx_config.h"! Default value will be used: VDP_VRAM_ADDR_16
-		#define VDP_VRAM_ADDR			VDP_VRAM_ADDR_16
+		#warning VDP_VRAM_ADDR is not defined in "cmsx_config.h"! Default value will be used: VDP_VRAM_ADDR_14
+		#define VDP_VRAM_ADDR			VDP_VRAM_ADDR_14
 	#else
 		#warning VDP_VRAM_ADDR is not defined in "cmsx_config.h"! Default value will be used: VDP_VRAM_ADDR_17
 		#define VDP_VRAM_ADDR			VDP_VRAM_ADDR_17
@@ -122,6 +122,17 @@
 	#warning PRINT_COLOR_NUM is not defined in "cmsx_config.h"! Default value will be used: 1
 	#define PRINT_COLOR_NUM				1
 #endif
+// PRINT_SKIP_SPACE
+#ifndef PRINT_SKIP_SPACE
+	#warning PRINT_SKIP_SPACE is not defined in "cmsx_config.h"! Default value will be used: 0
+	#define PRINT_SKIP_SPACE			0
+#endif
+// USE_PRINT_GRAPH
+#ifndef USE_PRINT_GRAPH
+	#warning USE_PRINT_GRAPH is not defined in "cmsx_config.h"! Default value will be used: 1
+	#define USE_PRINT_GRAPH				1
+#endif
+
 
 //-----------------------------------------------------------------------------
 // GAME MODULE
@@ -187,9 +198,9 @@
 
 	// Check for MSX1 supported 64K max VRAM size
 	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
-		#warning VDP_VRAM_ADDR cant be equal to VDP_VRAM_ADDR_17 when MSX1 machine is selected! VDP_VRAM_ADDR_16 will be select instead
+		#warning VDP_VRAM_ADDR cant be equal to VDP_VRAM_ADDR_17 when MSX1 machine is selected! VDP_VRAM_ADDR_14 will be select instead
 		#undef  VDP_VRAM_ADDR
-		#define VDP_VRAM_ADDR			VDP_VRAM_ADDR_16
+		#define VDP_VRAM_ADDR			VDP_VRAM_ADDR_14
 	#endif
 
 	// Check for MSX1 supported screen mode

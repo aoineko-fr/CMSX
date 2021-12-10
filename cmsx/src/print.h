@@ -227,3 +227,18 @@ void Print_DrawBin8(u8 value) __FASTCALL;
 /// Print a 16-bits signed decimal value
 void Print_DrawInt(i16 value) __FASTCALL;
 
+//-----------------------------------------------------------------------------
+// GRAPH FUNCTION
+//-----------------------------------------------------------------------------
+#if (USE_PRINT_GRAPH)
+
+/// Draw an horizontal line using characters
+void Print_DrawLineH(u8 x, u8 y, u8 len);
+
+/// Draw a vertical line using characters
+void Print_DrawLineV(u8 x, u8 y, u8 len);
+
+/// Draw a box using characters
+void Print_DrawBox(u8 x, u8 y, u8 width, u8 height);
+
+#endif // (USE_PRINT_GRAPH)

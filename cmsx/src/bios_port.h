@@ -90,4 +90,6 @@ __sfr __at(P_PSG_STAT) g_PSG_StatPort;
 // RTC
 
 #define P_RTC_ADDR #0xB4   // RTC address
+__sfr __at(P_RTC_ADDR) g_RTC_AddrPort;
 #define P_RTC_DATA #0xB5   // RTC data
+__sfr __at(P_RTC_DATA) g_RTC_DataPort;

@@ -18,7 +18,7 @@ enum COLOR_BPC
 // DEFAULT 4-BITS MSX PALETTE
 //-----------------------------------------------------------------------------
 
-// Color index
+// 16 colors index
 #define COLOR_TRANSPARENT	0
 #define COLOR_BLACK			1
 #define COLOR_MEDIUM_GREEN	2
@@ -36,7 +36,30 @@ enum COLOR_BPC
 #define COLOR_GRAY			14
 #define COLOR_WHITE			15
 
-#define COLOR_MERGE(f, b)	(u8)((f) << 4 | (b))
+// Merge 2 x 4-bits colors on 1 byte
+#define COLOR_MERGE(a, b)		(u8)((a & 0x0F) << 4 | (b & 0x0F))
+#define COLOR_MERGE_4B			COLOR_MERGE
+
+// Sprite GM7 palette                   G R B
+#define COLOR_S7_BLACK			0	// (0,0,0)
+#define COLOR_S7_DARK_BLUE		1	// (0,0,2)
+#define COLOR_S7_DARK_RED		2	// (0,3,0)
+#define COLOR_S7_DARK_MAGENTA	3	// (0,3,2)
+#define COLOR_S7_DARK_GREEN		4	// (3,0,0)
+#define COLOR_S7_DARK_CYAN		5	// (3,0,2)
+#define COLOR_S7_DARK_YELLOW	6	// (3,3,0)
+#define COLOR_S7_GRAY			7	// (3,3,2)
+#define COLOR_S7_ORANGE			8	// (4,7,2)
+#define COLOR_S7_BLUE			9	// (0,0,7)
+#define COLOR_S7_RED			10	// (0,7,0)
+#define COLOR_S7_MAGENTA		11	// (0,7,7)
+#define COLOR_S7_GREEN			12	// (7,0,0)
+#define COLOR_S7_CYAN			13	// (7,0,7)
+#define COLOR_S7_YELLOW			14	// (7,7,0)
+#define COLOR_S7_WHITE			15	// (7,7,7)
+
+// Merge 4 x 2-bits colors on 1 byte (for GM5)
+#define COLOR_MERGE_2B(a, b, c, d)	(u8)((a & 0x03) << 6 | (b & 0x03) << 4 | (c & 0x03) << 2 | (d & 0x03))
 
 //-----------------------------------------------------------------------------
 // 8-BITS RGB COLORS

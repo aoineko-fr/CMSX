@@ -11,12 +11,7 @@
 //_____________________________________________________________________________
 #pragma once
 #include "core.h"
-
-#define RTC_PORT_ADDR		0xB4
-#define RTC_PORT_DATA		0xB5
-
-__sfr __at(RTC_PORT_ADDR) g_RTC_AddrPort;
-__sfr __at(RTC_PORT_DATA) g_RTC_DataPort;
+#include "bios_port.h"
 
 #define RTC_REG_MODE		0xD // Mode Register
 #define RTC_REG_TEST		0xE // Test Register (write only)

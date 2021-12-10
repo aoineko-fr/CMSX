@@ -291,12 +291,12 @@ void VDP_SetModeGraphic2()
 void VDP_ClearVRAM()
 {
 	#if (MSX_VERSION == MSX_1)
-		VDP_FillVRAM(0, 0x0000, 0, 0x4000);  // Clear 16 KB of VRAM
+		VDP_FillVRAM_16K(0, 0x0000, 0x4000);  // Clear 16 KB of VRAM
 	#else
-		VDP_FillVRAM(0, 0x0000, 0, 0x8000); // Clear 128 KB of VRAM by 32 KB step
-		VDP_FillVRAM(0, 0x8000, 0, 0x8000);
-		VDP_FillVRAM(0, 0x0000, 1, 0x8000);
-		VDP_FillVRAM(0, 0x8000, 1, 0x8000);
+		VDP_FillVRAM(0, 0x0000, 0, 0x8000); // Clear VRAM by 32 KB step
+		VDP_FillVRAM(0, 0x8000, 0, 0x8000); // Clear VRAM by 32 KB step
+		VDP_FillVRAM(0, 0x0000, 1, 0x8000); // Clear VRAM by 32 KB step
+		VDP_FillVRAM(0, 0x8000, 1, 0x8000); // Clear VRAM by 32 KB step
 	#endif
 }
 
@@ -305,8 +305,11 @@ void VDP_ClearVRAM()
 /// @param		src			Source data address in RAM
 /// @param		dest		Destiation address in VRAM (14bits address form 16KB VRAM)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count) __sdcccall(0)
+void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count) __sdcccall(0)
 {
+	#if (MSX_VERSION > MSX_1)
+		VDP_RegWrite(14, 0); // VDP register 14 must be reset to 0
+	#endif
 	src, dest, count;
 	__asm
 		push	ix
@@ -317,7 +320,7 @@ void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count) __sdcccall(0)
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF)
 		ld		a, 7 (ix)
-		and		a, #0x3f
+		and		a, #0x3F
 		add		a, #F_VDP_WRIT
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT
@@ -373,10 +376,13 @@ void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count) __sdcccall(0)
 //-----------------------------------------------------------------------------
 /// Fill VRAM area with a given value
 /// @param		value		Byte value to copy in VRAM
-/// @param		dest		Destiation address in VRAM (14bits address form 16KB VRAM)
+/// @param		dest		Destiation address in VRAM (14 bits address form 16 KB VRAM)
 /// @param		count		Nomber of byte to copy in VRAM
-void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count) __sdcccall(0)
+void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count) __sdcccall(0)
 {
+	#if (MSX_VERSION > MSX_1)
+		VDP_RegWrite(14, 0); // VDP register 14 must be reset to 0
+	#endif
 	dest, value, count;
 	__asm
 		push	ix
@@ -385,9 +391,9 @@ void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count) __sdcccall(0)
 		// Setup address register
 		ld		a, 5 (ix)
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF);
+		out		(P_VDP_ADDR), a			// RegPort = (dest & 0x00FF);
 		ld		a, 6 (ix)
-		and		a, #0x3f
+		and		a, #0x3F
 		add		a, #F_VDP_WRIT
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
@@ -414,8 +420,11 @@ void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count) __sdcccall(0)
 /// @param		src			Source address in VRAM (14bits address form 16KB VRAM)
 /// @param		dst			Desitation data address in RAM
 /// @param		count		Nomber of byte to copy from VRAM
-void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count) __sdcccall(0)
+void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0)
 {
+	#if (MSX_VERSION > MSX_1)
+		VDP_RegWrite(14, 0); // VDP register 14 must be reset to 0
+	#endif
 	src, dest, count;
 	__asm
 		push	ix
@@ -424,9 +433,9 @@ void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count) __sdcccall(0)
 		// Setup address register 	
 		ld		a, 4 (ix)
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
-		out		(P_VDP_ADDR), a			// AddrPort = (srcLow & 0xFF)
+		out		(P_VDP_ADDR), a			// AddrPort = (srcLow & 0x00FF)
 		ld		a, 5 (ix)
-		and		a, #0x3f
+		and		a, #0x3F
 		add		a, #F_VDP_READ
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// AddrPort = ((srcLow >> 8) & 0x3F) + F_VDP_READ
@@ -1069,7 +1078,10 @@ void VDP_WriteVRAM(const u8* src, u16 destLow, u8 destHigh, u16 count) __sdcccal
 /// @param		count		Nomber of byte to copy in VRAM
 void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count) __sdcccall(0)
 {
-	destLow, destHigh, value, count;
+	value;		// IX+4
+	destLow;	// IX+6 IX+5
+	destHigh;	// IX+7
+	count;		// IX+9 IX+8
 	__asm
 		push	ix
 		ld		ix, #0
@@ -1089,9 +1101,9 @@ void VDP_FillVRAM(u8 value, u16 destLow, u8 destHigh, u16 count) __sdcccall(0)
 		ld		a, #VDP_REG(14)
 		out		(P_VDP_ADDR), a			// RegPort = VDP_REG(14);
 		ld		a, 5 (ix)
-		out		(P_VDP_ADDR), a			// RegPort = (dest & 0xFF);
+		out		(P_VDP_ADDR), a			// RegPort = (dest & 0x00FF);
 		ld		a, 6 (ix)
-		and		a, #0x3f
+		and		a, #0x3F
 		add		a, #F_VDP_WRIT
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT;
@@ -1498,13 +1510,15 @@ u8 VDP_GetVersion() __naked __sdcccall(0)
 }
 
 //-----------------------------------------------------------------------------
-void VDP_RegWriteFC(u16 reg_value) __FASTCALL
+/// Set register value
+void VDP_RegWrite(u8 reg, u8 value)
 {
-	reg_value;
+	reg;	// A
+	value;	// L
+
 	__asm
-	//	ld		h, reg					// FastCall
-	//	ld		l, value
-		ld		a, l
+		ld		h, a					// Register number
+		ld		a, l					// Value
 		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a
 		ld		a, h
@@ -1515,14 +1529,15 @@ void VDP_RegWriteFC(u16 reg_value) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-void VDP_RegWriteBakFC(u16 reg_value) __FASTCALL
+/// Set register value after backuping previous
+void VDP_RegWriteBak(u8 reg, u8 value)
 {
-	reg_value;
+	reg;	// A
+	value;	// L
+
 	__asm
-	//	ld		h, reg					// FastCall
-	//	ld		l, value
-		ld		a, l
-		ld		c, h
+		ld		c, a					// Register number
+		ld		a, l					// Value
 		// Backup
 		ld		b, #0
 		ld		hl, #_g_VDP_REGSAV

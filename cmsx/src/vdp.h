@@ -16,6 +16,7 @@
 
 #include "core.h"
 #include "vdp_reg.h"
+#include "bios_var.h"
 
 // @todo Handle VRAM read/write access timing
 //
@@ -112,7 +113,7 @@ extern u16 g_SpriteColorLow;		///< Address of the Sprite Color Table
 // DEFINES
 //-----------------------------------------------------------------------------
 
-#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_16)
+#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_14)
 	#define VADDR			u16
 	#define VADDR_Lo(a)		(a)
 	#define VADDR_Hi(a)		0
@@ -191,8 +192,18 @@ enum VDP_VERSION
 {
 	VDP_VERSION_TMS9918A = 0,	// MSX1 VDP
 	VDP_VERSION_V9938,			// MSX2 VDP
-	VDP_VERSION_V9958,			// MSX2+/tR VDP
+	VDP_VERSION_V9958,			// MSX2+/Turbo-R VDP
 };
+
+enum VRAM_SIZE
+{
+	VRAM_16K	= 0b00,
+	VRAM_64K	= 0b01,
+	VRAM_128K	= 0b10,
+	VRAM_192K	= 0b11,	
+};
+
+#define GET_VRAM_SIZE()	((g_MODE >> 1) & 0x3)
 
 //-----------------------------------------------------------------------------
 // MSX 1 FUNCTIONS
@@ -232,20 +243,20 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL;
 void VDP_ClearVRAM();
 
 /// Write data from RAM to VRAM
-void VDP_WriteVRAM_64K(const u8* src, u16 dest, u16 count) __sdcccall(0);
+void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count) __sdcccall(0);
 
 /// Fill VRAM area with a given value
-void VDP_FillVRAM_64K(u8 value, u16 dest, u16 count) __sdcccall(0);
+void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count) __sdcccall(0);
 
 /// Read data from VRAM to RAM
-void VDP_ReadVRAM_64K(u16 src, u8* dest, u16 count) __sdcccall(0);
+void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0);
 
 //-----------------------------------------------------------------------------
-#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_16)
+#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_14)
 
-	#define VDP_WriteVRAM(src, destLow, destHigh, count)	VDP_WriteVRAM_64K(src, destLow, count)
-	#define VDP_FillVRAM(value, destLow, destHigh, count)	VDP_FillVRAM_64K(value, destLow, count)
-	#define VDP_ReadVRAM(srcLow, srcHigh, dest, count)		VDP_ReadVRAM_64K(srcLow, dest, count)
+	#define VDP_WriteVRAM(src, destLow, destHigh, count)	VDP_WriteVRAM_16K(src, destLow, count)
+	#define VDP_FillVRAM(value, destLow, destHigh, count)	VDP_FillVRAM_16K(value, destLow, count)
+	#define VDP_ReadVRAM(srcLow, srcHigh, dest, count)		VDP_ReadVRAM_16K(srcLow, dest, count)
 
 #else // (MSX_VERSION >= MSX_2)
 
@@ -405,11 +416,11 @@ void VDP_FillLayout_GM2(u8 value, u8 dx, u8 dy, u8 nx, u8 ny);
 // VDP REGISTERS
 //-----------------------------------------------------------------------------
 
-#define VDP_RegWrite(reg, value) VDP_RegWriteFC(FC88(reg, value))
-void VDP_RegWriteFC(u16 reg_value) __FASTCALL;
+/// Set register value
+void VDP_RegWrite(u8 reg, u8 value);
 
-#define VDP_RegWriteBak(reg, value) VDP_RegWriteBakFC(FC88(reg, value))
-void VDP_RegWriteBakFC(u16 reg_value) __FASTCALL;
+/// Set register value after backuping previous
+void VDP_RegWriteBak(u8 reg, u8 value);
 
 //-----------------------------------------------------------------------------
 // VDP COMMANDS

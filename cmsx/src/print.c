@@ -95,6 +95,11 @@ u8 g_PrintInvalid[] =
 /// Slit color from merged colors
 u8 Print_SplitColor(u8 color) __FASTCALL
 {
+	#if (USE_PRINT_SPRITE)
+	if(g_PrintData.SourceMode == PRINT_MODE_SPRITE)
+		return color;
+	#endif
+
 	switch(VDP_GetMode())
 	{
 	#if (USE_VDP_MODE_G4)
@@ -376,7 +381,7 @@ void Print_SetColor(u8 text, u8 bg)
 {
 	if(VDP_IsBitmapMode(VDP_GetMode())) // Bitmap mode
 	{
-		#if (USE_PRINT_BITMAP)
+		#if ((USE_PRINT_BITMAP) || (USE_PRINT_SPRITE))
 			u8 t = text;
 			#if (USE_PRINT_VALIDATOR)
 				t = Print_SplitColor(t);
@@ -417,7 +422,7 @@ void Print_SetColor(u8 text, u8 bg)
 			#endif
 			#if (USE_VDP_MODE_G1)
 				case VDP_MODE_GRAPHIC1:		// 32 characters per one line of text, the COLOURed character available
-					VDP_FillVRAM_64K(col, g_ScreenColorLow, 32);
+					VDP_FillVRAM(col, g_ScreenColorLow, 0, 32);
 					break;
 			#endif
 			#if (USE_VDP_MODE_G2)
@@ -429,11 +434,11 @@ void Print_SetColor(u8 text, u8 bg)
 			#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
 				{
 					u16 dst = (u16)g_ScreenColorLow + g_PrintData.PatternOffset * 8;
-					VDP_FillVRAM_64K(col, dst, g_PrintData.CharCount * 8);
+					VDP_FillVRAM(col, dst, 0, g_PrintData.CharCount * 8);
 					dst += 256 * 8;
-					VDP_FillVRAM_64K(col, dst, g_PrintData.CharCount * 8);
+					VDP_FillVRAM(col, dst, 0, g_PrintData.CharCount * 8);
 					dst += 256 * 8;
-					VDP_FillVRAM_64K(col, dst, g_PrintData.CharCount * 8);
+					VDP_FillVRAM(col, dst, 0, g_PrintData.CharCount * 8);
 					break;
 				}
 			#endif
@@ -449,7 +454,7 @@ void Print_SetColorShade(const u8* shade) __FASTCALL
 {
 	if(VDP_IsBitmapMode(VDP_GetMode())) // Bitmap mode
 	{
-		#if (USE_PRINT_BITMAP)
+		#if ((USE_PRINT_BITMAP) || (USE_PRINT_SPRITE))
 			for(u8 i = 0; i < PRINT_COLOR_NUM; ++i)
 			{
 				u8 t = shade[i];
@@ -476,9 +481,9 @@ void Print_SetColorShade(const u8* shade) __FASTCALL
 					u16 dst = (u16)g_ScreenColorLow + g_PrintData.PatternOffset * 8;
 					for(u8 i = 0; i < g_PrintData.CharCount; ++i)
 					{
-						VDP_WriteVRAM_64K(shade, dst,           8);
-						VDP_WriteVRAM_64K(shade, dst + 256 * 8, 8);
-						VDP_WriteVRAM_64K(shade, dst + 512 * 8, 8);
+						VDP_WriteVRAM(shade, dst,           0, 8);
+						VDP_WriteVRAM(shade, dst + 256 * 8, 0, 8);
+						VDP_WriteVRAM(shade, dst + 512 * 8, 0, 8);
 						dst += 8;
 					}
 					break;
@@ -742,12 +747,12 @@ void DrawChar_Trans(u8 chr) __FASTCALL
 /// Set the current font and upload it to VRAM
 void Print_SetFontVRAM(const u8* font, UY y)
 {
-	Print_SetFont(font);
-	Print_Initialize();
-	
 	UX cx = g_PrintData.CursorX;
 	UY cy = g_PrintData.CursorY;
 
+	Print_SetFont(font);
+	Print_Initialize();
+	
 	// Load font to VRAM	
 	Print_SetMode(PRINT_MODE_BITMAP_TRANS); // Activate default mode to write font data into VRAM
 	g_PrintData.FontVRAMY = y;
@@ -850,7 +855,7 @@ void Print_SetTextFont(const u8* fontData, u8 offset)
 	// Load font data to VRAM
 	const u8* src = g_PrintData.FontPatterns;
 	u16 dst = (u16)g_ScreenPatternLow + (offset * 8);
-	VDP_WriteVRAM_64K(src, dst, g_PrintData.CharCount * 8);
+	VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
 	
 	switch(VDP_GetMode())
 	{
@@ -862,9 +867,9 @@ void Print_SetTextFont(const u8* fontData, u8 offset)
 	#endif
 	#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
 		dst += 256 * 8;
-		VDP_WriteVRAM_64K(src, dst, g_PrintData.CharCount * 8);
+		VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
 		dst += 256 * 8;
-		VDP_WriteVRAM_64K(src, dst, g_PrintData.CharCount * 8);
+		VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
 		break;
 	#endif
 	};
@@ -880,7 +885,7 @@ void DrawChar_Layout(u8 chr) __FASTCALL
 	#endif
 	u8 shape = chr - g_PrintData.CharFirst + g_PrintData.PatternOffset;
 	u16 dst = (u16)g_ScreenLayoutLow + (g_PrintData.CursorY * g_PrintData.ScreenWidth) + g_PrintData.CursorX;
-	VDP_FillVRAM_64K(shape, dst, 1);
+	VDP_FillVRAM(shape, dst, 0, 1);
 }
 
 #endif
@@ -906,8 +911,8 @@ void Print_SetFontSprite(const u8* font, u8 patIdx, u8 sprtIdx)
 	g_PrintData.SpriteID = sprtIdx;
 
 	Print_SetFont(font);
-	Print_SetMode(PRINT_MODE_SPRITE);
 	Print_Initialize();
+	Print_SetMode(PRINT_MODE_SPRITE);
 
 	#if (PRINT_HEIGHT == PRINT_HEIGHT_8)
 		VDP_LoadSpritePattern(g_PrintData.FontPatterns, patIdx, g_PrintData.CharCount);
@@ -1015,16 +1020,16 @@ void Print_Clear()
 	{
 		#if (USE_PRINT_BITMAP)
 			u8 color = Print_MergeColor(g_PrintData.BGColor);
-			VDP_CommandHMMV(0, 0/*g_PrintData.Page * 256*/, g_PrintData.ScreenWidth, 212, color); // @todo Check the 192/212 lines parameter
+			VDP_CommandHMMV(0, 0, g_PrintData.ScreenWidth, 212, color); // @todo Check the 192/212 lines parameter
 			VDP_CommandWait();
 		#endif
 	}
+	#if (USE_PRINT_TEXT)
 	else // Text mode
 	{
-		#if (USE_PRINT_TEXT)
-			VDP_FillVRAM(0, g_ScreenLayoutLow, g_ScreenLayoutHigh, 24 * g_PrintData.ScreenWidth);
-		#endif
+		VDP_FillVRAM(0, g_ScreenLayoutLow, g_ScreenLayoutHigh, 24 * g_PrintData.ScreenWidth);
 	}
+	#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1176,3 +1181,52 @@ void Print_DrawInt(i16 value) __FASTCALL
 	while(*ptr != 0)
 		Print_DrawChar(*ptr--);	
 }
+
+//-----------------------------------------------------------------------------
+// GRAPH FUNCTION
+//-----------------------------------------------------------------------------
+#if (USE_PRINT_GRAPH)
+
+//-----------------------------------------------------------------------------
+/// Draw an horizontal line using characters
+void Print_DrawLineH(u8 x, u8 y, u8 len)
+{
+	Print_SetPosition(x, y);
+	Print_DrawCharX(0x17, len);
+}
+
+//-----------------------------------------------------------------------------
+/// Draw a vertical line using characters
+void Print_DrawLineV(u8 x, u8 y, u8 len)
+{
+	for(u8 i = 0; i < len; i++)
+	{
+		Print_SetPosition(x, y + i);
+		Print_DrawChar(0x16);
+	}
+}
+
+//-----------------------------------------------------------------------------
+/// Draw a box using characters
+void Print_DrawBox(u8 x, u8 y, u8 width, u8 height)
+{
+	// Draw corners
+	Print_SetPosition(x, y);
+	Print_DrawChar(0x18);
+	Print_SetPosition(x + width - 1, y);
+	Print_DrawChar(0x19);
+	Print_SetPosition(x, y + height - 1);
+	Print_DrawChar(0x1A);
+	Print_SetPosition(x + width - 1, y + height - 1);
+	Print_DrawChar(0x1B);
+
+	// Draw horizontal lines
+	Print_DrawLineH(x + 1, y,              width - 2);
+	Print_DrawLineH(x + 1, y + height - 1, width - 2);
+	
+	// Draw vertical lines
+	Print_DrawLineV(x,             y + 1, height - 2);
+	Print_DrawLineV(x + width - 1, y + 1, height - 2);
+}
+
+#endif // (USE_PRINT_GRAPH)
