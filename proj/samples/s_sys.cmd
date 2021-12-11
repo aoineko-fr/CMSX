@@ -3,7 +3,7 @@
 rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
-SET ModuleList=bios,vdp,print,input,memory,math,draw,clock,pt3\pt3_player,ayfx\ayfx_player,compress
+SET ModuleList=bios,vdp,print,input,memory,draw
 rem  Version:
 rem  - 1		MSX 1
 rem  - 2		MSX 2

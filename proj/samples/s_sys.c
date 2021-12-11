@@ -3,14 +3,12 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
-#pragma sdcc_hash +
+//  System module sample
 
-#include "core.h"
-#include "color.h"
-#include "bios_main.h"
-#include "input.h"
-#include "print.h"
-#include "memory.h"
+//=============================================================================
+// INCLUDES
+//=============================================================================
+#include "cmsx.h"
 
 /*void InstallCustomVBlankInterrupt()
 {
@@ -239,12 +237,14 @@ const c8* GetSlotName(u8 slotId, u8 page)
 
 void DisplaySlot()
 {	
-	Bios_ClearScreen();
+	// Bios_ClearScreen();
+	// VDP_FillVRAM_16K(0, 0x0000, 0x4000);
 
-	SetPrintPos(1, 1);
-	PrintText("| 1. SLOT | 2. MEM | 3. INPUT |");
-	PrintLineX(1, 2, 80);
-	
+	Print_Clear();
+	Print_SetPosition(0, 0);
+	Print_DrawText("| 1. SLOT | 2. MEM | 3. INPUT |");
+	Print_DrawLineH(0, 1, 80);
+
 	u8 x = 9;
 	u8 y;
 	for(i8 slot = 0; slot < 4; slot++)
@@ -257,11 +257,12 @@ void DisplaySlot()
 			if(g_EXPTBL[slot] & 0x80)
 			{
 				slotId += 0x80 + (sub << 2);
-				SetPrintPos(x + 1, y++);
+				Print_SetPosition(x, y++);
 			}
 			else
-				SetPrintPos(x + 2, y++);			
-			PrintSlot(slotId);
+				Print_SetPosition(x + 1, y++);			
+			// PrintSlot(slotId);
+			Print_DrawHex8(slotId);
 			for(i8 page = 0; page < 4; page++)
 			{
 				if(GetPageSlot(3 - page) == slotId)
@@ -269,16 +270,16 @@ void DisplaySlot()
 					static const c8 raw[] = { 0xF9, 0xF9, 0xF9, 0xF9, 0xF9, 0 };
 					static const c8 col[] = { 0xF9, ' ',  ' ',  ' ',  0xF9, 0 };
 
-					SetPrintPos(x, y++);
-					PrintText(raw);
+					Print_SetPosition(x, y++);
+					Print_DrawText(raw);
 
-					SetPrintPos(x, y);
-					PrintText(col);
-					SetPrintPos(x+1, y++);
-					PrintText(GetSlotName(slotId, 3 - page));
+					Print_SetPosition(x, y);
+					Print_DrawText(col);
+					Print_SetPosition(x+1, y++);
+					Print_DrawText(GetSlotName(slotId, 3 - page));
 
-					SetPrintPos(x, y);
-					PrintText(raw);			
+					Print_SetPosition(x, y);
+					Print_DrawText(raw);			
 				}
 				else
 				{
@@ -286,17 +287,17 @@ void DisplaySlot()
 					static const c8 col[] = "|   |";
 
 					i8 of = (sub == 0) ? 0 : 1;
-					SetPrintPos(x + of, y++);
+					Print_SetPosition(x + of, y++);
 					if(page == 0)
-						PrintText(raw + of);
+						Print_DrawText(raw + of);
 
-					SetPrintPos(x + of, y);
-					PrintText(col + of);
-					SetPrintPos(x + 1, y++);
-					PrintText(GetSlotName(slotId, 3 - page));
+					Print_SetPosition(x + of, y);
+					Print_DrawText(col + of);
+					Print_SetPosition(x + 1, y++);
+					Print_DrawText(GetSlotName(slotId, 3 - page));
 
-					SetPrintPos(x + of, y);
-					PrintText(raw + of);
+					Print_SetPosition(x + of, y);
+					Print_DrawText(raw + of);
 				}
 			}
 			x += 4;
@@ -306,78 +307,79 @@ void DisplaySlot()
 
 	for(i8 page = 0; page < 4; page++)
 	{
-		SetPrintPos(1, 6 + (page * 2));
-		PrintText("Page ");			
-		PrintInt(3 - page);			
+		Print_SetPosition(0, 5 + (page * 2));
+		Print_DrawText("Page ");			
+		Print_DrawInt(3 - page);			
 
-		SetPrintPos(x + 1, 7 + (page * 2));
-		PrintHex16(0x4000 * (3 - page));			
+		Print_SetPosition(x, 6 + (page * 2));
+		Print_DrawHex16(0x4000 * (3 - page));			
 	}
 	
-	SetPrintPos(1, 15);
-	PrintText("M-R: Main-ROM");
-	SetPrintPos(1, 16);
-	PrintText("S-R: Sub-ROM");
-	SetPrintPos(1, 17);
-	PrintText("D-R: Disk-ROM");
+	Print_SetPosition(0, 14);
+	Print_DrawText("M-R: Main-ROM");
+	Print_SetPosition(0, 15);
+	Print_DrawText("S-R: Sub-ROM");
+	Print_SetPosition(0, 16);
+	Print_DrawText("D-R: Disk-ROM");
 	
-	SetPrintPos(20, 15);
-	PrintText("EXPTBL: ");
-	PrintHex8(g_EXPTBL[0]);
-	SetPrintPos(20, 16);
-	PrintText("EXBRSA: ");
-	PrintHex8(g_EXBRSA);
-	SetPrintPos(20, 17);
-	PrintText("MASTER: ");
-	PrintHex8(g_MASTER);
+	Print_SetPosition(19, 14);
+	Print_DrawText("EXPTBL: ");
+	Print_DrawHex8(g_EXPTBL[0]);
+	Print_SetPosition(19, 15);
+	Print_DrawText("EXBRSA: ");
+	Print_DrawHex8(g_EXBRSA);
+	Print_SetPosition(19, 16);
+	Print_DrawText("MASTER: ");
+	Print_DrawHex8(g_MASTER);
 	
 	for(i8 slot = 0; slot < 4; slot++)
 	{
-		SetPrintPos(1, 19 + slot);
-		PrintText("Slot[");
-		PrintInt(slot);
-		PrintText("] EXPTBL: ");
-		PrintHex8(g_EXPTBL[slot]);
+		Print_SetPosition(0, 18 + slot);
+		Print_DrawText("Slot[");
+		Print_DrawInt(slot);
+		Print_DrawText("] EXPTBL: ");
+		Print_DrawHex8(g_EXPTBL[slot]);
 	}
 
-	SetPrintPos(24, 19);
-	PrintText("RAMAD0: ");
-	PrintHex8(g_RAMAD0);
-	SetPrintPos(24, 20);
-	PrintText("RAMAD1: ");
-	PrintHex8(g_RAMAD1);
-	SetPrintPos(24, 21);
-	PrintText("RAMAD2: ");
-	PrintHex8(g_RAMAD2);
-	SetPrintPos(24, 22);
-	PrintText("RAMAD3: ");
-	PrintHex8(g_RAMAD3);
+	Print_SetPosition(23, 18);
+	Print_DrawText("RAMAD0: ");
+	Print_DrawHex8(g_RAMAD0);
+	Print_SetPosition(23, 19);
+	Print_DrawText("RAMAD1: ");
+	Print_DrawHex8(g_RAMAD1);
+	Print_SetPosition(23, 20);
+	Print_DrawText("RAMAD2: ");
+	Print_DrawHex8(g_RAMAD2);
+	Print_SetPosition(23, 21);
+	Print_DrawText("RAMAD3: ");
+	Print_DrawHex8(g_RAMAD3);
 
-	SetPrintPos(1, 24);
-	PrintText("[ESC] to quit");	
+	Print_SetPosition(0, 23);
+	Print_DrawText("[ESC] to quit");	
 }
 
 void DisplayMemory()
 {	
-	Bios_ClearScreen();
+	// Bios_ClearScreen();
+	// VDP_FillVRAM_16K(0, 0x0000, 0x4000);
 
-	SetPrintPos(1, 1);
-	PrintText("| 1. SLOT | 2. MEM | 3. INPUT |");
-	PrintLineX(1, 2, 80);
+	Print_SetPosition(0, 0);
+	Print_DrawText("| 1. SLOT | 2. MEM | 3. INPUT |");
+	Print_DrawLineH(0, 1, 80);
 
-	SetPrintPos(1, 4);
-	PrintText("Heap:  ");
-	PrintHex16(Mem_GetHeapAddress());
-	SetPrintPos(1, 5);
-	PrintText("Stack: ");
-	PrintHex16(Mem_GetStackAddress());
-	SetPrintPos(1, 6);
-	PrintText("Free:  ");
-	PrintInt(Mem_GetHeapSize());
-	PrintText(" bytes");
+	Print_SetPosition(0, 3);
+	Print_DrawText("Heap:  ");
+	Print_DrawHex16(Mem_GetHeapAddress());
+	Print_SetPosition(0, 4);
+	Print_DrawText("Stack: ");
+	Print_DrawHex16(Mem_GetStackAddress());
+	Print_SetPosition(0, 5);
+	Print_DrawText("Free:  ");
+	Print_DrawInt(Mem_GetHeapSize());
+	Print_DrawText(" bytes");
 
-	SetPrintPos(1, 24);
-	PrintText("[ESC] to quit");
+	Print_SetPosition(0, 23);
+	Print_DrawText("[ESC] to quit");
 }
 
 
@@ -385,12 +387,13 @@ void DisplayMemory()
 // Program entry point
 void main()
 {
-	Bios_Beep();
+	VDP_SetMode(VDP_MODE_SCREEN0_W80);
+	VDP_SetColor(0xF0);
+	VDP_FillVRAM_16K(0, 0x0000, 0x4000); // Clear VRAM
 	
-	g_LINL40 = 80;
-	Bios_ChangeMode(SCREEN_0);
-	Bios_ChangeColor(COLOR_WHITE, COLOR_BLACK, COLOR_BLACK);
-	
+	Print_SetTextFont(PRINT_DEFAULT_FONT, 1);
+	Print_SetColor(0xF, 0x0);
+
 	DisplaySlot();
 
 	u8 count = 0;
@@ -403,14 +406,14 @@ void main()
 
 
 
-		SetPrintPos(g_LINL40 - 2, 1);
+		Print_SetPosition(g_LINL40 - 1, 0);
 		static const u8 chrAnim[] = { '|', '\\', '-', '/' };
 		u8 chr = count++ & 0x03;
-		PrintChar(chrAnim[chr]);
+		Print_DrawChar(chrAnim[chr]);
 
 		//VDP_WaitRetrace();
 	}
 
-	Bios_ChangeMode(SCREEN_0);
-	Bios_ClearScreen();
+	// Bios_ChangeMode(SCREEN_0);
+	// Bios_ClearScreen();
 }
