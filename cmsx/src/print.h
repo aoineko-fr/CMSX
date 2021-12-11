@@ -136,7 +136,7 @@ bool Print_SetBitmapFont(const u8* font) __FASTCALL;
 
 #if (USE_PRINT_VRAM)
 /// Set the current font and upload data to VRAM 
-void Print_SetFontVRAM(const u8* font, UY y);
+void Print_SetFontVRAM(const u8* font, UY y, u8 color);
 #endif
 
 #if (USE_PRINT_TEXT)

@@ -3,19 +3,25 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
+//  PSG music & SFX sample
+
+//=============================================================================
+// INCLUDES
+//=============================================================================
 #include "cmsx.h"
-#include "string.h"
 #include "pt3/pt3_player.h"
 #include "ayfx/ayfx_player.h"
 
-//-----------------------------------------------------------------------------
-// DEFINE
+//=============================================================================
+// DEFINES
+//=============================================================================
 
 // Song data structure
-typedef struct {
+struct SFXData
+{
 	u8*			Raw;
 	const c8*	Name;
-} SFXData;
+};
 
 // Player font character
 #define CHR_PLAY		112
@@ -34,8 +40,18 @@ typedef struct {
 #define CHR_SOUND		126
 #define CHR_MUTE		127
 
-//-----------------------------------------------------------------------------
-// DATA
+#define PT3_Y			(24)
+#define PT3_PLY_X		(0)
+#define PT3_PLY_Y		(PT3_Y + 36)
+#define AYFX_Y			(88)
+#define PSG_Y			(150)
+#define VU_X			(64+10)
+#define VU_MAX			7
+#define VU_H			4
+
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
 
 // Fonts
 #include "font\font_cmsx_std0.h"
@@ -54,7 +70,8 @@ typedef struct {
 #include "data\ayfx_fx017.h"
 #include "data\ayfx_fx019.h"
 
-const SFXData g_SFXFiles[] =
+// ayFX files
+const struct SFXData g_SFXFiles[] =
 {
 	{ g_ayfx_fx017, "ayfx_fx017.afx" },
 	{ g_ayfx_fx019, "ayfx_fx019.afx" },
@@ -63,8 +80,9 @@ const SFXData g_SFXFiles[] =
 // Character animation
 const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
 
-//-----------------------------------------------------------------------------
-// Static variables
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
 
 u8   g_VBlank = 0;
 u8   g_Frame = 0;
@@ -73,22 +91,12 @@ bool g_Mute[3] = { false, false, false };
 u8   g_BankFXNum = 0;
 u8   g_FileFXNum = 0;
 
-//-----------------------------------------------------------------------------
-// Functions prototype
-
-void DrawVUMeter();
-void PlayMusic();
-void PauseMusic();
-void StopMusic();
-void LoopMusic(bool enable) __FASTCALL;
-void MuteMusic(u8 chan, bool bMute);
-void PlayBankSFX(u8 id) __FASTCALL;
-void PlayFileSFX(u8 id) __FASTCALL;
-void ChannelSFX(u8 chan) __FASTCALL;
-void PrintHelp(u8 y, const c8* str);
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
 
 //-----------------------------------------------------------------------------
-/// H_TIMI interrupt hook
+// H_TIMI interrupt hook
 void VBlankHook()
 {
 	g_VBlank = 1;
@@ -100,12 +108,223 @@ void VBlankHook()
 }
 
 //-----------------------------------------------------------------------------
-/// Wait for V-Blank period
+// Wait for V-Blank period
 void WaitVBlank()
 {
 	while(g_VBlank == 0) {}
 	g_VBlank = 0;
 }
+
+//-----------------------------------------------------------------------------
+// Draw the VU meter
+void DrawVUMeter()
+{
+	g_VDP_Command.NY = VU_H;
+	g_VDP_Command.ARG = 0; 
+	g_VDP_Command.CMD = VDP_CMD_HMMV;
+
+	// Channel A
+	g_VDP_Command.DY = PSG_Y + (8*2) + ((8-VU_H)/2); 
+	u8 volA = PT3_GetVolume(PSG_CHANNEL_A) >> 1;
+	if(volA > VU_MAX)
+		volA = VU_MAX;
+	if(volA > 0)
+	{
+		g_VDP_Command.DX = VU_X;
+		g_VDP_Command.NX = volA * 8;
+		g_VDP_Command.CLR = 0x22;
+		VPD_CommandSetupR36();
+	}
+	if(volA < VU_MAX)
+	{
+		g_VDP_Command.DX = VU_X + volA * 8;
+		g_VDP_Command.NX = (VU_MAX - volA) * 8;
+		g_VDP_Command.CLR = 0x11;
+		VPD_CommandSetupR36();
+	}
+
+	// Channel B
+	g_VDP_Command.DY = PSG_Y + (8*3) + ((8-VU_H)/2); 
+	u8 volB = PT3_GetVolume(PSG_CHANNEL_B) >> 1;
+	if(volB > VU_MAX)
+		volB = VU_MAX;
+	if(volB > 0)
+	{
+		g_VDP_Command.DX = VU_X;
+		g_VDP_Command.NX = volB * 8;
+		g_VDP_Command.CLR = 0x22;
+		VPD_CommandSetupR36();
+	}
+	if(volB < VU_MAX)
+	{
+		g_VDP_Command.DX = VU_X + volB * 8;
+		g_VDP_Command.NX = (VU_MAX - volB) * 8;
+		g_VDP_Command.CLR = 0x11;
+		VPD_CommandSetupR36();
+	}
+
+	// Channel C
+	g_VDP_Command.DY = PSG_Y + (8*4) + ((8-VU_H)/2); 
+	u8 volC = PT3_GetVolume(PSG_CHANNEL_C)>> 1;
+	if(volC > VU_MAX)
+		volC = VU_MAX;
+	if(volC > 0)
+	{
+		g_VDP_Command.DX = VU_X;
+		g_VDP_Command.NX = volC * 8;
+		g_VDP_Command.CLR = 0x22;
+		VPD_CommandSetupR36();
+	}
+	if(volC < VU_MAX)
+	{
+		g_VDP_Command.DX = VU_X + volC * 8;
+		g_VDP_Command.NX = (VU_MAX - volC) * 8;
+		g_VDP_Command.CLR = 0x11;
+		VPD_CommandSetupR36();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Play/resume the current music
+void PlayMusic()
+{
+	PT3_Resume();
+
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	
+	Print_SetColor(0x9, 0);
+	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_PLAY);
+
+	Print_SetColor(0xF, 0);
+	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_PAUSE);
+	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_STOP);
+}
+
+//-----------------------------------------------------------------------------
+// Pause the current music
+void PauseMusic()
+{
+	PT3_Pause();
+
+	Print_SetFont(g_Font_CMSX_Symbol1);
+
+	Print_SetColor(0x9, 0);
+	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_PAUSE);
+
+	Print_SetColor(0xF, 0);
+	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_PLAY);
+	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_STOP);
+}
+
+//-----------------------------------------------------------------------------
+// Stop the current music
+void StopMusic()
+{
+	PT3_Pause();
+	PT3_InitSong(g_Beg_nsum);
+
+	Print_SetFont(g_Font_CMSX_Symbol1);
+
+	Print_SetColor(0x9, 0);
+	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_PAUSE);
+
+	Print_SetColor(0xF, 0);
+	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_PLAY);
+	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_STOP);
+}
+
+//-----------------------------------------------------------------------------
+// Set the current music loop flag
+void LoopMusic(bool enable) __FASTCALL
+{
+	PT3_SetLoop(enable);
+	g_Loop = enable;
+
+	Print_SetFont(g_Font_CMSX_Symbol1);
+
+	Print_SetColor(enable ? 0x9 : 0xF, 0);
+	Print_SetPosition(PT3_PLY_X+51, PT3_PLY_Y+1);
+	Print_DrawChar(CHR_LOOP);
+	Print_SetColor(0xF, 0);
+}
+
+//-----------------------------------------------------------------------------
+// Mute one of the channels
+void MuteMusic(u8 chan, bool bMute)
+{
+	PT3_Mute(chan, bMute);
+
+	g_Mute[chan] = bMute;
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_SetColor(bMute ? 0x9 : 0xF, 0);
+	Print_SetPosition(64, PSG_Y + 8*2 + 8*chan);
+	Print_DrawChar(bMute ? CHR_MUTE : CHR_SOUND);
+	Print_SetColor(0xF, 0);
+}
+
+//-----------------------------------------------------------------------------
+//
+void PlayFileSFX(u8 id) __FASTCALL
+{
+	ayFX_Play(g_SFXFiles[id].Raw);
+
+	Print_SetFont(g_Font_CMSX_Std0);
+	VDP_CommandHMMV(64, AYFX_Y+8*4, 16*6, 8, 0x44);
+	Print_SetPosition(64, AYFX_Y+8*4);
+	Print_DrawText(g_SFXFiles[id].Name);
+}
+
+//-----------------------------------------------------------------------------
+// 
+void PlayBankSFX(u8 id) __FASTCALL
+{
+	ayFX_PlayBank(id, 0);
+
+	Print_SetFont(g_Font_CMSX_Std0);
+	VDP_CommandHMMV(64, AYFX_Y+8*3, 7*6, 8, 0x44);
+	Print_SetPosition(64, AYFX_Y+8*3);
+	Print_DrawInt(id+1);
+	Print_DrawChar('/');
+	Print_DrawInt(ayFX_GetBankNumber());
+}
+
+//-----------------------------------------------------------------------------
+// 
+void ChannelSFX(u8 chan) __FASTCALL
+{
+	ayFX_Mute();
+	ayFX_SetChannel(chan);
+
+	Print_SetFont(g_Font_CMSX_Std0);
+	VDP_CommandHMMV(64, AYFX_Y+8*2, 6, 8, 0x44);
+	Print_SetPosition(64, AYFX_Y+8*2);
+	Print_DrawChar('A' + chan);
+}
+
+//-----------------------------------------------------------------------------
+//
+void PrintHelp(u8 y, const c8* str)
+{
+	u8 len = String_Length(str);
+	Print_SetFont(g_Font_CMSX_Std0);
+	Print_SetColor(0x5, 0);
+	Print_SetPosition(255 - 6 * len, y);
+	Print_DrawText(str);
+	Print_SetColor(0xF, 0);
+}
+
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Program entry point
@@ -123,7 +342,7 @@ void main()
 	Print_SetMode(PRINT_MODE_BITMAP_TRANS);
 	Print_SetColor(0xF, 0);
 	Print_SetPosition(4, 4);
-	Print_DrawText("PSG SAMPLE");
+	Print_DrawText("MGL - PSG SAMPLE");
 	Draw_Box(0, 0, 255, 14, 0x0F, 0);
 
 	// INIT PT3
@@ -141,10 +360,6 @@ void main()
 	
 	//-----------------------------------------------------------------------------
 	// PT3
-
-#define PT3_Y		(24)
-#define PT3_PLY_X	(0)
-#define PT3_PLY_Y	(PT3_Y + 36)
 
 	Print_SetPosition(0, PT3_Y);
 	Print_DrawText(" PT3\n\n");
@@ -173,21 +388,20 @@ void main()
 	//-----------------------------------------------------------------------------
 	// ayFX
 
-#define ayFX_Y	(88)
 
 	Print_SetFont(g_Font_CMSX_Std0);
 
-	Print_SetPosition(0, ayFX_Y);
+	Print_SetPosition(0, AYFX_Y);
 	Print_DrawText(" ayFX\n\n");
-	Draw_HLine(0, 255, ayFX_Y+10, 0x5, 0);
+	Draw_HLine(0, 255, AYFX_Y+10, 0x5, 0);
 	Print_DrawText("Channel\n");
 	Print_DrawText("FX Bank\n");
 	Print_DrawText("FX File\n");
 
 	// Help
-	PrintHelp(ayFX_Y+8*2, "^v:Channel");
-	PrintHelp(ayFX_Y+8*3, "<>:Bank SFX");
-	PrintHelp(ayFX_Y+8*4, "Home:File SFX");
+	PrintHelp(AYFX_Y+8*2, "^v:Channel");
+	PrintHelp(AYFX_Y+8*3, "<>:Bank SFX");
+	PrintHelp(AYFX_Y+8*4, "Home:File SFX");
 
 	ChannelSFX(PSG_CHANNEL_A);
 	PlayBankSFX(0);
@@ -196,7 +410,6 @@ void main()
 	//-----------------------------------------------------------------------------
 	// PSG
 
-#define PSG_Y	(150)
 
 	Print_SetPosition(0, PSG_Y);
 	Print_DrawText(" PSG\n\n");		
@@ -327,206 +540,4 @@ void main()
 
 		// PT3_Decode(); 
 	}
-}
-
-// Draw the VU meter
-void DrawVUMeter()
-{
-	#define VU_X	(64+10)
-	#define VU_MAX	7
-	#define VU_H	4
-	
-	g_VDP_Command.NY = VU_H;
-	g_VDP_Command.ARG = 0; 
-	g_VDP_Command.CMD = VDP_CMD_HMMV;
-
-	// Channel A
-	g_VDP_Command.DY = PSG_Y + (8*2) + ((8-VU_H)/2); 
-	u8 volA = PT3_GetVolume(PSG_CHANNEL_A) >> 1;
-	if(volA > VU_MAX)
-		volA = VU_MAX;
-	if(volA > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volA * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volA < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volA * 8;
-		g_VDP_Command.NX = (VU_MAX - volA) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-
-	// Channel B
-	g_VDP_Command.DY = PSG_Y + (8*3) + ((8-VU_H)/2); 
-	u8 volB = PT3_GetVolume(PSG_CHANNEL_B) >> 1;
-	if(volB > VU_MAX)
-		volB = VU_MAX;
-	if(volB > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volB * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volB < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volB * 8;
-		g_VDP_Command.NX = (VU_MAX - volB) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-
-	// Channel C
-	g_VDP_Command.DY = PSG_Y + (8*4) + ((8-VU_H)/2); 
-	u8 volC = PT3_GetVolume(PSG_CHANNEL_C)>> 1;
-	if(volC > VU_MAX)
-		volC = VU_MAX;
-	if(volC > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volC * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volC < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volC * 8;
-		g_VDP_Command.NX = (VU_MAX - volC) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-}
-
-// Play/resume the current music
-void PlayMusic()
-{
-	PT3_Resume();
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	
-	Print_SetColor(0x9, 0);
-	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PLAY);
-
-	Print_SetColor(0xF, 0);
-	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PAUSE);
-	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_STOP);
-}
-
-// Pause the current music
-void PauseMusic()
-{
-	PT3_Pause();
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-
-	Print_SetColor(0x9, 0);
-	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PAUSE);
-
-	Print_SetColor(0xF, 0);
-	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PLAY);
-	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_STOP);
-}
-
-// Stop the current music
-void StopMusic()
-{
-	PT3_Pause();
-	PT3_InitSong(g_Beg_nsum);
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-
-	Print_SetColor(0x9, 0);
-	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PAUSE);
-
-	Print_SetColor(0xF, 0);
-	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PLAY);
-	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_STOP);
-}
-
-// Set the current music loop flag
-void LoopMusic(bool enable) __FASTCALL
-{
-	PT3_SetLoop(enable);
-	g_Loop = enable;
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-
-	Print_SetColor(enable ? 0x9 : 0xF, 0);
-	Print_SetPosition(PT3_PLY_X+51, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_LOOP);
-	Print_SetColor(0xF, 0);
-}
-
-// Mute one of the channels
-void MuteMusic(u8 chan, bool bMute)
-{
-	PT3_Mute(chan, bMute);
-
-	g_Mute[chan] = bMute;
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetColor(bMute ? 0x9 : 0xF, 0);
-	Print_SetPosition(64, PSG_Y + 8*2 + 8*chan);
-	Print_DrawChar(bMute ? CHR_MUTE : CHR_SOUND);
-	Print_SetColor(0xF, 0);
-}
-
-//
-void PlayFileSFX(u8 id) __FASTCALL
-{
-	ayFX_Play(g_SFXFiles[id].Raw);
-
-	Print_SetFont(g_Font_CMSX_Std0);
-	VDP_CommandHMMV(64, ayFX_Y+8*4, 16*6, 8, 0x44);
-	Print_SetPosition(64, ayFX_Y+8*4);
-	Print_DrawText(g_SFXFiles[id].Name);
-}
-
-
-// 
-void PlayBankSFX(u8 id) __FASTCALL
-{
-	ayFX_PlayBank(id, 0);
-
-	Print_SetFont(g_Font_CMSX_Std0);
-	VDP_CommandHMMV(64, ayFX_Y+8*3, 7*6, 8, 0x44);
-	Print_SetPosition(64, ayFX_Y+8*3);
-	Print_DrawInt(id+1);
-	Print_DrawChar('/');
-	Print_DrawInt(ayFX_GetBankNumber());
-}
-
-// 
-void ChannelSFX(u8 chan) __FASTCALL
-{
-	ayFX_Mute();
-	ayFX_SetChannel(chan);
-
-	Print_SetFont(g_Font_CMSX_Std0);
-	VDP_CommandHMMV(64, ayFX_Y+8*2, 6, 8, 0x44);
-	Print_SetPosition(64, ayFX_Y+8*2);
-	Print_DrawChar('A' + chan);
-}
-
-//
-void PrintHelp(u8 y, const c8* str)
-{
-	u8 len = String_Length(str);
-	Print_SetFont(g_Font_CMSX_Std0);
-	Print_SetColor(0x5, 0);
-	Print_SetPosition(255 - 6 * len, y);
-	Print_DrawText(str);
-	Print_SetColor(0xF, 0);
 }

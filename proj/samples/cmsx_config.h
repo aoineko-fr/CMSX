@@ -62,8 +62,8 @@
 //-----------------------------------------------------------------------------
 
 // VRAM addressing unit
-// - VDP_VRAM_ADDR_16 ............. Use 16-bits VRAM address (u16 parameter; for VRAM <= 64K)
-// - VDP_VRAM_ADDR_17 ............. Use 17-bits VRAM address (u32 parameter; for VRAM > 64K)
+// - VDP_VRAM_ADDR_14 ............. Use 14-bits 16K VRAM addressing for MSX 1 (u16)
+// - VDP_VRAM_ADDR_17 ............. Use 17-bits 128K VRAM addressing for MSX 2/2+/Turbo-R (u32)
 #define VDP_VRAM_ADDR				VDP_VRAM_ADDR_17
 
 // VDP X/Y units

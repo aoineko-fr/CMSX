@@ -745,13 +745,14 @@ void DrawChar_Trans(u8 chr) __FASTCALL
 #if (USE_PRINT_VRAM)
 //-----------------------------------------------------------------------------
 /// Set the current font and upload it to VRAM
-void Print_SetFontVRAM(const u8* font, UY y)
+void Print_SetFontVRAM(const u8* font, UY y, u8 color)
 {
 	UX cx = g_PrintData.CursorX;
 	UY cy = g_PrintData.CursorY;
 
 	Print_SetFont(font);
 	Print_Initialize();
+	Print_SetColor(color, 0x0);
 	
 	// Load font to VRAM	
 	Print_SetMode(PRINT_MODE_BITMAP_TRANS); // Activate default mode to write font data into VRAM
@@ -838,6 +839,19 @@ void DrawChar_VRAM512(u8 chr) __FASTCALL
 #if (USE_PRINT_TEXT)
 #if (USE_VDP_MODE_T1 || USE_VDP_MODE_T2 || USE_VDP_MODE_G1 || USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
 
+#if (USE_PRINT_VALIDATOR)
+void CopyNo8HeightFontData(const u8* src, u16 dst, u8 height)
+{
+	for(u8 i = 0; i < g_PrintData.CharCount; ++i)
+	{
+		VDP_FillVRAM(0, dst, 0, 8);
+		VDP_WriteVRAM(src, dst, 0, height);
+		src += height;
+		dst += 8;
+	}	
+}
+#endif
+
 //-----------------------------------------------------------------------------
 /// Set the current font and upload it to VRAM
 void Print_SetTextFont(const u8* fontData, u8 offset)
@@ -855,7 +869,12 @@ void Print_SetTextFont(const u8* fontData, u8 offset)
 	// Load font data to VRAM
 	const u8* src = g_PrintData.FontPatterns;
 	u16 dst = (u16)g_ScreenPatternLow + (offset * 8);
-	VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
+	#if (USE_PRINT_VALIDATOR)
+		if(fontData != null)
+			CopyNo8HeightFontData(src, dst, fontData[0] & 0x0F);
+		else
+	#endif
+		VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
 	
 	switch(VDP_GetMode())
 	{
@@ -867,9 +886,19 @@ void Print_SetTextFont(const u8* fontData, u8 offset)
 	#endif
 	#if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
 		dst += 256 * 8;
-		VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
+		#if (USE_PRINT_VALIDATOR)
+			if(fontData != null)
+				CopyNo8HeightFontData(src, dst, fontData[0] & 0x0F);
+			else
+		#endif
+			VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
 		dst += 256 * 8;
-		VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
+		#if (USE_PRINT_VALIDATOR)
+			if(fontData != null)
+				CopyNo8HeightFontData(src, dst, fontData[0] & 0x0F);
+			else
+		#endif
+			VDP_WriteVRAM(src, dst, 0, g_PrintData.CharCount * 8);
 		break;
 	#endif
 	};

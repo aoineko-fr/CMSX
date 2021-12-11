@@ -3,18 +3,25 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
+//  Real-time clock module sample
+
+//=============================================================================
+// INCLUDES
+//=============================================================================
 #include "cmsx.h"
 #include "pt3/pt3_player.h"
 
-//-----------------------------------------------------------------------------
-// DEFINE
+//=============================================================================
+// DEFINES
+//=============================================================================
 
 // Song data structure
-typedef struct {
+struct SongData
+{
 	u8*			Raw;
 	const c8*	Name;
 	u16			Size;
-} SongData;
+};
 
 // Player font character
 #define CHR_PLAY		112
@@ -33,53 +40,48 @@ typedef struct {
 #define CHR_SOUND		126
 #define CHR_MUTE		127
 
-//-----------------------------------------------------------------------------
-// DATA
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
 
 // Fonts
-#include "font\font_cmsx_std0.h"
-#include "font\font_cmsx_symbol1.h"
+#include "font/font_cmsx_std0.h"
+#include "font/font_cmsx_symbol1.h"
 
 // Note table
 #include "pt3/pt3_notetable2.h"
 
 // Music
-#include "data\pt3\!ndiffer.h"
-#include "data\pt3\Beg!nsum.h"
-//#include "data\pt3\Fret.h"
+#include "data/pt3/!ndiffer.h"
+#include "data/pt3/Beg!nsum.h"
+//#include "data/pt3/Fret.h"
 
 // Songs data table
-SongData g_SongData[] = {
+const struct SongData g_SongData[] = {
 	{ g__ndiffer, 	"!ndiffer",		sizeof(g__ndiffer) },
 	{ g_Beg_nsum, 	"Beg!nsum",		sizeof(g_Beg_nsum) },
 	// { g_Fret,     	"Fret",			sizeof(g_Fret) },
 };
-u8 g_CurrentSong = 0;
 
 // Character animation
 const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
 
-//-----------------------------------------------------------------------------
-// Static variables
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
 
+u8   g_CurrentSong = 0;
 u8   g_VBlank = 0;
 u8   g_Frame = 0;
 bool g_Loop = false;
 bool g_Mute[3] = { false, false, false };
 
-//-----------------------------------------------------------------------------
-// Functions prototype
-
-void DrawVUMeter();
-void SetSong(u8 songId) __FASTCALL;
-void Play();
-void Pause();
-void Stop();
-void Loop(bool enable) __FASTCALL;
-void Mute(u8 chan, bool bMute);
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
 
 //-----------------------------------------------------------------------------
-/// H_TIMI interrupt hook
+// H_TIMI interrupt hook
 void VBlankHook()
 {
 	g_VBlank = 1;
@@ -90,12 +92,191 @@ void VBlankHook()
 }
 
 //-----------------------------------------------------------------------------
-/// Wait for V-Blank period
+// Wait for V-Blank period
 void WaitVBlank()
 {
 	while(g_VBlank == 0) {}
 	g_VBlank = 0;
 }
+
+// Set a new song
+void SetSong(u8 songId) __FASTCALL
+{
+	g_CurrentSong = songId;
+	
+	PT3_InitSong(g_SongData[songId].Raw);
+
+	Print_SetFont(g_Font_CMSX_Std0);
+	VDP_CommandHMMV(64, 56, 6*8, 8, 0x44);
+	Print_SetPosition(64, 56);
+	Print_DrawText(g_SongData[songId].Name);
+}
+
+//-----------------------------------------------------------------------------
+// Draw the VU meter
+void DrawVUMeter()
+{
+	#define VU_X	(64+10)
+	#define VU_MAX	7
+	#define VU_H	4
+	
+	g_VDP_Command.NY = VU_H;
+	g_VDP_Command.ARG = 0; 
+	g_VDP_Command.CMD = VDP_CMD_HMMV;
+
+	// Channel A
+	g_VDP_Command.DY = 64 + (8*1) + ((8-VU_H)/2); 
+	u8 volA = PT3_GetVolume(PSG_CHANNEL_A) >> 1;
+	if(volA > VU_MAX)
+		volA = VU_MAX;
+	if(volA > 0)
+	{
+		g_VDP_Command.DX = VU_X;
+		g_VDP_Command.NX = volA * 8;
+		g_VDP_Command.CLR = 0x22;
+		VPD_CommandSetupR36();
+	}
+	if(volA < VU_MAX)
+	{
+		g_VDP_Command.DX = VU_X + volA * 8;
+		g_VDP_Command.NX = (VU_MAX - volA) * 8;
+		g_VDP_Command.CLR = 0x11;
+		VPD_CommandSetupR36();
+	}
+
+	// Channel B
+	g_VDP_Command.DY = 64 + (8*2) + ((8-VU_H)/2); 
+	u8 volB = PT3_GetVolume(PSG_CHANNEL_B) >> 1;
+	if(volB > VU_MAX)
+		volB = VU_MAX;
+	if(volB > 0)
+	{
+		g_VDP_Command.DX = VU_X;
+		g_VDP_Command.NX = volB * 8;
+		g_VDP_Command.CLR = 0x22;
+		VPD_CommandSetupR36();
+	}
+	if(volB < VU_MAX)
+	{
+		g_VDP_Command.DX = VU_X + volB * 8;
+		g_VDP_Command.NX = (VU_MAX - volB) * 8;
+		g_VDP_Command.CLR = 0x11;
+		VPD_CommandSetupR36();
+	}
+
+	// Channel C
+	g_VDP_Command.DY = 64 + (8*3) + ((8-VU_H)/2); 
+	u8 volC = PT3_GetVolume(PSG_CHANNEL_C)>> 1;
+	if(volC > VU_MAX)
+		volC = VU_MAX;
+	if(volC > 0)
+	{
+		g_VDP_Command.DX = VU_X;
+		g_VDP_Command.NX = volC * 8;
+		g_VDP_Command.CLR = 0x22;
+		VPD_CommandSetupR36();
+	}
+	if(volC < VU_MAX)
+	{
+		g_VDP_Command.DX = VU_X + volC * 8;
+		g_VDP_Command.NX = (VU_MAX - volC) * 8;
+		g_VDP_Command.CLR = 0x11;
+		VPD_CommandSetupR36();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Play/resume the current music
+void Play()
+{
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_SetMode(PRINT_MODE_BITMAP);
+	
+	Print_SetColor(0x9, 0x5);
+	Print_SetPosition(1, 33);
+	Print_DrawChar(CHR_PLAY);
+
+	Print_SetColor(0xF, 0x5);
+	Print_SetPosition(11, 33);
+	Print_DrawChar(CHR_PAUSE);
+	Print_SetPosition(21, 33);
+	Print_DrawChar(CHR_STOP);
+	
+	PT3_Resume();
+}
+
+//-----------------------------------------------------------------------------
+// Pause the current music
+void Pause()
+{
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_SetMode(PRINT_MODE_BITMAP);
+
+	Print_SetColor(0x9, 0x5);
+	Print_SetPosition(11, 33);
+	Print_DrawChar(CHR_PAUSE);
+
+	Print_SetColor(0xF, 0x5);
+	Print_SetPosition(1, 33);
+	Print_DrawChar(CHR_PLAY);
+	Print_SetPosition(21, 33);
+	Print_DrawChar(CHR_STOP);
+	
+	PT3_Pause();
+}
+
+//-----------------------------------------------------------------------------
+// Stop the current music
+void Stop()
+{
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_SetMode(PRINT_MODE_BITMAP);
+
+	Print_SetColor(0x9, 0x5);
+	Print_SetPosition(11, 33);
+	Print_DrawChar(CHR_PAUSE);
+
+	Print_SetColor(0xF, 0x5);
+	Print_SetPosition(1, 33);
+	Print_DrawChar(CHR_PLAY);
+	Print_SetPosition(21, 33);
+	Print_DrawChar(CHR_STOP);
+	
+	PT3_Pause();
+	PT3_InitSong(g_SongData[g_CurrentSong].Raw);
+}
+
+//-----------------------------------------------------------------------------
+// Set the current music loop flag
+void Loop(bool enable) __FASTCALL
+{
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_SetMode(PRINT_MODE_BITMAP);
+	Print_SetColor(enable ? 0x9 : 0xF, 0x5);
+	Print_SetPosition(51, 33);
+	Print_DrawChar(CHR_LOOP);
+
+	g_Loop = enable;
+	PT3_SetLoop(enable);
+}
+
+//-----------------------------------------------------------------------------
+// Mute one of the channels
+void Mute(u8 chan, bool bMute)
+{
+	g_Mute[chan] = bMute;
+	Print_SetFont(g_Font_CMSX_Symbol1);
+	Print_SetMode(PRINT_MODE_BITMAP);
+	Print_SetColor(bMute ? 0x9 : 0xF, 0x4);
+	Print_SetPosition(64, 64 + 8 + 8*chan);
+	Print_DrawChar(bMute ? CHR_MUTE : CHR_SOUND);
+	
+	PT3_Mute(chan, bMute);
+}
+
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Program entry point
@@ -104,15 +285,16 @@ void main()
 	// INIT SCREEN
 
 	VDP_SetMode(VDP_MODE_SCREEN5);
-	// VDP_SetFrequency(VDP_FREQ_50HZ);
 	VDP_EnableSprite(false);
 	VDP_SetColor(0x4);
 	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
 
 	Print_SetBitmapFont(null);
 	Print_SetFont(g_Font_CMSX_Std0);
+	Print_SetMode(PRINT_MODE_BITMAP_TRANS);
+	Print_SetColor(0xF, 0);
 	Print_SetPosition(4, 4);
-	Print_DrawText("PT3 PLAYER SAMPLE");
+	Print_DrawText("MGL - PT3 PLAYER SAMPLE");
 	Draw_Box(0, 0, 255, 14, 0x0F, 0);
 
 	Print_SetPosition(0, 56);
@@ -244,173 +426,4 @@ void main()
 
 		// PT3_Decode(); 
 	}
-}
-
-// Set a new song
-void SetSong(u8 songId) __FASTCALL
-{
-	g_CurrentSong = songId;
-	
-	PT3_InitSong(g_SongData[songId].Raw);
-
-	Print_SetFont(g_Font_CMSX_Std0);
-	VDP_CommandHMMV(64, 56, 6*8, 8, 0x44);
-	Print_SetPosition(64, 56);
-	Print_DrawText(g_SongData[songId].Name);
-}
-
-// Draw the VU meter
-void DrawVUMeter()
-{
-	#define VU_X	(64+10)
-	#define VU_MAX	7
-	#define VU_H	4
-	
-	g_VDP_Command.NY = VU_H;
-	g_VDP_Command.ARG = 0; 
-	g_VDP_Command.CMD = VDP_CMD_HMMV;
-
-	// Channel A
-	g_VDP_Command.DY = 64 + (8*1) + ((8-VU_H)/2); 
-	u8 volA = PT3_GetVolume(PSG_CHANNEL_A) >> 1;
-	if(volA > VU_MAX)
-		volA = VU_MAX;
-	if(volA > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volA * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volA < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volA * 8;
-		g_VDP_Command.NX = (VU_MAX - volA) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-
-	// Channel B
-	g_VDP_Command.DY = 64 + (8*2) + ((8-VU_H)/2); 
-	u8 volB = PT3_GetVolume(PSG_CHANNEL_B) >> 1;
-	if(volB > VU_MAX)
-		volB = VU_MAX;
-	if(volB > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volB * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volB < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volB * 8;
-		g_VDP_Command.NX = (VU_MAX - volB) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-
-	// Channel C
-	g_VDP_Command.DY = 64 + (8*3) + ((8-VU_H)/2); 
-	u8 volC = PT3_GetVolume(PSG_CHANNEL_C)>> 1;
-	if(volC > VU_MAX)
-		volC = VU_MAX;
-	if(volC > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volC * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volC < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volC * 8;
-		g_VDP_Command.NX = (VU_MAX - volC) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-}
-
-// Play/resume the current music
-void Play()
-{
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_BITMAP);
-	
-	Print_SetColor(0x9, 0x5);
-	Print_SetPosition(1, 33);
-	Print_DrawChar(CHR_PLAY);
-
-	Print_SetColor(0xF, 0x5);
-	Print_SetPosition(11, 33);
-	Print_DrawChar(CHR_PAUSE);
-	Print_SetPosition(21, 33);
-	Print_DrawChar(CHR_STOP);
-	
-	PT3_Resume();
-}
-
-// Pause the current music
-void Pause()
-{
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_BITMAP);
-
-	Print_SetColor(0x9, 0x5);
-	Print_SetPosition(11, 33);
-	Print_DrawChar(CHR_PAUSE);
-
-	Print_SetColor(0xF, 0x5);
-	Print_SetPosition(1, 33);
-	Print_DrawChar(CHR_PLAY);
-	Print_SetPosition(21, 33);
-	Print_DrawChar(CHR_STOP);
-	
-	PT3_Pause();
-}
-
-// Stop the current music
-void Stop()
-{
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_BITMAP);
-
-	Print_SetColor(0x9, 0x5);
-	Print_SetPosition(11, 33);
-	Print_DrawChar(CHR_PAUSE);
-
-	Print_SetColor(0xF, 0x5);
-	Print_SetPosition(1, 33);
-	Print_DrawChar(CHR_PLAY);
-	Print_SetPosition(21, 33);
-	Print_DrawChar(CHR_STOP);
-	
-	PT3_Pause();
-	PT3_InitSong(g_SongData[g_CurrentSong].Raw);
-}
-
-// Set the current music loop flag
-void Loop(bool enable) __FASTCALL
-{
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_BITMAP);
-	Print_SetColor(enable ? 0x9 : 0xF, 0x5);
-	Print_SetPosition(51, 33);
-	Print_DrawChar(CHR_LOOP);
-
-	g_Loop = enable;
-	PT3_SetLoop(enable);
-}
-
-// Mute one of the channels
-void Mute(u8 chan, bool bMute)
-{
-	g_Mute[chan] = bMute;
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetMode(PRINT_MODE_BITMAP);
-	Print_SetColor(bMute ? 0x9 : 0xF, 0x4);
-	Print_SetPosition(64, 64 + 8 + 8*chan);
-	Print_DrawChar(bMute ? CHR_MUTE : CHR_SOUND);
-	
-	PT3_Mute(chan, bMute);
 }

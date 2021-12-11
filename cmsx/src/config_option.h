@@ -69,7 +69,7 @@
 
 // VDP_VRAM
 #define VDP_VRAM_ADDR_14	0 // Use 14-bits 16K VRAM addressing for MSX 1 (u16)
-#define VDP_VRAM_ADDR_17	1 // Use 17-bits 128K VRAM addressing for MSX (u32)
+#define VDP_VRAM_ADDR_17	1 // Use 17-bits 128K VRAM addressing for MSX 2/2+/Turbo-R (u32)
 
 // VDP_UNIT
 #define VDP_UNIT_U8			0 // X and Y use 8-bits values

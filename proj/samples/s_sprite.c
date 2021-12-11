@@ -3,23 +3,18 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
-#pragma sdcc_hash +
+//  Real-time clock module sample
 
-#include "core.h"
-#include "color.h"
-#include "input.h"
-#include "print.h"
-#include "vdp.h"
-#include "memory.h"
-#include "bios.h"
-#include "bios_mainrom.h"
-#include "math.h"
-#include "draw.h"
-#include "profile.h"
+//=============================================================================
+// INCLUDES
+//=============================================================================
+#include "cmsx.h"
 
-//-----------------------------------------------------------------------------
+//=============================================================================
 // DEFINES
+//=============================================================================
 
+// Pattern enum
 #define PATTERN_8_1ST			(u8)0
 #define PATTERN_8_NUM			(u8)64
 #define PATTERN_16_1ST			(u8)(PATTERN_8_1ST+PATTERN_8_NUM)
@@ -27,6 +22,7 @@
 #define PATTERN_16OR_1ST		(u8)(PATTERN_16_1ST+PATTERN_16_NUM)
 #define PATTERN_16OR_NUM		(u8)(6*2*4)
 
+// Sprite enum
 #define SPRITE_8_1ST			(u8)0
 #define SPRITE_8_NUM			(u8)24
 #define SPRITE_16_1ST			(u8)(SPRITE_8_1ST+SPRITE_8_NUM)
@@ -34,6 +30,7 @@
 #define SPRITE_16OR_1ST			(u8)(SPRITE_16_1ST+SPRITE_16_NUM)
 #define SPRITE_16OR_NUM			(u8)4
 
+// Line interruption
 #if (TARGET_TYPE == TARGET_TYPE_BIN)
 	#define SPRITE_2X_LINE		63-9
 	#define SPRITE_8_LINE		113-9
@@ -45,26 +42,37 @@
 	#define SPRITE_8_LINE		113-10
 #endif
 
-typedef struct
+// Vector structure
+struct Vector
 {
 	i8 x, y;
-} Vector;
+};
 
-//-----------------------------------------------------------------------------
-// DATA
+/// Sprite data
+struct SpriteData
+{
+	u8 Y;
+	u8 X;
+	u8 Shape;
+};
+
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
 
 // Fonts
 #include "font\font_cmsx_std0.h"
 #include "font\font_cmsx_symbol1.h"
 
-// Fonts
-//#include "data\data_sprt_8.h"
+// Sprite pattern
 #include "data\data_sprt_16.h"
 #include "data\data_sprt_16or.h"
 
+// Character animation
 const u8 chrAnim[] = { '|', '\\', '-', '/' };
 
-const Vector DirMove[] = 
+// Sprite movement
+const struct Vector DirMove[] = 
 {
 	{ (i8)1,  (i8)1 },
 	{ (i8)1,  (i8)0 },
@@ -76,6 +84,7 @@ const Vector DirMove[] =
 	{ (i8)0,  (i8)1 },
 };
 
+// Color table
 const u8 ColorTab[] = 
 {
 	15, 5, 6, 7, 1, 7, 6, 5,
@@ -83,12 +92,24 @@ const u8 ColorTab[] =
 	15, 5, 6, 7, 1, 7, 6, 5,
 };
 
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
+
 // Screen mode setting index
 u8 g_VBlank = 0;
 u8 g_Frame = 0;
 u8 g_Phase = 0;
 
-/// H-Blank interrupt hook
+// Sprite data
+struct SpriteData g_Sprite[32];
+
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
+
+//-----------------------------------------------------------------------------
+// H-Blank interrupt hook
 void HBlankHook()
 {
 	// VDP_SetColor(COLOR_BLACK);
@@ -106,7 +127,8 @@ void HBlankHook()
 	}
 }
 
-/// H_KEYI interrupt hook
+//-----------------------------------------------------------------------------
+// H_KEYI interrupt hook
 void InterruptHook()
 {
 	__asm
@@ -131,13 +153,15 @@ void InterruptHook()
 	// Call((u16)HookBackup_KEYI);
 }
 
-/// H_TIMI interrupt hook
+//-----------------------------------------------------------------------------
+// H_TIMI interrupt hook
 void VBlankHook()
 {
 	g_VBlank = 1;
 }
 
-/// Wait for V-Blank period
+//-----------------------------------------------------------------------------
+// Wait for V-Blank period
 void WaitVBlank()
 {
 	while(g_VBlank == 0) {}
@@ -148,15 +172,9 @@ void WaitVBlank()
 	VDP_SetHBlankLine(SPRITE_2X_LINE);
 }
 
-///
-struct SpriteData
-{
-	u8 Y;
-	u8 X;
-	u8 Shape;
-};
-
-struct SpriteData g_Sprite[32];
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Program entry point
@@ -286,7 +304,7 @@ void main()
 		u8 sprtIdx = SPRITE_8_1ST;
 		for(u8 i = 0; i < SPRITE_8_NUM; i++)
 		{
-			const Vector* mov = &DirMove[i & 0x7];
+			const struct Vector* mov = &DirMove[i & 0x7];
 			sprt->X += mov->x;
 			sprt->Y += mov->y;
 			if(sprt->Y > 212)

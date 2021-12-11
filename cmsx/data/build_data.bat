@@ -33,7 +33,7 @@ REM %CMSXimg% -in font\oxygene.png			-out font_oxygene.h     -pos 0 16 -size 8 8
 REM -------- SSYTEM FONTS --------
 %CMSXimg% font\font_tsm9900.png       -out ..\src\font\font_tsm9900.h       -pos 0 16  -size 8 8  -gap 0 0  -num 16 6  -trans 0x000000  -bpc 1  -name g_Font_TMS9900       -copy          -skip  -font 6 8 ! ~
 REM %CMSXimg% -in font\IBMFont.bmp			-out font_ibm.h         -pos 0 0  -size 8 8  -gap 0 0 -num 16 16 -trans 0x040404 -bpc 1 -name g_Font_IBM			-skip -font 8 8 0x01 0xFE
-%CMSXimg% font\typo\Apple2.png        -out ..\src\font\font_apple2.h        -pos 0 0   -size 7 8  -gap 1 0  -num 32 3  -trans 0x000000  -bpc 1  -name g_Font_Apple2        -copy -skip -font 8 8 ! 0x7F
+%CMSXimg% font\typo\Apple2.png        -out ..\src\font\font_apple2.h        -pos 0 0   -size 7 8  -gap 0 0  -num 32 3  -trans 0x000000  -bpc 1  -name g_Font_Apple2        -copy -skip -font 8 8 ! 0x7F
 %CMSXimg% font\typo\Atari.png         -out ..\src\font\font_atari.h         -pos 0 0   -size 8 8  -gap 0 0  -num 32 3  -trans 0x005D8E  -bpc 1  -name g_Font_Atari         -copy -skip -font 8 8 ! 0x7C
 
 REM -------- GFX FONTS --------

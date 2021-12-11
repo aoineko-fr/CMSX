@@ -24,8 +24,15 @@ rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=%~n1
 
-rem Get MSX version and modules list
-call %ProjName%.cmd
+rem  List of modules to link
+SET ModuleList=bios,vdp,print,input,memory,math,draw
+
+rem  MSX version:
+rem  - 1		MSX 1
+rem  - 2		MSX 2
+rem  - 2P		MSX 2+
+rem  - TR		MSX TurboR
+SET Version=2
 
 rem  Target:
 rem  - BIN		.bin	BASIC binary program (8000h~)
@@ -45,7 +52,13 @@ rem  - Speed
 rem  - Size
 set Optim=Speed
 
+rem Verbose mode: 0 or 1
 set Verbose=0
+
+rem Check for project specific parameters
+if exist %ProjName%.cmd do (
+	call %ProjName%.cmd
+)
 
 rem ***************************************************************************
 rem * BUILD STEPS                                                             *

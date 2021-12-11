@@ -63,7 +63,7 @@ struct ModeEntry
 // Trigo
 #include "mathtable/mt_trigo_32.inc"
 
-//
+// Long sample text
 const c8* g_SampleText =
 	"\nEquation: (x+7)*42=(10h>>x)^2-3\n"
 	"\"Nous sommes au 21e siecle ; toute la Gaule est occupee par les PC, Mac, Xbox, Switch et autres Playstation..."
@@ -72,11 +72,10 @@ const c8* g_SampleText =
 	"entierement consacre au culte d'un standard fabuleux : le MSX !\"\n"
 	"Bienvenue au MSX Village, le site des irreductibles Gaulois du MSX !";
 
-//
-const c8* g_SampleTextShort =
-	"Bienvenue au MSX Village, le site des irreductibles Gaulois du MSX !";
+// Short sample text
+const c8* g_SampleTextShort = "Bienvenue au MSX Village, le site des irreductibles Gaulois du MSX !";
 
-//
+// Sprite sample data
 const c8* g_SpriteText = "SPRITE!";
 
 // Font entries table
@@ -189,6 +188,8 @@ void PrintList()
 	for(u8 i = 0; i < numberof(g_Fonts); ++i)
 	{
 		Print_SetFont(g_Fonts[i].Font);
+		Print_SetColor((i == g_FontIndex) ? g_Modes[g_ModeIndex].ColorAlt : g_Modes[g_ModeIndex].ColorText, g_Modes[g_ModeIndex].ColorBG);
+		Print_DrawText("\t");
 		Print_DrawText(g_Fonts[i].Name);
 		Print_DrawText("\n");
 	}
@@ -280,8 +281,7 @@ void PrintEffect()
 	Print_DrawText("VRAM: ");
 #if (USE_PRINT_VRAM)
 	Print_DrawText("Loading...");
-	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
-	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212);
+	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212, g_Modes[g_ModeIndex].ColorAlt);
 	Print_Backspace(String_Length("Loading..."));
 	Print_DrawText(g_SampleTextShort);
 #else
@@ -340,7 +340,7 @@ void PrintBenchmark()
 
 	Print_DrawText("\n\nLoading...");
 	Print_SetColor(g_Modes[g_ModeIndex].ColorAlt, g_Modes[g_ModeIndex].ColorBG);
-	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212);
+	Print_SetFontVRAM(g_Fonts[g_FontIndex].Font, 212, g_Modes[g_ModeIndex].ColorAlt);
 	Print_Backspace(String_Length("Loading..."));
 	u8 startTime = g_JIFFY;
 	Print_DrawText(text1);
@@ -363,32 +363,10 @@ void PrintBenchmark()
 // MAIN LOOP
 //=============================================================================
 
-u16 T = 0;
-void F() { T++; }
-
-
 //-----------------------------------------------------------------------------
 /// Program entry point
 void main()
 {
-	VDP_SetMode(VDP_MODE_SCREEN0);
-	VDP_ClearVRAM();
-
-	Print_SetTextFont(PRINT_DEFAULT_FONT, 1);
-	Print_DrawText("VRAM: ");
-	switch((g_MODE >> 1) & 0x3)
-	{
-		case 0b00: Print_DrawText("16kB");  break;
-		case 0b01: Print_DrawText("64kB");  break;
-		case 0b10: Print_DrawText("128kB"); break;
-		case 0b11: Print_DrawText("192kB"); break;
-	};
-
-	while(!Keyboard_IsKeyPressed(KEY_ESC))
-	{
-	}
-
-
 	callback cb = PrintList;
 	cb();
 

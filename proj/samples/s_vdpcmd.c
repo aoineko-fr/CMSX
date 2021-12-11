@@ -3,24 +3,16 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
-#pragma sdcc_hash +
+//  VDP command sample
 
-#include "core.h"
-#include "color.h"
-#include "input.h"
-#include "print.h"
-#include "vdp.h"
-#include "memory.h"
-#include "bios.h"
-#include "bios_port.h"
-#include "bios_var.h"
-#include "bios_hook.h"
-#include "bios_mainrom.h"
-#include "math.h"
-#include "draw.h"
+//=============================================================================
+// INCLUDES
+//=============================================================================
+#include "cmsx.h"
 
-//-----------------------------------------------------------------------------
+//=============================================================================
 // DEFINES
+//=============================================================================
 
 // Screen setting
 struct ScreenSetting
@@ -44,8 +36,24 @@ struct ScreenSetting
 	const u16* Palette;
 };
 
-//-----------------------------------------------------------------------------
-// DATA
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
+
+// Screen mode setting index
+u8 g_SrcModeIndex;
+u8 g_VBlank = 0;
+u8 g_Frame = 0;
+u16 SX, SY;
+
+// Memory buffer to unpack compressed data
+u8 g_LMMC2b[16*16];
+u8 g_LMMC4b[16*16];
+
+
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
 
 // Fonts
 #include "font\font_cmsx_std0.h"
@@ -97,26 +105,21 @@ const u8 g_CursorForm[] =
 #include "data\data_bmp_4b.h"
 #include "data\data_bmp_8b.h"
 
-// Screen mode setting index
-u8 g_LMMC2b[16*16];
-u8 g_LMMC4b[16*16];
-
 // Screen mode settings
 const struct ScreenSetting g_Settings[] =
-{ //  Name              Mode              Width BPC Txt   BG    Red   White Gray  Black Font              Data      DataLMMC  Palette 
-	{ "Screen 5 (G4)",	VDP_MODE_SCREEN5, 256,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_CMSX_Std0, g_DataBmp4b, g_LMMC4b, null }, // 0
-	{ "Screen 6 (G5)",	VDP_MODE_SCREEN6, 512,	2,	0xFF, 0xAA, 0x55, 0xFF, 0xAA, 0x55, g_Font_IBM,       g_DataBmp2b, g_LMMC2b, null }, // 1
-	{ "Screen 7 (G6)",	VDP_MODE_SCREEN7, 512,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_IBM,       g_DataBmp4b, g_LMMC4b, null }, // 2
+{ //  Name              Mode              Width BPC Txt   BG    Red   White Gray  Black Font              Data         DataLMMC     Palette 
+	{ "Screen 5 (G4)",	VDP_MODE_SCREEN5, 256,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_CMSX_Std0, g_DataBmp4b, g_LMMC4b,    null }, // 0
+	{ "Screen 6 (G5)",	VDP_MODE_SCREEN6, 512,	2,	0xFF, 0xAA, 0x55, 0xFF, 0xAA, 0x55, g_Font_IBM,       g_DataBmp2b, g_LMMC2b,    null }, // 1
+	{ "Screen 7 (G6)",	VDP_MODE_SCREEN7, 512,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_IBM,       g_DataBmp4b, g_LMMC4b,    null }, // 2
 	{ "Screen 8 (G7)",	VDP_MODE_SCREEN8, 256,	8,	0xFF, 0x47, 0x1C, 0xFF, 0x6D, 0x00, g_Font_CMSX_Std0, g_DataBmp8b, g_DataBmp8b, null }, // 3
 };
 
+// Character animation
 const u8 chrAnim[] = { '|', '\\', '-', '/' };
 
-// Screen mode setting index
-u8 g_SrcModeIndex;
-u8 g_VBlank = 0;
-u8 g_Frame = 0;
-u16 SX, SY;
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 //
@@ -125,7 +128,7 @@ void DisplayPage()
 	const struct ScreenSetting* src = &g_Settings[g_SrcModeIndex];
 	
 	u8* buffer = Mem_HeapAlloc(256);
-	u16 blockWidth = 16 * 256 / src->Width;
+	u16 blockWidth = src->Width / 16;
 	u16 blockBytes = 16 / 8 * src->BPC;
 	u16 lineBytes = src->Width / 8 * src->BPC;
 	u16 X, Y;
@@ -152,7 +155,7 @@ void DisplayPage()
 
 	//-------------------------------------------------------------------------
 	// WriteVRAM(src, destLow, destHigh, count) - Write data from RAM to VRAM
-	X = 8;
+	X = blockWidth / 2;
 	Y = 24;
 	Print_SetPosition(X, Y);
 	Print_DrawText("Write");
@@ -181,7 +184,7 @@ void DisplayPage()
 	Y += 32;
 	Print_SetPosition(X, Y);
 	Print_DrawText("HMMV");
-	VDP_CommandHMMV(X, Y + 8, 16, 16, src->Red);
+	VDP_CommandHMMV(X, Y + 8, blockWidth, 16, src->Red);
 
 	//-----------------------------------------------------------------------------
 	// ReadVRAM(srcLow, srcHigh, dest, count) - Read data from VRAM to RAM
@@ -218,8 +221,8 @@ void DisplayPage()
 	Y += 32;
 	Print_SetPosition(X, Y);
 	Print_DrawText("LMMV(OR)");
-	VDP_CommandLMMV(X - 4, Y + 8 + 4, 16 + 8, 16 - 8, src->Red, VDP_OP_IMP);
-	VDP_CommandLMMV(X, Y + 8, 16, 16, src->Gray, VDP_OP_OR);
+	VDP_CommandLMMV(X - blockWidth/4, Y + 8 + 4, blockWidth + blockWidth/2, 16 - 8, src->Red, VDP_OP_IMP);
+	VDP_CommandLMMV(X, Y + 8, blockWidth, 16, src->Gray, VDP_OP_OR);
 
 	//-----------------------------------------------------------------------------
 	// FillVRAM(value, destLow, destHigh, count) - Fill VRAM area with a given value
@@ -228,17 +231,17 @@ void DisplayPage()
 	Print_SetPosition(X, Y);
 	Print_DrawText("Fill");
 	for(u16 i = 0; i < 16; ++i)
-		VDP_FillVRAM(src->Red, (Y + 8 + i) * lineBytes + (X / scale), 0, blockBytes);
+		VDP_FillVRAM(src->Red, (Y + 8 + i) * lineBytes + (X / scale), 0, blockBytes * blockWidth/16);
 
 	// LINE - Draw straight line in VRAM
 	Y += 32;
 	Print_SetPosition(X, Y);
 	Print_DrawText("LINE(OR)");
-	VDP_CommandHMMV(X - 4, Y + 8 + 4, 16 + 8, 8, src->Red);
-	VDP_CommandLINE(X, Y + 8, 16, 16, src->Gray, VDP_ARG_DIY_DOWN + VDP_ARG_DIX_RIGHT, VDP_OP_OR);
-	VDP_CommandLINE(X, Y + 16 + 8, 16, 16, src->Gray, VDP_ARG_DIY_UP + VDP_ARG_DIX_RIGHT, VDP_OP_OR);
-	VDP_CommandLINE(X, Y + 8 + 8, 16, 0, src->Gray, VDP_ARG_DIY_DOWN + VDP_ARG_DIX_RIGHT, VDP_OP_OR);
-	VDP_CommandLINE(X + 8, Y + 8, 16, 0, src->Gray, VDP_ARG_DIY_DOWN + VDP_ARG_MAJ_V, VDP_OP_OR);
+	VDP_CommandHMMV(X - blockWidth/4, Y + 8 + 4,  blockWidth + blockWidth/2, 8, src->Red);
+	VDP_CommandLINE(X, Y + 8,      blockWidth, 16, src->Gray, VDP_ARG_DIY_DOWN + VDP_ARG_DIX_RIGHT, VDP_OP_OR);
+	VDP_CommandLINE(X, Y + 16 + 8, blockWidth, 16, src->Gray, VDP_ARG_DIY_UP + VDP_ARG_DIX_RIGHT, VDP_OP_OR);
+	VDP_CommandLINE(X, Y + 8 + 8,  blockWidth, 0,  src->Gray, VDP_ARG_DIY_DOWN + VDP_ARG_DIX_RIGHT, VDP_OP_OR);
+	VDP_CommandLINE(X + blockWidth/2, Y + 8, 16, 0,  src->Gray, VDP_ARG_DIY_DOWN + VDP_ARG_MAJ_V, VDP_OP_OR);
 
 	// SRCH - Search for the specific color in VRAM to the right or left of the starting point
 	Y += 32;
@@ -254,7 +257,7 @@ void DisplayPage()
 	for(u16 i = 0; i < 32; ++i)
 	{
 		u16 rnd = Math_GetRandom();
-		VDP_CommandPSET(X + rnd % 16, Y + 8 + (rnd >> 4) % 16, (rnd >> 8), VDP_OP_IMP);
+		VDP_CommandPSET(X + rnd % blockWidth, Y + 8 + (rnd >> 4) % 16, (rnd >> 8), VDP_OP_IMP);
 	}
 	
 	// POINT(sx, sy) - Read the color of the specified dot located in VRAM 
@@ -262,7 +265,7 @@ void DisplayPage()
 	Print_SetPosition(X, Y);
 	Print_DrawText("POINT(I)");
 	u8 clr = VDP_CommandPOINT(SX, SY);
-	VDP_CommandLMMV(X, Y + 8, 16, 16, clr, VDP_OP_IMP);
+	VDP_CommandLMMV(X, Y + 8, blockWidth, 16, clr, VDP_OP_IMP);
 
 	Print_SetPosition(4, 200);
 	Print_DrawText("Pad: Chg mode  Space+Pad: Move cursor");
@@ -278,19 +281,25 @@ void DisplayPage()
 	VDP_HideSpriteFrom(1);
 }
 
-/// H_TIMI interrupt hook
+//-----------------------------------------------------------------------------
+// H_TIMI interrupt hook
 void VBlankHook()
 {
 	g_VBlank = 1;
 }
 
-/// Wait for V-Blank period
+//-----------------------------------------------------------------------------
+// Wait for V-Blank period
 void WaitVBlank()
 {
 	while(g_VBlank == 0) {}
 	g_VBlank = 0;
 	g_Frame++;
 }
+
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Program entry point

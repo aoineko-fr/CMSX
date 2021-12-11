@@ -84,7 +84,7 @@ u8 g_PrevHour;
 //=============================================================================
 
 //-----------------------------------------------------------------------------
-/// Update hour display
+// Update hour display
 void UpdateHour()
 {
 	// Update digital watch
@@ -114,7 +114,7 @@ void UpdateHour()
 }
 
 //-----------------------------------------------------------------------------
-/// Update minute display
+// Update minute display
 void UpdateMinute()
 {
 	// Update digital watch
@@ -144,7 +144,7 @@ void UpdateMinute()
 }
 
 //-----------------------------------------------------------------------------
-/// Update second display
+// Update second display
 void UpdateSecond()
 {
 	// Update digital watch
@@ -178,7 +178,7 @@ void UpdateSecond()
 //=============================================================================
 
 //-----------------------------------------------------------------------------
-/// Program entry point
+// Program entry point
 void main()
 {
 	// Initialize display system
