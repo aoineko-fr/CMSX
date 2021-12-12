@@ -17,6 +17,18 @@
 // BUILD
 //-----------------------------------------------------------------------------
 
+// TARGET
+#if !defined(TARGET)
+	#warning TARGET is not defined in "cmsx_config.h"! Default value will be used: TARGET_ROM32
+	#define TARGET						TARGET_ROM32
+#endif
+
+// TARGET_TYPE
+#if !defined(TARGET_TYPE)
+	#warning TARGET_TYPE is not defined in "cmsx_config.h"! Default value will be used: TARGET_ROM32
+	#define TARGET_TYPE					TARGET_TYPE_ROM
+#endif
+
 // MSX_VERSION
 #if !defined(MSX_VERSION)
 	#warning MSX_VERSION is not defined in "cmsx_config.h"! Default value will be used: MSX_2
@@ -27,24 +39,18 @@
 // BIOS MODULE
 //-----------------------------------------------------------------------------
 
-// RENDER_MODE
-#ifndef RENDER_MODE
-	#warning RENDER_MODE is not defined in "cmsx_config.h"! Default value will be used: RENDER_VDP
-	#define RENDER_MODE					RENDER_VDP
-#endif
-
 // BIOS_CALL
-#ifndef CALL_MAINROM
-	#warning CALL_MAINROM is not defined in "cmsx_config.h"! Default value will be used: CALL_DIRECT
-	#define CALL_MAINROM				CALL_DIRECT
+#ifndef BIOS_CALL_MAINROM
+	#warning BIOS_CALL_MAINROM is not defined in "cmsx_config.h"! Default value will be used: BIOS_CALL_DIRECT
+	#define BIOS_CALL_MAINROM			BIOS_CALL_DIRECT
 #endif
-#ifndef CALL_SUBROM
-	#warning CALL_SUBROM is not defined in "cmsx_config.h"! Default value will be used: CALL_INTERSLOT
-	#define CALL_SUBROM					CALL_INTERSLOT
+#ifndef BIOS_CALL_SUBROM
+	#warning BIOS_CALL_SUBROM is not defined in "cmsx_config.h"! Default value will be used: BIOS_CALL_INTERSLOT
+	#define BIOS_CALL_SUBROM			BIOS_CALL_INTERSLOT
 #endif
-#ifndef CALL_DISCROM
-	#warning CALL_DISCROM is not defined in "cmsx_config.h"! Default value will be used: CALL_INTERSLOT
-	#define CALL_DISCROM				CALL_INTERSLOT
+#ifndef BIOS_CALL_DISKROM
+	#warning BIOS_CALL_DISKROM is not defined in "cmsx_config.h"! Default value will be used: BIOS_CALL_INTERSLOT
+	#define BIOS_CALL_DISKROM			BIOS_CALL_INTERSLOT
 #endif
 
 //-----------------------------------------------------------------------------
@@ -198,44 +204,44 @@
 
 	// Check for MSX1 supported 64K max VRAM size
 	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
-		#warning VDP_VRAM_ADDR cant be equal to VDP_VRAM_ADDR_17 when MSX1 machine is selected! VDP_VRAM_ADDR_14 will be select instead
+		#warning Cant use VDP_VRAM_ADDR_17 with MSX1! VDP_VRAM_ADDR_14 will be used instead
 		#undef  VDP_VRAM_ADDR
 		#define VDP_VRAM_ADDR			VDP_VRAM_ADDR_14
 	#endif
 
 	// Check for MSX1 supported screen mode
 	#if (USE_VDP_MODE_T2)
-		#warning USE_VDP_MODE_T2 cant be use when MSX_VERSION < MSX2! Option will be disable
+		#warning Cant use USE_VDP_MODE_T2 with MSX1! Option will be disable
 		#undef  USE_VDP_MODE_T2
 		#define USE_VDP_MODE_T2			0
 	#endif
 	#if (USE_VDP_MODE_G3)
-		#warning USE_VDP_MODE_G3 cant be use when MSX_VERSION < MSX2! Option will be disable
+		#warning Cant use USE_VDP_MODE_G3 with MSX1! Option will be disable
 		#undef  USE_VDP_MODE_G3
 		#define USE_VDP_MODE_G3			0
 	#endif
 	#if (USE_VDP_MODE_G4)
-		#warning USE_VDP_MODE_G4 cant be use when MSX_VERSION < MSX2! Option will be disable
+		#warning Cant use USE_VDP_MODE_G4 with MSX1! Option will be disable
 		#undef  USE_VDP_MODE_G4
 		#define USE_VDP_MODE_G4			0
 	#endif
 	#if (USE_VDP_MODE_G5)
-		#warning USE_VDP_MODE_G5 cant be use when MSX_VERSION < MSX2! Option will be disable
+		#warning Cant use USE_VDP_MODE_G5 with MSX1! Option will be disable
 		#undef  USE_VDP_MODE_G5
 		#define USE_VDP_MODE_G5			0
 	#endif
 	#if (USE_VDP_MODE_G6)
-		#warning USE_VDP_MODE_G6 cant be use when MSX_VERSION < MSX2! Option will be disable
+		#warning Cant use USE_VDP_MODE_G6 with MSX1! Option will be disable
 		#undef  USE_VDP_MODE_G6
 		#define USE_VDP_MODE_G6			0
 	#endif
 	#if (USE_VDP_MODE_G7)
-		#warning USE_VDP_MODE_G7 cant be use when MSX_VERSION < MSX2! Option will be disable
+		#warning Cant use USE_VDP_MODE_G7 with MSX1! Option will be disable
 		#undef  USE_VDP_MODE_G7
 		#define USE_VDP_MODE_G7			0
 	#endif
 	#if (USE_PRINT_BITMAP)
-		#warning USE_PRINT_BITMAP cant be use on MSX 1! Option will be disable
+		#warning Cant use USE_PRINT_BITMAP with MSX1! Option will be disable
 		#undef  USE_PRINT_BITMAP
 		#define USE_PRINT_BITMAP		0
 	#endif

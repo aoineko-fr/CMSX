@@ -56,12 +56,14 @@
 //-----------------------------------------------------------------------------
 
 // PRINT_WIDTH
-#define PRINT_WIDTH_6		0 // 
-#define PRINT_WIDTH_8		1 // 
-#define PRINT_WIDTH_X		2 // Not supported (fall back to PRINT_WIDTH_8)
+#define PRINT_WIDTH_1		1 // 
+#define PRINT_WIDTH_6		6 // 
+#define PRINT_WIDTH_8		8 // 
+#define PRINT_WIDTH_X		0 // Not supported (fall back to PRINT_WIDTH_8)
 // PRINT_HEIGHT
-#define PRINT_HEIGHT_8		1 // 
-#define PRINT_HEIGHT_X		2 // 
+#define PRINT_HEIGHT_1		1 // 
+#define PRINT_HEIGHT_8		8 // 
+#define PRINT_HEIGHT_X		0 // 
 
 //-----------------------------------------------------------------------------
 // VDP MODULE

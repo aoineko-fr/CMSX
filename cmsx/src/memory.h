@@ -7,7 +7,7 @@
 #include "core.h"
 
 /// Get the current address of the stack top (lower address)
-u16 Mem_GetStackAddress();
+u16 Mem_GetStackAddress() __sdcccall(0);
 
 /// Get the current address of the heap top (higher addresse)
 u16 Mem_GetHeapAddress();

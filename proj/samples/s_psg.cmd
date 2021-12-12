@@ -1,12 +1,6 @@
 @ECHO off
 
 rem ***************************************************************************
-rem * PROJECT SETTINGS                                                        *
+rem * PROJECT OVERWRITE                                                       *
 rem ***************************************************************************
-SET ModuleList=bios,vdp,print,input,memory,math,draw,pt3\pt3_player,ayfx\ayfx_player,compress
-rem  Version:
-rem  - 1		MSX 1
-rem  - 2		MSX 2
-rem  - 2P		MSX 2+
-rem  - TR		MSX TurboR
-SET Version=2
+SET ModuleList=%ModuleList%,pt3\pt3_player,ayfx\ayfx_player,compress

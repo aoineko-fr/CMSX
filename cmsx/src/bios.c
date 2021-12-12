@@ -14,6 +14,7 @@
 //-----------------------------------------------------------------------------
 #include "core.h"
 #include "bios_mainrom.h"
+#include "system.h"
 
 //-----------------------------------------------------------------------------
 //  █ █ █▀▀ █   █▀█ █▀▀ █▀█
@@ -24,9 +25,9 @@
 /// Call a bios function
 inline void Bios_MainCall(u16 addr)
 {
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 	Call(addr);
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 	Bios_MainROMCall(addr);
 #endif
 }
@@ -81,24 +82,12 @@ void Bios_Exit(u8 ret) __FASTCALL
 #endif
 }
 
-//-----------------------------------------------------------------------------
-/// Get the slot ID of a given page
-u8 Bios_GetSlot(u8 page) __FASTCALL
-{
-	u8 slot = (g_PortPrimarySlot >> (page * 2)) & 0x03;
-	if(g_EXPTBL[slot] & 0x80)
-	{
-		slot |= SLOT_EXP;
-		slot |= (((~g_SLTSL) >> (page * 2)) & 0x03) << 2;
-	}
-	return slot;
-}
 
 //-----------------------------------------------------------------------------
 /// Set a safe hook jump to given function
 void Bios_SetHookCallback(u16 hook, callback cb)
 {
-	u8 slot = Bios_GetSlot((u16)cb >> 14);
+	u8 slot = Sys_GetSlot((u16)cb >> 14);
 	Bios_SetHookInterSlotCallback(hook, slot, cb);
 }
 
@@ -385,9 +374,9 @@ void Bios_WriteVDP(u8 reg, u8 value) __sdcccall(0)
 
 		ld		c, 4(ix)
 		ld		b, 5(ix)
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_WRTVDP
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_WRTVDP
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -411,9 +400,9 @@ u8 Bios_ReadVRAM(u16 addr) __FASTCALL
 	// FastCall
 	//	ld		hl, addr
 	__asm
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_RDVRM
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_RDVRM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -442,9 +431,9 @@ void Bios_WriteVRAM(u16 addr, u8 value) __sdcccall(0)
 		ld		l, 4(ix)
 		ld		h, 5(ix)
 		ld		a, 6(ix)
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_WRTVRM
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_WRTVRM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -468,9 +457,9 @@ void Bios_SetAddressForRead(u16 addr) __FASTCALL
 	// FastCall
 	//	ld		hl, addr
 	__asm
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_SETRD
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_SETRD
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -493,9 +482,9 @@ void Bios_SetAddressForWrite(u16 addr) __FASTCALL
 	// FastCall
 	//	ld		hl, addr
 	__asm
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_SETWRT
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_SETWRT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -526,9 +515,9 @@ void Bios_FillVRAM(u16 addr, u16 length, u8 value) __sdcccall(0)
 		ld		c, 6(ix)
 		ld		b, 7(ix)
 		ld		a, 8(ix)
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_FILVRM
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_FILVRM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -561,9 +550,9 @@ void Bios_TransfertVRAMtoRAM(u16 vram, u16 ram, u16 length) __sdcccall(0)
 		ld		d, 7(ix)
 		ld		c, 8(ix)
 		ld		b, 9(ix)
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_LDIRMV
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_LDIRMV
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -596,9 +585,9 @@ void Bios_TransfertRAMtoVRAM(u16 ram, u16 vram, u16 length) __sdcccall(0)
 		ld		d, 7(ix)
 		ld		c, 8(ix)
 		ld		b, 9(ix)
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_LDIRVM
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_LDIRVM
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -622,9 +611,9 @@ void Bios_ChangeMode(u8 screen) __FASTCALL
 	//	ld		l, screen
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CHGMOD
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CHGMOD
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -656,9 +645,9 @@ void Bios_ChangeColor(u8 text, u8 back, u8 border) __sdcccall(0)
 		ld  	(M_BAKCLR), a
 		ld  	a, 6(ix)
 		ld  	(M_BDRCLR), a
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CHGCLR
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CHGCLR
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -832,9 +821,9 @@ u16 Bios_GetPatternTableAddress(u8 id) __FASTCALL
 	//	ld		l, id
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CALPAT
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CALPAT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -857,9 +846,9 @@ u16 Bios_GetAttributeTableAddress(u8 id) __FASTCALL
 	//	ld		l, id
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CALATR
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CALATR
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -878,9 +867,9 @@ u16 Bios_GetAttributeTableAddress(u8 id) __FASTCALL
 u8 Bios_GetSpriteSize()
 { 
 	__asm
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_GSPSIZ
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_GSPSIZ
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -902,9 +891,9 @@ void Bios_GraphPrintChar(u8 chr) __FASTCALL
 	//	ld		l, chr
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_GRPPRT
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_GRPPRT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -965,9 +954,9 @@ void Bios_WritePSG(u8 reg, u8 value) __sdcccall(0)
 
 		ld		a, 4(ix)
 		ld		e, 5(ix)
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_WRTPSG
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_WRTPSG
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -991,9 +980,9 @@ u8 Bios_ReadPSG(u8 reg) __FASTCALL
 	//	ld		l, reg
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_RDPSG
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_RDPSG
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1039,9 +1028,9 @@ inline void Bios_PlayPSG()
 u8 Bios_GetCharacter()
 {
 	__asm
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CHGET
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CHGET
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1063,9 +1052,9 @@ void Bios_TextPrintChar(u8 chr) __FASTCALL
 	//	ld		l, chr
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CHPUT
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CHPUT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1162,9 +1151,9 @@ inline void Bios_ClearScreen()
 {
 	__asm
 		xor		a, a
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CLS
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CLS
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1228,9 +1217,9 @@ u8 Bios_GetJoystickDirection(u8 port) __FASTCALL
 	//	ld		l, reg
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_GTSTCK
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_GTSTCK
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1260,9 +1249,9 @@ u8 Bios_GetJoystickTrigger(u8 trigger) __FASTCALL
 	//	ld		l, reg
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_GTTRIG
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_GTTRIG
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1548,9 +1537,9 @@ u8 Bios_GetKeyboardMatrix(u8 line) __FASTCALL
 	//	ld		l, line
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_SNSMAT
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_SNSMAT
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1794,9 +1783,9 @@ void Bios_SetCPUMode(u8 mode) __FASTCALL
 	//	ld		l, mode
 	__asm
 		ld		a, l
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_CHGCPU
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_CHGCPU
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT
@@ -1818,9 +1807,9 @@ void Bios_SetCPUMode(u8 mode) __FASTCALL
 u8 Bios_GetCPUMode()
 {
 	__asm
-#if (CALL_MAINROM == CALL_DIRECT)
+#if (BIOS_CALL_MAINROM == BIOS_CALL_DIRECT)
 		call	R_GETCPU
-#else // (CALL_MAINROM == CALL_INTERSLOT)
+#else // (BIOS_CALL_MAINROM == BIOS_CALL_INTERSLOT)
 		ld		ix, #R_GETCPU
 		ld		iy, (M_EXPTBL-1)
 		call	R_CALSLT

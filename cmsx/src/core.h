@@ -58,21 +58,6 @@ typedef void (*callback)(void);	///< Callback default signature
 #define loop(a, b)		for(u8 a = 0; a < b; ++a)
 
 //-----------------------------------------------------------------------------
-// Helper inline functions
-
-/// Direct call a routine at a given address (generate ASM code: "call XXXX")
-inline void Call(u16 addr) { ((void(*)(void))(addr))(); }
-
-/// Enable interruption
-inline void EnableInterrupt() { __asm__("ei"); }
-
-/// Disable interruption
-inline void DisableInterrupt() { __asm__("di"); }
-
-/// Disable interruption
-inline void Halt() { __asm__("halt"); }
-
-//-----------------------------------------------------------------------------
 // PEEK & POKE
 //-----------------------------------------------------------------------------
 #define POKE(addr, val)		(*(u8*)(addr) = (val))

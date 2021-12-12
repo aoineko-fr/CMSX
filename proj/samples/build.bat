@@ -25,7 +25,7 @@ rem ***************************************************************************
 SET ProjName=%~n1
 
 rem  List of modules to link
-SET ModuleList=bios,vdp,print,input,memory,math,draw
+SET ModuleList=system,bios,vdp,print,input,memory,math,draw
 
 rem  MSX version:
 rem  - 1		MSX 1

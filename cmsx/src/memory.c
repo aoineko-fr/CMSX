@@ -10,7 +10,7 @@ u16 g_StackAddress;
 
 //-----------------------------------------------------------------------------
 /// Get the current address of the stack top (lower address)
-u16 Mem_GetStackAddress()
+u16 Mem_GetStackAddress() __sdcccall(0)
 {
 	__asm
 		ld		(_g_StackAddress), sp

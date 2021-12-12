@@ -34,7 +34,9 @@ enum PRINT_MODE
 };
 
 // Handle fixed of variables character width
-#if (PRINT_WIDTH == PRINT_WIDTH_6)
+#if (PRINT_WIDTH == PRINT_WIDTH_1)
+	#define PRINT_W(a) 1
+#elif (PRINT_WIDTH == PRINT_WIDTH_6)
 	#define PRINT_W(a) 6
 #elif (PRINT_WIDTH == PRINT_WIDTH_8)
 	#define PRINT_W(a) 8
@@ -43,7 +45,9 @@ enum PRINT_MODE
 #endif
 
 // Handle fixed of variables character height
-#if (PRINT_HEIGHT == PRINT_HEIGHT_8)
+#if (PRINT_HEIGHT == PRINT_HEIGHT_1)
+	#define PRINT_H(a) 1
+#elif (PRINT_HEIGHT == PRINT_HEIGHT_8)
 	#define PRINT_H(a) 8
 #else // (PRINT_HEIGHT == PRINT_HEIGHT_X)
 	#define PRINT_H(a) a
@@ -161,6 +165,9 @@ inline void Print_SetSpriteID(u8 id) { g_PrintData.SpriteID = id; }
 
 /// Clear screen
 void Print_Clear();
+
+inline struct Print_Data* Print_GetData() { return &g_PrintData; }
+
 
 /// Clear X character back from current cursor position
 void Print_Backspace(u8 num) __FASTCALL;

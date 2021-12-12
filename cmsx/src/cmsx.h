@@ -9,6 +9,7 @@
 #pragma once
 
 #include "core.h"
+#include "system.h"
 #include "bios.h"
 #include "vdp.h"
 #include "draw.h"

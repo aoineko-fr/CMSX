@@ -803,7 +803,10 @@ const u8 __at(M_DRWSCL) g_DRWSCL;
 // 3 = 270° rotation
 const u8 __at(M_DRWANG) g_DRWANG;
 
-#define M_EXPTBL	0xFCC1	// 4	Bit 7 of these variables is a flag for each primary slot to indicate if the slot is expanded or not. The other bits are reset. The first variable (also called MNROM) indicates the slot ID of the Main-ROM. This implies that the Main-ROM of an MSX is always in primary slot 0, or secondary slot 0-0.
+#define M_MNROM		0xFCC1	// 1
+#define M_EXPTBL	0xFCC1	// 4	Bit 7 of these variables is a flag for each primary slot to indicate if the slot is expanded or not. The other bits are reset.
+//                                  The first variable (also called MNROM) indicates the slot ID of the Main-ROM. 
+//                                  This implies that the Main-ROM of an MSX is always in primary slot 0, or secondary slot 0-0.
 // EXPTBL+0 = Flag for slot 0 (also Slot ID of the Main-ROM!)
 // EXPTBL+1 = Flag for slot 1
 // EXPTBL+2 = Flag for slot 2
