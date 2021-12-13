@@ -16,7 +16,7 @@
 // FUNCTIONS
 
 /// Initialize game module
-void Game_Initialize();
+void Game_Initialize(u8 screenMode);
 
 /// Update game frame
 void Game_Update();
@@ -33,13 +33,15 @@ void Game_Release();
 //-----------------------------------------------------------------------------
 // DATA RAM
 
-extern bool g_Exit;
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
 
 /// Game main loop
-void Game_MainLoop();
+void Game_MainLoop(u8 screenMode);
+
+/// Game exit
+void Game_Exit();
 
 #endif
 
@@ -76,7 +78,7 @@ void Game_UpdateState();
 //-----------------------------------------------------------------------------
 // DATA RAM
 
-extern u8 g_Frame;
+extern u8 g_GameFrame;
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS

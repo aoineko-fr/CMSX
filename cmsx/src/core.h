@@ -22,28 +22,28 @@
 //-----------------------------------------------------------------------------
 
 // Boolean
-typedef unsigned char	bool; 	///< 8 bits boolean type
-#define true			1		///< Value for "true" boolean
-#define false			0		///< Value for "false" boolean
+typedef unsigned char		bool; 	///< 8 bits boolean type
+#define true				1		///< Value for "true" boolean
+#define false				0		///< Value for "false" boolean
 
-// Integer
-typedef signed char		i8;		///< 8 bits signed integer type
-typedef unsigned char	u8;		///< 8 bits unsigned integer type
-typedef signed short	i16;	///< 16 bits signed integer type
-typedef unsigned short	u16;	///< 16 bits unsigned integer type
-typedef signed long		i32;	///< 32 bits signed integer type
-typedef unsigned long	u32;	///< 32 bits unsigned integer type
-
-// Float
-typedef float			f32;	///< 32 bits float type (IEEE 754)
-
-// Character
-typedef unsigned char	c8;		///< 8 bits character type
-typedef unsigned short	c16;	///< 16 bits character type
-
-// Pointer
-typedef void*			ptr;	///< Pointer type
-#define null			0		///< Pointer "null" value
+// Integer	
+typedef signed char			i8;		///< 8 bits signed integer type
+typedef unsigned char		u8;		///< 8 bits unsigned integer type
+typedef signed short		i16;	///< 16 bits signed integer type
+typedef unsigned short		u16;	///< 16 bits unsigned integer type
+typedef signed long			i32;	///< 32 bits signed integer type
+typedef unsigned long		u32;	///< 32 bits unsigned integer type
+	
+// Float	
+typedef float				f32;	///< 32 bits float type (IEEE 754)
+	
+// Character	
+typedef unsigned char		c8;		///< 8 bits character type
+typedef unsigned short		c16;	///< 16 bits character type
+	
+// Pointer	
+typedef void*				ptr;	///< Pointer type
+#define null				0		///< Pointer "null" value
 
 // Functions
 typedef void (*callback)(void);	///< Callback default signature
@@ -53,9 +53,10 @@ typedef void (*callback)(void);	///< Callback default signature
 //-----------------------------------------------------------------------------
 
 /// Get the number of elements of a static initialized structure
-#define numberof(tab)	sizeof(tab) / sizeof(tab[0])
-
-#define loop(a, b)		for(u8 a = 0; a < b; ++a)
+#define numberof(tab)		sizeof(tab) / sizeof(tab[0])
+	
+#define loop(a, b)			for(u8 a = 0; a < b; ++a)
+#define loopx(a)			for(u8 i##__LINE__ = 0; i##__LINE__ < a; ++i##__LINE__)
 
 //-----------------------------------------------------------------------------
 // PEEK & POKE
@@ -104,29 +105,28 @@ typedef void (*callback)(void);	///< Callback default signature
 //-----------------------------------------------------------------------------
 // Bits handling
 //-----------------------------------------------------------------------------
-#define BIT_0	0x01	// LSB
-#define BIT_1	0x02
-#define BIT_2	0x04
-#define BIT_3	0x08
-#define BIT_4	0x10
-#define BIT_5	0x20
-#define BIT_6	0x40
-#define BIT_7	0x80	// 8 bits MSB
-#define BIT_8	0x0100
-#define BIT_9	0x0200
-#define BIT_10	0x0400
-#define BIT_11	0x0800
-#define BIT_12	0x1000
-#define BIT_13	0x2000
-#define BIT_14	0x4000
-#define BIT_15	0x8000	// 16 bits MSB
+#define BIT_0				0x01	// LSB
+#define BIT_1				0x02
+#define BIT_2				0x04
+#define BIT_3				0x08
+#define BIT_4				0x10
+#define BIT_5				0x20
+#define BIT_6				0x40
+#define BIT_7				0x80	// 8 bits MSB
+#define BIT_8				0x0100
+#define BIT_9				0x0200
+#define BIT_10				0x0400
+#define BIT_11				0x0800
+#define BIT_12				0x1000
+#define BIT_13				0x2000
+#define BIT_14				0x4000
+#define BIT_15				0x8000	// 16 bits MSB
 
 #define BIT_SET(val, bit)	val |=  (1 << bit)  	///< Macro to set a given bit in an integer
 #define BIT_CLR(val, bit)	val &= ~(1 << bit)  	///< Macro to clear a given bit in an integer
 #define BIT_ISSET(val, bit)	(val & (1 << bit) != 0)	///< Macro to tell if a given bit is set or not
 
 //-----------------------------------------------------------------------------
-
 
 // __FILE__
 // This macro expands to the name of the current input file, in the form of a C string constant.

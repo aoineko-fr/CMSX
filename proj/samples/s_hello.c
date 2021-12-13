@@ -20,6 +20,4 @@ void main()
 	while(!Keyboard_IsKeyPressed(KEY_ESC))
 	{
 	}
-
-	Bios_Exit(0);
 }

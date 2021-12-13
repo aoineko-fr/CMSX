@@ -3,4 +3,4 @@
 rem ***************************************************************************
 rem * PROJECT OVERWRITE                                                       *
 rem ***************************************************************************
-SET ModuleList=%ModuleList%,pt3\pt3_player,ayfx\ayfx_player,compress
+SET ModuleList=%ModuleList%,pt3\pt3_player,ayfx\ayfx_player

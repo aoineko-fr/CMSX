@@ -739,13 +739,13 @@ const u8 __at(M_ESCCNT) g_ESCCNT;
 #define M_INSFLG	0xFCA8	// 1	Insert mode flag.
 const u8 __at(M_INSFLG) g_INSFLG;
 
-#define M_CSRSW	0xFCA9	// 1	Cursor display switch
+#define M_CSRSW		0xFCA9	// 1	Cursor display switch
 const u8 __at(M_CSRSW) g_CSRSW;
 
 #define M_CSTYLE	0xFCAA	// 1	Cursor style i.e. Used if INS Key is used. ( 0 = Full Cursor / other = Halve Cursor )
 const u8 __at(M_CSTYLE) g_CSTYLE;
 
-#define M_CAPST	0xFCAB	// 1	Capital status. ( 0 = Off / other = On )
+#define M_CAPST		0xFCAB	// 1	Capital status. ( 0 = Off / other = On )
 const u8 __at(M_CAPST) g_CAPST;
 
 #define M_KANAST	0xFCAC	// 1	Kana mode flags for MSX Japanese, Russian key status ou "Dead Key" status.
@@ -775,10 +775,10 @@ const u8 __at(M_CASPRV) g_CASPRV;
 #define M_BRDATR	0xFCB2	// 1	Border color for paint.
 const u8 __at(M_BRDATR) g_BRDATR;
 
-#define M_GXPOS	0xFCB3	// 1	X-position of graphic cursor.
+#define M_GXPOS		0xFCB3	// 1	X-position of graphic cursor.
 const u8 __at(M_GXPOS) g_GXPOS;
 
-#define M_GYPOS	0xFCB5	// 1	Y-position of graphic cursor.
+#define M_GYPOS		0xFCB5	// 1	Y-position of graphic cursor.
 const u8 __at(M_GYPOS) g_GYPOS;
 
 #define M_GRPACX	0xFCB7	// 1	X Graphics Accumulator.

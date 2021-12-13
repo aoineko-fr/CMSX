@@ -3,69 +3,70 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
-#include "core.h"
-#include "bios.h"
-#include "bios_mainrom.h"
-#include "vdp.h"
-#include "input.h"
+//  Game module sample
 
-//-----------------------------------------------------------------------------
-// DATA
+//=============================================================================
+// INCLUDES
+//=============================================================================
+#include "cmsx.h"
+#include "game.h"
+
+//=============================================================================
+// DEFINES
+//=============================================================================
+
+#define FORCE		8
+#define GRAVITY		1
+
+// Prototype
+bool State_Initialize();
+bool State_Game();
+bool State_Pause();
+
+//=============================================================================
+// READ-ONLY DATA
+//=============================================================================
 
 // Fonts
 #include "font\font_cmsx_symbol1.h"
-//#include "data\data_sprt_8.h"
-//#include "data\data_sprt_16.h"
+// Sprites
 #include "data\data_sprt_16il.h"
+// Sinus & cosinus table
+#include "mathtable\mt_trigo_64.inc"
 
-u8 g_VBlank = 0;
-u8 g_Frame = 0;
+//=============================================================================
+// MEMORY DATA
+//=============================================================================
 
-//-----------------------------------------------------------------------------
-// FUNCTIONS
+u8 X = 16;
+u8 Y = 88;
 
-/// H_TIMI interrupt hook
-void VBlankHook()
-{
-	g_VBlank = 1;
-}
+bool bMoving = false;
+bool bJumping = false;
+u8 JumpForce;
 
-/// Wait for V-Blank period
-void WaitVBlank()
-{
-	while(g_VBlank == 0) {}
-	g_VBlank = 0;
-	g_Frame++;
-}
+//=============================================================================
+// HELPER FUNCTIONS
+//=============================================================================
 
 //-----------------------------------------------------------------------------
-// PROGRAM ENTRY POINT
-void main()
+//
+bool State_Initialize()
 {
-	// Address of Name Table in VRAM = 1400h
-	// Address of Color Table in VRAM = 2000h
-	// Address of Patern Table in VRAM = 0800h
-	// Address of Sprite Attribute Table in VRAM = 1000h
-	// Address of Sprite Pattern Table in VRAM = 0000h
-	//VDP_SetModeGraphic1();
-	VDP_SetMode(VDP_MODE_GRAPHIC1);
+	// Initialize display
 	VDP_EnableDisplay(false);
 	VDP_SetColor(1);
 	
-	u8 chrSprt = 0;
-	
-	// Draw background
-	VDP_FillVRAM(0xFF, 0x0800, 0, 256*8); // pattern
-	VDP_FillVRAM(0x51, 0x2000 + 0, 0, 1); // color
-	VDP_FillVRAM(0x41, 0x2000 + 1, 0, 1); // color
+	// Initialize background
+	VDP_FillVRAM(0xFF, g_ScreenPatternLow, 0, 256*8); // pattern
+	VDP_FillVRAM(0x51, g_ScreenColorLow + 0, 0, 1); // color
+	VDP_FillVRAM(0x41, g_ScreenColorLow + 1, 0, 1); // color
 	for(u8 i = 0; i < 24; ++i)
-		VDP_FillVRAM(i < 8 ? 0 : 8, 0x1400 + i * 32, 0, 32); // name
+		VDP_FillVRAM(i < 13 ? 8 : 0, g_ScreenLayoutLow + i * 32, 0, 32); // name
 
-	// Sprite
-	VDP_SetSpritePatternTable(0x0000);
-	VDP_SetSpriteAttributeTable(0x1000);
+	// Initialize sprite
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16);
-
+	u8 chrSprt = 0;
 	for(u8 j = 0; j < 6; j++) // Pattern 0-95
 	{
 		for(u8 i = 0; i < 6; i++)
@@ -83,51 +84,73 @@ void main()
 
 	VDP_EnableDisplay(true);
 
-	g_VBlank = 0;
-	g_Frame = 0;
-	VDP_EnableVBlank(true);
-	Bios_SetHookCallback(H_TIMI, VBlankHook);
+	Game_SetState(State_Game);
+	return false; // Frame finished
+}
+
+//-----------------------------------------------------------------------------
+//
+bool State_Game()
+{
+	u8 animId = bJumping ? 16 : bMoving ? ((g_GameFrame >> 2) % 6) * 4 : 16;
+	bool bOdd = (g_GameFrame & 1) == 1;
+
+	VDP_SetSpriteSM1(0, X, Y, 72 * bOdd + animId, 0x01);
+	VDP_SetSpriteSM1(1, X, Y, 24 + animId, 0x0F);
+	VDP_SetSpriteSM1(2, X, Y, 48 + animId, 0x09);
 	
-	u8 X = 16;
-	u8 Y = 88;
-	
-	bool bMoving = false;
-	bool bContinue = true;
-	while(bContinue)
+	if(Keyboard_IsKeyPressed(KEY_ESC))
+		Game_Exit();
+
+	u8 row = Keyboard_Read(KEY_ROW(KEY_SPACE));
+	if(IS_KEY_PRESSED(row, KEY_RIGHT))
 	{
-		u8 animId = bMoving ? ((g_Frame >> 2) % 6) * 4 : 16;
-		bool bOdd = (g_Frame & 1) == 1;
-
-		WaitVBlank();
-		
-		VDP_SetSpriteSM1(0, X, Y, 72 * bOdd + animId, 0x01);
-		VDP_SetSpriteSM1(1, X, Y, 24 + animId, 0x0F);
-		VDP_SetSpriteSM1(2, X, Y, 48 + animId, 0x09);
-		
-		if(Keyboard_IsKeyPressed(KEY_ESC))
-			bContinue = false;
-
-		u8 row = Keyboard_Read(KEY_ROW(KEY_DOWN));
-		if((row & KEY_FLAG(KEY_RIGHT)) == 0)
+		X++;
+		bMoving = true;
+	}
+	else if(IS_KEY_PRESSED(row, KEY_LEFT))
+	{
+		X--;
+		bMoving = true;
+	}
+	else
+		bMoving = false;
+	if(bJumping)
+	{
+		Y -= JumpForce;
+		JumpForce -= GRAVITY;
+		if(Y > 88)
 		{
-			X++;
-			bMoving = true;
+			Y = 88;
+			bJumping = false;
 		}
-		else if((row & KEY_FLAG(KEY_LEFT)) == 0)
-		{
-			X--;
-			bMoving = true;
-		}
-		else
-			bMoving = false;
-			
-		row = Keyboard_Read(KEY_ROW(KEY_1));
-		if((row & KEY_FLAG(KEY_1)) == 0)
-			VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16);
-		else if((row & KEY_FLAG(KEY_2)) == 0)
-			VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16 + VDP_SPRITE_SCALE_2);
+	}
+	else if(IS_KEY_PRESSED(row, KEY_SPACE))
+	{
+		bJumping = true;
+		JumpForce = FORCE;
 	}
 
-	Bios_ClearHook(H_TIMI);
-	Bios_Exit(0);
+
+		
+	return true; // Frame finished
+}
+
+//-----------------------------------------------------------------------------
+//
+bool State_Pause()
+{
+	return true; // Frame finished
+}
+
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
+
+//-----------------------------------------------------------------------------
+// Programme entry point
+void main()
+{
+	Game_SetState(State_Initialize);
+	Game_MainLoop(VDP_MODE_GRAPHIC1);
 }

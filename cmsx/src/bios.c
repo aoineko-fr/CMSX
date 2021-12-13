@@ -160,7 +160,7 @@ u8 Bios_MainROMRead(u16 addr) __FASTCALL
 	addr;
 	__asm
 //		ld		hl, addr	// FastCall
-		ld		a, (M_EXPTBL-1)
+		ld		a, (M_EXPTBL)
 		call	R_RDSLT
 		ld		l, a // return value
 	__endasm;
@@ -279,11 +279,25 @@ void Bios_MainROMCall(u16 addr) __FASTCALL
 //-----------------------------------------------------------------------------
 // ENASLT
 // Address  : #0024
-// Function : Switches indicated slot at indicated page on perpetually
+// Function : selects the slot corresponding to the value of A and enables the slot to be used.
+//            When this routine is called, interrupts are inhibited and remain so even after execution ends.
 // Input    : A - Slot ID, see RDSLT
 //            H - Bit 6 and 7 must contain the page number (00-11)
 		   
-//@todo To be implemented
+void Bios_SwitchSlot(u8 page, u8 slot)
+{
+	page; // A
+	slot; // H
+	__asm
+		LShift(6)					// A << 6
+		ld		b, h				// 
+		ld		h, a
+		ld		a, b
+		call	R_ENASLT
+		ei							// because ENASLT do DI
+	__endasm;
+}
+
 
 //-----------------------------------------------------------------------------
 // GETYPR
@@ -1159,7 +1173,7 @@ inline void Bios_ClearScreen()
 		call	R_CALSLT
 		ei							// because CALSLT do DI
 #endif
-__endasm;	
+	__endasm;
 }
 
 //-----------------------------------------------------------------------------
@@ -1169,6 +1183,16 @@ __endasm;
 // Input    : H  - Y coordinate of cursor
 //            L  - X coordinate of cursor
 // Registers: AF
+void Bios_SetCursorPosition(u8 X, u8 Y)
+{
+	X; // A
+	Y; // L
+	__asm
+		ld		h, a
+		call	R_POSIT	
+	__endasm;	
+}
+
 
 //-----------------------------------------------------------------------------
 // FNKSB

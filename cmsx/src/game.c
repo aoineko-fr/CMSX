@@ -17,8 +17,9 @@
 
 //-----------------------------------------------------------------------------
 /// Initialize game module
-void Game_Initialize()
+void Game_Initialize(u8 screenMode)
 {
+	VDP_SetMode(screenMode);
 	#if (USE_GAME_VSYNC)
 		VDP_EnableVBlank(true);
 		Bios_SetHookCallback(H_TIMI, Game_VSyncHook);
@@ -52,25 +53,34 @@ void Game_Release()
 //   G A M E   L O O P
 //
 //=============================================================================
+#if (USE_GAME_LOOP)
 
 //-----------------------------------------------------------------------------
 // RAM DATA
 
-bool g_Exit = false;
+bool g_GameExit = false;
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
 
 //-----------------------------------------------------------------------------
 /// Game main loop
-void Game_MainLoop()
+void Game_MainLoop(u8 screenMode)
 {
-	Game_Initialize();
-	while(!g_Exit)
+	Game_Initialize(screenMode);
+	while(!g_GameExit)
 		Game_Update();
 	Game_Release();
 }
 
+//-----------------------------------------------------------------------------
+/// Game exit
+void Game_Exit()
+{
+	g_GameExit = true;
+}
+
+#endif // (USE_GAME_LOOP)
 
 //=============================================================================
 //
@@ -82,8 +92,8 @@ void Game_MainLoop()
 //-----------------------------------------------------------------------------
 // RAM DATA
 
-State g_State = null;
-State g_PrevState = null;
+State g_GameState = null;
+State g_GamePrevState = null;
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
@@ -93,27 +103,27 @@ State g_PrevState = null;
 /// @param		newState	The new state to start (can be NULL to desactivate state-machine)
 void Game_SetState(State newState) __FASTCALL
 {
-	g_PrevState = g_State;
-	g_State = newState;
+	g_GamePrevState = g_GameState;
+	g_GameState = newState;
 }
 
 //-----------------------------------------------------------------------------
 /// Restore the previous state
 void Game_RestoreState()
 {
-	State prev = g_PrevState;
-	g_PrevState = g_State;
-	g_State = prev;
+	State prev = g_GamePrevState;
+	g_GamePrevState = g_GameState;
+	g_GameState = prev;
 }
 
 //-----------------------------------------------------------------------------
 /// Check state transition and update current state
 void Game_UpdateState()
 {
-	bool bFinish = false;
-	while((g_State != null) && !bFinish)
+	bool bFrameFinish = false;
+	while((g_GameState != null) && !bFrameFinish)
 	{
-		bFinish = g_State();
+		bFrameFinish = g_GameState();
 	}	
 }
 
@@ -132,9 +142,9 @@ void Game_DefaultVSyncCB();
 //-----------------------------------------------------------------------------
 // RAM DATA
 
-bool     g_VSync = false;
-u8       g_Frame = 0;
-callback g_VSyncCB = Game_DefaultVSyncCB;
+bool     g_GameVSync = false;
+u8       g_GameFrame = 0;
+callback g_GameVSyncCB = Game_DefaultVSyncCB;
 
 //-----------------------------------------------------------------------------
 // FUNCTIONS
@@ -147,24 +157,24 @@ void Game_DefaultVSyncCB() {}
 /// Set V-Sync callback
 void Game_SetVSyncCallback(callback cb) __FASTCALL
 {
-	g_VSyncCB = cb;
+	g_GameVSyncCB = cb;
 }
 
 //-----------------------------------------------------------------------------
 /// Vertical-synchronization hook handler
 void Game_VSyncHook()
 {
-	g_VSync = true;
-	g_VSyncCB();
+	g_GameVSync = true;
+	g_GameVSyncCB();
 }
 
 //-----------------------------------------------------------------------------
 /// Wait for vertical-synchronization 
 void Game_WaitVSync()
 {
-	while(g_VSync == false) {}
-	g_VSync = false;
-	g_Frame++;
+	while(g_GameVSync == false) {}
+	g_GameVSync = false;
+	g_GameFrame++;
 }
 
 #endif // (USE_GAME_VSYNC)

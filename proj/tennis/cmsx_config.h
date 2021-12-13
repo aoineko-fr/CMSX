@@ -38,17 +38,12 @@
 // BIOS MODULE
 //-----------------------------------------------------------------------------
 
-// Render mode
-// - RENDER_VDP ................... Use direct access to VDP registers
-// - RENDER_BIOS .................. Use BIOS routines
-#define RENDER_MODE					RENDER_VDP
-
 // Default bios access
-// - CALL_DIRECT .................. Use direct access to Bios routines (ROM slot must be selected in corresponding page)
-// - CALL_INTERSLOT ............... Use inter-slot access to Bios routines (through CALSLT routine)
-#define CALL_MAINROM				CALL_DIRECT
-#define CALL_SUBROM					CALL_INTERSLOT
-#define CALL_DISCROM				CALL_INTERSLOT
+// - BIOS_CALL_DIRECT ............. Use direct access to Bios routines (ROM slot must be selected in corresponding page)
+// - BIOS_CALL_INTERSLOT .......... Use inter-slot access to Bios routines (through CALSLT routine)
+#define BIOS_CALL_MAINROM			BIOS_CALL_DIRECT
+#define BIOS_CALL_SUBROM			BIOS_CALL_INTERSLOT
+#define BIOS_CALL_DISKROM			BIOS_CALL_INTERSLOT
 
 // MAIN-Bios module setting
 #define USE_BIOS_MAINROM			1
@@ -62,9 +57,9 @@
 //-----------------------------------------------------------------------------
 
 // VRAM address unit
-// - VDP_VRAM_ADDR_16 ............. Use 16-bits VRAM address (u16 parameter; for VRAM <= 64K)
-// - VDP_VRAM_ADDR_17 ............. Use 17-bits VRAM address (u32 parameter; for VRAM > 64K)
-#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_16
+// - VDP_VRAM_ADDR_14 ............. Use 14-bits 16K VRAM addressing for MSX 1 (u16)
+// - VDP_VRAM_ADDR_17 ............. Use 17-bits 128K VRAM addressing for MSX 2/2+/turbo R (u32)
+#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_14
 
 // VDP X/Y units
 // - VDP_UNIT_U8 .................. X and Y use 8-bits values
@@ -118,14 +113,15 @@
 #define USE_PRINT_UNIT				0	// Display integer type (h: hexadecimal, b: binary)
 #define PRINT_SKIP_SPACE			1	// Skill space character
 #define PRINT_COLOR_NUM				8	// 1 color per line
+// - PRINT_WIDTH_1
 // - PRINT_WIDTH_6
 // - PRINT_WIDTH_8
 // - PRINT_WIDTH_X
 #define PRINT_WIDTH					PRINT_WIDTH_X
+// - PRINT_HEIGHT_1
 // - PRINT_HEIGHT_8
 // - PRINT_HEIGHT_X
-#define PRINT_HEIGHT				PRINT_HEIGHT_X
-
+#define PRINT_HEIGHT				PRINT_HEIGHT_1
 
 //-----------------------------------------------------------------------------
 // GAME MODULE
@@ -135,7 +131,6 @@
 #define USE_GAME_STATE				1
 #define USE_GAME_VSYNC				1
 #define USE_GAME_LOOP				0
-
 
 //-----------------------------------------------------------------------------
 // MSXi MODULE
@@ -162,7 +157,6 @@
 // - RANDOM_LFSR_LCG_32 ........... Combined LFSR/LCG (32-bit seeds)
 // - RANDOM_XORSHIFT .............. Xorshift RNGs (16-bit seeds)
 #define RANDOM_METHOD				RANDOM_XORSHIFT
-
 
 //-----------------------------------------------------------------------------
 // MISC

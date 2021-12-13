@@ -1600,7 +1600,7 @@ void Menu_Update()
 	}
 	
 	// Update menu items
-	if((g_Frame & 0x07) == 0) // 8th frame
+	if((g_GameFrame & 0x07) == 0) // 8th frame
 	{
 		Print_SelectTextFont(g_DataFont, OFFSET_TITLE_FONT_DEF);
 		for(u8 item = 0; item < g_CurrentMenu->itemNum; ++item)
@@ -1787,7 +1787,7 @@ void SetTrainingCursor()
 
 void UpdateTrainingCursor()
 {
-	u8 pat = g_FlickerShadow ? (PATTERN_CURSOR1 + (g_Frame & 0x1) * 4) : PATTERN_CURSOR1;
+	u8 pat = g_FlickerShadow ? (PATTERN_CURSOR1 + (g_GameFrame & 0x1) * 4) : PATTERN_CURSOR1;
 	VDP_SetSpritePattern(SPRITE_CURSOR_1, pat);
 	VDP_SetSpritePattern(SPRITE_CURSOR_2, pat);
 	VDP_SetSpritePattern(SPRITE_CURSOR_3, pat);
@@ -1851,7 +1851,7 @@ void Ball_SwitchSprites()
 {
 	// Flicker Shadows
 	u8 pat = PATTERN_BALL_LINE1;
-	if(g_FlickerShadow && (g_Frame & 0x1))
+	if(g_FlickerShadow && (g_GameFrame & 0x1))
 	{
 		pat += 4;
 	}
@@ -2553,7 +2553,7 @@ void Player_SwitchSprites(Player* ply) __FASTCALL
 {
 	// Flicker Shadows
 	u8 pat = 0;
-	if(g_FlickerShadow && (g_Frame & 0x1))
+	if(g_FlickerShadow && (g_GameFrame & 0x1))
 	{
 		pat += 4;
 	}
@@ -2671,7 +2671,7 @@ void Launcher_SwitchSprites()
 {
 	// Flicker Shadows
 	u8 pat = g_TrainSideData[g_TrainSide].pattern;
-	if(g_FlickerShadow && (g_Frame & 0x1))
+	if(g_FlickerShadow && (g_GameFrame & 0x1))
 	{
 		pat += 8;
 	}
@@ -3524,7 +3524,7 @@ void MoveLogoBall(u8 x) __FASTCALL
 ///
 bool State_TitleUpdate()
 {
-	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+	if((g_Freq == FREQ_60HZ) && ((g_GameFrame % 6) == 0)) // skip 6th frame for 60 Hz
 		return true;
 
 	UpdateInput();
@@ -3610,7 +3610,7 @@ bool State_MenuStart()
 ///
 bool State_MenuUpdate()
 {
-	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+	if((g_Freq == FREQ_60HZ) && ((g_GameFrame % 6) == 0)) // skip 6th frame for 60 Hz
 		return true;
 
 	UpdateInput();
@@ -3646,12 +3646,12 @@ bool State_ScoreStart()
 ///
 bool State_ScoreUpdate()
 {
-	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+	if((g_Freq == FREQ_60HZ) && ((g_GameFrame % 6) == 0)) // skip 6th frame for 60 Hz
 		return true;
 
 	UpdateInput();
 
-	i16 dy = g_Cosinus64[(g_Frame % 32) * 2] / 32;
+	i16 dy = g_Cosinus64[(g_GameFrame % 32) * 2] / 32;
 	u8 y = 47 + 16 * (1 - g_Server) + dy;
 	
 	VDP_SetSpritePositionY(SPRITE_SCORE_BALL_1, y);
@@ -3710,11 +3710,11 @@ bool State_VictoryStart()
 ///
 bool State_VictoryUpdate()
 {
-	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+	if((g_Freq == FREQ_60HZ) && ((g_GameFrame % 6) == 0)) // skip 6th frame for 60 Hz
 		return true;
 
 	u8 pat = PATTERN_CUP_OUTLINE1;
-	if(g_FlickerShadow && (g_Frame & 0x1))
+	if(g_FlickerShadow && (g_GameFrame & 0x1))
 		pat += 4;
 	VDP_SetSpritePattern(SPRITE_CUP_OUTLINE, pat);
 
@@ -3807,7 +3807,7 @@ bool State_MatchUpdate()
 
 // VDP_SetColor(COLOR_LIGHT_GREEN);
 
-	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+	if((g_Freq == FREQ_60HZ) && ((g_GameFrame % 6) == 0)) // skip 6th frame for 60 Hz
 		return true;
 
 	//---------------------------------------------------------------------
@@ -3955,7 +3955,7 @@ bool State_TrainingUpdate()
 	Launcher_SwitchSprites();
 	Ball_SwitchSprites();
 
-	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+	if((g_Freq == FREQ_60HZ) && ((g_GameFrame % 6) == 0)) // skip 6th frame for 60 Hz
 		return true;
 
 	//---------------------------------------------------------------------
@@ -4107,7 +4107,7 @@ void VDP_InterruptHandler()
 /// Main loop
 void VSyncCallback()
 {
-	if((g_Freq == FREQ_60HZ) && ((g_Frame % 6) == 0)) // skip 6th frame for 60 Hz
+	if((g_Freq == FREQ_60HZ) && ((g_GameFrame % 6) == 0)) // skip 6th frame for 60 Hz
 		return;
 
 	if(g_PlayMusic)

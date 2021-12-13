@@ -150,6 +150,7 @@ void Bios_MainROMCall(u16 addr) __FASTCALL;
 //-----------------------------------------------------------------------------
 // ENASLT	#0024	Switches indicated slot at indicated page on perpetually
 #define R_ENASLT	0x0024 // Switches indicated slot at indicated page on perpetual
+void Bios_SwitchSlot(u8 page, u8 slot);
 
 //-----------------------------------------------------------------------------
 // GETYPR	#0028	Returns Type of DAC
@@ -427,6 +428,7 @@ inline void Bios_ClearScreen();
 //-----------------------------------------------------------------------------
 // POSIT	#00C6	Moves cursor to the specified position
 #define R_POSIT		0x00C6 // Moves cursor to the specified position
+void Bios_SetCursorPosition(u8 X, u8 Y);
 
 //-----------------------------------------------------------------------------
 // FNKSB	#00C9	Tests whether the function key display is active (FNKFLG)
