@@ -21,8 +21,8 @@ if /I %Ext%==com (set TargetType=TARGET_TYPE_DOS)
 
 if not exist %OutDir% ( md %OutDir% )
 
-if %Optim%==Speed (set CompileOpt=--opt-code-speed)
-if %Optim%==Size (set CompileOpt=--opt-code-size)
+if /I %Optim%==Speed (set CompileOpt=%CompileOpt% --opt-code-speed)
+if /I %Optim%==Size (set CompileOpt=%CompileOpt% --opt-code-size)
 
 set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -DMSX_VERSION=MSX_%Version% -I%ProjDir% -I%LibDir%\src %CompileOpt% --constseg RODATA %File% -o %OutDir%\
 set ASMParam=-o -l -s -I%ProjDir% -I%LibDir%\src %File%

@@ -52,15 +52,15 @@ struct SongData
 #include "pt3/pt3_notetable2.h"
 
 // Music
-#include "data/pt3/!ndiffer.h"
+#include "data/pt3/smario.h"
 #include "data/pt3/Beg!nsum.h"
-//#include "data/pt3/Fret.h"
+#include "data/pt3/Fret.h"
 
 // Songs data table
 const struct SongData g_SongData[] = {
-	{ g__ndiffer, 	"!ndiffer",		sizeof(g__ndiffer) },
+	{ g_smario, 	"smario",		sizeof(g_smario) },
 	{ g_Beg_nsum, 	"Beg!nsum",		sizeof(g_Beg_nsum) },
-	// { g_Fret,     	"Fret",			sizeof(g_Fret) },
+	{ g_Fret,     	"Fret",			sizeof(g_Fret) },
 };
 
 // Character animation

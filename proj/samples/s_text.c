@@ -82,6 +82,7 @@ const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
 
 u8 g_CurrentFont = 0;
 u8 g_CurrentMode = 0;
+bool g_DisplayFont = 0;
 
 //=============================================================================
 // HELPER FUNCTIONS
@@ -109,11 +110,33 @@ void DrawPage()
 	Print_DrawText("\nFont: ");
 	Print_DrawText(g_Fonts[g_CurrentFont].name);
 
-	Print_DrawText("\n\nSample: ");
-	Print_DrawText(g_SampleText);
-
+	if(g_DisplayFont)
+	{
+		Print_DrawText("\n\n");
+		const struct Print_Data* data = Print_GetFontInfo();
+		for(u8 j = 0; j < 16; ++j)
+		{
+			Print_DrawHex8(j * 16);
+			Print_DrawText("  ");
+			for(u8 i = 0; i < 16; ++i)
+			{
+				u8 chr = j * 16 + i;
+				if((chr >= data->CharFirst) && (chr <= data->CharLast))
+					Print_DrawChar(chr);
+				else
+					Print_Space();
+			}
+			Print_Return();
+		}
+	}
+	else
+	{
+		Print_DrawText("\n\nSample: ");
+		Print_DrawText(g_SampleText);
+	}
+	
 	Print_SetPosition(0, 23);
-	Print_DrawText("<> Scr Mode  ^v Font");
+	Print_DrawText("<> Scr Mode  ^v Font  F1 Sample");
 }
 
 //=============================================================================
@@ -154,6 +177,11 @@ void main()
 		{
 			g_CurrentFont++;
 			g_CurrentFont %= numberof(g_Fonts);
+			DrawPage();
+		}
+		if(Keyboard_IsKeyPressed(KEY_F1))
+		{
+			g_DisplayFont = 1 - g_DisplayFont;
 			DrawPage();
 		}
 		

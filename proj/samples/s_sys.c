@@ -15,6 +15,8 @@
 //=============================================================================
 #define SLOT_Y 3
 
+#define DOT_CHAR ((g_ROMVersion.CharacterSet == 0) ? 0xA5 : 0x07)
+
 //=============================================================================
 // READ-ONLY DATA
 //=============================================================================
@@ -27,9 +29,9 @@ const u8 g_SlotTop[]	= { 0x18, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x19, 0
 const u8 g_SlotMid[]	= { 0x16, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x16, 0 }; 
 const u8 g_SlotBot[]	= { 0x1A, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x1B, 0 }; 
 // Expended slot box
-const u8 g_SlotExTop[]	= { 0x18, 0x17, 0x12, 0x17, 0x12, 0x17, 0x12, 0x17, 0x19, 0 }; 
-const u8 g_SlotExMid[]	= { 0x16, 0x20, 0x16, 0x20, 0x16, 0x20, 0x16, 0x20, 0x16, 0 }; 
-const u8 g_SlotExBot[]	= { 0x1A, 0x17, 0x11, 0x17, 0x11, 0x17, 0x11, 0x17, 0x1B, 0 }; 
+const u8 g_SlotExTop[]	= { 0x18, 0x17, 0x19, 0 }; 
+const u8 g_SlotExMid[]	= { 0x16, 0x20, 0x16, 0 }; 
+const u8 g_SlotExBot[]	= { 0x1A, 0x17, 0x1B, 0 }; 
 
 //=============================================================================
 // MEMORY DATA
@@ -40,7 +42,22 @@ u8 g_VDP;
 // HELPER FUNCTIONS
 //=============================================================================
 
-/*void InstallCustomVBlankInterrupt()
+//-----------------------------------------------------------------------------
+//
+void Print_DrawSlot(u8 slot)
+{
+	Print_DrawInt(Sys_SlotGetPrimary(slot));
+	if(Sys_SlotIsExpended(slot))
+	{
+		Print_DrawChar('-');
+		Print_DrawInt(Sys_SlotGetSecondary(slot));
+	}
+}
+
+/*
+//-----------------------------------------------------------------------------
+//
+void InstallCustomVBlankInterrupt()
 {
 	__asm
 		ORG     38H
@@ -84,19 +101,6 @@ _D02:
 		ret
 	
 	__endasm;	
-}*/
-
-//-----------------------------------------------------------------------------
-//
-/*inline u8 GetPageSlot(u8 page)
-{
-	u8 slot = (g_PortPrimarySlot >> (page * 2)) & 0x03;
-	if(g_EXPTBL[slot] & 0x80)
-	{
-		slot |= SLOT_EXP;
-		slot |= (((~g_SLTSL) >> (page * 2)) & 0x03) << 2;
-	}
-	return slot;
 }*/
 
 //-----------------------------------------------------------------------------
@@ -280,154 +284,6 @@ const c8* GetSlotName(u8 slotId, u8 page)
 
 //-----------------------------------------------------------------------------
 //
-void DisplaySlot_W80()
-{	
-	Print_Clear();
-	Print_SetPosition(0, 0);
-	Print_DrawText("| 1. SLOT | 2. MEM | 3. INPUT |");
-	Print_DrawLineH(0, 1, 80);
-
-	u8 x = 9;
-	u8 y;
-	for(i8 slot = 0; slot < 4; slot++)
-	{
-		i8 numCol = (g_EXPTBL[slot] & 0x80) ? 4 : 1;
-		for(i8 sub = 0; sub < numCol; sub++)
-		{
-			y = 4;
-			u8 slotId = slot;
-			if(g_EXPTBL[slot] & 0x80)
-			{
-				slotId += 0x80 + (sub << 2);
-				Print_SetPosition(x, y++);
-			}
-			else
-				Print_SetPosition(x + 1, y++);			
-			// PrintSlot(slotId);
-			Print_DrawHex8(slotId);
-			for(i8 page = 0; page < 4; page++)
-			{
-				if(Sys_GetSlot(3 - page) == slotId)
-				{
-					static const c8 raw[] = { 0xF9, 0xF9, 0xF9, 0xF9, 0xF9, 0 };
-					static const c8 col[] = { 0xF9, ' ',  ' ',  ' ',  0xF9, 0 };
-
-					Print_SetPosition(x, y++);
-					Print_DrawText(raw);
-
-					Print_SetPosition(x, y);
-					Print_DrawText(col);
-					Print_SetPosition(x+1, y++);
-					Print_DrawText(GetSlotName(slotId, 3 - page));
-
-					Print_SetPosition(x, y);
-					Print_DrawText(raw);			
-				}
-				else
-				{
-					static const c8 raw[] = "+---+";
-					static const c8 col[] = "|   |";
-
-					i8 of = (sub == 0) ? 0 : 1;
-					Print_SetPosition(x + of, y++);
-					if(page == 0)
-						Print_DrawText(raw + of);
-
-					Print_SetPosition(x + of, y);
-					Print_DrawText(col + of);
-					Print_SetPosition(x + 1, y++);
-					Print_DrawText(GetSlotName(slotId, 3 - page));
-
-					Print_SetPosition(x + of, y);
-					Print_DrawText(raw + of);
-				}
-			}
-			x += 4;
-		}
-		x += 3;
-	}
-
-	for(i8 page = 0; page < 4; page++)
-	{
-		Print_SetPosition(0, 5 + (page * 2));
-		Print_DrawText("Page ");			
-		Print_DrawInt(3 - page);			
-
-		Print_SetPosition(x, 6 + (page * 2));
-		Print_DrawHex16(0x4000 * (3 - page));			
-	}
-	
-	Print_SetPosition(0, 14);
-	Print_DrawText("M-R: Main-ROM");
-	Print_SetPosition(0, 15);
-	Print_DrawText("S-R: Sub-ROM");
-	Print_SetPosition(0, 16);
-	Print_DrawText("D-R: Disk-ROM");
-	
-	Print_SetPosition(19, 14);
-	Print_DrawText("EXPTBL: ");
-	Print_DrawHex8(g_EXPTBL[0]);
-	Print_SetPosition(19, 15);
-	Print_DrawText("EXBRSA: ");
-	Print_DrawHex8(g_EXBRSA);
-	Print_SetPosition(19, 16);
-	Print_DrawText("MASTER: ");
-	Print_DrawHex8(g_MASTER);
-	
-	for(i8 slot = 0; slot < 4; slot++)
-	{
-		Print_SetPosition(0, 18 + slot);
-		Print_DrawText("Slot[");
-		Print_DrawInt(slot);
-		Print_DrawText("] EXPTBL: ");
-		Print_DrawHex8(g_EXPTBL[slot]);
-	}
-
-	Print_SetPosition(23, 18);
-	Print_DrawText("RAMAD0: ");
-	Print_DrawHex8(g_RAMAD0);
-	Print_SetPosition(23, 19);
-	Print_DrawText("RAMAD1: ");
-	Print_DrawHex8(g_RAMAD1);
-	Print_SetPosition(23, 20);
-	Print_DrawText("RAMAD2: ");
-	Print_DrawHex8(g_RAMAD2);
-	Print_SetPosition(23, 21);
-	Print_DrawText("RAMAD3: ");
-	Print_DrawHex8(g_RAMAD3);
-
-	Print_SetPosition(0, 23);
-	Print_DrawText("[ESC] to quit");	
-}
-
-//-----------------------------------------------------------------------------
-//
-void DisplayMemory_W80()
-{	
-	Print_Clear();
-
-	Print_SetPosition(0, 0);
-	Print_DrawText("| 1. SLOT | 2. MEM | 3. INPUT |");
-	Print_DrawLineH(0, 1, 80);
-
-	Print_SetPosition(0, 3);
-	Print_DrawText("Heap:  ");
-	Print_DrawHex16(Mem_GetHeapAddress());
-	Print_SetPosition(0, 4);
-	Print_DrawText("Stack: ");
-	Print_DrawHex16(Mem_GetStackAddress());
-	Print_SetPosition(0, 5);
-	Print_DrawText("Free:  ");
-	Print_DrawInt(Mem_GetHeapSize());
-	Print_DrawText(" bytes");
-
-	Print_SetPosition(0, 23);
-	Print_DrawText("[ESC] to quit");
-}
-
-
-//-----------------------------------------------------------------------------
-//
 void DisplayHeader()
 {
 	Print_Clear();
@@ -529,6 +385,31 @@ void DisplayInfo()
 	Print_DrawText("\n- Free:    ");
 	Print_DrawInt(Mem_GetHeapSize());
 	Print_DrawText(" B");
+	
+	//-------------------------------------------------------------------------
+	// Slots
+	u8 X = 21;
+	u8 Y = 3;
+	Print_DrawTextAt(X, Y++, "Current Slots");
+	Print_DrawTextAt(X, Y++, "- Page #0:  ");
+	Print_DrawSlot(Sys_GetPageSlot(0));
+	Print_DrawTextAt(X, Y++, "- Page #1:  ");
+	Print_DrawSlot(Sys_GetPageSlot(1));
+	Print_DrawTextAt(X, Y++, "- Page #2:  ");
+	Print_DrawSlot(Sys_GetPageSlot(2));
+	Print_DrawTextAt(X, Y++, "- Page #3:  ");
+	Print_DrawSlot(Sys_GetPageSlot(3));
+
+	//-------------------------------------------------------------------------
+	// ROMs
+	Y++;
+	Print_DrawTextAt(X, Y++, "ROM");
+	Print_DrawTextAt(X, Y++, "- Main:     ");
+	Print_DrawSlot(g_MNROM);
+	Print_DrawTextAt(X, Y++, "- Sub:      ");
+	Print_DrawSlot(g_EXBRSA);
+	Print_DrawTextAt(X, Y++, "- Disk:     ");
+	Print_DrawSlot(g_MASTER);
 
 	DisplayFooter();
 }
@@ -540,12 +421,10 @@ void DisplaySlots()
 	DisplayHeader();
 
 	// Draw frames
-	Print_SetPosition(0, SLOT_Y + 2);
-	Print_DrawText("FFFF\n\n\nC000\nBFFF\n\n\n8000\n7FFF\n\n\n4000\n3FFF\n\n\n0000");
+	Print_DrawTextAt(0, SLOT_Y + 2, "FFFF\n\n\nC000\nBFFF\n\n\n8000\n7FFF\n\n\n4000\n3FFF\n\n\n0000");
 	for(u8 slot = 0; slot < 4; ++slot)
 	{
-		Print_SetPosition((slot * 9) + 6, SLOT_Y);
-		Print_DrawText("Slot");
+		Print_DrawTextAt((slot * 9) + 6, SLOT_Y, "Slot");
 		Print_DrawInt(slot);
 		if(Sys_IsSlotExpanded(slot))
 		{
@@ -557,27 +436,42 @@ void DisplaySlots()
 			for(u8 page = 0; page < 4; ++page)
 			{
 				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 2);
-				Print_DrawText(g_SlotExTop);
+				Print_DrawCharX(DOT_CHAR, 9);
 				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 3);
-				Print_DrawText(g_SlotExMid);
+				Print_DrawText("| | | | |");
 				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 4);
-				Print_DrawText(g_SlotExMid);
+				Print_DrawText("| | | | |");
 				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 5);
-				Print_DrawText(g_SlotExBot);
+				Print_DrawCharX(DOT_CHAR, 9);
 			}
 		}
 		else
 		{
 			for(u8 page = 0; page < 4; ++page)
 			{
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 2);
-				Print_DrawText(g_SlotTop);
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 3);
-				Print_DrawText(g_SlotMid);
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 4);
-				Print_DrawText(g_SlotMid);
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 5);
-				Print_DrawText(g_SlotBot);
+				u8 pageSlot = Sys_GetPageSlot(3 - page);
+				if(pageSlot == SLOT(slot))
+				{
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 2, g_SlotTop);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 3, g_SlotMid);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 4, g_SlotMid);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 5, g_SlotBot);
+				}
+				else
+				{
+					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 2);
+					Print_DrawCharX(DOT_CHAR, 9);
+					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 3);
+					Print_DrawChar('|');
+					g_PrintData.CursorX += 7;
+					Print_DrawChar('|');
+					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 4);
+					Print_DrawChar('|');
+					g_PrintData.CursorX += 7;
+					Print_DrawChar('|');
+					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 5);
+					Print_DrawCharX(DOT_CHAR, 9);
+				}
 			}
 		}
 	}
@@ -585,13 +479,24 @@ void DisplaySlots()
 	// Find slot type
 	for(u8 page = 0; page < 4; ++page)
 	{
-		u8 pageSlot = Sys_GetSlot(3 - page);
+		u8 pageSlot = Sys_GetPageSlot(3 - page);
 		for(u8 slot = 0; slot < 4; ++slot)
 		{
 			if(Sys_IsSlotExpanded(slot))
 			{
 				for(u8 sub = 0; sub < 4; ++sub)
 				{
+					if(pageSlot == SLOTEX(slot, sub))
+					{
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 2);
+						Print_DrawText(g_SlotExTop);
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 3);
+						Print_DrawText(g_SlotExMid);
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 4);
+						Print_DrawText(g_SlotExMid);
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 5);
+						Print_DrawText(g_SlotExBot);
+					}
 					Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 3 + (sub & 0x1));
 					Print_DrawText(GetSlotName(SLOTEX(slot, sub), 3 - page));
 				}

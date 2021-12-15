@@ -60,6 +60,7 @@ void main()
 	Bios_PrintTextAt(0, 0, "MGL - BIOS SAMPLE");
 	Bios_PrintTextAt(0, 1, "----------------------------------------");
 	Bios_PrintTextAt(0, 21, "----------------------------------------");
+	Bios_PrintTextAt(0, 23, "<||> Move     [space] Jump");
 
 	bool bContinue = true;
 	bool bJump = false;

@@ -3,4 +3,5 @@
 rem ***************************************************************************
 rem * PROJECT OVERWRITE                                                       *
 rem ***************************************************************************
-SET ModuleList=%ModuleList%,compress
+SET Version=1
+SET Target=ROM48

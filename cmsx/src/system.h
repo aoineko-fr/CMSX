@@ -49,8 +49,16 @@
 #define SLOT_3_2 (SLOT_3 | (0x02 << 2) | SLOT_EXP)
 #define SLOT_3_3 (SLOT_3 | (0x03 << 2) | SLOT_EXP)
 
-#define SLOT(p) (0x03 & p)
-#define SLOTEX(p, s) ((0x03 & p) | ((0x03 & s) << 2) | SLOT_EXP)
+#define SLOT(p)			(0x03 & p)
+#define SLOTEX(p, s)	((0x03 & p) | ((0x03 & s) << 2) | SLOT_EXP)
+
+#define IS_SLOT_EXP(s)	(s & SLOT_EXP)
+#define SLOT_PRIM(s)	(s & 0x03)
+#define SLOT_SEC(s)		((s >> 2 ) & 0x03)
+
+inline bool Sys_SlotIsExpended(u8 slot) { return slot & SLOT_EXP; }
+inline u8 Sys_SlotGetPrimary(u8 slot) { return slot & 0x03; }
+inline u8 Sys_SlotGetSecondary(u8 slot) { return (slot >> 2) & 0x03; }
 
 //-----------------------------------------------------------------------------
 // Optimized assmbler bits shift
@@ -142,10 +150,13 @@ inline void Halt() { __asm__("halt"); }
 // Slot
 
 /// Get the slot ID of a given page
-u8 Sys_GetSlot(u8 page);
+u8 Sys_GetPageSlot(u8 page);
 
 /// Set the slot ID of a given page
-void Sys_SetSlot(u8 page, u8 slot);
+void Sys_SetPageSlot(u8 page, u8 slot);
 
 /// Set the slot ID of a given page
 inline bool Sys_IsSlotExpanded(u8 slot) { return g_EXPTBL[slot] & 0x80; }
+
+/// Set a given slot in page 0
+void Sys_SetPage0Slot(u8 slotId);

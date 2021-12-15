@@ -17,7 +17,7 @@
 // DiskROM RAM Variables
 //-----------------------------------------------------------------------------
 
-#define M_KANJTABLE	0xF30F // Two pairs of limits for the first bytes of Shift-JIS characters. See here and here for more information
+#define M_KANJTABLE	0xF30F // Two pairs of limits for the first bytes of Shift-JIS characters
 const u16 __at(M_KANJTABLE) g_KANJTABLE[2];
 
 #define M_RAMAD0	0xF341 // Slot address of RAM in page 0 (DOS)

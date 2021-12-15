@@ -3,5 +3,5 @@
 rem ***************************************************************************
 rem * PROJECT OVERWRITE                                                       *
 rem ***************************************************************************
-SET ModuleList=%ModuleList%,game,bios
+SET ModuleList=%ModuleList%,game
 SET Version=1

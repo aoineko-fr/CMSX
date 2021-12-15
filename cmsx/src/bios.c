@@ -87,7 +87,7 @@ void Bios_Exit(u8 ret) __FASTCALL
 /// Set a safe hook jump to given function
 void Bios_SetHookCallback(u16 hook, callback cb)
 {
-	u8 slot = Sys_GetSlot((u16)cb >> 14);
+	u8 slot = Sys_GetPageSlot((u16)cb >> 14);
 	Bios_SetHookInterSlotCallback(hook, slot, cb);
 }
 
@@ -294,10 +294,9 @@ void Bios_SwitchSlot(u8 page, u8 slot)
 		ld		h, a
 		ld		a, b
 		call	R_ENASLT
-		ei							// because ENASLT do DI
+		// ei							// because ENASLT do DI
 	__endasm;
 }
-
 
 //-----------------------------------------------------------------------------
 // GETYPR

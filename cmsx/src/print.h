@@ -195,18 +195,6 @@ void Print_EnableOutline(bool enable) __FASTCALL;
 #endif
 
 //-----------------------------------------------------------------------------
-// INLINE FUNCTIONS
-//-----------------------------------------------------------------------------
-// inline void Print_SetFontEx(u8 patternX, u8 patternY, u8 sizeX, u8 sizeY, u8 firstChr, u8 lastChr, const u8* patterns); // Set the current font
-// inline void Print_SetPosition(u8 x, u8 y); // Set cursor position
-// inline void Print_SetCharSize(u8 x, u8 y); // Set cursor position
-// inline void Print_SetTabSize(u8 size) // Set tabulation size in pixel (must be a power of 2 like 16, 32, 64, ...);
-// inline void Print_Space(); // Print space
-// inline void Print_Tab(); // Print tabulation
-// inline void Print_Return(); // Print return
-#include "print.inl"
-
-//-----------------------------------------------------------------------------
 // DRAW FUNCTION
 //-----------------------------------------------------------------------------
 
@@ -249,3 +237,17 @@ void Print_DrawLineV(u8 x, u8 y, u8 len);
 void Print_DrawBox(u8 x, u8 y, u8 width, u8 height);
 
 #endif // (USE_PRINT_GRAPH)
+
+//-----------------------------------------------------------------------------
+// INLINE FUNCTIONS
+//-----------------------------------------------------------------------------
+
+// inline void Print_SetFontEx(u8 patternX, u8 patternY, u8 sizeX, u8 sizeY, u8 firstChr, u8 lastChr, const u8* patterns); // Set the current font
+// inline void Print_SetPosition(u8 x, u8 y); // Set cursor position
+// inline void Print_SetCharSize(u8 x, u8 y); // Set cursor position
+// inline void Print_SetTabSize(u8 size) // Set tabulation size in pixel (must be a power of 2 like 16, 32, 64, ...);
+// inline void Print_Space(); // Print space
+// inline void Print_Tab(); // Print tabulation
+// inline void Print_Return(); // Print return
+// inline void Print_DrawTextAt(u8 x, u8 y, const c8* string); // Print a character string
+#include "print.inl"

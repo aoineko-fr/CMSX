@@ -25,7 +25,7 @@ rem ***************************************************************************
 SET ProjName=%~n1
 
 rem  List of modules to link
-SET ModuleList=system,vdp,print,input,memory,math,draw
+SET ModuleList=system,bios,vdp,print,input,memory,math,draw
 
 rem  MSX version:
 rem  - 1		MSX 1
@@ -51,6 +51,9 @@ rem  - Default
 rem  - Speed
 rem  - Size
 set Optim=Speed
+
+rem  Additionnal compilation flag
+SET CompileOpt=
 
 rem Verbose mode: 0 or 1
 set Verbose=0

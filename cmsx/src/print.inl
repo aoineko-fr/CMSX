@@ -92,3 +92,11 @@ inline const struct Print_Data* Print_GetFontInfo()
 {
 	return &g_PrintData;
 }
+
+//-----------------------------------------------------------------------------
+/// Print a character string
+inline void Print_DrawTextAt(u8 x, u8 y, const c8* string)
+{
+	Print_SetPosition(x, y);
+	Print_DrawText(string);
+}
