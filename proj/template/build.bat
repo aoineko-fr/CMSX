@@ -23,7 +23,8 @@ rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=template
-SET ModuleList=bios,vdp,print,input,memory,math,draw
+rem List of modules to link
+SET ModuleList=system,bios,vdp,print,input,memory,math,draw
 rem  Version:
 rem  - 1		MSX 1
 rem  - 2		MSX 2
@@ -46,6 +47,10 @@ rem  - Default
 rem  - Speed
 rem  - Size
 set Optim=Speed
+rem  Additionnal compilation flag
+SET CompileOpt=
+rem Verbose mode: 0 or 1
+set Verbose=0
 
 rem ***************************************************************************
 rem * BUILD STEPS                                                             *

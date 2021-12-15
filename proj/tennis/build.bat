@@ -30,7 +30,7 @@ rem  - 1		MSX 1
 rem  - 2		MSX 2
 rem  - 2P		MSX 2+
 rem  - TR		MSX TurboR
-SET Version=1
+SET Version=2
 rem  Target:
 rem  - BIN			.bin	BASIC binary program (8000h~)
 rem  - ROM16		.rom	see ROM16P1

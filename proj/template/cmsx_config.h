@@ -1,8 +1,9 @@
-// ___________________________________________________________________________
-// ██▀█▀██▀▀▀█▀▀███   ▄▄             ▄▄  ▄  
-// █  ▄ █  ███  ███  ██ ▀ ▄█▀▄ ██▀▄ ██ ▀ ▄  ▄▀██ 
-// █  █ █▄ ▀ █  ▀▀█  ▀█▄▀ ▀█▄▀ ██ █ ██▀  ██  ▀██ 
-// ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀──────────────────────────▀▀───────────────────────────────
+//-----------------------------------------------------------------------------
+//  █▀▀ █▀▄▀█ █▀ ▀▄▀
+//  █▄▄ █ ▀ █ ▄█ █ █ v0.2
+//-----------------------------------------------------------------------------
+// Library configuration
+//-----------------------------------------------------------------------------
 #pragma once
 
 //-----------------------------------------------------------------------------
@@ -29,41 +30,36 @@
 // MSX version
 // - MSX_1 ........................ MSX
 // - MSX_2 ........................ MSX 2
-// - MSX_2Plus .................... MSX 2+
-// - MSX_TurboR ................... MSX Turbo-R
-#define MSX_VERSION					MSX_1
+// - MSX_2P ....................... MSX 2+
+// - MSX_TR ....................... MSX turbo R
+// MSX_VERSION is defined by the build tool
 
 //-----------------------------------------------------------------------------
 // BIOS MODULE
 //-----------------------------------------------------------------------------
 
-// Render mode
-// - RENDER_VDP ................... Use direct access to VDP registers
-// - RENDER_BIOS .................. Use BIOS routines
-#define RENDER_MODE					RENDER_VDP
-
-// Default bios access
-// - CALL_DIRECT .................. Use direct access to Bios routines (ROM slot must be selected in corresponding page)
-// - CALL_INTERSLOT ............... Use inter-slot access to Bios routines (through CALSLT routine)
-#define CALL_MAINROM				CALL_DIRECT
-#define CALL_SUBROM					CALL_INTERSLOT
-#define CALL_DISCROM				CALL_INTERSLOT
+// Default slot BIOS access
+// - BIOS_CALL_DIRECT ............. Use direct access to Bios routines (ROM slot must be selected in corresponding page)
+// - BIOS_CALL_INTERSLOT .......... Use inter-slot access to Bios routines (through CALSLT routine)
+#define BIOS_CALL_MAINROM			BIOS_CALL_DIRECT
+#define BIOS_CALL_SUBROM			BIOS_CALL_INTERSLOT
+#define BIOS_CALL_DISKROM			BIOS_CALL_INTERSLOT
 
 // MAIN-Bios module setting
-#define USE_BIOS_MAINROM			1
-#define USE_BIOS_VDP				1
-#define USE_BIOS_PSG				1
-#define USE_BIOS_SUBROM				1
-#define USE_BIOS_DISCROM			1
+#define USE_BIOS_MAINROM			1	// Allow use of Main-ROM routines
+#define USE_BIOS_VDP				1	// Give access to Main-ROM routines related to VDP
+#define USE_BIOS_PSG				1	// Give access to Main-ROM routines related to PSG
+#define USE_BIOS_SUBROM				1	// Allow use of Sub-ROM routines (MSX 2/2+/turbo R)
+#define USE_BIOS_DISKROM			1	// Allow use of Disk-ROM routines
 
 //-----------------------------------------------------------------------------
 // VDP MODULE
 //-----------------------------------------------------------------------------
 
-// VRAM address unit
-// - VDP_VRAM_ADDR_16 ............. Use 16-bits VRAM address (u16 parameter; for VRAM <= 64K)
-// - VDP_VRAM_ADDR_17 ............. Use 17-bits VRAM address (u32 parameter; for VRAM > 64K)
-#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_16
+// VRAM addressing unit
+// - VDP_VRAM_ADDR_14 ............. Use 14-bits 16K VRAM addressing for MSX 1 (u16)
+// - VDP_VRAM_ADDR_17 ............. Use 17-bits 128K VRAM addressing for MSX 2/2+/turbo R (u32)
+#define VDP_VRAM_ADDR				VDP_VRAM_ADDR_14
 
 // VDP X/Y units
 // - VDP_UNIT_U8 .................. X and Y use 8-bits values
@@ -108,16 +104,20 @@
 #define USE_PRINT_SPRITE			0	// Allow use of Sprite font (G3-G7)
 #define USE_PRINT_FX_SHADOW			0	// [Bitmap] Allow use of text shadow
 #define USE_PRINT_FX_OUTLINE		0	// [Bitmap] Allow use of text outline
+#define USE_PRINT_GRAPH				1	// Allow use of character lines and boxes
 #define USE_PRINT_VALIDATOR			1	// Add validator character code
 #define USE_PRINT_UNIT				1	// Display integer type (h: hexadecimal, b: binary)
-#define PRINT_COLOR_NUM				8	// 1 color per line
+#define PRINT_SKIP_SPACE			1	// Skill space character
+#define PRINT_COLOR_NUM				12	// 1 color per line
+// - PRINT_WIDTH_1
 // - PRINT_WIDTH_6
 // - PRINT_WIDTH_8
 // - PRINT_WIDTH_X
 #define PRINT_WIDTH					PRINT_WIDTH_X
+// - PRINT_HEIGHT_1
 // - PRINT_HEIGHT_8
 // - PRINT_HEIGHT_X
-#define PRINT_HEIGHT				PRINT_HEIGHT_X
+#define PRINT_HEIGHT				PRINT_HEIGHT_1
 
 //-----------------------------------------------------------------------------
 // GAME MODULE
@@ -155,7 +155,7 @@
 // - RANDOM_XORSHIFT .............. XOR Shift RNGs (16-bit seeds)
 // - RANDOM_GNU ................... GNU C Library function (16-bit seed)
 // - RANDOM_LINEAR ................ Linear congruential generator
-#define RANDOM_METHOD				RANDOM_LINEAR
+#define RANDOM_METHOD				RANDOM_XORSHIFT
 
 //-----------------------------------------------------------------------------
 // COMPRESS 

@@ -31,6 +31,7 @@ const c8 g_ChrAnim[] = { '|', '\\', '-', '/' };
 u8 g_Buffer[128];
 u8 biosSlot = 0xFF;
 u8 cartSlot = 0xFF;
+u8 pageSlot[4];
 
 //=============================================================================
 // HELPER FUNCTIONS
@@ -66,24 +67,47 @@ void main()
 	
 	u8 biosSlot = Sys_GetPageSlot(0); // Get slot in page 0, the Main-ROM
 	u8 cartSlot = Sys_GetPageSlot(1); // Get slot in page 1, the cartridge
+	u8 ramSlot = Sys_GetPageSlot(3); // Get slot in page 1, the cartridge
 	
 	Print_SetPosition(0, 2);
-	Print_DrawText("\nBIOS slot: ");
+	Print_DrawText("\nPage #0: ");
 	Print_Slot(biosSlot);
-	Print_DrawText("\nCart slot: ");
+	Print_DrawText(" (BIOS)\nPage #1: ");
 	Print_Slot(cartSlot);
+	Print_DrawText(" (Cart)\nPage #2: ");
+	Print_Slot(Sys_GetPageSlot(2));
+	Print_DrawText(" (Cart)\nPage #3: ");
+	Print_Slot(ramSlot);
+	Print_DrawText(" (RAM)");
+	
 	
 	Print_DrawText("\n\nSwitching page 0 and copy data to RAM...\n");
 	DisableInterrupt();
 	Sys_SetPage0Slot(cartSlot);
-	// Catridge Slot in Page 0
+	////////// Catridge Slot in Page 0 //////////
 	{
+		// pageSlot[0] = Sys_GetPageSlot(0);
+		// pageSlot[1] = Sys_GetPageSlot(1);
+		// pageSlot[2] = Sys_GetPageSlot(2);
+		// pageSlot[3] = Sys_GetPageSlot(3);
 		Mem_Copy(g_Page0Data, g_Buffer, sizeof(g_Page0Data)); // Copy page 0 cartridge data to RAM
 
 		Sys_SetPage0Slot(biosSlot);
 	}
-	// EnableInterrupt();	
-	Print_DrawText("\n... page 0 restored\n\nData: ");
+	////////// BIOS Slot in Page 0 //////////
+	EnableInterrupt();	
+	Print_DrawText("\n... page 0 restored!");
+
+	// Print_DrawText("\n\nPage #0: ");
+	// Print_Slot(pageSlot[0]);
+	// Print_DrawText("\nPage #1: ");
+	// Print_Slot(pageSlot[1]);
+	// Print_DrawText("\nPage #2: ");
+	// Print_Slot(pageSlot[2]);
+	// Print_DrawText("\nPage #3: ");
+	// Print_Slot(pageSlot[3]);
+
+	Print_DrawText("\n\nData: ");
 	Print_DrawText(g_Buffer);
 	
 	Bios_Beep();

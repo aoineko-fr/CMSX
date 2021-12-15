@@ -3412,19 +3412,6 @@ bool Joy2_Button2()		{ return (IS_JOY_PRESSED(g_Joy2, JOY_INPUT_TRIGGER_B) && !(
 ///
 bool State_Init()
 {
-	// Initialize VDP
-	#if (MSX2_ENHANCE)
-	if(g_VersionVDP == VDP_VERSION_TMS9918A)
-	{
-	#endif
-		VDP_SetMode(VDP_MODE_GRAPHIC2);
-	#if (MSX2_ENHANCE)
-	}
-	else // VDP_VERSION_V99xx
-	{
-		VDP_SetMode(VDP_MODE_GRAPHIC3);
-	}
-	#endif
 	// Setup VRAM tables
 	VDP_SetLayoutTable(VRAM_LAYOUT_TABLE);
 	VDP_SetColorTable(VRAM_COLOR_TABLE);
@@ -4003,11 +3990,11 @@ bool State_TrainingUpdate()
 
 				Print_SetPosition(1, 19);
 				if(g_Freq == FREQ_50HZ)
-					Print_DrawText("FREQ:50HZ");
+					Print_DrawText("FRQ:50HZ");
 				else if(g_Freq == FREQ_60HZ)
-					Print_DrawText("FREQ:60HZ");
+					Print_DrawText("FRQ:60HZ");
 				else
-					Print_DrawText("FREQ:???");
+					Print_DrawText("FRQ:???");
 
 				#if (TARGET_TYPE == TARGET_TYPE_ROM)
 					Print_SetPosition(1, 20);
@@ -4020,9 +4007,9 @@ bool State_TrainingUpdate()
 				
 				Print_SetPosition(1, 22);
 				#if (MSX2_ENHANCE)
-					Print_DrawText((g_VersionVDP == VDP_VERSION_TMS9918A) ? "MSX1" : "MSX2");
+					Print_DrawText((g_VersionVDP == VDP_VERSION_TMS9918A) ? "VDP:9918" : "VDP:9938+");
 				#else
-					Print_DrawText("MSX1");
+					Print_DrawText("VDP:9918");
 				#endif
 			}
 		}
@@ -4124,8 +4111,10 @@ void main()
 {
 	#if (MSX2_ENHANCE)
 	g_KeyRow[0] = Keyboard_Read(0); // 0 1 2 3 4 5 6 7
-	if(IS_KEY_PRESSED(g_KeyRow[0], KEY_1))
+	if(KEY_ON(KEY_1))
 		g_VersionVDP = VDP_VERSION_TMS9918A;
+	else if(KEY_ON(KEY_2))
+		g_VersionVDP = VDP_VERSION_V9938;
 	else
 		g_VersionVDP = VDP_GetVersion();
 	#endif
@@ -4138,7 +4127,16 @@ void main()
 	g_Freq = g_FreqDetected;
 	#endif
 
-	Game_Initialize();
+	// Initialize VDP
+	#if (MSX2_ENHANCE)
+	if(g_VersionVDP == VDP_VERSION_TMS9918A)
+		Game_Initialize(VDP_MODE_GRAPHIC2);
+	else // VDP_VERSION_V99xx
+		Game_Initialize(VDP_MODE_GRAPHIC3);
+	#else
+	Game_Initialize(VDP_MODE_GRAPHIC2);
+	#endif
+
 	Game_SetVSyncCallback(VSyncCallback);
 	Game_SetState(State_Init);
 
