@@ -24,6 +24,8 @@ REM -------- CMSX FONTS --------
 %CMSXimg% font\font_cmsx_std3.png     -out ..\src\font\font_cmsx_std3.h     -pos 0 16  -size 8 7  -gap 0 1  -num 16 6  -trans 0x000000  -bpc 1  -name g_Font_CMSX_Std3     -copy cmsx.txt -skip  -font 6 8 ! }
 %CMSXimg% font\font_cmsx_symbol1.png  -out ..\src\font\font_cmsx_symbol1.h  -pos 0 0   -size 8 8  -gap 0 0  -num 16 14 -trans 0x000000  -bpc 1  -name g_Font_CMSX_Symbol1  -copy cmsx.txt        -font 8 8 0x00 0xE0
 %CMSXimg% font\font_cmsx_sys1.png     -out ..\src\font\font_cmsx_sys1.h     -pos 0 16  -size 8 8  -gap 0 0  -num 16 4  -trans 0x000000  -bpc 1  -name g_Font_CMSX_Sys1     -copy cmsx.txt -skip  -font 8 8 ! _
+%CMSXimg% font\font_cmsx_sample6.png  -out ..\src\font\font_cmsx_sample6.h  -pos 0 0   -size 8 8  -gap 0 0  -num 16 12 -trans 0x000000  -bpc 1  -name g_Font_CMSX_Sample6  -copy cmsx.txt        -font 6 8 0x00 0xBF
+%CMSXimg% font\font_cmsx_sample8.png  -out ..\src\font\font_cmsx_sample8.h  -pos 0 0   -size 8 8  -gap 0 0  -num 16 12 -trans 0x000000  -bpc 1  -name g_Font_CMSX_Sample8  -copy cmsx.txt        -font 8 8 0x00 0xBF
 
 REM -------- MISC FONTS --------
 %CMSXimg% font\font_carwar.png        -out ..\src\font\font_carwar.h        -pos 0 0   -size 8 8  -gap 0 0  -num 16 4  -trans 0xDA48B6  -bpc 1  -name g_Font_Carwar        -copy          -skip  -font 8 8 ! _

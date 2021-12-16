@@ -15,23 +15,35 @@
 //=============================================================================
 #define SLOT_Y 3
 
-#define DOT_CHAR ((g_ROMVersion.CharacterSet == 0) ? 0xA5 : 0x07)
+// Library's logo
+#define MSX_GL "\x01\x02\x03\x04\x05\x06"
 
 //=============================================================================
 // READ-ONLY DATA
 //=============================================================================
 
+// Fonts data
+#include "font\font_cmsx_sample6.h"
+
 // Character animation data
 const c8 g_ChrAnim[] = { '|', '\\', '-', '/' };
 
 // Slot box
-const u8 g_SlotTop[]	= { 0x18, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x19, 0 }; 
-const u8 g_SlotMid[]	= { 0x16, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x16, 0 }; 
-const u8 g_SlotBot[]	= { 0x1A, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x17, 0x1B, 0 }; 
+const c8* g_SlotTop			= "\x18\x17\x17\x17\x17\x17\x17\x17\x19"; 
+const c8* g_SlotMid			= "\x16\x20\x20\x20\x20\x20\x20\x20\x16"; 
+const c8* g_SlotBot			= "\x1A\x17\x17\x17\x17\x17\x17\x17\x1B"; 
+// Selected slot	
+const c8* g_SlotTopSel		= "\x98\x97\x97\x97\x97\x97\x97\x97\x99"; 
+const c8* g_SlotMidSel		= "\x96\x20\x20\x20\x20\x20\x20\x20\x96"; 
+const c8* g_SlotBotSel		= "\x9A\x97\x97\x97\x97\x97\x97\x97\x9B"; 
 // Expended slot box
-const u8 g_SlotExTop[]	= { 0x18, 0x17, 0x19, 0 }; 
-const u8 g_SlotExMid[]	= { 0x16, 0x20, 0x16, 0 }; 
-const u8 g_SlotExBot[]	= { 0x1A, 0x17, 0x1B, 0 }; 
+const c8* g_SlotExTop		= "\x18\x17\x12\x17\x12\x17\x12\x17\x19"; 
+const c8* g_SlotExMid		= "\x16\x20\x16\x20\x16\x20\x16\x20\x16"; 
+const c8* g_SlotExBot		= "\x1A\x17\x11\x17\x11\x17\x11\x17\x1B"; 
+// Selected slot
+const c8* g_SlotExTopSel	= "\x98\x97\x99"; 
+const c8* g_SlotExMidSel	= "\x96\x20\x96"; 
+const c8* g_SlotExBotSel	= "\x9A\x97\x9B"; 
 
 //=============================================================================
 // MEMORY DATA
@@ -288,7 +300,7 @@ void DisplayHeader()
 {
 	Print_Clear();
 	Print_SetPosition(0, 0);
-	Print_DrawText("MGL - SYSTEM INFORMATION");
+	Print_DrawText(MSX_GL "  SYSTEM INFORMATION");
 	Print_DrawLineH(0, 1, 40);
 }
 
@@ -318,7 +330,7 @@ void DisplayInfo()
 		case 0: Print_DrawText("MSX 1"); break;
 		case 1: Print_DrawText("MSX 2"); break;
 		case 2: Print_DrawText("MSX 2+"); break;
-		case 3: Print_DrawText("MSX TurboR"); break;
+		case 3: Print_DrawText("TurboR"); break;
 		default: Print_DrawText("Unknow"); break;
 	}
 	Print_DrawText("\n- Font:    ");
@@ -435,14 +447,10 @@ void DisplaySlots()
 			}
 			for(u8 page = 0; page < 4; ++page)
 			{
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 2);
-				Print_DrawCharX(DOT_CHAR, 9);
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 3);
-				Print_DrawText("| | | | |");
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 4);
-				Print_DrawText("| | | | |");
-				Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 5);
-				Print_DrawCharX(DOT_CHAR, 9);
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 2, g_SlotExTop);
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 3, g_SlotExMid);
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 4, g_SlotExMid);
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 5, g_SlotExBot);
 			}
 		}
 		else
@@ -452,25 +460,17 @@ void DisplaySlots()
 				u8 pageSlot = Sys_GetPageSlot(3 - page);
 				if(pageSlot == SLOT(slot))
 				{
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 2, g_SlotTopSel);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 3, g_SlotMidSel);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 4, g_SlotMidSel);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 5, g_SlotBotSel);
+				}
+				else
+				{
 					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 2, g_SlotTop);
 					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 3, g_SlotMid);
 					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 4, g_SlotMid);
 					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 5, g_SlotBot);
-				}
-				else
-				{
-					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 2);
-					Print_DrawCharX(DOT_CHAR, 9);
-					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 3);
-					Print_DrawChar('|');
-					g_PrintData.CursorX += 7;
-					Print_DrawChar('|');
-					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 4);
-					Print_DrawChar('|');
-					g_PrintData.CursorX += 7;
-					Print_DrawChar('|');
-					Print_SetPosition((slot * 9) + 4, (page * 4) + SLOT_Y + 5);
-					Print_DrawCharX(DOT_CHAR, 9);
 				}
 			}
 		}
@@ -489,13 +489,13 @@ void DisplaySlots()
 					if(pageSlot == SLOTEX(slot, sub))
 					{
 						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 2);
-						Print_DrawText(g_SlotExTop);
+						Print_DrawText(g_SlotExTopSel);
 						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 3);
-						Print_DrawText(g_SlotExMid);
+						Print_DrawText(g_SlotExMidSel);
 						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 4);
-						Print_DrawText(g_SlotExMid);
+						Print_DrawText(g_SlotExMidSel);
 						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 5);
-						Print_DrawText(g_SlotExBot);
+						Print_DrawText(g_SlotExBotSel);
 					}
 					Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 3 + (sub & 0x1));
 					Print_DrawText(GetSlotName(SLOTEX(slot, sub), 3 - page));
@@ -527,7 +527,7 @@ void main()
 	VDP_SetMode(VDP_MODE_SCREEN0);
 	VDP_FillVRAM_16K(0, 0x0000, 0x4000); // Clear VRAM
 	
-	Print_SetTextFont(PRINT_DEFAULT_FONT, 1);
+	Print_SetTextFont(g_Font_CMSX_Sample6, 1);
 	Print_SetColor(0xF, 0x0);
 
 	callback cb = DisplayInfo;

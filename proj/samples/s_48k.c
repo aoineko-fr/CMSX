@@ -14,9 +14,15 @@
 // DEFINES
 //=============================================================================
 
+// Library's logo
+#define MSX_GL "\x01\x02\x03\x04\x05\x06"
+
 //=============================================================================
 // READ-ONLY DATA
 //=============================================================================
+
+// Fonts data
+#include "font\font_cmsx_sample6.h"
 
 // Sample data in page 0
 __at(0x0000) const c8 g_Page0Data[] = "You got Page #0 data!";
@@ -61,8 +67,8 @@ void main()
 	VDP_EnableVBlank(true);
 	VDP_ClearVRAM();
 
-	Print_SetTextFont(PRINT_DEFAULT_FONT, 1);
-	Print_DrawText("MGL - 48K Cartridge Sample\n");
+	Print_SetTextFont(g_Font_CMSX_Sample6, 1);
+	Print_DrawText(MSX_GL "   48K Cartridge Sample\n");
 	Print_DrawLineH(0, 1, 40);
 	
 	u8 biosSlot = Sys_GetPageSlot(0); // Get slot in page 0, the Main-ROM

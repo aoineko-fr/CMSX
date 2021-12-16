@@ -61,7 +61,7 @@ struct SpriteData
 //=============================================================================
 
 // Fonts
-#include "font\font_cmsx_std0.h"
+#include "font\font_cmsx_sample6.h"
 #include "font\font_cmsx_symbol1.h"
 
 // Sprite pattern
@@ -253,10 +253,10 @@ void main()
 	VDP_HideSpriteFrom(SPRITE_16_1ST + 7);
 
 	// Setup print
-	Print_SetBitmapFont(g_Font_CMSX_Std0);
+	Print_SetBitmapFont(g_Font_CMSX_Sample6);
 	Print_SetColor(0xF, 0x4);
-	Print_SetPosition(4, 2);
-	Print_DrawText("VDP SPRITE SAMPLE (G4)");
+	Print_SetPosition(0, 2);
+	Print_DrawText("\x1\x2\x3\x4\x5\x6   VDP SPRITE SAMPLE (G4)");
 	Draw_HLine(0, 255, 12, 0xFF, 0);
 	Draw_HLine(0, 255, 64, 0xFF, 0);
 	Draw_HLine(0, 255, 114, 0xFF, 0);
