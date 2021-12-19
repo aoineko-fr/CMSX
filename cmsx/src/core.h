@@ -57,7 +57,7 @@ typedef void (*callback)(void);	///< Callback default signature
 	
 #define loop(a, b)			for(u8 a = 0; a < b; ++a)
 #define loopx(a)			for(u8 i##__LINE__ = 0; i##__LINE__ < a; ++i##__LINE__)
-
+	
 //-----------------------------------------------------------------------------
 // PEEK & POKE
 //-----------------------------------------------------------------------------

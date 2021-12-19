@@ -88,12 +88,15 @@
 // MATH MODULE
 //-----------------------------------------------------------------------------
 
-// RANDOM_METHOD
-#define RANDOM_LFSR_LCG_16	0 // Combined LFSR/LCG (16-bit seeds)
-#define RANDOM_LFSR_LCG_32	1 // Combined LFSR/LCG (32-bit seeds)
-#define RANDOM_XORSHIFT		2 // XOR Shift RNGs (16-bit seeds)
-#define RANDOM_GNU			3 // GNU C Library function (16-bit seed)
-#define RANDOM_LINEAR		4 // Linear congruential generator
+// RANDOM_8_METHOD
+#define RANDOM_8_REGISTER		0 // R Register value (7-bits)
+#define RANDOM_8_ION			1 // Ion Random
+#define RANDOM_8_MEMORY			2 // Memory Peek from R
+
+// RANDOM_16_METHOD
+#define RANDOM_16_LINEAR		0 // Linear congruential
+#define RANDOM_16_XORSHIFT		1 // XOR Shift
+#define RANDOM_16_LFSR_LCG		2 // Combined LFSR/LCG
 
 //-----------------------------------------------------------------------------
 // MISC

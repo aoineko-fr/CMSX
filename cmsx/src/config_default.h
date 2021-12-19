@@ -166,10 +166,16 @@
 // MATH MODULE
 //-----------------------------------------------------------------------------
 
-// RANDOM_METHOD
-#ifndef RANDOM_METHOD
-	#warning RANDOM_METHOD is not defined in "cmsx_config.h"! Default value will be used: RANDOM_XORSHIFT
-	#define RANDOM_METHOD				RANDOM_XORSHIFT
+// RANDOM_8_METHOD
+#ifndef RANDOM_8_METHOD
+	#warning RANDOM_8_METHOD is not defined in "cmsx_config.h"! Default value will be used: RANDOM_8_ION
+	#define RANDOM_8_METHOD				RANDOM_8_ION
+#endif
+
+// RANDOM_16_METHOD
+#ifndef RANDOM_16_METHOD
+	#warning RANDOM_16_METHOD is not defined in "cmsx_config.h"! Default value will be used: RANDOM_16_XORSHIFT
+	#define RANDOM_16_METHOD			RANDOM_16_XORSHIFT
 #endif
 
 //-----------------------------------------------------------------------------

@@ -39,6 +39,7 @@ enum COLOR_BPC
 // Merge 2 x 4-bits colors on 1 byte
 #define COLOR_MERGE(a, b)		(u8)((a & 0x0F) << 4 | (b & 0x0F))
 #define COLOR_MERGE_4B			COLOR_MERGE
+#define COLOR_MERGE2(a)			(u8)((a & 0x0F) << 4 | (a & 0x0F))
 
 // Sprite GM7 palette                   G R B
 #define COLOR_S7_BLACK			0	// (0,0,0)
@@ -60,6 +61,7 @@ enum COLOR_BPC
 
 // Merge 4 x 2-bits colors on 1 byte (for GM5)
 #define COLOR_MERGE_2B(a, b, c, d)	(u8)((a & 0x03) << 6 | (b & 0x03) << 4 | (c & 0x03) << 2 | (d & 0x03))
+#define COLOR_MERGE4(a)				(u8)((a & 0x03) << 6 | (a & 0x03) << 4 | (a & 0x03) << 2 | (a & 0x03))
 
 //-----------------------------------------------------------------------------
 // 8-BITS RGB COLORS

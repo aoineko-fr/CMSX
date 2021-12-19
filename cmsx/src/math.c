@@ -206,30 +206,208 @@ u16 Math_Flip_16b(u16 val) __FASTCALL
 	__endasm;
 }
 
-//-----------------------------------------------------------------------------
+//=============================================================================
 // RANDOM
+//=============================================================================
+
+
 //-----------------------------------------------------------------------------
+// 7-bits R register value
+//-----------------------------------------------------------------------------
+#if (RANDOM_8_METHOD == RANDOM_8_REGISTER)
 
-//=============================================================================
-// Combined LFSR/LCG (16-bit seeds)
-//=============================================================================
-
-#if (RANDOM_METHOD == RANDOM_LFSR_LCG_16)
-
-u16 g_RandomSeed1 = 1;
-u16 g_RandomSeed2 = 2;
+u8 g_RandomSeed8 = 0;
 
 //-----------------------------------------------------------------------------
 /// Initialize random generator seed
-void Math_SetRandomSeed(u16 seed)
+void Math_SetRandomSeed8(u8 seed) { g_RandomSeed8 = seed; }
+
+//-----------------------------------------------------------------------------
+/// Generates 8-bit pseudorandom numbers
+u8 Math_GetRandom8()
 {
-	g_RandomSeed1 = seed;
-	g_RandomSeed2 = seed + 1;
+	__asm
+	#if(1)
+		ld      a, (_g_RandomSeed8)
+		ld		b, a
+		ld		a, r
+		xor		b
+		ld      (_g_RandomSeed8), a
+	#else // ARTRAG version (https://www.msx.org/forum/development/msx-development/example-random-number-generator?page=1)
+		ld		a, r
+		ld		b, a
+		ld		a, (_g_RandomSeed8)
+		xor		b
+		ld		(_g_RandomSeed8), a
+	#endif
+	__endasm;	
+}
+
+
+//-----------------------------------------------------------------------------
+// 8-bits Ion Random
+//-----------------------------------------------------------------------------
+#elif (RANDOM_8_METHOD == RANDOM_8_ION)
+
+u16 g_RandomSeed8 = 0;
+
+//-----------------------------------------------------------------------------
+/// Initialize random generator seed
+void Math_SetRandomSeed8(u8 seed) { g_RandomSeed8 = (u16)seed; }
+
+//-----------------------------------------------------------------------------
+/// Generates 8-bit pseudorandom numbers
+// Ion Random by Joe Wingbermuehle (https://wikiti.brandonw.net/index.php?title=Z80_Routines:Math:Random)
+u8 Math_GetRandom8()
+{
+	__asm
+	#if(0)
+		ld      hl, (_g_RandomSeed8)
+		ld      a, r
+		ld      d, a
+		ld      e, (hl)
+		add     hl, de
+		add     a, l
+		xor     h
+		ld      (_g_RandomSeed8), hl
+	#else // Version alternative
+		ld      hl, (_g_RandomSeed8)
+		ld      a, r
+		ld      d, a
+		ld      e, a
+		add     hl, de
+		xor     l
+		add     a
+		xor     h
+		ld      l, a
+		ld      (_g_RandomSeed8), hl
+	#endif
+	__endasm;
+}
+
+
+//-----------------------------------------------------------------------------
+// 8-bits Memory Peek
+//-----------------------------------------------------------------------------
+#elif (RANDOM_8_METHOD == RANDOM_8_MEMORY)
+
+u8 g_RandomSeed8 = 0;
+
+//-----------------------------------------------------------------------------
+/// Initialize random generator seed
+void Math_SetRandomSeed8(u8 seed) { g_RandomSeed8 = seed; }
+
+//-----------------------------------------------------------------------------
+/// Generates 8-bit pseudorandom numbers
+// Peek value from address
+u8 Math_GetRandom8()
+{
+	__asm
+		ld      a, (_g_RandomSeed8)
+		ld		l, a				// Put seed in L
+		ld		a, r
+		ld		h, a				// Put R register in H (R is 7-bits counter so upper address is 0x7Fxx
+		ld      (_g_RandomSeed8), a
+		ld		a, (hl)				// Get byte at HL random address
+
+	__endasm;
+}
+
+#endif
+
+
+//-----------------------------------------------------------------------------
+// 16-bits Linear congruential generator
+//-----------------------------------------------------------------------------
+#if (RANDOM_16_METHOD == RANDOM_16_LINEAR)
+
+u16 g_RandomSeed16 = 0;
+
+//-----------------------------------------------------------------------------
+/// Initialize random generator seed
+void Math_SetRandomSeed16(u16 seed) { g_RandomSeed16 = seed; }
+
+//-----------------------------------------------------------------------------
+/// Generates 16-bit pseudorandom numbers with a period of 65535
+// Linear congruential generator
+u16 Math_GetRandom16() __FASTCALL
+{
+	u16 ret = (g_RandomSeed16 * RANDOM_16_LINEAR_A) + RANDOM_16_LINEAR_C;
+	g_RandomSeed16 = ret;
+	return ret;
+}
+
+
+//-----------------------------------------------------------------------------
+// 16-bit xorshift pseudorandom number generator
+//-----------------------------------------------------------------------------
+#elif (RANDOM_16_METHOD == RANDOM_16_XORSHIFT)
+
+u16 g_RandomSeed16 = 1;
+
+//-----------------------------------------------------------------------------
+/// Initialize random generator seed
+void Math_SetRandomSeed16(u16 seed) { g_RandomSeed16 = seed | 0x0001; }
+
+//-----------------------------------------------------------------------------
+/// Generates 16-bit pseudorandom numbers
+// 16-bit xorshift pseudorandom number generator by John Metcalf (https://wikiti.brandonw.net/index.php?title=Z80_Routines:Math:Random)
+// Outputs:		HL	Pseudorandom number
+// Using the xor-shift method:
+//	hl ^= hl << 7
+//	hl ^= hl >> 9
+//	hl ^= hl << 8
+// Some alternative shift triplets which also perform well are:
+//	{6, 7, 13}; {7, 9, 13}; {9, 7, 13}.
+// 20 bytes, 86 cycles
+u16 Math_GetRandom16() __FASTCALL
+{
+	__asm
+	xrnd:
+		ld		hl, (_g_RandomSeed16)
+		ld		a, h
+		rra
+		ld		a, l
+		rra
+		xor		h
+		ld		h, a
+		ld		a, l
+		rra
+		ld		a, h
+		rra
+		xor		l
+		ld		l, a
+		xor		h
+		ld		h, a
+		ld		(_g_RandomSeed16), hl
+	__endasm;
+	
+	/*g_RandomSeed16 ^= g_RandomSeed16 << 7;
+	g_RandomSeed16 ^= g_RandomSeed16 >> 9;
+	g_RandomSeed16 ^= g_RandomSeed16 << 8;
+	return g_RandomSeed16;*/
+}
+
+
+//-----------------------------------------------------------------------------
+// 16-bits Combined LFSR/LCG
+//-----------------------------------------------------------------------------
+#elif (RANDOM_16_METHOD == RANDOM_16_LFSR_LCG)
+
+u16 g_RandomSeed16_1 = 1;
+u16 g_RandomSeed16_2 = 2;
+
+//-----------------------------------------------------------------------------
+/// Initialize random generator seed
+void Math_SetRandomSeed16(u16 seed)
+{
+	g_RandomSeed16_1 = seed;
+	g_RandomSeed16_2 = seed | 0x0001;
 }
 
 //-----------------------------------------------------------------------------
 /// Generates 16-bit pseudorandom numbers with a period of 65535
-// Combined LFSR/LCG (16-bit seeds)
+// Combined LFSR/LCG (16-bit seeds) (https://wikiti.brandonw.net/index.php?title=Z80_Routines:Math:Random)
 // Inputs:		(seed1) contains a 16-bit seed value
 //				(seed2) contains a NON-ZERO 16-bit seed value
 // Outputs:		HL is the result
@@ -237,209 +415,26 @@ void Math_SetRandomSeed(u16 seed)
 //				DE is preserved
 // cycle: 4,294,901,760 (almost 4.3 billion)
 // 26 bytes, 160 cycles
-u16 Math_GetRandom()
+u16 Math_GetRandom16() __FASTCALL
 {
 	__asm
-		ld		hl,(_g_RandomSeed1)
+		ld		hl, (_g_RandomSeed16_1)
 		ld		b, h
 		ld		c, l
 		add		hl, hl
 		add		hl, hl
 		inc		l
 		add		hl, bc
-		ld		(_g_RandomSeed1), hl
-		ld		hl, (_g_RandomSeed2)
+		ld		(_g_RandomSeed16_1), hl
+		ld		hl, (_g_RandomSeed16_2)
 		add		hl, hl
 		sbc		a, a
 		and		#0b00101101
 		xor		l
 		ld		l, a
-		ld		(_g_RandomSeed2), hl
+		ld		(_g_RandomSeed16_2), hl
 		add		hl, bc
-		ld		de, hl
 	__endasm;
-}
-
-//=============================================================================
-// Combined LFSR/LCG (32-bit seeds)
-//=============================================================================
-
-#elif (RANDOM_METHOD == RANDOM_LFSR_LCG_32)
-
-u16 g_RandomSeed1_0 = 1;
-u16 g_RandomSeed1_1 = 2;
-u16 g_RandomSeed2_0 = 3;
-u16 g_RandomSeed2_1 = 4;
-
-//-----------------------------------------------------------------------------
-/// Initialize random generator seed
-void Math_SetRandomSeed(u16 seed)
-{ 
-	g_RandomSeed1_0 = seed + 1;
-	g_RandomSeed1_1 = seed + 2;
-	g_RandomSeed2_0 = seed + 3;
-	g_RandomSeed2_1 = seed + 4;
-}
-
-//-----------------------------------------------------------------------------
-/// Generates 16-bit pseudorandom numbers with a period of 65535
-// Combined LFSR/LCG (32-bit seeds)
-// Inputs:		(seed1_0) holds the lower 16 bits of the first seed
-//				(seed1_1) holds the upper 16 bits of the first seed
-//				(seed2_0) holds the lower 16 bits of the second seed
-//				(seed2_1) holds the upper 16 bits of the second seed
-//				**NOTE: seed2 must be non-zero
-// Outputs:		HL is the result
-//				BC,DE can be used as lower quality values, but are not independent of HL.
-// LFSR taps: 0,2,6,7  = 11000101
-// 291 cycles
-u16 Math_GetRandom()
-{
-	__asm
-		ld		hl, #12345
-		ld		de, #6789
-		ld		b, h
-		ld		c, l
-		add		hl, hl
-		rl		e
-		rl		d
-		add		hl, hl
-		rl		e
-		rl		d
-		inc		l
-		add		hl, bc
-		ld		(_g_RandomSeed1_0), hl
-		ld		hl, (_g_RandomSeed1_1)
-		adc		hl, de
-		ld		(_g_RandomSeed1_1), hl
-		ex		de, hl
-		ld		hl, #9876
-		ld		bc, #54321
-		add		hl, hl
-		rl		c
-		rl		b
-		ld		(_g_RandomSeed2_1), bc
-		sbc		a, a
-		and		#0b11000101
-		xor		l
-		ld		l, a
-		ld		(_g_RandomSeed2_0), hl
-		ex		de, hl
-		add		hl, bc
-		ld		de, hl
-	__endasm;
-}
-
-//=============================================================================
-// 16-bit xorshift pseudorandom number generator
-//=============================================================================
-
-#elif (RANDOM_METHOD == RANDOM_XORSHIFT)
-
-u16 g_RandomSeed = 1;
-
-//-----------------------------------------------------------------------------
-/// Initialize random generator seed
-void Math_SetRandomSeed(u16 seed) { g_RandomSeed = 0x8000 & seed; }
-
-//-----------------------------------------------------------------------------
-/// Generates 16-bit pseudorandom numbers with a period of 65535
-// 16-bit xorshift pseudorandom number generator by John Metcalf
-// Outputs:		HL	Pseudorandom number
-// Using the xor-shift method:
-//	hl ^= hl << 7
-//	hl ^= hl >> 9
-//	hl ^= hl << 8
-// Some alternative shift triplets which also perform well are:
-//	6, 7, 13; 7, 9, 13; 9, 7, 13.
-// 20 bytes, 86 cycles
-u16 Math_GetRandom()
-{
-	__asm
-	xrnd:
-		ld		de, (_g_RandomSeed)
-		ld		a, d
-		rra
-		ld		a, e
-		rra
-		xor		d
-		ld		d, a
-		ld		a, e
-		rra
-		ld		a, d
-		rra
-		xor		e
-		ld		e, a
-		xor		d
-		ld		d, a
-		ld		(_g_RandomSeed), de
-	__endasm;
-	
-	/*g_RandomSeed ^= g_RandomSeed << 7;
-	g_RandomSeed ^= g_RandomSeed >> 9;
-	g_RandomSeed ^= g_RandomSeed << 8;
-	return g_RandomSeed;*/
-}
-
-//=============================================================================
-// Reentrant random function from POSIX.1c.
-//=============================================================================
-
-#elif (RANDOM_METHOD == RANDOM_GNU)
-
-u32 g_RandomSeed = 1;
-
-//-----------------------------------------------------------------------------
-/// Initialize random generator seed
-void Math_SetRandomSeed(u16 seed) { g_RandomSeed = 0x8000000 & seed; }
-
-//-----------------------------------------------------------------------------
-/// Generates 16-bit pseudorandom numbers with a period of 65535
-// Reentrant random function from POSIX.1c.
-// Copyright (C) 1996, 1999, 2009 Free Software Foundation, Inc.
-// This file is part of the GNU C Library.
-// Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
-u16 Math_GetRandom()
-{
-	i32 result;
-
-	g_RandomSeed *= 1103515245;
-	g_RandomSeed += 12345;
-	result = (u32) (g_RandomSeed / 65536) % 2048;
-
-	g_RandomSeed *= 1103515245;
-	g_RandomSeed += 12345;
-	result <<= 10;
-	result ^= (u32) (g_RandomSeed / 65536) % 1024;
-
-	g_RandomSeed *= 1103515245;
-	g_RandomSeed += 12345;
-	result <<= 10;
-	result ^= (u32) (g_RandomSeed / 65536) % 1024;
-
-	return (u16)result;
-}
-
-//=============================================================================
-// Linear congruential generator
-//=============================================================================
-
-#elif (RANDOM_METHOD == RANDOM_LINEAR)
-
-u16 g_RandomSeed = 0;
-
-//-----------------------------------------------------------------------------
-/// Initialize random generator seed
-void Math_SetRandomSeed(u16 seed) { g_RandomSeed = seed; }
-
-//-----------------------------------------------------------------------------
-/// Generates 16-bit pseudorandom numbers with a period of 65535
-// Linear congruential generator
-u16 Math_GetRandom()
-{
-	g_RandomSeed *= 75; 
-	g_RandomSeed += 0x4321;
-	return g_RandomSeed;
 }
 
 #endif

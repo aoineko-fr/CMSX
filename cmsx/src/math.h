@@ -66,8 +66,43 @@ u8 Math_Flip(u8 val) __FASTCALL;
 /// Bits flip routine
 u16 Math_Flip_16b(u16 val) __FASTCALL;
 
-/// Initialize random generator seed
-void Math_SetRandomSeed(u16 seed);
+//-----------------------------------------------------------------------------
+// Random routines
+//-----------------------------------------------------------------------------
 
-/// Generates 16-bit pseudorandom numbers with a period of 65535
-u16 Math_GetRandom();
+// R register value
+#if (RANDOM_8_METHOD == RANDOM_8_REGISTER)
+	#define RANDOM_8_NAME		"R Register"
+// Ion Random
+#elif (RANDOM_8_METHOD == RANDOM_8_ION)
+	#define RANDOM_8_NAME		"Ion Random"
+// Memory Peek from R
+#elif (RANDOM_8_METHOD == RANDOM_8_MEMORY)
+	#define RANDOM_8_NAME		"Memory Peek from R"
+#endif
+
+/// Initialize random generator seed
+void Math_SetRandomSeed8(u8 seed);
+
+/// Generates 8-bit pseudorandom numbers
+u8 Math_GetRandom8();
+
+
+// Linear congruential generator
+#if (RANDOM_16_METHOD == RANDOM_16_LINEAR)
+	#define RANDOM_16_LINEAR_A	3			// 3		75		129
+	#define RANDOM_16_LINEAR_C	0x8721		// 0x8721	74		0x4321
+	#define RANDOM_16_NAME		"Linear congruential"
+// 16-bit xorshift pseudorandom number generator
+#elif (RANDOM_16_METHOD == RANDOM_16_XORSHIFT)
+	#define RANDOM_16_NAME 		"XOR Shift"
+// Combination of a 16-bit Linear Feedback Shift Register (LFSR) and a 16-bit LCG
+#elif (RANDOM_16_METHOD == RANDOM_16_LFSR_LCG)
+	#define RANDOM_16_NAME 		"Combined LFSR/LCG"
+#endif
+
+/// Initialize random generator seed
+void Math_SetRandomSeed16(u16 seed);
+
+/// Generates 16-bit pseudorandom numbers
+u16 Math_GetRandom16() __FASTCALL;

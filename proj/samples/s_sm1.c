@@ -189,7 +189,7 @@ void main()
 	VDP_SetSpritePatternTable(VRAM_SPRITE_PATTERN);
 	VDP_SetSpriteAttributeTable(VRAM_SPRITE_ATTRIBUTE_0);
 
-	VDP_ClearVRAM();
+	VDP_FillVRAM_16K(0, 0x0000, 0x4000);  // Clear 16 KB of VRAM
 	
 	// Setup print
 	Print_SetTextFont(g_Font_CMSX_Sample8, 0);

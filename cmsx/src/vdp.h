@@ -462,7 +462,7 @@ void VPD_CommandReadLoop(u8* addr) __FASTCALL;
 // inline void VDP_CommandLINE(u16 dx, u16 dy, u16 nx, u16 ny, u8 col, u8 arg, u8 op); // Draw straight line in VRAM
 // inline void VDP_CommandSRCH(u16 sx, u16 sy, u8 col, u8 arg); // Search for the specific color in VRAM to the right or left of the starting point
 // inline void VDP_CommandPSET(u16 dx, u16 dy, u8 col, u8 op); // Draw a dot in VRAM 
-// inline void VDP_CommandPOINT(u16 sx, u16 sy); // Read the color of the specified dot located in VRAM 
+// inline u8   VDP_CommandPOINT(u16 sx, u16 sy); // Read the color of the specified dot located in VRAM 
 // inline void VDP_CommandSTOP(); // Abort current command
 
 #define VDP_CopyRAMtoVRAM			VDP_CommandHMMC		///< High speed move CPU to VRAM
