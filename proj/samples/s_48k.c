@@ -76,13 +76,13 @@ void main()
 	u8 ramSlot = Sys_GetPageSlot(3); // Get slot in page 1, the cartridge
 	
 	Print_SetPosition(0, 2);
-	Print_DrawText("\nPage #0: ");
+	Print_DrawText("\nPage #0 -> Slot ");
 	Print_Slot(biosSlot);
-	Print_DrawText(" (BIOS)\nPage #1: ");
+	Print_DrawText(" (BIOS)\nPage #1 -> Slot ");
 	Print_Slot(cartSlot);
-	Print_DrawText(" (Cart)\nPage #2: ");
+	Print_DrawText(" (Cart)\nPage #2 -> Slot ");
 	Print_Slot(Sys_GetPageSlot(2));
-	Print_DrawText(" (Cart)\nPage #3: ");
+	Print_DrawText(" (Cart)\nPage #3 -> Slot ");
 	Print_Slot(ramSlot);
 	Print_DrawText(" (RAM)");
 	

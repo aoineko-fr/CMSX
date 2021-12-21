@@ -1,31 +1,85 @@
 @echo off
 "%__APPDIR__%chcp.com" 65001 > nul
 title <nul & title CMSX Build Tool – %ProjName% – %Target%
-cls
-echo ╔═══════════════════════════════════════════════════════════════════════════╗
-echo ║  ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                       ║
-echo ║ ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                       ║
-echo ║ ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                       ║
-echo ╟───────────────────────────────────────────────────────────────────────────╢
-echo ║ BUILD TOOL                                                                ║
-echo ╚═══════════════════════════════════════════════════════════════════════════╝
-echo.
 
 setlocal EnableDelayedExpansion
+
+rem -- Setup text color
+set RESET=[0m
+set RED=[91m
+set GREEN=[92m
+set YELLOW=[93m
+set BLUE=[94m
+set MAGENTA=[95m
+set CYAN=[96m
+set BG=[44m
+
+cls
+echo %BG%
+echo ╔═══════════════════════════════════════════════════════════════════════════╗
+echo ║                                                                           ║
+echo ║  ██▀█▀██▀▀▀█▀▀█▀█  ▄▄▄ ▄▄                                                 ║
+echo ║  █  ▄ █▄ ▀██▄ ▀▄█ ██   ██                                                 ║
+echo ║  █  █ █▀▀ ▄█  █ █ ▀█▄█ ██▄▄                                               ║
+echo ║  ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀                                                         ║
+echo ║   ▄▄▄       ▄  ▄▄    ▄▄   ▄▄▄▄           ▄▄                               ║
+echo ║   ██▄▀ ██ █ ▄  ██   ▄██    ██  ▄█▀▄ ▄█▀▄ ██                               ║
+echo ║   ██▄▀ ▀█▄█ ██ ▀█▄ ▀▄██    ██  ▀█▄▀ ▀█▄▀ ▀█▄                              ║
+echo ║                                                                           ║
+echo ╚═══════════════════════════════════════════════════════════════════════════╝
+echo %RESET%
 
 rem ***************************************************************************
 rem * TARGET SETTINGS                                                         *
 rem ***************************************************************************
-if /I %Version%==1	echo » Version: MSX 1
-if /I %Version%==2	echo » Version: MSX 2
-if /I %Version%==2P	echo » Version: MSX 2+
-if /I %Version%==TR	echo » Version: MSX Turbo-R
 
+rem -- Check MSX version
+if /I %Version%==1			( echo » Version: MSX 1
+) else if /I %Version%==2	( echo » Version: MSX 2
+) else if /I %Version%==2P	( echo » Version: MSX 2+
+) else if /I %Version%==TR	( echo » Version: MSX turbo R
+) else if /I %Version%==12	( echo » Version: MSX 1/2
+) else (
+	echo %RED%Error: Unknow MSX Version%RESET%
+	exit /b 10
+)
+
+rem -- Target specific initializations
 call %LibDir%\script\target_config.cmd
 
+rem -- Overwrite RAM start address
 if defined %ForceDataAddr% do (
 	echo Force RAM address to %ForceDataAddr%
 	set DataAddr=%ForceDataAddr%
+)
+
+rem ***************************************************************************
+rem * CHECK PARAMETERS                                                        *
+rem ***************************************************************************
+
+rem -- Check tools
+if not exist %SDCC%\sdcc.exe (
+	echo %RED%Error: Invalide path to C Compiler [%SDCC%\sdcc.exe]%RESET%
+	exit /b 20
+)
+if not exist %SDCC%\sdasz80.exe (
+	echo %RED%Error: Invalide path to ASM Compiler [%SDCC%\sdasz80.exe]%RESET%
+	exit /b 20
+)
+if not exist %Hex2Bin% (
+	echo %RED%Error: Invalide path to Hex2Bin [%Hex2Bin%]%RESET%
+	exit /b 20
+)
+if not exist %FillFile% (
+	echo %RED%Error: Invalide path to FillFile [%FillFile%]%RESET%
+	exit /b 20
+)
+if not exist %Emulator% (
+	echo %YELLOW%Warning: Invalide path to Emulator [%Emulator%]%RESET%
+)
+	
+if not exist %Debugger% (
+	echo %YELLOW%Warning: Invalide path to Debugger [%Debugger%]%RESET%
 )
 
 rem ***************************************************************************
@@ -36,12 +90,24 @@ rem  Add crt0 source to build list (it must be the first in the list)
 set SrcList=%LibDir%\src\crt0\%Crt0%.asm
 set LibList=%OutDir%\%Crt0%.rel 
 
-rem  Add project source to build list
-set SrcList= %SrcList%,%ProjName%.c
-set LibList=%LibList% %OutDir%\%ProjName%.rel
+rem  Add project sources to build list
+for %%G in (%ProjName%) do (
+	if not exist %%G.c (
+		echo %RED%Error: Source file %%G.c don't exist%RESET%
+		exit /b 20
+	)
+	set SrcList=!SrcList!,%%G.c
+	set LibList=!LibList! %OutDir%\%%~nG.rel
+)
+
+echo » Modules: %ModuleList%
 
 rem  Add modules sources to build list
 for %%G in (%ModuleList%) do (
+	if not exist %LibDir%\src\%%G.c (
+		echo %RED%Error: Module %%G don't exist%RESET%
+		exit /b 30
+	)
 	set SrcList=!SrcList!,%LibDir%\src\%%G.c
 	set LibList=!LibList! %OutDir%\%%~nG.rel
 )
@@ -84,6 +150,8 @@ echo ┌────────────────────────
 echo │ COMPILE                                                                   │
 echo └───────────────────────────────────────────────────────────────────────────┘
 
+%SDCC%\sdcc.exe --version
+
 call %LibDir%\script\compile_all.cmd
 if errorlevel 1 goto :Error
 
@@ -97,16 +165,18 @@ echo ┌────────────────────────
 echo │ MAKE                                                                      │
 echo └───────────────────────────────────────────────────────────────────────────┘
 
-echo [94mMaking %ProjName% using SDCC...[0m
+echo %BLUE%Making %ProjName% using SDCC...%RESET%
+
+%SDCC%\sdcc.exe --version
 
 if %Optim%==Speed (set LinkOpt=%LinkOpt% --opt-code-speed)
 if %Optim%==Size (set LinkOpt=%LinkOpt% --opt-code-size)
 
 set SDCCParam=-mz80 --no-std-crt0 --code-loc 0x%CodeAddr% --data-loc 0x%DataAddr% --constseg RODATA --vc %LinkOpt% %LibList% -o %OutDir%\
 echo SDCC %SDCCParam%
-%SDCC% %SDCCParam%
+%SDCC%\sdcc.exe %SDCCParam%
 if errorlevel 1 goto :Error
-echo [92mSucceed![0m
+echo %GREEN%Succeed%RESET%
 
 :NoMake
 
@@ -122,22 +192,22 @@ rem ***************************************************************************
 rem * HEX2BIN                                                                 *
 rem ***************************************************************************
 set H2BParam=-e %Ext% -s %StartAddr% %OutDir%\%Crt0%.ihx
-echo [94mConverting to binary...[0m
+echo %BLUE%Converting to binary...%RESET%
 
 echo HEX2BIN %H2BParam%
-%HEX2BIN% %H2BParam% 
+%Hex2Bin% %H2BParam% 
 if errorlevel 1 goto :Error
-echo [92mSucceed![0m
+echo %GREEN%Succeed%RESET%
 
 rem ***************************************************************************
 rem * FILL                                                                    *
 rem ***************************************************************************
 if %FillSize% EQU 0 goto :NoFill
 
-echo [94mFilling binary up to %FillSize% bytes...[0m
-%FILLFILE% %OutDir%\%Crt0%.%Ext% %FillSize%
+echo %BLUE%Filling binary up to %FillSize% bytes...%RESET%
+%FillFile% %OutDir%\%Crt0%.%Ext% %FillSize%
 if errorlevel 1 goto :Error
-echo [92mSucceed![0m
+echo %GREEN%Succeed%RESET%
 
 :NoFill
 :NoPackage
@@ -150,7 +220,7 @@ echo ┌────────────────────────
 echo │ DEPLOY                                                                    │
 echo └───────────────────────────────────────────────────────────────────────────┘
 
-echo [94mDeploying %Target%...[0m
+echo %BLUE%Deploying %Target%...%RESET%
 
 if /I %Ext%==bin (
 	echo Copy %OutDir%\%Crt0%.%Ext% to emul\dsk\%ProjName%.%Ext%
@@ -175,7 +245,7 @@ if /I %Ext%==com (
 	echo %ProjName%.%Ext% >> .\emul\dos\autoexec.bat
 	if errorlevel 1 goto :Error
 )
-echo [92mSucceed![0m
+echo %GREEN%Succeed%RESET%
 
 :NoDeploy
 
@@ -190,21 +260,21 @@ echo └────────────────────────
 rem ***************************************************************************
 rem * EMULATOR                                                                *
 rem ***************************************************************************
-START /b %EMUL% %EmulParam%
+START /b %Emulator% %EmulParam%
 
 rem ***************************************************************************
 rem * DEBUGGER                                                                *
 rem ***************************************************************************
-REM START /b %DEBUGGER%
+REM START /b %Debugger%
 
 :NoRun
 
 REM ////////////////////////////////////////
 
-echo [92mBuild Succeed![0m
+echo %GREEN%Build Succeed%RESET%
 exit /b %errorlevel%
 
 :Error
 
-echo [91mBuild Failed! Error:%errorlevel%[0m
+echo %RED%Build Failed with error:%errorlevel%%RESET%
 exit /b %errorlevel%

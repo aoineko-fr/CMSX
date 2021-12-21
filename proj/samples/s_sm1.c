@@ -212,7 +212,7 @@ void main()
 	// Initialize 8x8 sprites
 	for(u8 i = 0; i < SPRITE_8_NUM; ++i)
 	{
-		u16 rnd = Math_GetRandom();
+		u16 rnd = Math_GetRandom16();
 		struct VDP_Sprite* sprt = &g_Sprite[i];
 		sprt->Y = rnd & 0x7F;
 		sprt->X = (rnd >> 7) & 0xFF;

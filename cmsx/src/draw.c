@@ -18,22 +18,22 @@ void Draw_Line(UX x1, UY y1, UX x2, UY y2, u8 color, u8 op)
 	if(x1 > x2)
 	{
 		arg |= VDP_ARG_DIX_LEFT;
-		dx = x1 - x2 + 1;
+		dx = x1 - x2 /*+ 1*/;
 	}
 	else // (x1 <= x2)
 	{
 		arg |= VDP_ARG_DIX_RIGHT;
-		dx = x2 - x1 + 1;
+		dx = x2 - x1 /*+ 1*/;
 	}
 	if(y1 > y2)
 	{
 		arg |= VDP_ARG_DIY_UP;
-		dy = y1 - y2 + 1;
+		dy = y1 - y2 /*+ 1*/;
 	}
 	else // (y1 <= y2)
 	{
 		arg |= VDP_ARG_DIY_DOWN;
-		dy = y2 - y1 + 1;
+		dy = y2 - y1 /*+ 1*/;
 	}
 	if(dx > dy)
 	{

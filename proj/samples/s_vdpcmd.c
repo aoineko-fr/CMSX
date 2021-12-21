@@ -256,7 +256,7 @@ void DisplayPage()
 	Print_DrawText("PSET(I)");
 	for(u16 i = 0; i < 32; ++i)
 	{
-		u16 rnd = Math_GetRandom();
+		u16 rnd = Math_GetRandom16();
 		VDP_CommandPSET(X + rnd % blockWidth, Y + 8 + (rnd >> 4) % 16, (rnd >> 8), VDP_OP_IMP);
 	}
 	

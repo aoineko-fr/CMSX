@@ -149,15 +149,19 @@
 // MATH MODULE
 //-----------------------------------------------------------------------------
 
-// Random method
-// - RANDOM_8_REGISTER ............ R register value (7-bits)
+// Random methods
+// - RANDOM_8_NONE ................ No 8-bits random
+// - RANDOM_8_REGISTER ............ R Register value (7-bits)
+// - RANDOM_8_RACC ................ R Register accumulation (7-bits)
 // - RANDOM_8_ION ................. Ion Random
 // - RANDOM_8_MEMORY .............. Memory Peek from R
 #define RANDOM_8_METHOD				RANDOM_8_ION
+// - RANDOM_16_NONE ............... No 16-bits random
 // - RANDOM_16_LINEAR ............. Linear congruential
 // - RANDOM_16_XORSHIFT ........... XOR Shift
 // - RANDOM_16_LFSR_LCG ........... Combined LFSR/LCG
-#define RANDOM_16_METHOD			RANDOM_16_LINEAR
+#define RANDOM_16_METHOD			RANDOM_16_XORSHIFT
+
 
 //-----------------------------------------------------------------------------
 // COMPRESS 

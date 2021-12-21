@@ -37,6 +37,8 @@
 #define MSX_2				1 // MSX 2
 #define MSX_2P				2 // MSX 2+
 #define MSX_TR				3 // MSX Turbo-R
+#define MSX_3				4 // MSX 3 (reserved)
+#define MSX_12				3 // MSX 1/2
 // MSX_VERSION is defined by the build tool
 
 //-----------------------------------------------------------------------------
@@ -89,14 +91,17 @@
 //-----------------------------------------------------------------------------
 
 // RANDOM_8_METHOD
-#define RANDOM_8_REGISTER		0 // R Register value (7-bits)
-#define RANDOM_8_ION			1 // Ion Random
-#define RANDOM_8_MEMORY			2 // Memory Peek from R
+#define RANDOM_8_NONE			0 // No 8-bits random
+#define RANDOM_8_REGISTER		1 // R Register value (7-bits)
+#define RANDOM_8_RACC			2 // R Register accumulation (7-bits)
+#define RANDOM_8_ION			3 // Ion Random
+#define RANDOM_8_MEMORY			4 // Memory Peek from R
 
 // RANDOM_16_METHOD
-#define RANDOM_16_LINEAR		0 // Linear congruential
-#define RANDOM_16_XORSHIFT		1 // XOR Shift
-#define RANDOM_16_LFSR_LCG		2 // Combined LFSR/LCG
+#define RANDOM_16_NONE			0 // No 16-bits random
+#define RANDOM_16_LINEAR		1 // Linear congruential
+#define RANDOM_16_XORSHIFT		2 // XOR Shift
+#define RANDOM_16_LFSR_LCG		3 // Combined LFSR/LCG
 
 //-----------------------------------------------------------------------------
 // MISC

@@ -11,12 +11,11 @@ set ToolsDir=..\..\tools
 rem ***************************************************************************
 rem * TOOLS SETTINGS                                                          *
 rem ***************************************************************************
-set SDCC=%ToolsDir%\SDCC4112\bin\sdcc.exe
-set SDASZ80=%ToolsDir%\SDCC4112\bin\sdasz80.exe
-set HEX2BIN=%ToolsDir%\Hex2bin\hex2bin.exe
-set FILLFILE=%ToolsDir%\MakeROM\fillfile.exe
-set EMUL=%ToolsDir%\OpenMSX\openmsx.exe
-set DEBUGGER=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
+set SDCC=%ToolsDir%\SDCC\bin
+set Hex2Bin=%ToolsDir%\Hex2bin\hex2bin.exe
+set FillFile=%ToolsDir%\MakeROM\fillfile.exe
+set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
+set Debugger=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
 set MSXDOS=%ToolsDir%\MSXDOS
 
 rem ***************************************************************************

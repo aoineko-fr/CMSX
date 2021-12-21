@@ -205,6 +205,10 @@
 //
 //-----------------------------------------------------------------------------
 
+#if (SDCC_VERSION_CURRENT < VERSION(4,1,12))
+	#error MSXGL need SDCC version 4.1.12 or newer!
+#endif
+
 // Check MSX 1 dependency
 #if (MSX_VERSION == MSX_1)
 

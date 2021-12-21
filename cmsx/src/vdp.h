@@ -231,7 +231,7 @@ bool VDP_IsBitmapMode(const u8 mode) __FASTCALL;
 inline bool VDP_IsPatternMode(const u8 mode) { return !VDP_IsBitmapMode(mode); }
 
 /// Get VDP version
-u8 VDP_GetVersion() __naked __sdcccall(0);
+u8 VDP_GetVersion() __naked;
 
 /// Read default S#0 register
 u8 VDP_ReadDefaultStatus();

@@ -152,11 +152,19 @@
 // MATH MODULE
 //-----------------------------------------------------------------------------
 
-// Random method
-// - RANDOM_LFSR_LCG_16 ........... Combined LFSR/LCG (16-bit seeds)
-// - RANDOM_LFSR_LCG_32 ........... Combined LFSR/LCG (32-bit seeds)
-// - RANDOM_XORSHIFT .............. Xorshift RNGs (16-bit seeds)
-#define RANDOM_METHOD				RANDOM_XORSHIFT
+// Random methods
+// - RANDOM_8_NONE ................ No 8-bits random
+// - RANDOM_8_REGISTER ............ R Register value (7-bits)
+// - RANDOM_8_RACC ................ R Register accumulation (7-bits)
+// - RANDOM_8_ION ................. Ion Random
+// - RANDOM_8_MEMORY .............. Memory Peek from R
+#define RANDOM_8_METHOD				RANDOM_8_NONE
+// - RANDOM_16_NONE ............... No 16-bits random
+// - RANDOM_16_LINEAR ............. Linear congruential
+// - RANDOM_16_XORSHIFT ........... XOR Shift
+// - RANDOM_16_LFSR_LCG ........... Combined LFSR/LCG
+#define RANDOM_16_METHOD			RANDOM_16_XORSHIFT
+
 
 //-----------------------------------------------------------------------------
 // MISC

@@ -4,6 +4,21 @@
 //  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
 //_____________________________________________________________________________
 #pragma once
+
+// Library version
+#define VERSION_MAJOR			1		// 4-bits (0-15)
+#define VERSION_MINOR			0		// 6-bits (0-63)
+#define VERSION_PATCH			0		// 6-bits (0-63)
+#define VERSION(a, b, c)		(((a & 0x0F) << 12) | ((b & 0x3F) << 6) | (c & 0x3F))
+#define VERSION_CURRENT			VERSION(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)		
+
+// SDCC version
+#define SDCC_VERSION_CURRENT	VERSION(__SDCC_VERSION_MAJOR, __SDCC_VERSION_MINOR, __SDCC_VERSION_PATCH)		
+
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+
 // Library configuration
 #include "config_option.h"		// Configuration options
 #include "cmsx_config.h"		// Application configuration
@@ -77,13 +92,13 @@ typedef void (*callback)(void);	///< Callback default signature
 #define FC8(a)				(u8)(a)					// L
 // For 16 bits parameters
 #define FC16(a)				(u16)(a)				// HL
-#define FC88(a, b)			(u16)((a << 8) + b)		// H, L
+#define FC88(a, b)			(u16)((a << 8) + (b))	// H, L
 // For 32 bits parameters
 #define FC32(a)				(u32)(a)															// DEHL
-#define FC1616(a, b)		(u32)(((u32)(a) << 16) + b)											// DE, HL
-#define FC1688(a, b, c)		(u32)(((u32)(a) << 16) + ((u16)(b) << 8) + c)						// DE, H, L
-#define FC8816(a, b, c)		(u32)(((u32)(a) << 24) + ((u32)(b) << 16) + c)						// D, E, HL
-#define FC8888(a, b, c, d)	(u32)(((u32)(a) << 24) + ((u32)(b) << 16) + ((u16)(c) << 8) + d)	// D, E, H, L
+#define FC1616(a, b)		(u32)(((u32)(a) << 16) + (b))										// DE, HL
+#define FC1688(a, b, c)		(u32)(((u32)(a) << 16) + ((u16)(b) << 8) + (c))						// DE, H, L
+#define FC8816(a, b, c)		(u32)(((u32)(a) << 24) + ((u32)(b) << 16) + (c))					// D, E, HL
+#define FC8888(a, b, c, d)	(u32)(((u32)(a) << 24) + ((u32)(b) << 16) + ((u16)(c) << 8) + (d))	// D, E, H, L
 
 //-----------------------------------------------------------------------------
 // SDCCCall 0 (__sdcccall(0))
@@ -101,6 +116,7 @@ typedef void (*callback)(void);	///< Callback default signature
 //	8 + 8 bits		A + L
 //	8 + 16 bits		A + DE
 //	16 + 16 bits	HL + DE
+
 
 //-----------------------------------------------------------------------------
 // Bits handling
@@ -142,3 +158,6 @@ typedef void (*callback)(void);	///< Callback default signature
 // __TIME__
 // This macro expands to a string constant that describes the time at which the preprocessor is being run. 
 // The string constant contains eight characters and looks like `"23:59:01"'.
+
+
+

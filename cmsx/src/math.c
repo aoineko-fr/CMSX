@@ -216,6 +216,25 @@ u16 Math_Flip_16b(u16 val) __FASTCALL
 //-----------------------------------------------------------------------------
 #if (RANDOM_8_METHOD == RANDOM_8_REGISTER)
 
+//-----------------------------------------------------------------------------
+/// Initialize random generator seed
+void Math_SetRandomSeed8(u8 seed) {}
+
+//-----------------------------------------------------------------------------
+/// Generates 8-bit pseudorandom numbers
+u8 Math_GetRandom8()
+{
+	__asm
+		ld		a, r
+	__endasm;	
+}
+
+
+//-----------------------------------------------------------------------------
+// 7-bits R register value
+//-----------------------------------------------------------------------------
+#elif (RANDOM_8_METHOD == RANDOM_8_RACC)
+
 u8 g_RandomSeed8 = 0;
 
 //-----------------------------------------------------------------------------
@@ -233,7 +252,7 @@ u8 Math_GetRandom8()
 		ld		a, r
 		xor		b
 		ld      (_g_RandomSeed8), a
-	#else // ARTRAG version (https://www.msx.org/forum/development/msx-development/example-random-number-generator?page=1)
+	#else // Alternative version from ARTRAG (https://www.msx.org/forum/development/msx-development/example-random-number-generator?page=1)
 		ld		a, r
 		ld		b, a
 		ld		a, (_g_RandomSeed8)
@@ -249,7 +268,7 @@ u8 Math_GetRandom8()
 //-----------------------------------------------------------------------------
 #elif (RANDOM_8_METHOD == RANDOM_8_ION)
 
-u16 g_RandomSeed8 = 0;
+u16 g_RandomSeed8 = 1;
 
 //-----------------------------------------------------------------------------
 /// Initialize random generator seed
@@ -270,7 +289,7 @@ u8 Math_GetRandom8()
 		add     a, l
 		xor     h
 		ld      (_g_RandomSeed8), hl
-	#else // Version alternative
+	#else // Alternative version  (better distribution but a little bit slower)
 		ld      hl, (_g_RandomSeed8)
 		ld      a, r
 		ld      d, a
@@ -282,6 +301,7 @@ u8 Math_GetRandom8()
 		ld      l, a
 		ld      (_g_RandomSeed8), hl
 	#endif
+
 	__endasm;
 }
 

@@ -66,6 +66,19 @@ void Print_DrawSlot(u8 slot)
 	}
 }
 
+//-----------------------------------------------------------------------------
+//
+void Print_DrawVersion(u16 ver)
+{
+	Print_DrawInt(ver >> 12);
+	Print_DrawChar('.');
+	Print_DrawInt((ver >> 6) & 0x3F);
+	Print_DrawChar('.');
+	Print_DrawInt(ver & 0x3F);
+}
+
+
+
 /*
 //-----------------------------------------------------------------------------
 //
@@ -422,6 +435,24 @@ void DisplayInfo()
 	Print_DrawSlot(g_EXBRSA);
 	Print_DrawTextAt(X, Y++, "- Disk:     ");
 	Print_DrawSlot(g_MASTER);
+
+	//-------------------------------------------------------------------------
+	// Lib
+	Y++;
+	Print_DrawTextAt(X, Y++, "Lib");
+	Print_DrawTextAt(X, Y++, "- "MSX_GL":   ");
+	Print_DrawVersion(VERSION_CURRENT);
+	Print_DrawTextAt(X, Y++, "- SDCC:     ");
+	Print_DrawVersion(SDCC_VERSION_CURRENT);
+	#if (MSX_VERSION == MSX_1)
+	Print_DrawTextAt(X, Y++, "- Target:   MSX 1");
+	#elif (MSX_VERSION == MSX_2)         
+	Print_DrawTextAt(X, Y++, "- Target:   MSX 2");
+	#elif (MSX_VERSION == MSX_2P)        
+	Print_DrawTextAt(X, Y++, "- Target:   MSX 2+");
+	#elif (MSX_VERSION == MSX_TR)        
+	Print_DrawTextAt(X, Y++, "- Target:   MSX TR");
+	#endif
 
 	DisplayFooter();
 }

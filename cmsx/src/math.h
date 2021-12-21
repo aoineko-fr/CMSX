@@ -70,9 +70,21 @@ u16 Math_Flip_16b(u16 val) __FASTCALL;
 // Random routines
 //-----------------------------------------------------------------------------
 
-// R register value
-#if (RANDOM_8_METHOD == RANDOM_8_REGISTER)
-	#define RANDOM_8_NAME		"R Register"
+
+//-----------------------------------------------------------------------------
+// 8-bits Random Number Generators
+
+// No 8-bits random
+#if (RANDOM_8_METHOD == RANDOM_8_NONE)
+	#define RANDOM_8_NAME		"None"
+	#define Math_SetRandomSeed8(seed)
+	#define Math_GetRandom8() 0
+// R Register value (7-bits)
+#elif (RANDOM_8_METHOD == RANDOM_8_REGISTER)
+	#define RANDOM_8_NAME		"R Register Value"
+// R Register accumulation (7-bits)
+#elif (RANDOM_8_METHOD == RANDOM_8_RACC)
+	#define RANDOM_8_NAME		"R Register Acc"
 // Ion Random
 #elif (RANDOM_8_METHOD == RANDOM_8_ION)
 	#define RANDOM_8_NAME		"Ion Random"
@@ -81,17 +93,29 @@ u16 Math_Flip_16b(u16 val) __FASTCALL;
 	#define RANDOM_8_NAME		"Memory Peek from R"
 #endif
 
+#if (RANDOM_8_METHOD != RANDOM_8_NONE)
+
 /// Initialize random generator seed
 void Math_SetRandomSeed8(u8 seed);
 
 /// Generates 8-bit pseudorandom numbers
 u8 Math_GetRandom8();
 
+#endif
 
+
+//-----------------------------------------------------------------------------
+// 16-bits Random Number Generators
+
+// No 8-bits random
+#if (RANDOM_16_METHOD == RANDOM_16_NONE)
+	#define RANDOM_16_NAME		"None"
+	#define Math_SetRandomSeed16(seed)
+	#define Math_GetRandom16() 0
 // Linear congruential generator
-#if (RANDOM_16_METHOD == RANDOM_16_LINEAR)
-	#define RANDOM_16_LINEAR_A	3			// 3		75		129
-	#define RANDOM_16_LINEAR_C	0x8721		// 0x8721	74		0x4321
+#elif (RANDOM_16_METHOD == RANDOM_16_LINEAR)
+	#define RANDOM_16_LINEAR_A	5			// 3		75		129
+	#define RANDOM_16_LINEAR_C	1			// 0x8721	74		0x4321
 	#define RANDOM_16_NAME		"Linear congruential"
 // 16-bit xorshift pseudorandom number generator
 #elif (RANDOM_16_METHOD == RANDOM_16_XORSHIFT)
@@ -101,8 +125,12 @@ u8 Math_GetRandom8();
 	#define RANDOM_16_NAME 		"Combined LFSR/LCG"
 #endif
 
+#if (RANDOM_16_METHOD != RANDOM_16_NONE)
+
 /// Initialize random generator seed
 void Math_SetRandomSeed16(u16 seed);
 
 /// Generates 16-bit pseudorandom numbers
 u16 Math_GetRandom16() __FASTCALL;
+
+#endif

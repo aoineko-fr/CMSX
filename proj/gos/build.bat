@@ -11,20 +11,20 @@ set ToolsDir=..\..\tools
 rem ***************************************************************************
 rem * TOOLS SETTINGS                                                          *
 rem ***************************************************************************
-set SDCC=%ToolsDir%\SDCC4112\bin\sdcc.exe
-set SDASZ80=%ToolsDir%\SDCC4112\bin\sdasz80.exe
-set HEX2BIN=%ToolsDir%\Hex2bin\hex2bin.exe
-set FILLFILE=%ToolsDir%\MakeROM\fillfile.exe
-set EMUL=%ToolsDir%\OpenMSX\openmsx.exe
-set DEBUGGER=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
+set SDCC=%ToolsDir%\SDCC\bin
+set Hex2Bin=%ToolsDir%\Hex2bin\hex2bin.exe
+set FillFile=%ToolsDir%\MakeROM\fillfile.exe
+set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
+set Debugger=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
 set MSXDOS=%ToolsDir%\MSXDOS
 
 rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=gos
+rem  List of modules to link
 SET ModuleList=system,bios,vdp,print,input,memory,math,draw,msxi\msxi_unpack,pt3\pt3_player,ayfx\ayfx_player
-rem  Version:
+rem  MSX version:
 rem  - 1		MSX 1
 rem  - 2		MSX 2
 rem  - 2P		MSX 2+
@@ -46,6 +46,10 @@ rem  - Default
 rem  - Speed
 rem  - Size
 set Optim=Speed
+rem  Additionnal compilation flag
+SET CompileOpt=
+rem Verbose mode: 0 or 1
+set Verbose=0
 
 rem ***************************************************************************
 rem * BUILD STEPS                                                             *

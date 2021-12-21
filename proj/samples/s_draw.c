@@ -85,7 +85,7 @@ struct DrawData g_Data;
 /// Generate random data into a given frame
 void RandomizeData(u16 minX, u16 minY)
 {
-	u16 rnd = Math_GetRandom();
+	u16 rnd = Math_GetRandom16();
 	g_Data.x1 = rnd >> 8;
 	g_Data.x2 = rnd & 0x00FF;
 	if(g_Settings[g_SrcModeIndex].Width == 256)
@@ -96,7 +96,7 @@ void RandomizeData(u16 minX, u16 minY)
 	g_Data.x1 += minX;
 	g_Data.x2 += minX;
 	
-	rnd = Math_GetRandom();
+	rnd = Math_GetRandom16();
 	g_Data.y1 = rnd >> 8;
 	g_Data.y2 = rnd & 0x00FF;
 	while(g_Data.y1 > 98)
@@ -106,7 +106,7 @@ void RandomizeData(u16 minX, u16 minY)
 	g_Data.y1 += minY;
 	g_Data.y2 += minY;
 	
-	rnd = Math_GetRandom();
+	rnd = Math_GetRandom16();
 	g_Data.color = rnd & 0x00FF;
 	if(g_Data.color == 0)
 		g_Data.color++;

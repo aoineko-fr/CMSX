@@ -27,9 +27,9 @@
 
 //-----------------------------------------------------------------------------
 // CONFIG
-#define VERSION						"V0.2.19"
+#define GAME_VERSION				"V0.2.20"
 #define DEBUG						1
-#define MSX2_ENHANCE				0
+#define MSX2_ENHANCE				1
 #define MUSIC_ENABLE				0
 #define SFX_ENABLE					0
 #define DISPLAY_CREDITS				1
@@ -878,7 +878,7 @@ const MenuEntry g_MenuMain[] =
 	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
 	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
 	{ "",        	MENU_ITEM_DISABLE, 0, 0 },
-	{ VERSION,   	MENU_ITEM_TEXT, 0, 4 },
+	{ GAME_VERSION, MENU_ITEM_TEXT, 0, 4 },
 };
 
 // Menu 1 - Match 1P
@@ -1741,7 +1741,7 @@ void SetNetSprite(u8 x) __FASTCALL
 ///
 void SetTrainingCursor()
 {
-	u16 rnd = Math_GetRandom();
+	u16 rnd = Math_GetRandom16();
 
 	if(g_Level == LEVEL_EASY)
 		g_TrainZone.x = (rnd % (128-16)) + 56;
@@ -1805,7 +1805,7 @@ void Ball_ShootRandom()
 	g_Ball.srcPos.x = UNIT_TO_PX(g_Ball.pos.x);
 	g_Ball.srcPos.y = UNIT_TO_PX(g_Ball.pos.y);
 
-	u16 rnd = Math_GetRandom();
+	u16 rnd = Math_GetRandom16();
 
 	// Direction
 	g_Ball.dir = g_TrainSide == SIDE_BOTTOM ? 48 : 16;

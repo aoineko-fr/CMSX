@@ -290,7 +290,7 @@ void VDP_SetModeGraphic2()
 /// Clear the VRAM content
 void VDP_ClearVRAM()
 {
-	#if (MSX_VERSION == MSX_1)
+	#if ((MSX_VERSION == MSX_1) || (MSX_VERSION == MSX_12))
 		VDP_FillVRAM_16K(0, 0x0000, 0x4000);  // Clear 16 KB of VRAM
 	#else
 		VDP_FillVRAM(0, 0x0000, 0, 0x8000); // Clear VRAM by 32 KB step
@@ -307,7 +307,7 @@ void VDP_ClearVRAM()
 /// @param		count		Nomber of byte to copy in VRAM
 void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count) __sdcccall(0)
 {
-	#if (MSX_VERSION > MSX_1)
+	#if ((MSX_VERSION > MSX_1) && !(MSX_VERSION == MSX_12))
 		VDP_RegWrite(14, 0); // VDP register 14 must be reset to 0
 	#endif
 	src, dest, count;
@@ -325,7 +325,7 @@ void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count) __sdcccall(0)
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// RegPort = ((dest >> 8) & 0x3F) + F_VDP_WRIT
 
-#if (1)//(MSX_VERSION == MSX_1)
+#if ((MSX_VERSION == MSX_1) || (MSX_VERSION == MSX_12))
 
 		// Setup fast 16-bits loop
 		ld		l, 4 (ix)				// source address
@@ -380,7 +380,7 @@ void VDP_WriteVRAM_16K(const u8* src, u16 dest, u16 count) __sdcccall(0)
 /// @param		count		Nomber of byte to copy in VRAM
 void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count) __sdcccall(0)
 {
-	#if (MSX_VERSION > MSX_1)
+	#if ((MSX_VERSION > MSX_1) && !(MSX_VERSION == MSX_12))
 		VDP_RegWrite(14, 0); // VDP register 14 must be reset to 0
 	#endif
 	dest, value, count;
@@ -422,7 +422,7 @@ void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count) __sdcccall(0)
 /// @param		count		Nomber of byte to copy from VRAM
 void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0)
 {
-	#if (MSX_VERSION > MSX_1)
+	#if ((MSX_VERSION > MSX_1) && (MSX_VERSION == MSX_12))
 		VDP_RegWrite(14, 0); // VDP register 14 must be reset to 0
 	#endif
 	src, dest, count;
@@ -440,7 +440,7 @@ void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0)
 		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
 		out		(P_VDP_ADDR), a			// AddrPort = ((srcLow >> 8) & 0x3F) + F_VDP_READ
 		
-#if (1)//(MSX_VERSION == MSX_1)
+#if ((MSX_VERSION == MSX_1) || (MSX_VERSION == MSX_12))
 
 		// Setup fast 16-bits loop
 		ld		l, 6 (ix)				// source address
@@ -1438,17 +1438,13 @@ bool VDP_IsBitmapMode(const u8 mode) __FASTCALL
 /// Get VDP version
 ///	@return					0: TMS9918A, 1: V9938, 2: V9958, x: VDP ID
 /// @note Code by Grauw (http://map.grauw.nl/sources/vdp_detection.php)
-u8 VDP_GetVersion() __naked __sdcccall(0)
+u8 VDP_GetVersion() __naked
 {
 	__asm
-		call	VDP_GetVersionAsm
-		ld		l, a
-		ret
-	
-	; Detect VDP version
-	;
-	; a <- 0: TMS9918A, 1: V9938, 2: V9958, x: VDP ID
-	; f <- z: TMS9918A, nz: other
+	// Detect VDP version
+	//
+	// a <- 0: TMS9918A, 1: V9938, 2: V9958, x: VDP ID
+	// f <- z: TMS9918A, nz: other
 	VDP_GetVersionAsm:
 		call	VDP_IsTMS9918A			// use a different way to detect TMS9918A
 		ret		z
@@ -1471,15 +1467,15 @@ u8 VDP_GetVersion() __naked __sdcccall(0)
 		inc		a						// return 1 for V9938
 		ret
 
-	; Test if the VDP is a TMS9918A.
-	;
-	; The VDP ID number was only introduced in the V9938, so we have to use a
-	; different method to detect the TMS9918A. We wait for the vertical blanking
-	; interrupt flag, and then quickly read status register 2 and expect bit 6
-	; (VR, vertical retrace flag) to be set as well. The TMS9918A has only one
-	; status register, so bit 6 (5S, 5th sprite flag) will return 0 in stead.
-	;
-	; f <- z: TMS9918A, nz: V99X8
+	// Test if the VDP is a TMS9918A.
+	//
+	// The VDP ID number was only introduced in the V9938, so we have to use a
+	// different method to detect the TMS9918A. We wait for the vertical blanking
+	// interrupt flag, and then quickly read status register 2 and expect bit 6
+	// (VR, vertical retrace flag) to be set as well. The TMS9918A has only one
+	// status register, so bit 6 (5S, 5th sprite flag) will return 0 in stead.
+	//
+	// f <- z: TMS9918A, nz: V99X8
 	VDP_IsTMS9918A:
 		in		a, (P_VDP_ADDR)			// read s#0, make sure interrupt flag is reset
 		di

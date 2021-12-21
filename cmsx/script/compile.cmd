@@ -15,9 +15,9 @@ set FilePath=%~d1%~p1
 set FileName=%~n1
 set FileExt=%~x1
 
-if /I %Ext%==bin (set TargetType=TARGET_TYPE_BIN)
-if /I %Ext%==rom (set TargetType=TARGET_TYPE_ROM)
-if /I %Ext%==com (set TargetType=TARGET_TYPE_DOS)
+if /I %Ext%==bin ( set TargetType=TARGET_TYPE_BIN)
+if /I %Ext%==rom ( set TargetType=TARGET_TYPE_ROM)
+if /I %Ext%==com ( set TargetType=TARGET_TYPE_DOS)
 
 if not exist %OutDir% ( md %OutDir% )
 
@@ -28,30 +28,30 @@ set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% 
 set ASMParam=-o -l -s -I%ProjDir% -I%LibDir%\src %File%
 
 if /I %FileExt%==.c (
-	echo [94mCompiling %1 using SDCC C compiler...[0m
+	echo %BLUE%Compiling %1 using SDCC C compiler...%RESET%
 	
 	echo SDCC %SDCCParam%
-	%SDCC% %SDCCParam%
+	%SDCC%\sdcc.exe %SDCCParam%
     if errorlevel 1 ( goto :Error )
 )
 
 if /I %FileExt%==.asm (
-	echo [94mCompiling %1 using SDASZ80 ASM compiler...[0m
+	echo %BLUE%Compiling %1 using SDASZ80 ASM compiler...%RESET%
 	
 	echo SDASZ80 %ASMParam%
-    %SDASZ80% %ASMParam%
+    %SDCC%\sdasz80.exe %ASMParam%
     if errorlevel 1 ( goto :Error )
 	move %FilePath%%FileName%.rel %OutDir%
 	move %FilePath%%FileName%.lst %OutDir%
 	move %FilePath%%FileName%.sym %OutDir%
 )
 
-echo [92mSucceed![0m
+echo %GREEN%Succeed%RESET%
 
 exit /b %errorlevel%
 
 :Error
 
-echo [91mFailed! Error:%errorlevel%[0m
+echo %RED%Compile failed with error:%errorlevel%%RESET%
 
 exit /b %errorlevel%

@@ -228,7 +228,7 @@ void main()
 	// Initialize 8x8 sprites
 	for(u8 i = 0; i < SPRITE_8_NUM; i++)
 	{
-		u16 rnd = Math_GetRandom();
+		u16 rnd = Math_GetRandom16();
 		g_Sprite[i].X = rnd >> 8;
 		g_Sprite[i].Y = (rnd & 0x007F) + 114;
 		g_Sprite[i].Shape = PATTERN_8_1ST + ((rnd >> 4) & 0x3F);
@@ -293,9 +293,9 @@ void main()
 	bool bContinue = true;
 	while(bContinue)
 	{
-		VDP_SetColor(COLOR_BLACK);
+		// VDP_SetColor(COLOR_LIGHT_BLUE);
 		WaitVBlank();
-		VDP_SetColor(COLOR_DARK_BLUE);
+		// VDP_SetColor(COLOR_DARK_BLUE);
 	
 		// Print_SetPosition(248, 2);
 		// Print_DrawChar(chrAnim[g_Frame & 0x03]);

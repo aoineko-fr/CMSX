@@ -22,7 +22,7 @@ void* Mem_HeapAlloc(u16 size) __FASTCALL;
 void Mem_HeapFree(u16 size) __FASTCALL;
 
 /// Copy a memory block from a source address to an other
-void Mem_Copy(const void* src, void* dest, u16 size) __sdcccall(0);
+void Mem_Copy(const void* src, void* dest, u16 size) /*__sdcccall(0)*/;
 
 /// Fill a memory block with a given value
-void Mem_Set(u8 val, void* dest, u16 size) __sdcccall(0);
+void Mem_Set(u8 val, void* dest, u16 size) /*__sdcccall(0)*/;
