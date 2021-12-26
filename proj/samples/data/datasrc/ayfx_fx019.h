@@ -3,10 +3,9 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ██▄  ▄  ██▀▄
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██▄▀ ██ ██ █
 // _____________________________________________________________________________
-// CMSXbin 1.1.0 by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
-// File generated on Thu Feb 11 23:00:00 2021
+// CMSXbin 1.2.0 by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
+// File generated on Tue Dec 21 17:08:59 2021
 // Soure file: datasrc\ayfx_fx019.afx
-
 const unsigned char g_ayfx_fx019[] = {
 	0xEF, 0x8C, 0x00, 0x1F, 0xAF, 0xC1, 0x00, 0xAF, 0xF5, 0x00, 0xAF, 0x1A, 0x01, 0xAF, 0x6D, 0x01, //      0 | �  �� �� �  �m  
 	0xAF, 0xBE, 0x01, 0xAF, 0xF7, 0x01, 0xAF, 0x99, 0x01, 0xAF, 0x3C, 0x01, 0xAF, 0xFB, 0x00, 0xAF, //     16 | �� �� �� �< �� � 

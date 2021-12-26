@@ -1,124 +1,182 @@
+set MapperSize=0
+
+rem ---------------------------------------------------------------------------
 if /I %Target%==BIN (
 
 	echo » Target: BASIC binary program ^(8000h~^)
 
+	set Ext=bin
 	set Crt0=crt0_basic
-	set LinkOpt=
 	set StartAddr=8000
 	set CodeAddr=8007
-	set DataAddr=0
-	set Ext=bin
+	set RamAddr=0
 	set FillSize=0
-	set EmulParam=-diska .\emul\dsk
 )
-if /I %Target%==ROM16 (
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_16K (
 
 	echo » Target: 16KB ROM in page 1 ^(4000h ~ 7FFFh^)
 
-	set Crt0=crt0_rom16
-	set LinkOpt=
-	set StartAddr=4000
-	set ROMSize=4000
-	set CodeAddr=4010
-	set DataAddr=8000
 	set Ext=rom
-	set FillSize=16384
-	set EmulParam=-carta .\emul\%ProjName%.rom
+	set Crt0=crt0_rom16
+	set StartAddr=4000
+	set CodeAddr=4010
+	set RamAddr=8000
+	set /A FillSize=16*1024
 )
-if /I %Target%==ROM16P2 (
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_16K_P2 (
 
 	echo » Target: 16KB ROM in page 2 ^(8000h ~ 7FFFh^)
 
-	set Crt0=crt0_rom16p2
-	set LinkOpt=
-	set StartAddr=8000
-	set ROMSize=4000
-	set CodeAddr=8010
-	set DataAddr=C000
 	set Ext=rom
-	set FillSize=16384
-	set EmulParam=-carta .\emul\%ProjName%.rom
+	set Crt0=crt0_rom16p2
+	set StartAddr=8000
+	set CodeAddr=8010
+	set RamAddr=C000
+	set /A FillSize=16*1024
 )
-if /I %Target%==ROM32 (
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_32K (
 
 	echo » Target: 32KB ROM in page 1^&2 ^(4000h ~ BFFFh^)
 
-	set Crt0=crt0_rom32
-	set LinkOpt=
-	set StartAddr=4000
-	set ROMSize=8000
-	set CodeAddr=4010
-	set DataAddr=C000
 	set Ext=rom
-	set FillSize=32768
-	set EmulParam=-carta .\emul\%ProjName%.rom
+	set Crt0=crt0_rom32
+	set StartAddr=4000
+	set CodeAddr=4010
+	set RamAddr=C000
+	set /A FillSize=32*1024
 )
-if /I %Target%==ROM48 (
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_48K (
 
 	echo » Target: 48KB ROM in page 0-2 ^(0000h ~ BFFFh^)
 
-	set Crt0=crt0_rom48
-	set LinkOpt=
-	set StartAddr=0000
-	set ROMSize=C000
-	set CodeAddr=4000
-	set DataAddr=C000
 	set Ext=rom
-	set FillSize=49152
-	set EmulParam=-carta .\emul\%ProjName%.rom
+	set Crt0=crt0_rom48
+	set StartAddr=0000
+	set CodeAddr=4000
+	set RamAddr=C000
+	set /A FillSize=48*1024
 )
-if /I %Target%==ROM48_ISR (
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_48K_ISR (
 
 	echo » Target: 48KB ROM in page 0-2 ^(0000h ~ BFFFh^) with ISR replacement
 
-	set Crt0=crt0_rom48_isr
-	set LinkOpt=
-	set StartAddr=0000
-	set ROMSize=C000
-	set CodeAddr=4000
-	set DataAddr=C000
 	set Ext=rom
-	set FillSize=49152
-	set EmulParam=-carta .\emul\%ProjName%.rom
+	set Crt0=crt0_rom48_isr
+	set StartAddr=0000
+	set CodeAddr=4000
+	set RamAddr=C000
+	set /A FillSize=48*1024
 )
-if /I %Target%==ROM64_ISR (
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_64K_ISR (
 
 	echo » Target: 64KB ROM in page 0-3 ^(0000h ~ FFFFh^) with ISR replacement
 
-	set Crt0=crt0_rom48_isr
-	set LinkOpt=
-	set StartAddr=0000
-	set ROMSize=C000
-	set CodeAddr=4000
-	set DataAddr=C000
 	set Ext=rom
-	set FillSize=65536
-	REM set EmulParam=-carta .\emul\%ProjName%.rom
-	set EmulParam=-ext slotexpander -cart .\emul\%ProjName%.rom
+	set Crt0=crt0_rom48_isr
+	set StartAddr=0000
+	set CodeAddr=4000
+	set RamAddr=C000
+	set /A FillSize=64*1024
 )
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_ASCII8 (
+
+	echo » Target: 128KB ROM using ASCII-8 mapper ^(starting at 4000h^)
+
+	set Ext=rom
+	set Crt0=crt0_rom_mapper
+	set StartAddr=4000
+	set CodeAddr=4010
+	set RamAddr=C000
+	set /A FillSize=32*1024
+	set /A MapperSize=128*1024
+	set /A SegSize=8*1024
+	set Bank0Addr=4000
+	set Bank1Addr=6000
+	set Bank2Addr=8000
+	set Bank3Addr=A000
+)
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_ASCII16 (
+
+	echo » Target: 128KB ROM using ASCII-16 mapper ^(starting at 4000h^)
+
+	set Ext=rom
+	set Crt0=crt0_rom_mapper
+	set StartAddr=4000
+	set CodeAddr=4010
+	set RamAddr=C000
+	set /A FillSize=32*1024
+	set /A MapperSize=128*1024
+	set /A SegSize=16*1024
+	set Bank0Addr=6000
+	set Bank1Addr=77FF
+	set Bank2Addr=0
+	set Bank3Addr=0
+)
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_KONAMI (
+
+	echo » Target: 128KB ROM using KONAMI mapper ^(starting at 4000h^)
+
+	set Ext=rom
+	set Crt0=crt0_rom_mapper
+	set StartAddr=4000
+	set CodeAddr=4010
+	set RamAddr=C000
+	set /A FillSize=32*1024
+	set /A MapperSize=128*1024
+	set /A SegSize=8*1024
+	set Bank0Addr=0
+	set Bank1Addr=6000
+	set Bank2Addr=8000
+	set Bank3Addr=A000
+)
+rem ---------------------------------------------------------------------------
+if /I %Target%==ROM_KONAMI_SCC (
+
+	echo » Target: 128KB ROM using KONAMI SCC mapper ^(starting at 4000h^)
+
+	set Ext=rom
+	set Crt0=crt0_rom_mapper
+	set StartAddr=4000
+	set CodeAddr=4010
+	set RamAddr=C000
+	set /A FillSize=32*1024
+	set /A MapperSize=128*1024
+	set /A SegSize=8*1024
+	set Bank0Addr=5000
+	set Bank1Addr=7000
+	set Bank2Addr=9000
+	set Bank3Addr=B000
+)
+rem ---------------------------------------------------------------------------
 if /I %Target%==DOS (
 
 	echo » Target: MSX-DOS program ^(starting at 0100h^)
 
+	set Ext=com
 	set Crt0=crt0_dos
-	set LinkOpt=
 	set StartAddr=0100
 	set CodeAddr=0100
-	set DataAddr=0
-	set Ext=com
+	set RamAddr=0
 	set FillSize=0
-	set EmulParam=-diska .\emul\dos -ext msxdos2
 )
-if /I %Target%==DOSARG (
+rem ---------------------------------------------------------------------------
+if /I %Target%==DOS_ARG (
 
 	echo » Target: MSX-DOS program with command line arguments ^(starting at 0100h^)
 
+	set Ext=com
 	set Crt0=crt0_dosarg
-	set LinkOpt=
 	set StartAddr=0100
 	set CodeAddr=0180
-	set DataAddr=0
-	set Ext=com
+	set RamAddr=0
 	set FillSize=0
-	set EmulParam=-diska .\emul\dos -ext msxdos2
 )

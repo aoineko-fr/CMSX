@@ -38,18 +38,20 @@ struct ModeData
 #include "font\font_cmsx_std2.h"
 #include "font\font_cmsx_std3.h"
 #include "font\font_cmsx_mini2.h"
+#include "font\font_cmsx_sample6.h"
 #include "font\font_tsm9900.h"
 
 // Font list
 const struct FontData g_Fonts[] = 
 {
-	{ null,               "Main-ROM system font" },
-	{ g_Font_CMSX_Std0,   "CMSX Standard 0" },
-	{ g_Font_CMSX_Std1,   "CMSX Standard 1" },
-	{ g_Font_CMSX_Std2,   "CMSX Standard 2" },
-	{ g_Font_CMSX_Std3,   "CMSX Standard 3" },
-	{ g_Font_CMSX_Mini2,  "CMSX Mini 2" },
-	{ g_Font_TMS9900,     "TMS 9900" },
+	{ null,					"Main-ROM system font" },
+	{ g_Font_CMSX_Std0,		"CMSX Standard 0" },
+	{ g_Font_CMSX_Std1,		"CMSX Standard 1" },
+	{ g_Font_CMSX_Std2,		"CMSX Standard 2" },
+	{ g_Font_CMSX_Std3,		"CMSX Standard 3" },
+	{ g_Font_CMSX_Mini2,	"CMSX Mini 2" },
+	{ g_Font_CMSX_Sample6,	"CMSX Sample 6px" },
+	{ g_Font_TMS9900,		"TMS 9900" },
 };
 
 // Modes data

@@ -24,8 +24,10 @@ if not exist %OutDir% ( md %OutDir% )
 if /I %Optim%==Speed (set CompileOpt=%CompileOpt% --opt-code-speed)
 if /I %Optim%==Size (set CompileOpt=%CompileOpt% --opt-code-size)
 
-set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DTARGET_TYPE=%TargetType% -DMSX_VERSION=MSX_%Version% -I%ProjDir% -I%LibDir%\src %CompileOpt% --constseg RODATA %File% -o %OutDir%\
-set ASMParam=-o -l -s -I%ProjDir% -I%LibDir%\src %File%
+rem ***************************************************************************
+rem * COMPILE C SOURCE                                                        *
+rem ***************************************************************************
+set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DMSX_VERSION=MSX_%Version% -I%ProjDir% -I%LibDir%\src %CompileOpt% --constseg RODATA %File% -o %OutDir%\
 
 if /I %FileExt%==.c (
 	echo %BLUE%Compiling %1 using SDCC C compiler...%RESET%
@@ -34,6 +36,11 @@ if /I %FileExt%==.c (
 	%SDCC%\sdcc.exe %SDCCParam%
     if errorlevel 1 ( goto :Error )
 )
+
+rem ***************************************************************************
+rem * COMPILE ASSEMBLER SOURCE                                                *
+rem ***************************************************************************
+set ASMParam=-o -l -s -I%ProjDir% -I%ProjDir%\%OutDir% -I%LibDir%\src %File%
 
 if /I %FileExt%==.asm (
 	echo %BLUE%Compiling %1 using SDASZ80 ASM compiler...%RESET%

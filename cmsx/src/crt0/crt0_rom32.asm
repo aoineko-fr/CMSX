@@ -16,8 +16,10 @@
 .globl  s__INITIALIZER
 .globl  s__HEAP
 
+.include "defines.asm"
+.include "macros.asm"
+
 HIMEM = #0xFC4A
-PPI_A = #0xA8
 
 ;------------------------------------------------------------------------------
 .area	_HEADER (ABS)
@@ -43,28 +45,14 @@ init:
 	ld		sp, (HIMEM)
 	
 	; Set Page 2 slot equal to Page 1 slot
-	in		a, (PPI_A)
-	and		a, #0xCF
-	ld		c, a
-	in		a, (PPI_A)
-	and		a, #0x0C
-	add		a, a
-	add		a, a
-	or		a, c
-	out		(PPI_A), a
+	SET_PAGE2_SLOT_FROM_PAGE1
 	
 	; Initialize heap address
 	ld		hl, #s__HEAP
 	ld		(#_g_HeapStartAddress), hl
 
 	; Initialize globals
-    ld		bc, #l__INITIALIZER
-	ld		a, b
-	or		a, c
-	jp		z, start	
-	ld		de, #s__INITIALIZED
-	ld		hl, #s__INITIALIZER
-	ldir
+	INIT_GLOBALS
 
 start:
 	; start main() function

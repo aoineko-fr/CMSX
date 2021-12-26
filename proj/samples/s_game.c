@@ -17,6 +17,7 @@
 
 #define FORCE		8
 #define GRAVITY		1
+#define GROUND		112
 
 // Prototype
 bool State_Initialize();
@@ -29,7 +30,7 @@ bool State_Pause();
 
 // Fonts
 #include "font\font_cmsx_symbol1.h"
-// Sprites
+// Sprites by GrafxKid (https://opengameart.org/content/super-random-sprites)
 #include "data\data_sprt_16il.h"
 // Sinus & cosinus table
 #include "mathtable\mt_trigo_64.inc"
@@ -38,12 +39,15 @@ bool State_Pause();
 // MEMORY DATA
 //=============================================================================
 
-u8 X = 16;
-u8 Y = 88;
+bool g_bFlicker = true;
 
-bool bMoving = false;
-bool bJumping = false;
-u8 JumpForce;
+u8   g_X = 16;
+u8   g_Y = GROUND;
+
+bool g_bMoving = false;
+bool g_bJumping = false;
+u8   g_JumpForce;
+u8   g_PrevRow8 = 0xFF;
 
 //=============================================================================
 // HELPER FUNCTIONS
@@ -62,7 +66,7 @@ bool State_Initialize()
 	VDP_FillVRAM(0x51, g_ScreenColorLow + 0, 0, 1); // color
 	VDP_FillVRAM(0x41, g_ScreenColorLow + 1, 0, 1); // color
 	for(u8 i = 0; i < 24; ++i)
-		VDP_FillVRAM(i < 13 ? 8 : 0, g_ScreenLayoutLow + i * 32, 0, 32); // name
+		VDP_FillVRAM(i < 16 ? 8 : 0, g_ScreenLayoutLow + i * 32, 0, 32); // name
 
 	// Initialize sprite
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16);
@@ -77,9 +81,9 @@ bool State_Initialize()
 			VDP_LoadSpritePattern(g_DataSprt16il + (i * 2 + 13 + 24 * j) * 8, chrSprt++, 1);	
 		}
 	}
-	VDP_SetSpriteSM1(0, 16, 16,  0, 0x01);
-	VDP_SetSpriteSM1(1, 16, 16, 24, 0x0F);
-	VDP_SetSpriteSM1(2, 16, 16, 48, 0x09);
+	VDP_SetSpriteSM1(0, 16, 16,  0, COLOR_BLACK);
+	VDP_SetSpriteSM1(1, 16, 16, 24, COLOR_WHITE);
+	VDP_SetSpriteSM1(2, 16, 16, 48, COLOR_LIGHT_RED);
 	VDP_SetSpriteSM1(3, 0, 208, 0, 0); // hide
 
 	VDP_EnableDisplay(true);
@@ -92,45 +96,50 @@ bool State_Initialize()
 //
 bool State_Game()
 {
-	u8 animId = bJumping ? 16 : bMoving ? ((g_GameFrame >> 2) % 6) * 4 : 16;
-	bool bOdd = (g_GameFrame & 1) == 1;
+	u8 animId = g_bJumping ? 16 : g_bMoving ? ((g_GameFrame >> 2) % 6) * 4 : 16;
+	bool bOdd = g_bFlicker ? (g_GameFrame & 1) == 1 : 0;
 
-	VDP_SetSpriteSM1(0, X, Y, 72 * bOdd + animId, 0x01);
-	VDP_SetSpriteSM1(1, X, Y, 24 + animId, 0x0F);
-	VDP_SetSpriteSM1(2, X, Y, 48 + animId, 0x09);
+	VDP_SetSpriteSM1(0, g_X, g_Y, 72 * bOdd + animId, 0x01);
+	VDP_SetSpriteSM1(1, g_X, g_Y, 24 + animId, 0x0F);
+	VDP_SetSpriteSM1(2, g_X, g_Y, 48 + animId, 0x09);
 	
-	if(Keyboard_IsKeyPressed(KEY_ESC))
-		Game_Exit();
-
-	u8 row = Keyboard_Read(KEY_ROW(KEY_SPACE));
-	if(IS_KEY_PRESSED(row, KEY_RIGHT))
+	u8 row8 = Keyboard_Read(8);
+	if(IS_KEY_PRESSED(row8, KEY_RIGHT))
 	{
-		X++;
-		bMoving = true;
+		g_X++;
+		g_bMoving = true;
 	}
-	else if(IS_KEY_PRESSED(row, KEY_LEFT))
+	else if(IS_KEY_PRESSED(row8, KEY_LEFT))
 	{
-		X--;
-		bMoving = true;
+		g_X--;
+		g_bMoving = true;
 	}
 	else
-		bMoving = false;
-	if(bJumping)
+		g_bMoving = false;
+	
+	if(g_bJumping)
 	{
-		Y -= JumpForce;
-		JumpForce -= GRAVITY;
-		if(Y > 88)
+		g_Y -= g_JumpForce;
+		g_JumpForce -= GRAVITY;
+		if(g_Y > GROUND)
 		{
-			Y = 88;
-			bJumping = false;
+			g_Y = GROUND;
+			g_bJumping = false;
 		}
 	}
-	else if(IS_KEY_PRESSED(row, KEY_SPACE))
+	else if(IS_KEY_PRESSED(row8, KEY_SPACE) || IS_KEY_PRESSED(row8, KEY_UP))
 	{
-		bJumping = true;
-		JumpForce = FORCE;
+		g_bJumping = true;
+		g_JumpForce = FORCE;
 	}
 
+	if(IS_KEY_PRESSED(row8, KEY_HOME) && !IS_KEY_PRESSED(g_PrevRow8, KEY_HOME))
+		g_bFlicker = 1 - g_bFlicker;
+	
+	g_PrevRow8 = row8;
+
+	if(Keyboard_IsKeyPressed(KEY_ESC))
+		Game_Exit();
 
 		
 	return true; // Frame finished

@@ -6,7 +6,7 @@
 // Author: Guillaume "Aoineko" Blanchard
 // License(s): CC-BY-SA
 // _____________________________________________________________________________
-// Data generated using CMSXimg 1.12.0 on Fri Dec 17 00:34:22 2021
+// Data generated using CMSXimg 1.12.0 on Tue Dec 21 22:11:43 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     font\font_carwar.png

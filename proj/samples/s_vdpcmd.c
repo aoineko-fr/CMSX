@@ -100,7 +100,7 @@ const u8 g_CursorForm[] =
 	0x0F, /* ######## */ 
 };
 
-// Bitmaps
+// Bitmaps by GrafxKid (https://opengameart.org/content/super-random-sprites)
 #include "data\data_bmp_2b.h"
 #include "data\data_bmp_4b.h"
 #include "data\data_bmp_8b.h"

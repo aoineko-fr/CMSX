@@ -3,10 +3,14 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ▄  ▄█▄█ ▄▀██
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██ ██ █  ▀██
 // _______________________________▀▀____________________________________________
-// Data generated using CMSXimg 1.10.0 on Thu Feb 11 23:00:00 2021
+// Source image author: GrafxKid (https://opengameart.org/content/super-random-sprites)
+// License: CC-BY
+// _____________________________________________________________________________
+// Data generated using CMSXimg 1.12.0 on Tue Dec 21 17:08:59 2021
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     datasrc\data.png
+//  - Mode:           Bitmap
 //  - Start position: 0, 144
 //  - Sprite size:    8, 8 (gap: 0, 0)
 //  - Sprite count:   32, 3

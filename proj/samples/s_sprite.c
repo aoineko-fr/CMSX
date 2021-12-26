@@ -64,7 +64,7 @@ struct SpriteData
 #include "font\font_cmsx_sample6.h"
 #include "font\font_cmsx_symbol1.h"
 
-// Sprite pattern
+// Sprite by GrafxKid (https://opengameart.org/content/super-random-sprites)
 #include "data\data_sprt_16.h"
 #include "data\data_sprt_16or.h"
 

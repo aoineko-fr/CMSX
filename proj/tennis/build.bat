@@ -51,7 +51,7 @@ rem  - Speed
 rem  - Size
 set Optim=Speed
 rem  Overwrite RAM starting address
-set ForceDataAddr=E000
+set ForceRamAddr=E000
 rem  Additionnal compilation flag
 SET CompileOpt=
 rem  Verbose mode: 0 or 1
