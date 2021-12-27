@@ -29,7 +29,7 @@
 
 //-----------------------------------------------------------------------------
 // DEFINES
-#define VERSION			"V0.4.0"
+#define GAME_VERSION	"V0.4.0"
 
 #define USE_AUDIO		0
 #define LINE_NB			212	// 192 or 212
@@ -53,11 +53,11 @@
 #define GOAL_HEIGHT		20
 #define SPRT_TXT_Y		2
 
-#if (TARGET_TYPE == TARGET_TYPE_BIN)
+#if (TARGET_TYPE == TYPE_BIN)
 	#define HBLANK_LINE		(u8)(255-9)
-#elif (TARGET_TYPE == TARGET_TYPE_ROM)
+#elif (TARGET_TYPE == TYPE_ROM)
 	#define HBLANK_LINE		(u8)(255-5)
-#elif (TARGET_TYPE == TARGET_TYPE_DOS)
+#elif (TARGET_TYPE == TYPE_DOS)
 	#define HBLANK_LINE		(u8)(255-10)
 #endif
 

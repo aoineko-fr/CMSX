@@ -41,7 +41,7 @@ rem  - ROM32P0	.rom	32KB ROM in page 0-1 (0000h ~ 7FFFh)
 rem  - ROM48	.rom	48KB ROM in page 0-2 (0000h ~ BFFFh) No direct acces to Main-ROM
 rem  - DOS		.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOSARG	.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
-set Target=ROM32
+set Target=ROM_32K
 rem  Optim:
 rem  - Default
 rem  - Speed

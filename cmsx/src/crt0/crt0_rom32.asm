@@ -1,23 +1,22 @@
-;_____________________________________________________________________________
-;   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
-;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
-;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
-;_____________________________________________________________________________
-; crt0 header for 32KB ROM
-; 
-; Code address: 0x4010
+; ___________________________
+; ██▀█▀██▀▀▀█▀▀█▀█  ▄▄▄ ▄▄   │   ▄▄       ▄▄   ▄▄ 
+; █  ▄ █▄ ▀██▄ ▀▄█ ██   ██   │  ██ ▀ ██▄▀ ██▀ █ ██
+; █  █ █▀▀ ▄█  █ █ ▀█▄█ ██▄▄ │  ▀█▄▀ ██   ▀█▄ ▀▄█▀
+; ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀───────────┘
+;------------------------------------------------------------------------------
+; crt0 header for 32KB ROM program
+;------------------------------------------------------------------------------
+; By Guillaume 'Aoineko' Blanchard for MSX Game Library 
+; (ɔ) 2022 under CC-BY-AS license
+;------------------------------------------------------------------------------
+; Code address: 0x4010 (right after the header)
 ; Data address: 0xC000
 ;------------------------------------------------------------------------------
 .module	crt0
 
-.globl	_main
-.globl  l__INITIALIZER
-.globl  s__INITIALIZED
-.globl  s__INITIALIZER
-.globl  s__HEAP
-
 .include "defines.asm"
 .include "macros.asm"
+
 
 HIMEM = #0xFC4A
 
@@ -26,9 +25,9 @@ HIMEM = #0xFC4A
 	.org	0x4000
 
 	; ROM header
-	.db		0x41
-	.db		0x42
-	.dw		init
+	.db		0x41 ; A
+	.db		0x42 ; B
+	.dw		crt0_init
 	.dw		0x0000
 	.dw		0x0000
 	.dw		0x0000
@@ -39,22 +38,22 @@ HIMEM = #0xFC4A
 ;------------------------------------------------------------------------------
 .area	_CODE
 
-init:
+crt0_init:
 	di
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
-	
-	; Set Page 2 slot equal to Page 1 slot
-	SET_PAGE2_SLOT_FROM_PAGE1
 	
 	; Initialize heap address
 	ld		hl, #s__HEAP
 	ld		(#_g_HeapStartAddress), hl
 
+	; Set Page 2 slot equal to Page 1 slot
+	INIT_P1_TO_P2
+		
 	; Initialize globals
 	INIT_GLOBALS
-
-start:
+	
+crt0_start:
 	; start main() function
 	ei
 	call	_main

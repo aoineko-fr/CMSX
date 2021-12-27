@@ -54,10 +54,10 @@ set Optim=Speed
 rem  Additionnal compilation flag
 SET CompileOpt=
 
-rem Verbose mode: 0 or 1
+rem  Verbose mode: 0 or 1
 set Verbose=0
 
-rem Check for project specific parameters
+rem  Check for project specific parameters
 if exist %ProjName%.cmd do (
 	call %ProjName%.cmd
 )

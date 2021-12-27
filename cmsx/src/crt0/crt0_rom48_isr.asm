@@ -1,28 +1,25 @@
-;_____________________________________________________________________________
-;   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
-;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
-;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
-;_____________________________________________________________________________
-; crt0 header for 48KB ROM with ISR replacement
-; 
+; ___________________________
+; ██▀█▀██▀▀▀█▀▀█▀█  ▄▄▄ ▄▄   │   ▄▄       ▄▄   ▄▄ 
+; █  ▄ █▄ ▀██▄ ▀▄█ ██   ██   │  ██ ▀ ██▄▀ ██▀ █ ██
+; █  █ █▀▀ ▄█  █ █ ▀█▄█ ██▄▄ │  ▀█▄▀ ██   ▀█▄ ▀▄█▀
+; ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀───────────┘
+;------------------------------------------------------------------------------
+; crt0 header for 48KB ROM program with ISR replacement
+;------------------------------------------------------------------------------
+; By Guillaume 'Aoineko' Blanchard for MSX Game Library 
+; (ɔ) 2022 under CC-BY-AS license
+;------------------------------------------------------------------------------
 ; Code address: 0x4000
 ; Data address: 0xC000
 ;------------------------------------------------------------------------------
 .module	crt0
 
-.globl	_main
-.globl	_VDP_InterruptHandler
-.globl  l__INITIALIZER
-.globl  s__INITIALIZED
-.globl  s__INITIALIZER
-.globl  s__HEAP
+.include "defines.asm"
+.include "macros.asm"
 
-SLTSL  = #0xFFFF
+.globl	_VDP_InterruptHandler
+
 HIMEM  = #0xFC4A
-ROMVER = #0x002B
-MSXVER = #0x002D
-PPI_A  = #0xA8
-VDP_S  = #0x99
 
 ;------------------------------------------------------------------------------
 .area	_HEADER (ABS)
@@ -79,9 +76,9 @@ _interrupt_end:
 .area	_CODE
 
 	; ROM header
-	.db		0x41
-	.db		0x42
-	.dw		init
+	.db		0x41 ; A
+	.db		0x42 ; B
+	.dw		crt0_init
 	.dw		0x0000
 	.dw		0x0000
 	.dw		0x0000
@@ -89,10 +86,14 @@ _interrupt_end:
 	.dw		0x0000
 	.dw		0x0000
 
-init:
+crt0_init:
 	di
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
+
+	; Initialize heap address
+	ld		hl, #s__HEAP
+	ld		(#_g_HeapStartAddress), hl
 
 	; Backup Page 0 (Main-ROM) information
 	ld		a, (ROMVER)
@@ -100,68 +101,13 @@ init:
 	ld		a, (MSXVER)
 	ld		(#_g_VersionMSX), a
 
-	; Set all pages slot equal to Page 1 slot
-	in		a, (PPI_A)				; Get primary slots info [P3|P2|P1|P0]
-	ld		b, a					; Backup full slots info
-	and		a, #0b00001100			; Mask all pages slots but P1 [00|00|P1|00]
-	ld		c, a					; Backup P1
-
-	rrca							; P1>>1
-	rrca							; P1>>1
-	or		a, c					; Merge [00|00|P1|P1>>2]
-	ld		c, a					; Backup [00|00|P1|P0]
-
-	add		a, a					; P1<<1
-	add		a, a					; P1<<1
-	add		a, a					; P1<<1
-	add		a, a					; P1<<1
-	or		a, c					; Merge [P1<<4|P1<<2|P1|P0]
-
-	out		(PPI_A), a				; Set primary slots info
-	ld		d, a					; Backup new slots
-
-	; Set all pages subslot equal to Page 1 subslot
-	ld		a, (SLTSL)				; Read secondary slots register of selected primary slot
-	cpl								; Reverses the bits
-	and		a, #0b00001100			; Mask all pages slots but P1 [00|00|P1|00]
-	ld		c, a					; Backup P1
-
-	rrca							; P1>>1
-	rrca							; P1>>1
-	or		a, c					; Merge [00|00|P1|P1>>2]
-	ld		c, a					; Backup [00|00|P1|P0]
-
-	add		a, a					; P1<<1
-	add		a, a					; P1<<1
-	or		a, c					; Merge [00|P1<<2|P1|P0]
-	
-	ld		(SLTSL), a				; 
-
-	; Restore initial Page 3 slot
-	ld		a, b					; Restore initiale slots
-	and		a, #0b11000000			; 
-	ld		b, a					;
-
-	ld		a, d					; 
-	and		a, #0b00111111			; 
-	or		a, b
-
-	out		(PPI_A), a
-
-	; Initialize heap address
-	ld		hl, #s__HEAP
-	ld		(#_g_HeapStartAddress), hl
+	; Set Page 0 & 2 at the same slot than the Page 1 one
+	INIT_P1_TO_P02
 
 	; Initialize globals
-    ld		bc, #l__INITIALIZER
-	ld		a, b
-	or		a, c
-	jp		z, start	
-	ld		de, #s__INITIALIZED
-	ld		hl, #s__INITIALIZER
-	ldir
+	INIT_GLOBALS
 
-start:
+crt0_start:
 	; start main() function
 	ei
 	call	_main

@@ -1,23 +1,24 @@
-;_____________________________________________________________________________
-;   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
-;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
-;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
-;_____________________________________________________________________________
-; crt0 header for Basic binary
+; ___________________________
+; ██▀█▀██▀▀▀█▀▀█▀█  ▄▄▄ ▄▄   │   ▄▄       ▄▄   ▄▄ 
+; █  ▄ █▄ ▀██▄ ▀▄█ ██   ██   │  ██ ▀ ██▄▀ ██▀ █ ██
+; █  █ █▀▀ ▄█  █ █ ▀█▄█ ██▄▄ │  ▀█▄▀ ██   ▀█▄ ▀▄█▀
+; ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀───────────┘
+;------------------------------------------------------------------------------
+; crt0 header for Basic program
+;------------------------------------------------------------------------------
+; By Guillaume 'Aoineko' Blanchard for MSX Game Library 
+; (ɔ) 2022 under CC-BY-AS license
 ; 
-; Credit: Konamiman 1/2018
-; https://github.com/Konamiman/MSX/blob/master/SRC/SDCC/crt0_msxbasic.asm
-; 
+; Based on work from 'Konamiman' (1/2018)
+;  https://github.com/Konamiman/MSX/blob/master/SRC/SDCC/crt0_msxbasic.asm
+;------------------------------------------------------------------------------
 ; Code address: 0x8007 (right after the header)
 ; Data address: 0      (right after code)
 ;------------------------------------------------------------------------------
 .module crt0
 
-.globl	_main
-.globl  l__INITIALIZER
-.globl  s__INITIALIZED
-.globl  s__INITIALIZER
-.globl  s__HEAP
+.include "defines.asm"
+.include "macros.asm"
 
 HIMEM = #0xFC4A
 
@@ -41,13 +42,7 @@ crt0_init:
 	ld		sp, (HIMEM)
 
 	; Initialize globals and jump to main()
-    ld		bc, #l__INITIALIZER
-	ld		a, b
-	or		a, c
-	jp		z, crt0_start
-	ld		de, #s__INITIALIZED
-	ld		hl, #s__INITIALIZER
-	ldir
+	INIT_GLOBALS
 
 crt0_start:
 	; start main() function

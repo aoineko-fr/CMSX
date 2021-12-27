@@ -316,8 +316,8 @@ if /I %Ext%==bin (
 	start /b %Emulator% -diska .\emul\dsk
 )
 if /I %Ext%==rom (
-	REM start /b %Emulator% -ext slotexpander -cart .\emul\%ProjName%.rom
-	start /b %Emulator% -carta .\emul\%ProjName%.rom
+	start /b %Emulator% -ext slotexpander -cart .\emul\%ProjName%.rom
+	REM start /b %Emulator% -carta .\emul\%ProjName%.rom
 )
 if /I %Ext%==com (
 	start /b %Emulator% -diska .\emul\dos  -ext msxdos2

@@ -1,23 +1,23 @@
-;_____________________________________________________________________________
-;   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
-;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
-;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
-;_____________________________________________________________________________
-; crt0 header for 48KB ROM
-; 
-; Code address: 0x4000
+; ___________________________
+; ██▀█▀██▀▀▀█▀▀█▀█  ▄▄▄ ▄▄   │   ▄▄       ▄▄   ▄▄ 
+; █  ▄ █▄ ▀██▄ ▀▄█ ██   ██   │  ██ ▀ ██▄▀ ██▀ █ ██
+; █  █ █▀▀ ▄█  █ █ ▀█▄█ ██▄▄ │  ▀█▄▀ ██   ▀█▄ ▀▄█▀
+; ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀───────────┘
+;------------------------------------------------------------------------------
+; crt0 header for 48KB ROM program
+;------------------------------------------------------------------------------
+; By Guillaume 'Aoineko' Blanchard for MSX Game Library 
+; (ɔ) 2022 under CC-BY-AS license
+;------------------------------------------------------------------------------
+; Code address: 0x4010 (right after the header)
 ; Data address: 0xC000
 ;------------------------------------------------------------------------------
 .module	crt0
 
-.globl	_main
-.globl  l__INITIALIZER
-.globl  s__INITIALIZED
-.globl  s__INITIALIZER
-.globl  s__HEAP
+.include "defines.asm"
+.include "macros.asm"
 
 HIMEM = #0xFC4A
-PPI_A = #0xA8
 
 ;------------------------------------------------------------------------------
 .area	_HEADER (ABS)
@@ -28,9 +28,9 @@ PPI_A = #0xA8
 .area	_CODE
 
 	; ROM header
-	.db		0x41
-	.db		0x42
-	.dw		init
+	.db		0x41 ; A
+	.db		0x42 ; B
+	.dw		crt0_init
 	.dw		0x0000
 	.dw		0x0000
 	.dw		0x0000
@@ -38,36 +38,22 @@ PPI_A = #0xA8
 	.dw		0x0000
 	.dw		0x0000
 
-init:
+crt0_init:
 	di
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
-	
-	; Set Page 2 slot equal to Page 1 slot
-	in		a, (PPI_A)
-	and		a, #0xCF
-	ld		c, a
-	in		a, (PPI_A)
-	and		a, #0x0C
-	add		a, a
-	add		a, a
-	or		a, c
-	out		(PPI_A), a
 	
 	; Initialize heap address
 	ld		hl, #s__HEAP
 	ld		(#_g_HeapStartAddress), hl
 
+	; Set Page 2 slot equal to Page 1 slot
+	INIT_P1_TO_P2
+	
 	; Initialize globals
-    ld		bc, #l__INITIALIZER
-	ld		a, b
-	or		a, c
-	jp		z, start	
-	ld		de, #s__INITIALIZED
-	ld		hl, #s__INITIALIZER
-	ldir
+	INIT_GLOBALS
 
-start:
+crt0_start:
 	; start main() function
 	ei
 	call	_main
@@ -83,11 +69,11 @@ start:
 .area	_INITIALIZER 
 .area   _GSINIT
 .area   _GSFINAL
+
 ;-- RAM --
 .area	_DATA
 _g_HeapStartAddress::
 	.ds 2
-
 .area	_INITIALIZED
 .area	_BSEG
 .area   _BSS

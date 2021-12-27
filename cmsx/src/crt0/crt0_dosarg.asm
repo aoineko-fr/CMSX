@@ -1,26 +1,27 @@
-;_____________________________________________________________________________
-;   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
-;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
-;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
-;_____________________________________________________________________________
-; crt0 header for MSX-DOS program with command line arguments
-; 
-; Credit: Konamiman, 11/2004
-; https://github.com/Konamiman/MSX/blob/master/SRC/SDCC/crt0_msxbasic.asm
-; - Advanced version: allows "int main(char** argv, int argc)",
-;   the returned value will be passed to _TERM on DOS 2,
-;   argv is always 0x100 (the startup code memory is recycled).
-; 
-; Code address: 0x0180
-; Data address: (after code)
+; ___________________________
+; ██▀█▀██▀▀▀█▀▀█▀█  ▄▄▄ ▄▄   │   ▄▄       ▄▄   ▄▄ 
+; █  ▄ █▄ ▀██▄ ▀▄█ ██   ██   │  ██ ▀ ██▄▀ ██▀ █ ██
+; █  █ █▀▀ ▄█  █ █ ▀█▄█ ██▄▄ │  ▀█▄▀ ██   ▀█▄ ▀▄█▀
+; ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀───────────┘
 ;------------------------------------------------------------------------------
-.globl	_main
-.globl	l__INITIALIZER
-.globl	s__INITIALIZED
-.globl	s__INITIALIZER
-.globl	s__HEAP
-
+; crt0 header for MSX-DOS program with command line arguments
+;------------------------------------------------------------------------------
+; By Guillaume 'Aoineko' Blanchard for MSX Game Library under CC-BY-AS
+; 
+; Based on work from 'Konamiman' (11/2004)
+;  https://github.com/Konamiman/MSX/blob/master/SRC/SDCC/crt0_msxbasic.asm
+;  - Advanced version: allows "int main(char** argv, int argc)",
+;    the returned value will be passed to _TERM on DOS 2,
+;    argv is always 0x100 (the startup code memory is recycled).
+;------------------------------------------------------------------------------
+; Code address: 0x0180
+; Data address: 0		(right after code)
+;------------------------------------------------------------------------------
 .module crt0
+
+.include "defines.asm"
+.include "macros.asm"
+
 ;------------------------------------------------------------------------------
 .area _HEADER (ABS)
 

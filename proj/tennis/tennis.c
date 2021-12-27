@@ -663,7 +663,7 @@ void SetSprite(u8 index, u8 x, u8 y, u8 shape, u8 color);
 //-----------------------------------------------------------------------------
 // EXTERNAL VARIABLES
 
-#if (TARGET_TYPE == TARGET_TYPE_ROM)
+#if (TARGET_TYPE == TYPE_ROM)
 	extern const u8 g_VersionROM;
 	extern const u8 g_VersionMSX;
 #endif
@@ -3996,7 +3996,7 @@ bool State_TrainingUpdate()
 				else
 					Print_DrawText("FRQ:???");
 
-				#if (TARGET_TYPE == TARGET_TYPE_ROM)
+				#if (TARGET_TYPE == TYPE_ROM)
 					Print_SetPosition(1, 20);
 					Print_DrawText("ROM:");
 					Print_DrawHex8(g_VersionROM);
@@ -4081,7 +4081,7 @@ bool State_TrainingUpdate()
 //
 //=============================================================================
 
-#if (TARGET_TYPE == TARGET_TYPE_ROM)
+#if (TARGET_TYPE == TYPE_ROM)
 //-----------------------------------------------------------------------------
 /// ISR for 48K ROM
 void VDP_InterruptHandler()
@@ -4119,7 +4119,7 @@ void main()
 		g_VersionVDP = VDP_GetVersion();
 	#endif
 	
-	#if (TARGET_TYPE == TARGET_TYPE_ROM)
+	#if (TARGET_TYPE == TYPE_ROM)
 	if(g_VersionROM & 0x80)
 		g_FreqDetected = FREQ_50HZ;
 	else

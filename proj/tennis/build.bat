@@ -44,7 +44,7 @@ rem  - ROM48_ISR	.rom	48KB ROM in pages 0-2 (0000h ~ BFFFh) With ISR replacement
 rem  - ROM64_ISR	.rom	64KB ROM in pages 0-3 (0000h ~ FFFFh) With ISR replacement
 rem  - DOS			.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOSARG		.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
-set Target=ROM48_ISR
+set Target=ROM_48K_ISR
 rem  Optim:
 rem  - Default
 rem  - Speed

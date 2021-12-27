@@ -1,20 +1,24 @@
-;_____________________________________________________________________________
-;   ▄▄   ▄ ▄  ▄▄▄ ▄▄ ▄                                                        
-;  ██ ▀ ██▀█ ▀█▄  ▀█▄▀                                                        
-;  ▀█▄▀ ██ █ ▄▄█▀ ██ █                                                        
-;_____________________________________________________________________________
+; ___________________________
+; ██▀█▀██▀▀▀█▀▀█▀█  ▄▄▄ ▄▄   │   ▄▄       ▄▄   ▄▄ 
+; █  ▄ █▄ ▀██▄ ▀▄█ ██   ██   │  ██ ▀ ██▄▀ ██▀ █ ██
+; █  █ █▀▀ ▄█  █ █ ▀█▄█ ██▄▄ │  ▀█▄▀ ██   ▀█▄ ▀▄█▀
+; ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀───────────┘
+;------------------------------------------------------------------------------
 ; crt0 header for MSX-DOS program
+;------------------------------------------------------------------------------
+; By Guillaume 'Aoineko' Blanchard for MSX Game Library 
+; (ɔ) 2022 under CC-BY-AS license
 ; 
+; Based on work from 'Konamiman' and 'Avelino' (11/2004)
+;  https://github.com/Konamiman/MSX/blob/master/SRC/SDCC/crt0-msxdos/crt0msx_msxdos.asm
+;------------------------------------------------------------------------------
 ; Code address: 0x0100
-; Data address: (after code)
+; Data address: 0		(right after code)
 ;------------------------------------------------------------------------------
 .module	crt0
 
-.globl	_main
-.globl  l__INITIALIZER
-.globl  s__INITIALIZED
-.globl  s__INITIALIZER
-.globl  s__HEAP
+.include "defines.asm"
+.include "macros.asm"
 
 HIMEM = #0xFC4A
 
@@ -25,21 +29,15 @@ HIMEM = #0xFC4A
 ;------------------------------------------------------------------------------
 .area	_CODE
 
-init:
+crt0_init:
 	di
 	; Set stack address at the top of free memory
 	ld		sp, (HIMEM)
 	
 	; Initialize globals
-    ld		bc, #l__INITIALIZER
-	ld		a, b
-	or		a, c
-	jp		z, start
-	ld		de, #s__INITIALIZED
-	ld		hl, #s__INITIALIZER
-	ldir
+	INIT_GLOBALS
 
-start:
+crt0_start:
 	; start main() function
 	ei
 	call	_main

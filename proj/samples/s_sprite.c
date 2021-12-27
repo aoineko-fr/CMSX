@@ -31,13 +31,13 @@
 #define SPRITE_16OR_NUM			(u8)4
 
 // Line interruption
-#if (TARGET_TYPE == TARGET_TYPE_BIN)
+#if (TARGET_TYPE == TYPE_BIN)
 	#define SPRITE_2X_LINE		63-9
 	#define SPRITE_8_LINE		113-9
-#elif (TARGET_TYPE == TARGET_TYPE_ROM)
+#elif (TARGET_TYPE == TYPE_ROM)
 	#define SPRITE_2X_LINE		63-4
 	#define SPRITE_8_LINE		113-4
-#elif (TARGET_TYPE == TARGET_TYPE_DOS)
+#elif (TARGET_TYPE == TYPE_DOS)
 	#define SPRITE_2X_LINE		63-10
 	#define SPRITE_8_LINE		113-10
 #endif
