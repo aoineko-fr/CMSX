@@ -15,38 +15,37 @@ set FilePath=%~d1%~p1
 set FileName=%~n1
 set FileExt=%~x1
 
-if /I %Ext%==bin ( set TargetType=TARGET_TYPE_BIN)
-if /I %Ext%==rom ( set TargetType=TARGET_TYPE_ROM)
-if /I %Ext%==com ( set TargetType=TARGET_TYPE_DOS)
-
 if not exist %OutDir% ( md %OutDir% )
-
-if /I %Optim%==Speed (set CompileOpt=%CompileOpt% --opt-code-speed)
-if /I %Optim%==Size (set CompileOpt=%CompileOpt% --opt-code-size)
 
 rem ***************************************************************************
 rem * COMPILE C SOURCE                                                        *
 rem ***************************************************************************
-set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DMSX_VERSION=MSX_%Version% -I%ProjDir% -I%LibDir%\src %CompileOpt% --constseg RODATA %File% -o %OutDir%\
-
 if /I %FileExt%==.c (
+
+	set AddOpt=%CompileOpt%
+	if /I %Optim%==Speed (set AddOpt=!AddOpt! --opt-code-speed)
+	if /I %Optim%==Size (set AddOpt=!AddOpt! --opt-code-size)
+
+	set SDCCParam=-c -mz80 --vc -DTARGET=TARGET_%Target% -DMSX_VERSION=MSX_%Version% -I%ProjDir% -I%LibDir%\src !AddOpt! --constseg RODATA %File% -o %OutDir%\
+
 	echo %BLUE%Compiling %1 using SDCC C compiler...%RESET%
 	
-	echo SDCC %SDCCParam%
-	%SDCC%\sdcc.exe %SDCCParam%
+	echo SDCC !SDCCParam!
+	%SDCC%\sdcc.exe !SDCCParam!
     if errorlevel 1 ( goto :Error )
 )
 
 rem ***************************************************************************
 rem * COMPILE ASSEMBLER SOURCE                                                *
 rem ***************************************************************************
-set ASMParam=-o -l -s -I%ProjDir% -I%ProjDir%\%OutDir% -I%LibDir%\src %File%
-
 if /I %FileExt%==.asm (
+	
+	set ASMParam=-o -l -s -I%ProjDir% -I%ProjDir%\%OutDir% -I%LibDir%\src %File%
+	
 	echo %BLUE%Compiling %1 using SDASZ80 ASM compiler...%RESET%
 	
-	echo SDASZ80 %ASMParam%
-    %SDCC%\sdasz80.exe %ASMParam%
+	echo SDASZ80 !ASMParam!
+    %SDCC%\sdasz80.exe !ASMParam!
     if errorlevel 1 ( goto :Error )
 	move %FilePath%%FileName%.rel %OutDir%
 	move %FilePath%%FileName%.lst %OutDir%
@@ -59,6 +58,6 @@ exit /b %errorlevel%
 
 :Error
 
-echo %RED%Compile failed with error:%errorlevel%%RESET%
+echo %RED%Error: Compile failed with error number%errorlevel%%RESET%
 
 exit /b %errorlevel%

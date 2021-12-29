@@ -23,7 +23,7 @@ rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=gos
 rem  List of modules to link
-SET ModuleList=system,bios,vdp,print,input,memory,math,draw,msxi\msxi_unpack,pt3\pt3_player,ayfx\ayfx_player
+SET LibModules=system,bios,vdp,print,input,memory,math,draw,msxi\msxi_unpack,pt3\pt3_player,ayfx\ayfx_player
 rem  MSX version:
 rem  - 1		MSX 1
 rem  - 2		MSX 2

@@ -52,7 +52,7 @@ echo ROM_MAPPER=%Target%		>> %OutDir%\crt0_config.asm
 echo ADDR_BOOT=0x%StartAddr%	>> %OutDir%\crt0_config.asm
 
 rem -- Overwrite RAM start address
-if defined %ForceRamAddr% do (
+if defined ForceRamAddr (
 	echo Force RAM address to %ForceRamAddr%
 	set RamAddr=%ForceRamAddr%
 )
@@ -60,6 +60,11 @@ if defined %ForceRamAddr% do (
 rem ***************************************************************************
 rem * CHECK PARAMETERS                                                        *
 rem ***************************************************************************
+
+if not defined ProjName (
+	echo %RED%Error: Invalide project name [%ProjName%]%RESET%
+	exit /b 1
+)
 
 rem -- Check tools
 if not exist %SDCC%\sdcc.exe (
@@ -81,10 +86,14 @@ if not exist %FillFile% (
 if not exist %Emulator% (
 	echo %YELLOW%Warning: Invalide path to Emulator [%Emulator%]%RESET%
 )
-	
 if not exist %Debugger% (
 	echo %YELLOW%Warning: Invalide path to Debugger [%Debugger%]%RESET%
 )
+if not exist %DskTool%\dsktool.exe (
+	echo %YELLOW%Warning: Invalide path to DskTool [%DskTool%]%RESET%
+	echo Only programs in ROM format will be testable with most emulators 
+)
+
 
 rem ***************************************************************************
 rem * MODULES                                                                 *
@@ -95,7 +104,11 @@ set SrcList=%LibDir%\src\crt0\%Crt0%.asm
 set LibList=%OutDir%\%Crt0%.rel 
 
 rem  Add project sources to build list
-for %%G in (%ProjName%) do (
+if not defined ProjModules (
+	echo %YELLOW%Warning: ProjModules not defined. Adding %ProjName% to build list.%RESET%
+	set ProjModules=%ProjName%
+)
+for %%G in (%ProjModules%) do (
 	if not exist %%G.c (
 		echo %RED%Error: Source file %%G.c don't exist%RESET%
 		exit /b 20
@@ -104,10 +117,10 @@ for %%G in (%ProjName%) do (
 	set LibList=!LibList! %OutDir%\%%~nG.rel
 )
 
-echo » Modules: %ModuleList%
+echo » Modules: %LibModules%
 
 rem  Add modules sources to build list
-for %%G in (%ModuleList%) do (
+for %%G in (%LibModules%) do (
 	if not exist %LibDir%\src\%%G.c (
 		echo %RED%Error: Module %%G don't exist%RESET%
 		exit /b 30
@@ -128,9 +141,9 @@ if exist %OutDir% (
 	echo Removing %OutDir%...
 	rd /S /Q %OutDir% 
 )
-if exist .\emul (
+if exist %ProjDir%\emul (
 	echo Removing \emul...
-	rd /S /Q .\emul
+	rd /S /Q %ProjDir%\emul
 )
 
 :NoClean
@@ -139,12 +152,15 @@ rem ***************************************************************************
 rem * INIT                                                                    *
 rem ***************************************************************************
 if not exist %OutDir% ( md %OutDir% )
-if not exist .\emul ( md .\emul )
-if not exist .\emul\dsk ( md .\emul\dsk )
-if not exist .\emul\dos (
-	md .\emul\dos
-	copy %MSXDOS%\*.* .\emul\dos
+if not exist %ProjDir%\emul ( md %ProjDir%\emul )
+if not exist %ProjDir%\emul\rom ( md %ProjDir%\emul\rom )
+if not exist %ProjDir%\emul\bin ( md %ProjDir%\emul\bin )
+if not exist %ProjDir%\emul\bin\dsk ( md %ProjDir%\emul\bin\dsk )
+if not exist %ProjDir%\emul\dos (
+	md %ProjDir%\emul\dos
+	copy %MSXDOS%\*.* %ProjDir%\emul\dos
 )
+if not exist %ProjDir%\emul\dos\dsk ( md %ProjDir%\emul\dos\dsk )
 
 rem ***************************************************************************
 if %DoCompile%==0 goto :NoCompile
@@ -206,7 +222,7 @@ echo %GREEN%Succeed%RESET%
 rem ***************************************************************************
 rem * FILL                                                                    *
 rem ***************************************************************************
-if %FillSize% EQU 0 goto :NoFill
+if %FillSize%==0 goto :NoFill
 
 echo %BLUE%Filling binary up to %FillSize% bytes...%RESET%
 %FillFile% %OutDir%\%Crt0%.%Ext% %FillSize%
@@ -218,7 +234,7 @@ echo %GREEN%Succeed%RESET%
 rem ***************************************************************************
 rem * MAPPER SEGMENTS                                                                    *
 rem ***************************************************************************
-if %MapperSize% EQU 0 goto :NoMapper
+if %MapperSize%==0 goto :NoMapper
 
 set /A FirstSeg=%FillSize% / %SegSize%
 set /A LastSeg=(%MapperSize% / %SegSize%) - 1
@@ -262,10 +278,8 @@ goto :NoMapper
 
 :NoPackage
 
-
-
 rem ***************************************************************************
-if DoDeploy==0 goto :NoDeploy
+if %DoDeploy%==0 goto :NoDeploy
 
 echo.
 echo ┌───────────────────────────────────────────────────────────────────────────┐
@@ -275,27 +289,77 @@ echo └────────────────────────
 echo %BLUE%Deploying %Target%...%RESET%
 
 if /I %Ext%==bin (
-	echo Copy %OutDir%\%Crt0%.%Ext% to emul\dsk\%ProjName%.%Ext%
-	copy %OutDir%\%Crt0%.%Ext% .\emul\dsk\%ProjName%.%Ext%
-	if errorlevel 1 goto :Error
-	echo Create emul\dsk\autoexec.bas
-	echo 10 print"Loading..." > .\emul\dsk\autoexec.bas
-	echo 20 bload"%ProjName:~0,8%.%Ext%",r >> .\emul\dsk\autoexec.bas
-	if errorlevel 1 goto :Error
+	echo -- Copy %OutDir%\%Crt0%.%Ext% to emul\bin\%ProjName%.%Ext%
+	copy %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\bin\%ProjName%.%Ext%
+	if not errorlevel 0 goto :Error
+	echo -- Create emul\bin\autoexec.bas
+	echo 10 print"Loading..." > %ProjDir%\emul\bin\autoexec.bas
+	echo 20 bload"%ProjName:~0,8%.%Ext%",r >> %ProjDir%\emul\bin\autoexec.bas
+	rem ---- Generate DSK file ----
+	if exist %DskTool%\dsktool.exe (
+		echo %GREEN%Succeed%RESET%
+		echo %BLUE%Generating DSK file...%RESET%
+		set PrevCD=%cd%
+		cd %DskTool%
+	
+		echo -- Temporary copy files to DskTool directory
+		copy %ProjDir%\emul\bin\autoexec.bas %DskTool%\
+		copy %ProjDir%\emul\bin\%ProjName%.%Ext% %DskTool%\
+
+		echo -- Generate .DSK file from autoexec.bas %ProjName%.%Ext%
+		echo %DskTool%\dsktool.exe a temp.dsk autoexec.bas %ProjName%.%Ext%
+		%DskTool%\dsktool.exe a temp.dsk autoexec.bas %ProjName%.%Ext%
+		
+		echo -- Copy DSK file to %ProjDir%\emul\bin\dsk\%ProjName%.dsk
+		copy %DskTool%\temp.dsk %ProjDir%\emul\bin\dsk\%ProjName%.dsk
+
+		echo -- Clean temporary files
+		del /Q %DskTool%\autoexec.bas
+		del /Q %DskTool%\%ProjName%.%Ext%
+		del /Q %DskTool%\temp.dsk
+
+		cd %PrevCD%
+	)
 )
 if /I %Ext%==rom (
-	echo Copy %OutDir%\%Crt0%.%Ext% to emul\%ProjName%.%Ext%
-	copy %OutDir%\%Crt0%.%Ext% .\emul\%ProjName%.%Ext%
+	echo Copy %OutDir%\%Crt0%.%Ext% to emul\rom\%ProjName%.%Ext%
+	copy %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\rom\%ProjName%.%Ext%
 	if errorlevel 1 goto :Error
+
 )
 if /I %Ext%==com (
 	echo Copy %OutDir%\%Crt0%.%Ext% to emul\dos\%ProjName%.%Ext%
-	copy %OutDir%\%Crt0%.%Ext% .\emul\dos\%ProjName%.%Ext%
+	copy %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\dos\%ProjName%.%Ext%
 	if errorlevel 1 goto :Error
 	echo Create emul\dos\autoexec.bat
-	echo echo Loading... > .\emul\dos\autoexec.bat
-	echo %ProjName%.%Ext% >> .\emul\dos\autoexec.bat
+	echo echo Loading... > %ProjDir%\emul\dos\autoexec.bat
+	echo %ProjName%.%Ext% >> %ProjDir%\emul\dos\autoexec.bat
 	if errorlevel 1 goto :Error
+	rem ---- Generate DSK file ----
+	if exist %DskTool% (
+		echo %GREEN%Succeed%RESET%
+		echo %BLUE%Generating DSK file...%RESET%
+		set PrevCD=%cd%
+		cd %DskTool%
+	
+		echo -- Temporary copy files to DskTool directory
+		copy %ProjDir%\emul\dos\autoexec.bat %DskTool%\
+		copy %ProjDir%\emul\dos\%ProjName%.%Ext% %DskTool%\
+
+		echo -- Generate .DSK file from autoexec.bat %ProjName%.%Ext%
+		echo %DskTool%\dsktool.exe a temp.dsk autoexec.bat %ProjName%.%Ext%
+		%DskTool%\dsktool.exe a temp.dsk autoexec.bat %ProjName%.%Ext%
+		
+		echo -- Copy DSK file to %ProjDir%\emul\dos\dsk\%ProjName%.dsk
+		copy %DskTool%\temp.dsk %ProjDir%\emul\dos\dsk\%ProjName%.dsk
+
+		echo -- Clean temporary files
+		del /Q %DskTool%\autoexec.bat
+		del /Q %DskTool%\%ProjName%.%Ext%
+		del /Q %DskTool%\temp.dsk
+
+		cd %PrevCD%
+	)
 )
 echo %GREEN%Succeed%RESET%
 
@@ -312,21 +376,7 @@ echo └────────────────────────
 rem ***************************************************************************
 rem * EMULATOR                                                                *
 rem ***************************************************************************
-if /I %Ext%==bin (
-	start /b %Emulator% -diska .\emul\dsk
-)
-if /I %Ext%==rom (
-	start /b %Emulator% -ext slotexpander -cart .\emul\%ProjName%.rom
-	REM start /b %Emulator% -carta .\emul\%ProjName%.rom
-)
-if /I %Ext%==com (
-	start /b %Emulator% -diska .\emul\dos  -ext msxdos2
-)
-
-rem ***************************************************************************
-rem * DEBUGGER                                                                *
-rem ***************************************************************************
-REM START /b %Debugger%
+call %LibDir%\script\emulator_config.cmd
 
 :NoRun
 
@@ -337,5 +387,5 @@ exit /b %errorlevel%
 
 :Error
 
-echo %RED%Build Failed with error:%errorlevel%%RESET%
+echo %RED%Error: Build Failed with error number %errorlevel%%RESET%
 exit /b %errorlevel%

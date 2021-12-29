@@ -586,6 +586,5 @@ void main()
 		// Halt();
 	}
 
-	// Bios_ChangeMode(SCREEN_0);
-	// Bios_ClearScreen();
+	Bios_Exit(0);
 }

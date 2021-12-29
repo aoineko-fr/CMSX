@@ -24,7 +24,7 @@ rem ***************************************************************************
 SET ProjName=template
 
 rem  List of modules to link
-SET ModuleList=system,bios,vdp,print,input,memory,math,draw
+SET LibModules=system,bios,vdp,print,input,memory,math,draw
 rem  MSX version:
 rem  - 1		MSX 1
 rem  - 2		MSX 2

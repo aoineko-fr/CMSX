@@ -22,7 +22,7 @@ rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 SET ProjName=tennis
-SET ModuleList=vdp,print,input,memory,math,game,pt3\pt3_player,ayfx\ayfx_player
+SET LibModules=vdp,print,input,memory,math,game,pt3\pt3_player,ayfx\ayfx_player
 rem  Version:
 rem  - 1		MSX 1
 rem  - 2		MSX 2
