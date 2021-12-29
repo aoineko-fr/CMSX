@@ -3,4 +3,4 @@
 rem ***************************************************************************
 rem * PROJECT OVERWRITE                                                       *
 rem ***************************************************************************
-SET ModuleList=%ModuleList%,clock
+SET LibModules=%LibModules%,clock

@@ -42,7 +42,7 @@ struct ModeEntry
 // Include font data
 #include "font/font_cmsx_std0.h"
 #include "font/font_cmsx_symbol1.h"
-#if (TARGET_TYPE != TARGET_TYPE_BIN)
+#if (TARGET_TYPE != TYPE_BIN)
 	#include "font/font_carwar.h"
 	#include "font/font_cmsx_mini1.h"
 	#include "font/font_cmsx_big1.h"
@@ -57,8 +57,8 @@ struct ModeEntry
 	#include "font/font_darkrose.h"
 //	#include "font/font_oxygene.h"
 //	#include "font/font_tsm9900.h"
+	#include "font/font_ibm.h"
 #endif
-#include "font/font_ibm.h"
 
 // Trigo
 #include "mathtable/mt_trigo_32.inc"
@@ -84,7 +84,7 @@ const struct FontEntry g_Fonts[] =
 	{ "Main-ROM [6*8]",			null },
 	{ "C-MSX Standard 0 [6*8]",	g_Font_CMSX_Std0 },
 	{ "C-MSX Symbol 1 [8*8]",	g_Font_CMSX_Symbol1 },	
-#if (TARGET_TYPE != TARGET_TYPE_BIN) // No enough free RAM in Basic to load all fonts
+#if (TARGET_TYPE != TYPE_BIN) // No enough free RAM in Basic to load all fonts
 	{ "CARWAR [8*8]",			g_Font_Carwar },
 	{ "C-MSX Mini 1 [4*6]",		g_Font_CMSX_Mini1 },
 	{ "C-MSX Big 1 [8*11]",		g_Font_CMSX_Big1 },
@@ -99,15 +99,15 @@ const struct FontEntry g_Fonts[] =
 	{ "Darkrose [8*8]",			g_Font_Darkrose },
 //	{ "OXYGENE [8*8]",			g_Font_Oxygene },
 //	{ "TMS9900 [6*8]",			g_Font_TMS9900 },
-#endif
 	{ "IBM VGA [8*8]",			g_Font_IBM },
+#endif
 };
 
 //
 const struct ModeEntry g_Modes[] =
 {
 	{ "G4", VDP_MODE_GRAPHIC4, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 }, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
-	{ "G5", VDP_MODE_GRAPHIC5, g_Font_IBM,       0x3, 0x0, 0x2, 0x2, { 3, 3,  2, 2, 3, 3,  2, 2, 3, 3,  2, 2 }, { 15, 15, 10, 10, 15, 15, 10, 10, 15, 15, 10, 10 } },
+	{ "G5", VDP_MODE_GRAPHIC5, null,             0x3, 0x0, 0x2, 0x2, { 3, 3,  2, 2, 3, 3,  2, 2, 3, 3,  2, 2 }, { 15, 15, 10, 10, 15, 15, 10, 10, 15, 15, 10, 10 } },
 	{ "G6", VDP_MODE_GRAPHIC6, g_Font_CMSX_Std0, 0xF, 0x0, 0xE, 0xB, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 }, { 3, 2, 12, 2, 3, 2, 12, 2, 3, 2, 12, 2 } },
 	{ "G7",	VDP_MODE_GRAPHIC7, g_Font_CMSX_Std0, COLOR8_WHITE, COLOR8_BLACK, RGB8(4,4,2), RGB8(6,6,2), 
 		{ COLOR8_DEFAULT3, COLOR8_DEFAULT2, COLOR8_DEFAULT12, COLOR8_DEFAULT2, 

@@ -3,4 +3,4 @@
 rem ***************************************************************************
 rem * PROJECT OVERWRITE                                                       *
 rem ***************************************************************************
-SET ModuleList=%ModuleList%,msxi/msxi_unpack
+SET LibModules=%LibModules%,msxi/msxi_unpack

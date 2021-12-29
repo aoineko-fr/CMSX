@@ -171,8 +171,7 @@
 	BANK3_ADDR = #0xA000
 
 	.macro INIT_MAPPER
-		xor		a
-		inc		a
+		ld		a, #1
 		ld		(BANK1_ADDR), a ; Segment 1 in Bank 1
 		inc		a
 		ld		(BANK2_ADDR), a ; Segment 2 in Bank 2

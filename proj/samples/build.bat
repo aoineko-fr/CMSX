@@ -3,8 +3,8 @@
 rem ***************************************************************************
 rem * DIRECTORIES SETTINGS                                                    *
 rem ***************************************************************************
-REM set ProjDir=.
-set ProjDir=%~d0%~p0
+set ProjDir=.
+REM set ProjDir=%~d0%~p0
 set OutDir=%ProjDir%\out
 set LibDir=%ProjDir%\..\..\cmsx
 set ToolsDir=%ProjDir%\..\..\tools
@@ -14,10 +14,7 @@ rem ***************************************************************************
 set SDCC=%ToolsDir%\SDCC\bin
 set Hex2Bin=%ToolsDir%\Hex2bin\hex2bin.exe
 set FillFile=%ToolsDir%\MakeROM\fillfile.exe
-REM set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
-REM set Emulator=D:\Jeux\MSX\Emulator\BlueMSX\blueMSX.exe
-REM set Emulator=%ToolsDir%\fMSX\fMSX.exe
-set Emulator=%ToolsDir%\RuMSX\msx.exe
+set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
 set Debugger=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
 set MSXDOS=%ToolsDir%\MSXDOS
 set DskTool=%ToolsDir%\DskTool\bin\win64
@@ -101,7 +98,7 @@ set DoCompile=1
 set DoMake=1
 set DoPackage=1
 set DoDeploy=1
-set DoRun=1
+set DoRun=0
 
 rem ***************************************************************************
 rem * START BUILD                                                             *

@@ -3,4 +3,4 @@
 rem ***************************************************************************
 rem * PROJECT OVERWRITE                                                       *
 rem ***************************************************************************
-SET ModuleList=%ModuleList%,compress
+SET LibModules=%LibModules%,compress

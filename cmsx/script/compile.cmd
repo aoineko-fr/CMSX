@@ -40,7 +40,7 @@ rem * COMPILE ASSEMBLER SOURCE                                                *
 rem ***************************************************************************
 if /I %FileExt%==.asm (
 	
-	set ASMParam=-o -l -s -I%ProjDir% -I%ProjDir%\%OutDir% -I%LibDir%\src %File%
+	set ASMParam=-o -l -s -I%ProjDir% -I%OutDir% -I%LibDir%\src %File%
 	
 	echo %BLUE%Compiling %1 using SDASZ80 ASM compiler...%RESET%
 	
