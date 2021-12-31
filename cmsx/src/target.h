@@ -6,47 +6,7 @@
 //
 // ROM Mapper Header
 //-----------------------------------------------------------------------------
-// #pragma once
-
-//-----------------------------------------------------------------------------
-// TARGET_TYPE options
-#define TYPE_BIN			0 // BASIC binary program
-#define TYPE_ROM			1 // ROM program
-#define TYPE_DOS			2 // MSX-DOS program
-
-// ROM_MAPPER options
-#define ROM_PLAIN			0
-#define ROM_ASCII8			1
-#define ROM_ASCII16			2
-#define ROM_KONAMI			3
-#define ROM_KONAMI_SCC		4
-
-// ROM_SIZE options
-#define ROM_8K				0	
-#define ROM_16K				1	
-#define ROM_32K				2	
-#define ROM_48K				3	
-#define ROM_64K				4	
-#define ROM_128K			5	
-#define ROM_256K			6	
-#define ROM_512K			7	
-#define ROM_1M				8	
-#define ROM_2M				9	
-#define ROM_4M				10	
-
-#define ROM_ISR				(1<<12)	
-
-// ROM type define
-//	15	14	13	12	11	10	9	8	7	6	5	4	3	2	1	0
-//	0	1	x	ISR	M3	M2	M1	M0	S3	S2	S1	S0	P1	P0	B1	B0	
-//  			│	│	│	│	│	│	│	│	│	│	│	└───┴── ROM boot page (address of 'AB' header)
-//  			│	│	│	│	│	│	│	│	│	└───┴────────── ROM starting page (first address of the ROM ; can be different from booting page)
-//  			│	│	│	│	│	└───┴───┴───┴────────────────── ROM size
-//				│	└───┴───┴───┴────────────────────────────────── ROM Mapper Type
-//				└────────────────────────────────────────────────── Use custom Interrupt Service Routine (place custom code in page 0)
-#define MAKE_ROM(m, s, p, b)	((TYPE_ROM << 14) | ((m) << 8) | ((s) << 4) | ((p) << 2) | (b))
-#define MAKE_BASIC(x)			((TYPE_BIN << 14) | (x))
-#define MAKE_DOS(x)				((TYPE_DOS << 14) | (x))
+#pragma once
 
 // Get current targer parameters
 #define GET_TARGET_TYPE(t)		(((t) >> 14) & 0x3)
@@ -85,8 +45,79 @@
 	#define SET_BANK_SEGMENT(b, s)	(*(unsigned char*)(ADDR_BANK_##b) = (s))
 #endif
 
-
-
+#if (TARGET == TARGET_BIN)
+	#define TARGET_NAME "BASIC binary"
+#elif (TARGET == TARGET_DOS)
+	#define TARGET_NAME "DOS"
+#elif (TARGET == TARGET_DOS_ARG)
+	#define TARGET_NAME "DOS with arguments"
+#elif (TARGET == TARGET_ROM_8K_P1)
+	#define TARGET_NAME "8K ROM in page 1"
+#elif (TARGET == TARGET_ROM_8K_P2)
+	#define TARGET_NAME "8K ROM in page 2"
+#elif (TARGET == TARGET_ROM_16K_P1)
+	#define TARGET_NAME "16K ROM in page 1"
+#elif (TARGET == TARGET_ROM_16K_P2)
+	#define TARGET_NAME "16K ROM in page 2"
+#elif (TARGET == TARGET_ROM_32K_P0)
+	#define TARGET_NAME "32K ROM in page 01"
+#elif (TARGET == TARGET_ROM_32K_P0_ISR)
+	#define TARGET_NAME "32K ROM in page 01 with ISR"
+#elif (TARGET == TARGET_ROM_32K_P1)
+	#define TARGET_NAME "32K ROM in pages 12 @4000h"
+#elif (TARGET == TARGET_ROM_32K_P1_B2)
+	#define TARGET_NAME "32K ROM in pages 12 @8000h"
+#elif (TARGET == TARGET_ROM_48K_B1)
+	#define TARGET_NAME "48K ROM @4000h"
+#elif (TARGET == TARGET_ROM_48K_B1_ISR)
+	#define TARGET_NAME "48K ROM @4000h with ISR"
+#elif (TARGET == TARGET_ROM_48K_B2)
+	#define TARGET_NAME "48K ROM @8000h"
+#elif (TARGET == TARGET_ROM_48K_B2_ISR)
+	#define TARGET_NAME "48K ROM @8000h with ISR"
+#elif (TARGET == TARGET_ROM_64K_B1)
+	#define TARGET_NAME "ROM_64K_B1"
+#elif (TARGET == TARGET_ROM_64K_B1_ISR)
+	#define TARGET_NAME "ROM_64K_B1_ISR"
+#elif (TARGET == TARGET_ROM_64K_B2)
+	#define TARGET_NAME "ROM_64K_B2"
+#elif (TARGET == TARGET_ROM_64K_B2_ISR)
+	#define TARGET_NAME "ROM_64K_B2_ISR"
+#elif (TARGET == TARGET_ROM_ASCII8_128K)
+	#define TARGET_NAME "128K ASCII-8 ROM"
+#elif (TARGET == TARGET_ROM_ASCII8_256K)
+	#define TARGET_NAME "256K ASCII-8 ROM"
+#elif (TARGET == TARGET_ROM_ASCII8_512K)
+	#define TARGET_NAME "512 ASCII-8 ROM"
+#elif (TARGET == TARGET_ROM_ASCII8_1M)
+	#define TARGET_NAME "1M ASCII-8 ROM"
+#elif (TARGET == TARGET_ROM_ASCII8_2M)
+	#define TARGET_NAME "2M ASCII-8 ROM"
+#elif (TARGET == TARGET_ROM_ASCII16_128K)
+	#define TARGET_NAME "128K ASCII-16 ROM"
+#elif (TARGET == TARGET_ROM_ASCII16_256K)
+	#define TARGET_NAME "256K ASCII-16 ROM"
+#elif (TARGET == TARGET_ROM_ASCII16_512K)
+	#define TARGET_NAME "512K ASCII-16 ROM"
+#elif (TARGET == TARGET_ROM_ASCII16_1M)
+	#define TARGET_NAME "1M ASCII-16 ROM"
+#elif (TARGET == TARGET_ROM_ASCII16_2M)
+	#define TARGET_NAME "2M ASCII-16 ROM"
+#elif (TARGET == TARGET_ROM_ASCII16_4M)
+	#define TARGET_NAME "4M ASCII-16 ROM"
+#elif (TARGET == TARGET_ROM_KONAMI_128K)
+	#define TARGET_NAME "128K Konami ROM"
+#elif (TARGET == TARGET_ROM_KONAMI_256K)
+	#define TARGET_NAME "256K Konami ROM"
+#elif (TARGET == TARGET_ROM_KONAMI_512K)
+	#define TARGET_NAME "512K Konami ROM"
+#elif (TARGET == TARGET_ROM_KONAMI_SCC_128K)
+	#define TARGET_NAME "128K Konami ROM with SCC"
+#elif (TARGET == TARGET_ROM_KONAMI_SCC_256K)
+	#define TARGET_NAME "256K Konami ROM with SCC"
+#elif (TARGET == TARGET_ROM_KONAMI_SCC_512K)
+	#define TARGET_NAME "512K Konami ROM with SCC"
+#endif
 
 
 

@@ -137,21 +137,14 @@ inline void Bios_Startup() { Bios_MainCall(R_CHKRAM); }
 // Registers: AF, C, DE
 // Remark   : Can be call directly from MSX-DOS
 //            This routine turns off the interupt, but won't turn it on again
-u8 Bios_InterSlotRead(u8 slot, u16 addr) __sdcccall(0)
+u8 Bios_InterSlotRead(u8 slot, u16 addr)
 {
-	slot, addr;
+	slot; // A
+	addr; // DE
 	__asm
-		push	ix
-		ld		ix, #0
-		add		ix, sp
-		
-		ld		a, 4(ix)
-		ld		l, 5(ix)
-		ld		h, 6(ix)
+		ld		h, d
+		ld		l, e
 		call	R_RDSLT
-		ld		l, a // return value
-		
-		pop		ix
 	__endasm;
 }
 // InterSlot read to Main-ROM

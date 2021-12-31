@@ -2,7 +2,7 @@
 
 for %%G in (%SrcList%) do (
 	call %LibDir%\script\compile.cmd %%G
-    if errorlevel 1 (exit /b 1)
+    if errorlevel 1 (exit /B 300)
 )
 
-exit /b 0
+exit /B 0

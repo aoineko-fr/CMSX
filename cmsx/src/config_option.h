@@ -11,8 +11,6 @@
 // INCLUDES
 //-----------------------------------------------------------------------------
 
-#include "target.h"
-
 //-----------------------------------------------------------------------------
 // BUILD
 //-----------------------------------------------------------------------------
@@ -28,7 +26,48 @@
 #define MSX_12				3 // MSX 1/2
 
 //-----------------------------------------------------------------------------
+// TARGET_TYPE options
+#define TYPE_BIN			0 // BASIC binary program
+#define TYPE_ROM			1 // ROM program
+#define TYPE_DOS			2 // MSX-DOS program
+
+//-----------------------------------------------------------------------------
 // TARGET options
+
+// ROM_MAPPER options
+#define ROM_PLAIN			0
+#define ROM_ASCII8			1
+#define ROM_ASCII16			2
+#define ROM_KONAMI			3
+#define ROM_KONAMI_SCC		4
+
+// ROM_SIZE options
+#define ROM_8K				0	
+#define ROM_16K				1	
+#define ROM_32K				2	
+#define ROM_48K				3	
+#define ROM_64K				4	
+#define ROM_128K			5	
+#define ROM_256K			6	
+#define ROM_512K			7	
+#define ROM_1M				8	
+#define ROM_2M				9	
+#define ROM_4M				10	
+
+#define ROM_ISR				(1<<12)	
+
+// ROM type define
+//	15	14	13	12	11	10	9	8	7	6	5	4	3	2	1	0
+//	0	1	x	ISR	M3	M2	M1	M0	S3	S2	S1	S0	P1	P0	B1	B0	
+//  			│	│	│	│	│	│	│	│	│	│	│	└───┴── ROM boot page (address of 'AB' header)
+//  			│	│	│	│	│	│	│	│	│	└───┴────────── ROM starting page (first address of the ROM ; can be different from booting page)
+//  			│	│	│	│	│	└───┴───┴───┴────────────────── ROM size
+//				│	└───┴───┴───┴────────────────────────────────── ROM Mapper Type
+//				└────────────────────────────────────────────────── Use custom Interrupt Service Routine (place custom code in page 0)
+#define MAKE_ROM(m, s, p, b)	((TYPE_ROM << 14) | ((m) << 8) | ((s) << 4) | ((p) << 2) | (b))
+#define MAKE_BASIC(x)			((TYPE_BIN << 14) | (x))
+#define MAKE_DOS(x)				((TYPE_DOS << 14) | (x))
+
 // -- BASIC program
 #define TARGET_BIN			  		MAKE_BASIC(0) // BASIC binary program (8000h~)
 // -- DOS program
@@ -88,6 +127,8 @@
 #define TARGET_ROM_KONAMI_SCC_256K	MAKE_ROM(ROM_KONAMI_SCC, ROM_256K, 1, 1) // Konami 8KB ROM Mapper (32 segments) + SCC sound chip
 #define TARGET_ROM_KONAMI_SCC_512K	MAKE_ROM(ROM_KONAMI_SCC, ROM_512K, 1, 1) // Konami 8KB ROM Mapper (64 segments) + SCC sound chip
 #define TARGET_ROM_KONAMI_SCC		TARGET_ROM_KONAMI_SCC_128K
+
+#include "target.h"
 
 //-----------------------------------------------------------------------------
 // BIOS MODULE

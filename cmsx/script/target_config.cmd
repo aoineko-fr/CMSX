@@ -11,7 +11,7 @@ if /I %Target%==BIN (
 	set FillSize=0
 	
 	echo » Target: BASIC binary program ^(8000h~^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_8K (
@@ -24,7 +24,7 @@ if /I %Target%==ROM_8K (
 	set /A FillSize=8*1024
 
 	echo » Target: 8KB ROM in page 1 ^(4000h ~ 5FFFh^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_8K_P2 (
@@ -37,7 +37,7 @@ if /I %Target%==ROM_8K_P2 (
 	set /A FillSize=8*1024
 
 	echo » Target: 8KB ROM in page 2 ^(8000h ~ 9FFFh^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_16K (
@@ -50,7 +50,7 @@ if /I %Target%==ROM_16K (
 	set /A FillSize=16*1024
 
 	echo » Target: 16KB ROM in page 1 ^(4000h ~ 7FFFh^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_16K_P2 (
@@ -63,7 +63,7 @@ if /I %Target%==ROM_16K_P2 (
 	set /A FillSize=16*1024
 
 	echo » Target: 16KB ROM in page 2 ^(8000h ~ BFFFh^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_32K (
@@ -76,7 +76,7 @@ if /I %Target%==ROM_32K (
 	set /A FillSize=32*1024
 
 	echo » Target: 32KB ROM in page 1^&2 ^(4000h ~ BFFFh^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_48K (
@@ -89,7 +89,7 @@ if /I %Target%==ROM_48K (
 	set /A FillSize=48*1024
 
 	echo » Target: 48KB ROM in page 0-2 ^(0000h ~ BFFFh^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_48K_ISR (
@@ -102,7 +102,7 @@ if /I %Target%==ROM_48K_ISR (
 	set /A FillSize=48*1024
 
 	echo » Target: 48KB ROM in page 0-2 ^(0000h ~ BFFFh^) with ISR replacement
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_64K (
@@ -115,7 +115,7 @@ if /I %Target%==ROM_64K (
 	set /A FillSize=64*1024
 
 	echo » Target: 64KB ROM in page 0-3 ^(0000h ~ FFFFh^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_64K_ISR (
@@ -128,7 +128,7 @@ if /I %Target%==ROM_64K_ISR (
 	set /A FillSize=64*1024
 
 	echo » Target: 64KB ROM in page 0-3 ^(0000h ~ FFFFh^) with ISR replacement
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_ASCII8 (
@@ -147,7 +147,7 @@ if /I %Target%==ROM_ASCII8 (
 	set Bank3Addr=A000
 
 	echo » Target: 128KB ROM using ASCII-8 mapper ^(starting at 4000h^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_ASCII16 (
@@ -166,7 +166,7 @@ if /I %Target%==ROM_ASCII16 (
 	set Bank3Addr=0
 
 	echo » Target: 128KB ROM using ASCII-16 mapper ^(starting at 4000h^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_KONAMI (
@@ -185,7 +185,7 @@ if /I %Target%==ROM_KONAMI (
 	set Bank3Addr=A000
 
 	echo » Target: 128KB ROM using KONAMI mapper ^(starting at 4000h^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_KONAMI_SCC (
@@ -204,7 +204,7 @@ if /I %Target%==ROM_KONAMI_SCC (
 	set Bank3Addr=B000
 
 	echo » Target: 128KB ROM using KONAMI SCC mapper ^(starting at 4000h^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==DOS (
@@ -217,7 +217,7 @@ if /I %Target%==DOS (
 	set FillSize=0
 
 	echo » Target: MSX-DOS program ^(starting at 0100h^)
-	exit /b 0
+	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==DOS_ARG (
@@ -230,7 +230,7 @@ if /I %Target%==DOS_ARG (
 	set FillSize=0
 
 	echo » Target: MSX-DOS program with command line arguments ^(starting at 0100h^)
-	exit /b 0
+	exit /B 0
 )
 
 

@@ -121,7 +121,7 @@ inline void Bios_Startup();
 //-----------------------------------------------------------------------------
 // RDSLT	#000C	Reads the value of an address in another slot
 #define R_RDSLT		0x000C // Reads the value of an address in another slot
-u8 Bios_InterSlotRead(u8 slot, u16 addr) __sdcccall(0);
+u8 Bios_InterSlotRead(u8 slot, u16 addr);
 u8 Bios_MainROMRead(u16 addr) __FASTCALL;
 
 //-----------------------------------------------------------------------------
