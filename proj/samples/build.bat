@@ -17,7 +17,7 @@ set FillFile=%ToolsDir%\MakeROM\fillfile.exe
 set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
 set Debugger=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
 set MSXDOS=%ToolsDir%\MSXDOS
-set DskTool=%ToolsDir%\DskTool\bin\win64
+set DskTool=%ToolsDir%\DskTool\dsktool.exe
 
 rem ***************************************************************************
 rem * PROJECT SETTINGS                                                        *
@@ -58,7 +58,7 @@ rem  - ROM_KONAMI		.rom	128KB ROM using Konami mapper (8KB segments)
 rem  - ROM_KONAMI_SCC	.rom	128KB ROM using Konami SCC mapper (8KB segments)
 rem  - DOS				.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOS_ARG			.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
-set Target=BIN
+set Target=ROM_32K
 
 rem  Optim:
 rem  - Default
@@ -76,13 +76,13 @@ rem  Verbose mode: 0 or 1
 set Verbose=0
 
 rem  Emulator options: 0 or 1
-set EmulSetMachine=1
-set EmulSetFullScreen=1
-set EmulMute=1
-set EmulAddExpander=1
-set EmulStartDebugger=0
-set Emul60Hz=1
-rem  Emulator extra parameters to be add to command line
+set EmulMachine=0
+set Emul60Hz=0
+set EmulFullScreen=0
+set EmulMute=0
+set EmulSubSlot=1
+set EmulDebug=0
+rem  Emulator extra parameters to be add to command-line
 set EmulExtraParam=
 
 rem  Check for project specific parameters

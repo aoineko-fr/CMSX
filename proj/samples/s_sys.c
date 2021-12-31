@@ -48,6 +48,7 @@ const c8* g_SlotExBotSel	= "\x9A\x97\x9B";
 //=============================================================================
 // MEMORY DATA
 //=============================================================================
+
 u8 g_VDP;
 
 //=============================================================================
@@ -77,110 +78,66 @@ void Print_DrawVersion(u16 ver)
 	Print_DrawInt(ver & 0x3F);
 }
 
-
-
-/*
-//-----------------------------------------------------------------------------
-//
-void InstallCustomVBlankInterrupt()
-{
-	__asm
-		ORG     38H
-
-		push    AF
-		ex      AF, AF'
-		push    AF
-
-		in      A, (99H)
-		and     A
-		jp      P, _D02
-
-		push    HL
-		push    DE
-		push    BC
-		exx
-		push    HL
-		push    DE
-		push    BC
-		push    IY
-		push    IX
-
-		call    H_TIMI
-
-		pop     IX
-		pop     IY
-		pop     BC
-		pop     DE
-		pop     HL
-		exx
-		pop     BC
-		pop     DE
-		pop     HL
-		
-_D02:		
-		pop     AF
-		ex      AF, AF'
-		pop     AF
-		
-		ei
-		ret
-	
-	__endasm;	
-}*/
-
 //-----------------------------------------------------------------------------
 //
 void InterSlotWritePage3(u8 slot, u16 addr, u8 value) __sdcccall(0)
 {
-	slot, addr, value;
+	slot;  // IX+4
+	addr;  // IX+6 IX+5
+	value; // IX+7
 	__asm
 		di
 		push	ix
 		ld		ix, #0
 		add		ix, sp
-		ld		d, 4(ix)
+		ld		d, 4(ix)		// D=[E.|..|SS|PP] Get slot ID
 		ld		l, 5(ix)
-		ld		h, 6(ix)
-		ld		a, 7(ix)
-		ld		i, a
-		// Backup
-		ld		a, (0xFFFF)
-		cpl
-		ld		c, a			// Save current secondary slot in C
-		in		a, (0xA8)
-		ld		b, a			// Save current primary slot in B
+		ld		h, 6(ix)		// HL=Write address
+		ld		a, 7(ix)		
+		ld		i, a			// I=Write value
+		
+		// Backup primary slot
+		in		a, (P_PPI_A)	// A=[P3|P2|P1|P0]
+		ld		b, a			// B=[P3|P2|P1|P0] Save current primary slot in B
 
-		// Switch slot
-		ld		a, d
+		// Switch primary slot
+		ld		a, d			// A=[E.|..|SS|PP]
 		rrca
-		rrca
-		and		#0xC0
-		ld		e, a
-		ld		a, b
-		and		#0x3F
-		or		e				// remplace ?? par le slot primaire (00,01,10 ou 11)
-		out		(0xA8), a
+		rrca					// A=[PP|E.|..|SS]
+		and		#0b11000000		// A=[PP|00|00|00]
+		ld		e, a			// E=[PP|00|00|00]
+		ld		a, b			// A=[P3|P2|P1|P0]
+		and		#0b00111111		// A=[00|P2|P1|P0]
+		or		e				// A=[PP|P2|P1|P0] remplace ?? par le slot primaire (00,01,10 ou 11)
+		out		(P_PPI_A), a	//                 write new primary slot
 
-		ld		a, d
+		// Backup secondary slot (of the new primary slot)
+		ld		a, (M_SLTSL)	// A=[~3|~2|~1|~0]
+		cpl						// A=[S3|S2|S1|S0]
+		ld		c, a			// C=[S3|S2|S1|S0] Save current secondary slot in C
+
+		// Switch secondary slot
+		ld		a, d			// A=[E.|..|SS|PP]
 		rlca
+		rlca					// A=[..|SS|PP|E.]
 		rlca
-		rlca
-		rlca
-		and		#0xC0
-		ld		e, a
-		ld		a, c
-		and		#0x3F
-		or		e				// remplace ?? par le slot secondaire (00,01,10 ou 11)
-		ld		(0xFFFF), a
+		rlca					// A=[SS|PP|E.|..]
+		and		#0b11000000		// A=[SS|00|00|00]
+		ld		e, a			// E=[SS|00|00|00]
+		ld		a, c			// A=[S3|S2|S1|S0]
+		and		#0b00111111		// A=[00|S2|S1|S0]
+		or		e				// A=[SS|S2|S1|S0] remplace ?? par le slot secondaire (00,01,10 ou 11)
+		ld		(M_SLTSL), a	//				   write new seconday slot
+
 		// Write
 		ld		a, i
 		ld		(hl), a
 
 		// Restore		
-		ld		a, b
-		out		(0xA8), a
-		ld		a, c
-		ld		(0xFFFF), a
+		ld		a, c			// C=[S3|S2|S1|S0]
+		ld		(M_SLTSL), a
+		ld		a, b			// B=[P3|P2|P1|P0]
+		out		(P_PPI_A), a
 
 		pop		ix
 		ei
@@ -189,57 +146,58 @@ void InterSlotWritePage3(u8 slot, u16 addr, u8 value) __sdcccall(0)
 
 //-----------------------------------------------------------------------------
 //
-u8 InterSlotReadPage3(u8 slot, u16 addr) __sdcccall(0)
+u8 InterSlotReadPage3(u8 slot, u16 addr)
 {
-	slot, addr;
+	slot;	// A  -> D
+	addr;	// DE -> HL
 	__asm
 		di
-		push	ix
-		ld		ix, #0
-		add		ix, sp
-		ld		d, 4(ix)
-		ld		l, 5(ix)
-		ld		h, 6(ix)
-		// Backup
-		ld		a, (0xFFFF)
-		cpl
-		ld		c, a			// Save current secondary slot in C
-		in		a, (0xA8)
-		ld		b, a			// Save current primary slot in B
+		ld		d, a			// D=[E.|..|SS|PP] Get slot ID
+		ld		l, d
+		ld		h, e			// HL=Read address
 
-		// Switch slot
-		ld		a, d
-		rrca
-		rrca
-		and		#0xC0
-		ld		e, a
-		ld		a, b
-		and		#0x3F
-		or		e				// remplace ?? par le slot primaire (00,01,10 ou 11)
-		out		(0xA8), a
+		// Backup primary slot
+		in		a, (P_PPI_A)	// A=[P3|P2|P1|P0]
+		ld		b, a			// B=[P3|P2|P1|P0] Save current primary slot in B
 
-		ld		a, d
+		// Switch primary slot
+		ld		a, d			// A=[E.|..|SS|PP]
+		rrca
+		rrca					// A=[PP|E.|..|SS]
+		and		#0b11000000		// A=[PP|00|00|00]
+		ld		e, a			// E=[PP|00|00|00]
+		ld		a, b			// A=[P3|P2|P1|P0]
+		and		#0b00111111		// A=[00|P2|P1|P0]
+		or		e				// A=[PP|P2|P1|P0] Remplace ?? par le slot primaire (00,01,10 ou 11)
+		out		(P_PPI_A), a
+
+		// Backup secondary slot (of the new primary slot)
+		ld		a, (M_SLTSL)	// A=[~3|~2|~1|~0]
+		cpl						// A=[S3|S2|S1|S0]
+		ld		c, a			// C=[S3|S2|S1|S0] Save current secondary slot in C
+
+		// Switch secondary slot
+		ld		a, d			// A=[E.|..|SS|PP]
+		rlca					
+		rlca					// A=[..|SS|PP|E.]
 		rlca
-		rlca
-		rlca
-		rlca
-		and		#0xC0
-		ld		e, a
-		ld		a, c
-		and		#0x3F
-		or		e				// remplace ?? par le slot secondaire (00,01,10 ou 11)
-		ld		(0xFFFF), a
+		rlca					// A=[SS|PP|E.|..]
+		and		#0b11000000		// A=[SS|00|00|00]
+		ld		e, a			// E=[SS|00|00|00]
+		ld		a, c			// A=[S3|S2|S1|S0]
+		and		#0b00111111		// A=[S3|00|00|00]
+		or		e				// A=[SS|S2|S1|S0] Remplace ?? par le slot secondaire (00,01,10 ou 11)
+		ld		(M_SLTSL), a
 		// Read
 		ld		a, (hl)
-		ld		l, a // return value
+		ld		l, a			// L=Return value
 
 		// Restore		
-		ld		a, b
-		out		(0xA8), a
 		ld		a, c
-		ld		(0xFFFF), a
+		ld		(M_SLTSL), a
+		ld		a, b
+		out		(P_PPI_A), a
 
-		pop		ix
 		ei
 	__endasm;
 }
@@ -293,6 +251,14 @@ const c8* GetSlotName(u8 slotId, u8 page)
 	if(IsSlotPageRAM(slotId, page))
 		return "RAM";
 	
+	if(page < 3)
+	{
+		u16 addr = page * 0x4000;
+		if(Bios_InterSlotRead(slotId, addr) == 'A')
+			if(Bios_InterSlotRead(slotId, ++addr) == 'B')
+				return "ROM";
+	}
+		
 	u8 prim = slotId & 0x03;
 	u8 sec = (slotId >> 2) & 0x03;
 	u16 addr = M_SLTATR + 16 * prim + 4 * sec + page;
@@ -583,6 +549,7 @@ void main()
 		Print_SetPosition(39, 0);
 		Print_DrawChar(g_ChrAnim[count++ & 0x03]);
 
+		EnableInterrupt();
 		// Halt();
 	}
 
