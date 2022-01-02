@@ -26,6 +26,9 @@ HIMEM = #0xFC4A
 .area	_HEADER (ABS)
 	.org	0x0100 ; MSX-DOS .com program start address
 
+_g_FirstAddr::
+_g_HeaderAddr::
+
 ;------------------------------------------------------------------------------
 .area	_CODE
 
@@ -57,6 +60,7 @@ crt0_start:
 .area	_INITIALIZER 
 .area   _GSINIT
 .area   _GSFINAL
+_g_LastAddr::
 .area	_DATA
 _g_HeapStartAddress::
 	.dw		s__HEAP

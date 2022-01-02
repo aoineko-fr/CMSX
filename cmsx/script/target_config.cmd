@@ -1,4 +1,13 @@
 set MapperSize=0
+set DOS=0
+
+if /I %Target%==DOS			set Target=DOS2
+if /I %Target%==DOS_ARG		set Target=DOS2_ARG
+if /I %Target%==ROM			set Target=ROM_32K
+
+rem ***************************************************************************
+rem * BASIC                                                                   *
+rem ***************************************************************************
 
 rem ---------------------------------------------------------------------------
 if /I %Target%==BIN (
@@ -13,6 +22,11 @@ if /I %Target%==BIN (
 	echo » Target: BASIC binary program ^(8000h~^)
 	exit /B 0
 )
+
+rem ***************************************************************************
+rem * PLAIN ROM                                                               *
+rem ***************************************************************************
+
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_8K (
 
@@ -130,6 +144,11 @@ if /I %Target%==ROM_64K_ISR (
 	echo » Target: 64KB ROM in page 0-3 ^(0000h ~ FFFFh^) with ISR replacement
 	exit /B 0
 )
+
+rem ***************************************************************************
+rem * MAPPED ROM                                                              *
+rem ***************************************************************************
+
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_ASCII8 (
 
@@ -206,9 +225,15 @@ if /I %Target%==ROM_KONAMI_SCC (
 	echo » Target: 128KB ROM using KONAMI SCC mapper ^(starting at 4000h^)
 	exit /B 0
 )
-rem ---------------------------------------------------------------------------
-if /I %Target%==DOS (
 
+rem ***************************************************************************
+rem * MSX-DOS                                                                 *
+rem ***************************************************************************
+
+rem ---------------------------------------------------------------------------
+if /I %Target%==DOS1 (
+
+	set DOS=1
 	set Ext=com
 	set Crt0=crt0_dos
 	set StartAddr=0100
@@ -216,12 +241,27 @@ if /I %Target%==DOS (
 	set RamAddr=0
 	set FillSize=0
 
-	echo » Target: MSX-DOS program ^(starting at 0100h^)
+	echo » Target: MSX-DOS 1 program ^(starting at 0100h^)
 	exit /B 0
 )
 rem ---------------------------------------------------------------------------
-if /I %Target%==DOS_ARG (
+if /I %Target%==DOS2 (
 
+	set DOS=2
+	set Ext=com
+	set Crt0=crt0_dos
+	set StartAddr=0100
+	set CodeAddr=0100
+	set RamAddr=0
+	set FillSize=0
+
+	echo » Target: MSX-DOS 2 program ^(starting at 0100h^)
+	exit /B 0
+)
+rem ---------------------------------------------------------------------------
+if /I %Target%==DOS2_ARG (
+
+	set DOS=2
 	set Ext=com
 	set Crt0=crt0_dosarg
 	set StartAddr=0100
@@ -229,7 +269,7 @@ if /I %Target%==DOS_ARG (
 	set RamAddr=0
 	set FillSize=0
 
-	echo » Target: MSX-DOS program with command line arguments ^(starting at 0100h^)
+	echo » Target: MSX-DOS 2 program with command line arguments ^(starting at 0100h^)
 	exit /B 0
 )
 

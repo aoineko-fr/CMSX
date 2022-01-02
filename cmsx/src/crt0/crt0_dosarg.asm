@@ -27,6 +27,8 @@
 
         .org    0x0100  ;MSX-DOS .COM programs start address
 
+_g_FirstAddr::
+_g_HeaderAddr::
         ;--- Step 1: Initialize globals
 
 init:   call    gsinit
@@ -181,3 +183,4 @@ gsinext:
 	.area	_HEAP
 
 _HEAP_start::
+_g_LastAddr::

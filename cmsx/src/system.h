@@ -145,6 +145,14 @@ inline void DisableInterrupt() { __asm__("di"); }
 /// Disable interruption
 inline void Halt() { __asm__("halt"); }
 
+extern u16 g_FirstAddr;
+extern u16 g_HeaderAddr;
+extern u16 g_LastAddr;
+
+/// Disable interruption
+inline u16 Sys_GetFirstAddr() { return (u16)&g_FirstAddr; }
+inline u16 Sys_GetHeardAddr() { return (u16)&g_HeaderAddr; }
+inline u16 Sys_GetLastAddr()  { return (u16)&g_LastAddr; }
 
 //-----------------------------------------------------------------------------
 // Slot
@@ -160,3 +168,5 @@ inline bool Sys_IsSlotExpanded(u8 slot) { return g_EXPTBL[slot] & 0x80; }
 
 /// Set a given slot in page 0
 void Sys_SetPage0Slot(u8 slotId);
+
+

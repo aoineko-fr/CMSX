@@ -27,6 +27,8 @@ HIMEM = #0xFC4A
 .area _HEADER (ABS)
 	.org    0x8000
 
+_g_FirstAddr::
+_g_HeaderAddr::
 	; Binary program header
 	.db 	0xFE		; ID byte
 	.dw 	crt0_init	; Start address
@@ -55,6 +57,7 @@ crt0_start:
 .area	_INITIALIZER
 .area   _GSINIT
 .area   _GSFINAL
+_g_LastAddr::
 .area	_DATA
 _g_HeapStartAddress::
 	.dw		s__HEAP

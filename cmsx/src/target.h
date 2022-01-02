@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
+//-----------------------------------------------------------------------------
 // Get current targer parameters
 #define GET_TARGET_TYPE(t)		(((t) >> 14) & 0x3)
 #define GET_TARGET_ISR(t)		(((t) >> 12) & 0x1)
@@ -20,12 +21,14 @@
 #define ROM_MAPPER				GET_TARGET_MAPPER(TARGET)
 #define ROM_SIZE				GET_TARGET_SIZE(TARGET)
 
+//-----------------------------------------------------------------------------
 // Get current targer parameters
 #if (ROM_MAPPER == ROM_ASCII8)
 	#define ADDR_BANK_0			0x6000 // 4000h - 5FFFh
 	#define ADDR_BANK_1			0x6800 // 6000h - 7FFFh
 	#define ADDR_BANK_2			0x7000 // 8000h - 9FFFh
 	#define ADDR_BANK_3			0x7800 // A000h - BFFFh
+	#define ROM_SEGMENT			()
 #elif (ROM_MAPPER == ROM_ASCII16)
 	#define ADDR_BANK_0			0x6000 // 4000h - 7FFFh
 	#define ADDR_BANK_1			0x77FF // 8000h - BFFFh (or 0x7000 ?)
@@ -41,16 +44,61 @@
 	#define ADDR_BANK_3			0xB000 // A000h - BFFFh
 #endif
 
+//-----------------------------------------------------------------------------
+// Macro to change a given bank segment
 #if (ROM_MAPPER > ROM_PLAIN)
 	#define SET_BANK_SEGMENT(b, s)	(*(unsigned char*)(ADDR_BANK_##b) = (s))
 #endif
 
+//-----------------------------------------------------------------------------
+// Segment counts
+
+#if (ROM_SIZE == ROM_128K)
+	#if (ROM_MAPPER == ROM_ASCII16)
+		#define ROM_SEGMENTS	(128/16)
+	#else 
+		#define ROM_SEGMENTS	(128/8)
+	#endif
+#elif (ROM_SIZE == ROM_256K)
+	#if (ROM_MAPPER == ROM_ASCII16)
+		#define ROM_SEGMENTS	(256/16)
+	#else 
+		#define ROM_SEGMENTS	(256/8)
+	#endif
+#elif (ROM_SIZE == ROM_512K)
+	#if (ROM_MAPPER == ROM_ASCII16)
+		#define ROM_SEGMENTS	(512/16)
+	#else 
+		#define ROM_SEGMENTS	(512/8)
+	#endif
+#elif (ROM_SIZE == ROM_1M)
+	#if (ROM_MAPPER == ROM_ASCII16)
+		#define ROM_SEGMENTS	(1024/16)
+	#else 
+		#define ROM_SEGMENTS	(1024/8)
+	#endif
+#elif (ROM_SIZE == ROM_2M)
+	#if (ROM_MAPPER == ROM_ASCII16)
+		#define ROM_SEGMENTS	(2048/8)
+	#else 
+		#define ROM_SEGMENTS	(2048/8)
+	#endif
+#elif (ROM_SIZE == ROM_4M)
+	#if (ROM_MAPPER == ROM_ASCII16)
+		#define ROM_SEGMENTS	(4096/16)
+	#endif
+#endif
+
+//-----------------------------------------------------------------------------
+// Target names
 #if (TARGET == TARGET_BIN)
 	#define TARGET_NAME "BASIC binary"
-#elif (TARGET == TARGET_DOS)
-	#define TARGET_NAME "DOS"
-#elif (TARGET == TARGET_DOS_ARG)
-	#define TARGET_NAME "DOS with arguments"
+#elif (TARGET == TARGET_DOS1)
+	#define TARGET_NAME "MSX-DOS 1"
+#elif (TARGET == TARGET_DOS2)
+	#define TARGET_NAME "MSX-DOS 2"
+#elif (TARGET == TARGET_DOS2_ARG)
+	#define TARGET_NAME "MSX-DOS 2 with arguments"
 #elif (TARGET == TARGET_ROM_8K_P1)
 	#define TARGET_NAME "8K ROM in page 1"
 #elif (TARGET == TARGET_ROM_8K_P2)

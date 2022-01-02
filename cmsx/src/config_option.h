@@ -46,7 +46,7 @@
 #define ROM_16K				1	
 #define ROM_32K				2	
 #define ROM_48K				3	
-#define ROM_64K				4	
+#define ROM_64K				4
 #define ROM_128K			5	
 #define ROM_256K			6	
 #define ROM_512K			7	
@@ -71,12 +71,14 @@
 // -- BASIC program
 #define TARGET_BIN			  		MAKE_BASIC(0) // BASIC binary program (8000h~)
 // -- DOS program
-#define TARGET_DOS					MAKE_DOS(0) // MSX-DOS program (0100h~). No direct acces to Main-ROM
-#define TARGET_DOS_ARG				MAKE_DOS(1) // MSX-DOS program (using command line arguments ; 0100h~). No direct acces to Main-ROM
+#define TARGET_DOS1					MAKE_DOS(0) // MSX-DOS 1 program (0100h~). No direct acces to Main-ROM
+#define TARGET_DOS2					MAKE_DOS(2) // MSX-DOS 2 program (0100h~). No direct acces to Main-ROM
+#define TARGET_DOS2_ARG				MAKE_DOS(3) // MSX-DOS 2 program (using command line arguments ; 0100h~). No direct acces to Main-ROM
+#define TARGET_DOS					TARGET_DOS1
 // -- Plain ROM 8KB
 #define TARGET_ROM_8K_P1			MAKE_ROM(ROM_PLAIN, ROM_8K, 1, 1) // 8KB ROM in page 1 boot at 4000h
 #define TARGET_ROM_8K_P2			MAKE_ROM(ROM_PLAIN, ROM_8K, 2, 2) // 8KB ROM in page 2 boot at 8000h
-#define TARGET_ROM_8K				TARGET_ROM_PLAIN_8K_P1
+#define TARGET_ROM_8K				TARGET_ROM_8K_P1
 // -- Plain ROM 16KB
 #define TARGET_ROM_16K_P1			MAKE_ROM(ROM_PLAIN, ROM_16K, 1, 1) // 16KB ROM in page 1 boot at 4000h
 #define TARGET_ROM_16K_P2			MAKE_ROM(ROM_PLAIN, ROM_16K, 2, 2) // 16KB ROM in page 2 boot at 8000h
@@ -108,7 +110,7 @@
 #define TARGET_ROM_ASCII8_512K		MAKE_ROM(ROM_ASCII8, ROM_512K, 1, 1) // ASCII 8KB ROM Mapper (64 segments)
 #define TARGET_ROM_ASCII8_1M		MAKE_ROM(ROM_ASCII8, ROM_1M, 1, 1)   // ASCII 8KB ROM Mapper (128 segments)
 #define TARGET_ROM_ASCII8_2M		MAKE_ROM(ROM_ASCII8, ROM_2M, 1, 1)   // ASCII 8KB ROM Mapper (256 segments)
-#define TARGET_ROM_ASCII8			0x4155//TARGET_ROM_ASCII8_128K		
+#define TARGET_ROM_ASCII8			TARGET_ROM_ASCII8_128K		
 // -- ASCII 16 ROM
 #define TARGET_ROM_ASCII16_128K		MAKE_ROM(ROM_ASCII16, ROM_128K, 1, 1) // ASCII 16KB ROM Mapper (8 segments)
 #define TARGET_ROM_ASCII16_256K		MAKE_ROM(ROM_ASCII16, ROM_256K, 1, 1) // ASCII 16KB ROM Mapper (16 segments)

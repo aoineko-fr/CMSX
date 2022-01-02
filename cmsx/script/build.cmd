@@ -1,4 +1,4 @@
-@echo off
+REM @echo off
 "%__APPDIR__%chcp.com" 65001 > nul
 title <nul & title CMSX Build Tool – %ProjName% – %Target%
 
@@ -159,14 +159,19 @@ if /I %Ext%==rom (
 )
 if /I %Ext%==bin (
 	if not exist %ProjDir%\emul\bin ( md %ProjDir%\emul\bin )
-	if not exist %ProjDir%\emul\bin_dsk ( md %ProjDir%\emul\bin_dsk )
+	if not exist %ProjDir%\emul\dsk ( md %ProjDir%\emul\dsk )
 )
 if /I %Ext%==com (
-	if not exist %ProjDir%\emul\dos (
-		md %ProjDir%\emul\dos
-		copy /Y %MSXDOS%\*.* %ProjDir%\emul\dos
+	if not exist %ProjDir%\emul\dos%DOS% ( md %ProjDir%\emul\dos%DOS% )
+	if /I %DOS%==1 (
+		if not exist %ProjDir%\emul\dos%DOS%\COMMAND.COM  ( copy /Y %MSXDOS%\COMMAND.COM %ProjDir%\emul\dos%DOS% )
+		if not exist %ProjDir%\emul\dos%DOS%\MSXDOS.SYS   ( copy /Y %MSXDOS%\MSXDOS.SYS %ProjDir%\emul\dos%DOS% )
 	)
-	if not exist %ProjDir%\emul\dos_dsk ( md %ProjDir%\emul\dos_dsk )
+	if /I %DOS%==2 (
+		if not exist %ProjDir%\emul\dos%DOS%\COMMAND2.COM ( copy /Y %MSXDOS%\COMMAND2.COM %ProjDir%\emul\dos%DOS% )
+		if not exist %ProjDir%\emul\dos%DOS%\MSXDOS2.SYS  ( copy /Y %MSXDOS%\MSXDOS2.SYS %ProjDir%\emul\dos%DOS% )
+	)
+	if not exist %ProjDir%\emul\dsk ( md %ProjDir%\emul\dsk )
 )
 
 rem ***************************************************************************
@@ -180,7 +185,7 @@ echo └────────────────────────
 %SDCC%\sdcc.exe --version
 
 call %LibDir%\script\compile_all.cmd
-if errorlevel 1 goto :Error
+if not errorlevel 0 goto :Error
 
 :NoCompile
 
@@ -202,7 +207,7 @@ if %Optim%==Size (set LinkOpt=%LinkOpt% --opt-code-size)
 set SDCCParam=-mz80 --no-std-crt0 --code-loc 0x%CodeAddr% --data-loc 0x%RamAddr% --constseg RODATA --vc %LinkOpt% %LibList% -o %OutDir%\
 echo SDCC %SDCCParam%
 %SDCC%\sdcc.exe %SDCCParam%
-if errorlevel 1 goto :Error
+if not errorlevel 0 goto :Error
 echo %GREEN%Succeed%RESET%
 
 :NoMake
@@ -223,7 +228,7 @@ echo %BLUE%Converting to binary...%RESET%
 
 echo HEX2BIN %H2BParam%
 %Hex2Bin% %H2BParam% 
-if errorlevel 1 goto :Error
+if not errorlevel 0 goto :Error
 echo %GREEN%Succeed%RESET%
 
 rem ***************************************************************************
@@ -233,7 +238,7 @@ if %FillSize%==0 goto :NoFill
 
 echo %BLUE%Filling binary up to %FillSize% bytes...%RESET%
 %FillFile% %OutDir%\%Crt0%.%Ext% %FillSize%
-if errorlevel 1 goto :Error
+if not errorlevel 0 goto :Error
 echo %GREEN%Succeed%RESET%
 
 :NoFill
@@ -295,10 +300,10 @@ echo └────────────────────────
 
 echo %BLUE%Deploying %Target%...%RESET%
 
-for %%I in ("%DskTool%") do (set DskToolPath=%%~dI%%~pI)
-for %%J in ("%DskTool%") do (set DskToolName=%%~nJ%%~xJ)
+for %%I in ("%DskTool%") do set DskToolPath=%%~dI%%~pI
+for %%J in ("%DskTool%") do set DskToolName=%%~nJ%%~xJ
 
-
+rem ***************************************************************************
 if /I %Ext%==bin (
 	echo -- Copy %OutDir%\%Crt0%.%Ext% to emul\bin\%ProjName%.%Ext%
 	copy /Y %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\bin\%ProjName%.%Ext%
@@ -313,8 +318,8 @@ if /I %Ext%==bin (
 		echo %BLUE%Generating DSK file...%RESET%
 	
 		echo -- Temporary copy files to DskTool directory
-		copy /Y %ProjDir%\emul\bin\autoexec.bas %DskToolPath%\
-		copy /Y %ProjDir%\emul\bin\%ProjName%.%Ext% %DskToolPath%\
+		copy /Y %ProjDir%\emul\bin\autoexec.bas %DskToolPath%
+		copy /Y %ProjDir%\emul\bin\%ProjName%.%Ext% %DskToolPath%
 
 		echo -- Generate .DSK file from autoexec.bas %ProjName%.%Ext%
 		echo %DskToolName% a temp.dsk autoexec.bas %ProjName%.%Ext%
@@ -323,50 +328,69 @@ if /I %Ext%==bin (
 		%DskToolName% a temp.dsk autoexec.bas %ProjName%.%Ext%
 		cd !PrevCD!
 		
-		echo -- Copy DSK file to %ProjDir%\emul\bin_dsk\%ProjName%.dsk
-		copy /Y %DskToolPath%\temp.dsk %ProjDir%\emul\bin_dsk\%ProjName%.dsk
+		echo -- Copy DSK file to %ProjDir%\emul\dsk\%ProjName%.dsk
+		copy /Y %DskToolPath%\temp.dsk %ProjDir%\emul\dsk\%ProjName%.dsk
 
 		echo -- Clean temporary files
 		del /Q %DskToolPath%\autoexec.bas %DskToolPath%\%ProjName%.%Ext% %DskToolPath%\temp.dsk
 	)
 )
+
+rem ***************************************************************************
 if /I %Ext%==rom (
 	echo Copy %OutDir%\%Crt0%.%Ext% to emul\rom\%ProjName%.%Ext%
 	copy /Y %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\rom\%ProjName%.%Ext%
-	if errorlevel 1 goto :Error
-
+	if not errorlevel 0 goto :Error
 )
+
+rem ***************************************************************************
 if /I %Ext%==com (
-	echo Copy %OutDir%\%Crt0%.%Ext% to emul\dos\%ProjName%.%Ext%
-	copy /Y %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\dos\%ProjName%.%Ext%
-	if errorlevel 1 goto :Error
-	echo Create emul\dos\autoexec.bat
-	echo echo Loading... > %ProjDir%\emul\dos\autoexec.bat
-	echo %ProjName%.%Ext% >> %ProjDir%\emul\dos\autoexec.bat
-	if errorlevel 1 goto :Error
+	echo Copy %OutDir%\%Crt0%.%Ext% to emul\dos%DOS%\%ProjName%.%Ext%
+	copy /Y %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\dos%DOS%\%ProjName%.%Ext%
+	if not errorlevel 0 goto :Error
+	echo Create emul\dos%DOS%\autoexec.bat
+	if /I %DOS%==1 (
+		echo %ProjName% > %ProjDir%\emul\dos%DOS%\autoexec.bat
+	)
+	if /I %DOS%==2 (
+		echo echo Loading... > %ProjDir%\emul\dos%DOS%\autoexec.bat
+		echo %ProjName%.%Ext% >> %ProjDir%\emul\dos%DOS%\autoexec.bat
+		echo %ProjName% >> %ProjDir%\emul\dos%DOS%\autoexec.bat
+	)
+	
+	if not errorlevel 0 goto :Error
 	rem ---- Generate DSK file ----
 	if exist %DskTool% (
+
 		echo %GREEN%Succeed%RESET%
 		echo %BLUE%Generating DSK file...%RESET%
-	
-		echo -- Temporary copy files to DskTool directory
-		copy /Y %ProjDir%\emul\dos\autoexec.bat %DskToolPath%\
-		copy /Y %ProjDir%\emul\dos\%ProjName%.%Ext% %DskToolPath%\
 
-		echo -- Generate .DSK file from autoexec.bat %ProjName%.%Ext%
-		echo %DskToolName% a temp.dsk autoexec.bat %ProjName%.%Ext%
+		if /I %DOS%==1 (
+			set FilesList=COMMAND.COM MSXDOS.SYS autoexec.bat %ProjName%.%Ext%
+		)
+		if /I %DOS%==2 (
+			set FilesList=COMMAND2.COM MSXDOS2.SYS autoexec.bat %ProjName%.%Ext%
+		)
+		
+		echo -- Temporary copy files to DskTool directory
+		for %%K in (!FilesList!) do ( copy /Y %ProjDir%\emul\dos%DOS%\%%K %DskToolPath% )
+
+		echo -- Generate .DSK file
+		echo %DskToolName% a temp.dsk !FilesList!
 		set PrevCD=%cd%
 		cd %DskToolPath%
-		%DskToolName% a temp.dsk autoexec.bat %ProjName%.%Ext%
+		%DskToolName% a temp.dsk !FilesList!
 		cd !PrevCD!
-		
-		echo -- Copy DSK file to %ProjDir%\emul\dos_dsk\%ProjName%.dsk
-		copy /Y %DskToolPath%\temp.dsk %ProjDir%\emul\dos_dsk\%ProjName%.dsk
+
+		echo -- Copy DSK file to %ProjDir%\emul\dsk\%ProjName%.dsk
+		copy /Y %DskToolPath%\temp.dsk %ProjDir%\emul\dsk\%ProjName%.dsk
 
 		echo -- Clean temporary files
-		del /Q %DskToolPath%\autoexec.bat %DskToolPath%\%ProjName%.%Ext% %DskToolPath%\temp.dsk
+		del /Q %DskToolPath%\temp.dsk
+		for %%K in (!FilesList!) do ( del /Q %DskToolPath%\%%K )
 	)
 )
+
 echo %GREEN%Succeed%RESET%
 
 :NoDeploy

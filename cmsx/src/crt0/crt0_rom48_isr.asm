@@ -26,6 +26,8 @@ HIMEM  = #0xFC4A
 
 	.org	0x0000
 
+_g_FirstAddr::
+
 ;------------------------------------------------------------------------------
 .area   _DRIVER (ABS)
 
@@ -75,6 +77,7 @@ _interrupt_end:
 ;------------------------------------------------------------------------------
 .area	_CODE
 
+_g_HeaderAddr::
 	; ROM header
 	.db		0x41 ; A
 	.db		0x42 ; B
@@ -123,6 +126,8 @@ crt0_start:
 .area	_INITIALIZER 
 .area   _GSINIT
 .area   _GSFINAL
+_g_LastAddr::
+
 ;-- RAM --
 .area	_DATA
 _g_HeapStartAddress::

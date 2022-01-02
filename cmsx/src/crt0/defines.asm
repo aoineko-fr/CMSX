@@ -17,6 +17,8 @@
 .globl  l__INITIALIZER
 .globl  s__INITIALIZED
 .globl  s__INITIALIZER
+.globl  s__HEADER
+.globl  s__GSFINAL
 .globl  s__HEAP
 
 ;------------------------------------------------------------------------------
