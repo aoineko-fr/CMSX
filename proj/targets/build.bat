@@ -24,13 +24,7 @@ rem * PROJECT SETTINGS                                                        *
 rem ***************************************************************************
 
 rem  Project name (will be use for output filename)
-set In=%1
-set ProjName=
-if /I %In:~0,3%==rom (
-	set ProjName=s_target_%In%
-) else (
-	set ProjName=s_target
-)
+set ProjName=s_target
 
 rem  Project modules to build (use ProjName if not defined)
 set ProjModules=s_target
@@ -62,8 +56,9 @@ rem  - ROM_ASCII8		.rom	128KB ROM using ASCII-8 mapper
 rem  - ROM_ASCII16		.rom	128KB ROM using ASCII-16 mapper
 rem  - ROM_KONAMI		.rom	128KB ROM using Konami mapper (8KB segments)
 rem  - ROM_KONAMI_SCC	.rom	128KB ROM using Konami SCC mapper (8KB segments)
-rem  - DOS				.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
-rem  - DOS_ARG			.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
+rem  - DOS1				.com	MSX-DOS 1 program (0100h~) No direct acces to Main-ROM
+rem  - DOS2				.com	MSX-DOS 2 program (0100h~) No direct acces to Main-ROM
+rem  - DOS2_ARG			.com	MSX-DOS 2 program (using command line arguments ; 0100h~) No direct acces to Main-ROM
 set Target=%1
 
 rem  Optim:
