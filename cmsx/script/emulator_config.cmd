@@ -57,7 +57,10 @@ if /I %EmulatorName%==openmsx (
 	rem ---- Add launch program ----
 	if /I %Ext%==bin ( set EmulatorArgs=!EmulatorArgs! -diska %ProjDir%\emul\bin )
 	if /I %Ext%==rom ( set EmulatorArgs=!EmulatorArgs! -cart %ProjDir%\emul\rom\%ProjName%.rom )
-	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! -diska %ProjDir%\emul\dos -ext msxdos2 )
+	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! -diska %ProjDir%\emul\dos%DOS% -ext msxdos2 )
+	REM if /I %Ext%==bin ( set EmulatorArgs=!EmulatorArgs! -ext ide -hda %ProjDir%\emul\dsk\%ProjName%.dsk )
+	REM if /I %Ext%==rom ( set EmulatorArgs=!EmulatorArgs! -cart %ProjDir%\emul\rom\%ProjName%.rom )
+	REM if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! -ext ide -hda %ProjDir%\emul\dsk\%ProjName%.dsk -ext msxdos2 )
 	
 	rem ---- Start emulator ----
 	if %EmulDebug%==1 ( start /b %Debugger% )	
@@ -109,9 +112,9 @@ if /I %EmulatorName%==bluemsx (
 	if %EmulSubSlot%==1    ( echo %YELLOW%Warning: EmulSubSlot can't be use with BlueMSX%RESET% )
 
 	rem ---- Add launch program ----
-	if /I %Ext%==bin ( set EmulatorArgs=!EmulatorArgs! /diskA %ProjDir%\emul\bin_dsk\%ProjName%.dsk )
+	if /I %Ext%==bin ( set EmulatorArgs=!EmulatorArgs! /diskA %ProjDir%\emul\dsk\%ProjName%.dsk )
 	if /I %Ext%==rom ( set EmulatorArgs=!EmulatorArgs! /rom1 %ProjDir%\emul\rom\%ProjName%.rom )
-	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! /diskA %ProjDir%\emul\dos_dsk\%ProjName%.dsk )
+	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! /diskA %ProjDir%\emul\dsk\%ProjName%.dsk )
 )
 rem ***************************************************************************
 rem * fMSX                                                                    *
@@ -145,9 +148,9 @@ if /I %EmulatorName%==fmsx (
 	if %EmulSubSlot%==1    ( echo %YELLOW%Warning: EmulSubSlot can't be use with fMSX%RESET% )
 
 	rem ---- Add launch program ----
-	if /I %Ext%==bin ( set EmulatorArgs=!EmulatorArgs! -diska %ProjDir%\emul\bin_dsk\%ProjName%.dsk )
+	if /I %Ext%==bin ( set EmulatorArgs=!EmulatorArgs! -diska %ProjDir%\emul\dsk\%ProjName%.dsk )
 	if /I %Ext%==rom ( set EmulatorArgs=!EmulatorArgs! %ProjDir%\emul\rom\%ProjName%.rom )
-	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! -diska %ProjDir%\emul\dos_dsk\%ProjName%.dsk )
+	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! -diska %ProjDir%\emul\dsk\%ProjName%.dsk )
 )
 rem ***************************************************************************
 rem * Mesei                                                                   *
@@ -212,7 +215,7 @@ if /I %EmulatorName%==msx (
 	rem ---- Add launch program ----
 	if /I %Ext%==bin ( set EmulatorArgs=!EmulatorArgs! -dirAsDisk -disk %ProjDir%\emul\bin )
 	if /I %Ext%==rom ( set EmulatorArgs=!EmulatorArgs! -rom %ProjDir%\emul\rom\%ProjName%.rom )
-	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! -dirAsDisk -disk %ProjDir%\emul\dos )
+	if /I %Ext%==com ( set EmulatorArgs=!EmulatorArgs! -dirAsDisk -disk %ProjDir%\emul\dos%DOS% )
 )
 
 rem ***************************************************************************
