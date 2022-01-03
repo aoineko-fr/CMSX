@@ -2,18 +2,20 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <ctype.h>
-//#include "malloc.h"
+#include <malloc.h>
 #include <string.h>
 #include <time.h>
 #include <libgen.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include "msxboot.h"
 
-#define fat12odd_value(pos)		(((int)(fat[pos+2]))<<4)+(fat[pos+1]>>4)
-#define fat12even_value(pos)	((((int)(fat[pos+1]&0xF))<<8)+fat[pos])
+
+//Format types
+#define FORMAT_360		360
+#define FORMAT_720		720
+#define FORMAT_1440		1440
+#define FORMAT_2880		2880
 
 //Params for load_dsk(...)
 #define NO_ERROR     0
@@ -21,56 +23,67 @@
 #define READ_ALL     0
 #define READ_BOOTFAT 1
 
-typedef uint8_t byte;
-typedef uint16_t word;
-typedef uint32_t dword;
+#define fat12odd_value(pos)		(((int)(fat[pos+2]))<<4)+(fat[pos+1]>>4)
+#define fat12even_value(pos)	((((int)(fat[pos+1]&0xF))<<8)+fat[pos])
 
-#pragma pack(push)
-#pragma pack(1)
+// MEDIA DESCRIPTOR TABLE
+// FAT-ID             F8   F9   FA   FB   FC   FD   FE   FF
+// Format code        891  892  881  882  491  492  481  482
+// Directory entries  112  112  112  112  64   112  64   112
+// Sectors / FAT      2    3    1    2    2    2    1    1
+// Sectors / track    9    9    8    8    9    9    8    8
+// Heads              1    2    1    2    1    2    1    2
+// Sectors / head     80   80   80   80   40   40   40   40
+// Sectors / cluster  2    2    2    2    1    2    1    2
+// Total sectors      720  1440 640  1280 360  720  320  640
+// Total clusters     360  720  320  640  360  360  320  320
+// Total Kbytes       360  720  320  640  180  360  160  320
+
+#pragma pack(push,1)
 
 typedef struct {
-	byte  dummy[3];				// 0x000 [3]  Dummy jump instruction (e.g. 0xEB 0xFE 0x90)
-	byte  oemname[8];			// 0x003 [8]  OEM Name (padded with spaces 0x20)
-	word  bytesPerSector;		// 0x00B [2]  Bytes per logical sector in powers of two (e.g. 512 0x0200)
-	byte  sectorsPerCluster;	// 0x00D [1]  Logical sectors per cluster (e.g. 2 0x02)
-	word  reservedSectors;		// 0x00E [2]  Count of reserved logical sectors (e.g. 1 0x0001)
-	byte  numberOfFATs;			// 0x010 [1]  Number of File Allocation Tables (e.g. 2 0x02)
-	word  maxDirectoryEntries;	// 0x011 [2]  Maximum number of FAT12 or FAT16 root directory entries (e.g. 112 0x0070)
-	word  totalSectors;			// 0x013 [2]  Total logical sectors (e.g. 1440 0x05a0)
-	byte  mediaDescriptor;		// 0x015 [1]  Media descriptor: 0xf9:3.5"720Kb | 0xf8:3.5"360Kb
-	word  sectorsPerFAT;		// 0x016 [2]  Logical sectors per FAT (e.g. 3 0x0003)
-	word  sectorsPerTrack;		// 0x018 [2]  Physical sectors per track for disks with CHS geometry (e.g. 9 0x0009)
-	word  numberOfHeads;		// 0x01A [2]  Number of heads (e.g. 2 0x0002)
-	word  hiddenSectors;		// 0x01C [2]  Count of hidden sectors preceding the partition that contains this FAT volume (e.g. 0 0x0000)
-	byte  entryMSXDOS1[2];		// 0x01E [2]  MSX-DOS1 code entry point for Z80 processors into MSX boot code. This is where MSX-DOS 1 machines jump to when passing control to the boot sector. This location overlaps with BPB formats since DOS 3.2 or the x86 compatible boot sector code of IBM PC compatible boot sectors and will lead to a crash on the MSX machine unless special precautions have been taken such as catching the CPU in a tight loop here (opstring 0x18 0xFE for JR 0x01E).
-	byte  unused[480];
+	uint8_t   dummy[3];				// 0x000 [3]  Dummy jump instruction (e.g. 0xEB 0xFE 0x90)
+	uint8_t   oemname[8];			// 0x003 [8]  OEM Name (padded with spaces 0x20)
+	uint16_t  bytesPerSector;		// 0x00B [2]  Bytes per logical sector in powers of two (e.g. 512 0x0200)
+	uint8_t   sectorsPerCluster;	// 0x00D [1]  Logical sectors per cluster (e.g. 2 0x02)
+	uint16_t  reservedSectors;		// 0x00E [2]  Count of reserved logical sectors (e.g. 1 0x0001)
+	uint8_t   numberOfFATs;			// 0x010 [1]  Number of File Allocation Tables (e.g. 2 0x02)
+	uint16_t  maxDirectoryEntries;	// 0x011 [2]  Maximum number of FAT12 or FAT16 root directory entries (e.g. 112 0x0070)
+	uint16_t  totalSectors;			// 0x013 [2]  Total logical sectors (e.g. 1440 0x05a0)
+	uint8_t   mediaDescriptor;		// 0x015 [1]  Media descriptor: 0xf9:3.5"720Kb | 0xf8:3.5"360Kb (see previous table)
+	uint16_t  sectorsPerFAT;		// 0x016 [2]  Logical sectors per FAT (e.g. 3 0x0003)
+	uint16_t  sectorsPerTrack;		// 0x018 [2]  Physical sectors per track for disks with CHS geometry (e.g. 9 0x0009)
+	uint16_t  numberOfHeads;		// 0x01A [2]  Number of heads (e.g. 2 0x0002)
+	uint16_t  hiddenSectors;		// 0x01C [2]  Count of hidden sectors preceding the partition that contains this FAT volume (e.g. 0 0x0000)
+	uint16_t  codeEntryPorint;		// 0x01E [2]  MSX-DOS 1 code entry point for Z80 processors into MSX boot code. This is where MSX-DOS 1 machines jump to when passing control to the boot sector.
+	uint8_t   bootCode[482];		// 0x020 [-]  This location overlaps with BPB formats since DOS 3.2 or the x86 compatible boot sector code of IBM PC compatible boot sectors and will lead to a crash on the MSX machine unless special precautions have been taken such as catching the CPU in a tight loop here (opstring 0x18 0xFE for JR 0x01E).
 } bootsec_t;
 
 typedef struct {
-	byte  name[8];				// 0x000 [8]  Short file name (padded with spaces). First char '0xE5' for deleted files.
-	byte  ext[3];				// 0x008 [3]  Short file extension (padded with spaces)
-	byte  attr;					// 0x00B [1]  File Attributes. Mask: 0x01:ReadOnly | 0x02:Hidden | 0x04:System | 0x08:Volume | 0x10:Directory | 0x20:Archive
-	byte  unused1;				// 0x00C [1]  MSX-DOS 2: For a deleted file, the original first character of the filename
-	byte  unused2;				// 0x00D [1]
-	word  ctime;				// 0x00E [2]  Create time: #0-4:Seconds/2 #5-10:Minuts #11-15:Hours
-	word  cdate;				// 0x010 [2]  Create date: #0-4:Day #5-8:Month #9-15:Year(0=1980)
-	word  unused3;				// 0x012 [2]
-	word  unused4;				// 0x014 [2]
-	word  mtime;				// 0x016 [2]  Last modified time: #0-4:Seconds/2 #5-10:Minuts #11-15:Hours
-	word  mdate;				// 0x018 [2]  Last modified date: #0-4:Day #5-8:Month #9-15:Year(0=1980)
-	word  cluini;				// 0x01A [2]  Initial cluster for this file
-	dword fsize;				// 0x01C [4]  File size in bytes
+	char      name[8];				// 0x000 [8]  Short file name (padded with spaces). First char '0xE5' for deleted files.
+	char      ext[3];				// 0x008 [3]  Short file extension (padded with spaces)
+	uint8_t   attr;					// 0x00B [1]  File Attributes. Mask: 0x01:ReadOnly | 0x02:Hidden | 0x04:System | 0x08:Volume | 0x10:Directory | 0x20:Archive
+	uint8_t   unused1;				// 0x00C [1]  MSX-DOS 2: For a deleted file, the original first character of the filename
+	uint8_t   unused2;				// 0x00D [1]
+	uint16_t  ctime;				// 0x00E [2]  Create time: #0-4:Seconds/2 #5-10:Minuts #11-15:Hours
+	uint16_t  cdate;				// 0x010 [2]  Create date: #0-4:Day #5-8:Month #9-15:Year(0=1980)
+	uint16_t  unused3;				// 0x012 [2]
+	uint16_t  unused4;				// 0x014 [2]
+	uint16_t  mtime;				// 0x016 [2]  Last modified time: #0-4:Seconds/2 #5-10:Minuts #11-15:Hours
+	uint16_t  mdate;				// 0x018 [2]  Last modified date: #0-4:Day #5-8:Month #9-15:Year(0=1980)
+	uint16_t  cluini;				// 0x01A [2]  Initial cluster for this file
+	uint32_t  fsize;				// 0x01C [4]  File size in bytes
 } direntry_t;
 
 typedef struct {
-	byte      name[9];
-	byte      ext[4];
-	uint32_t  size;
-	uint16_t  hour,min,sec;
-	uint16_t  day,month,year;
-	uint32_t  first;
-	uint32_t  pos;
-	uint16_t  attr;
+	char     name[9];
+	char     ext[4];
+	uint32_t size;
+	uint16_t hour,min,sec;
+	uint16_t day,month,year;
+	uint32_t first;
+	uint32_t pos;
+	uint16_t attr;
 } fileinfo_t;
 
 
@@ -78,7 +91,7 @@ typedef struct {
 ADVH Format
 
    0 -  511	(1)	Boot sector
- 512 - 3583	(6)	Root dir (16 bytes c/u)
+ 512 - 3583	(6)	Root dir (16 bytes each entry)
 3584 - 6655 (6)	???
 6656 - ...		Data
 
@@ -96,64 +109,102 @@ K  A  N  J  I  6        F  N  T
 30 30 31 20 20 20 20 20 4D 45 53  4D 00  01      00 00
 ...
 */
-
 typedef struct {
-	byte  name[8];
-	byte  ext[3];
-	word  secini;
-	word  secsize;
-	byte  unused;
+	uint8_t  name[8];
+	uint8_t  ext[3];
+	uint16_t secini;
+	uint16_t secsize;
+	uint8_t  reserved;
 } advhDirentry_t;
 
 #pragma pack(pop)
 
+uint16_t    dskFormat = FORMAT_720;
+uint8_t    *dskimage;
+bootsec_t  *bootsec;
 
-byte *dskimage;
-bootsec_t *bootsec;
-
-byte *fat;
+uint8_t    *fat;
 direntry_t *rootdir;
-byte *cluster;
-dword disksize;
-dword fatelements;
-dword availsectors;
+uint8_t    *cluster;
+uint32_t    disksize;
+uint32_t    fatelements;
+uint32_t    availsectors;
+uint32_t    bytespercluster;
 
-byte isADVH = 0;
+uint8_t     isADVH = 0;
 advhDirentry_t *rootADVH;
 
 
+// Create a disk in memory of specified format
+void create_boot() {
+
+	//Copy default boot sector
+	bootsec = (bootsec_t *)malloc(512);
+	memcpy(bootsec, msxboot720, sizeof(msxboot720));
+
+
+	//Check format size & personalize boot params
+	switch (dskFormat) {
+		case 360:
+			bootsec->totalSectors = 720;
+			bootsec->mediaDescriptor = 0xF8;
+			bootsec->sectorsPerFAT = 2;
+			bootsec->numberOfHeads = 1;
+			break;
+		case 720:
+			break;
+		case 1440:
+			bootsec->sectorsPerCluster = 1;
+			bootsec->maxDirectoryEntries = 224;
+			bootsec->totalSectors = 2880;
+			bootsec->mediaDescriptor = 0xF0;
+			bootsec->sectorsPerFAT = 9;
+			bootsec->sectorsPerTrack = 18;
+			break;
+		case 2880:
+			bootsec->maxDirectoryEntries = 224;
+			bootsec->totalSectors = 5760;
+			bootsec->mediaDescriptor = 0xF0;
+			bootsec->sectorsPerFAT = 9;
+			bootsec->sectorsPerTrack = 36;
+			break;
+		default:
+			puts("ERROR bad format size. Only 360, 720, 1440, 2880 are supported!\n");
+			exit(1);
+	}
+}
 
 
 // Load the specified DSK file into memory
-void load_dsk (char *name, byte onlybootfat, byte error) {
+void load_dsk (char *name, uint8_t  onlybootfat, uint8_t  error) {
 	FILE *file;
-	bootsec_t boot;
 
 	file = fopen(name, "rb");
 
 	//Boot sector
 	if (file==NULL) {
-		memcpy(&boot, msxboot, sizeof(bootsec_t));
+		create_boot();
 	} else {
-		if (!fread(&boot, sizeof(bootsec_t), 1, file)) {
+		bootsec = (bootsec_t *)malloc(512);
+		if (!fread(bootsec, 512, 1, file)) {
 			printf("ERROR bad .DSK image\n");
 			exit (2);
 		}
 		rewind(file);
 	}
-	disksize = boot.bytesPerSector * boot.totalSectors;
-	bootsec = &boot;
+	disksize = bootsec->bytesPerSector * bootsec->totalSectors;
+	bytespercluster = bootsec->bytesPerSector*bootsec->sectorsPerCluster;
 
 	//Allocate memory for disk image
-	dskimage = (byte*) malloc(disksize);
+	dskimage = (uint8_t *) malloc(disksize);
 	memset(dskimage, 0, disksize);
 
 	fat = dskimage + bootsec->bytesPerSector * bootsec->reservedSectors;
 	rootdir = (direntry_t*) (fat + bootsec->bytesPerSector * (bootsec->sectorsPerFAT * bootsec->numberOfFATs));
-	cluster = (byte*)&(rootdir[bootsec->maxDirectoryEntries]);
+	cluster = (uint8_t *)&(rootdir[bootsec->maxDirectoryEntries]);
 	availsectors = bootsec->totalSectors - bootsec->reservedSectors - bootsec->sectorsPerFAT * bootsec->numberOfFATs;
 	availsectors -= bootsec->maxDirectoryEntries * sizeof(direntry_t) / bootsec->bytesPerSector;
-	fatelements = availsectors / 2;
+	fatelements = availsectors / bootsec->sectorsPerCluster;
 
 	if (file==NULL) {
 		if (error==ERROR) {
@@ -161,8 +212,8 @@ void load_dsk (char *name, byte onlybootfat, byte error) {
 			exit (2);
 		}
 		memset(dskimage, 0, disksize);
-		memcpy(dskimage, msxboot, 512);
-		fat[0]=0xF9;
+		memcpy(dskimage, bootsec, 512);
+		fat[0]=bootsec->mediaDescriptor;
 		fat[1]=0xFF;
 		fat[2]=0xFF;
 	} else {
@@ -230,18 +281,22 @@ void store_fat (uint16_t link, uint16_t next) {
 fileinfo_t *getfileinfo (uint16_t entrypos) {
 	fileinfo_t *file;
 	direntry_t *dir;
-	uint32_t i;
+	uint32_t    aux;
+	uint32_t    i;
 
 	dir = &rootdir[entrypos];
 
-	//Filtramos entradas
+	// Filter entries by name
+	char *name = (char *)dir->name;
 	for (i=0; i<11; i++) {
-		if (dir->name[i]<0x20 || dir->name[i]>=0x80) return NULL;
+		if (*name < 0x20 || *name >= 0x80) return NULL;
+		name++;
 	}
-	if (dir->cluini >= bootsec->totalSectors) return NULL;
+
+	if (dir->cluini >= bootsec->totalSectors / bootsec->sectorsPerCluster) return NULL;
 	if (dir->fsize >= disksize) return NULL;
 
-	//Obtenemos datos
+	// Fill fileinfo struct
 	file = (fileinfo_t*) malloc (sizeof(fileinfo_t));
 	for (i=0; i<8; i++)
 		file->name[i] = dir->name[i]==0x20?0:dir->name[i];
@@ -253,15 +308,15 @@ fileinfo_t *getfileinfo (uint16_t entrypos) {
 
 	file->size = dir->fsize;
 
-	i = dir->mtime;
-	file->sec=(i&0x1F)<<1;
-	file->min=(i>>5)&0x3F;
-	file->hour=i>>11;
+	aux = dir->mtime;
+	file->sec = (aux & 0x1F)<<1;
+	file->min = (aux >> 5)&0x3F;
+	file->hour = (aux >> 11);
 
-	i = dir->mdate;
-	file->day=i&0x1F;
-	file->month=(i>>5)&0xF;
-	file->year=1980+(i>>9);
+	aux = dir->mdate;
+	file->day = (aux & 0x1F);
+	file->month = (aux >> 5) & 0xF;
+	file->year = 1980 + (aux >> 9);
 
 	file->first = dir->cluini;
 	file->pos=entrypos;
@@ -295,33 +350,40 @@ fileinfo_t *getfileinfoadvh(uint16_t entrypos) {
 }
 
 // Calculate the available space on the DSK
-int bytes_free (void) {
-	uint16_t i;
-	uint16_t avail=0;
+uint32_t bytes_free (void) {
+	uint32_t avail=0;
+	uint32_t i;
 
 	for (i=2; i<2+fatelements; i++) {
 		if (!next_link(i)) avail++;
 	}
-	return avail*1024;
+	return avail*bytespercluster;
 }
 
-// List the directory of a DSK
+// List the root directory of a DSK
 void list_dsk (void) {
-	uint32_t i;
+	int i, num = 0;
 	fileinfo_t *file;
 	char name[20],date[30],time[30],size[30],attrib[5];
 
+	// Print Disk Volume Name
 	for (i=0; i<8; i++)
 		name[i]=dskimage[3+i];
 	name[8]=0;
-	printf ("Name of volume:   %s\n\n",name);
+	printf ("Volume Name:  %s\n\n",name);
+
+	puts ("Name         Bytes    Date       Time     Attr\n"
+		  "============ ======== ========== ======== ====");
+
+	// Iteract all entries in the root directory table
 	for (i=0; i<bootsec->maxDirectoryEntries; i++) {
-		file = getfileinfo (i);    
+		file = getfileinfo(i);
 		if (file != NULL) {
+			num++;
 			if (file->ext[0]) 
 				sprintf (name,"%s.%s",file->name,file->ext);
 			else
-				strcpy (name,file->name);
+				strcpy (name, file->name);
 			sprintf (size,"%7u",file->size);
 			if (file->attr&0x8) strcpy (size,"  <VOL>");
 			if (file->attr&0x10) strcpy (size,"  <DIR>");
@@ -332,6 +394,10 @@ void list_dsk (void) {
 			free (file);
 		}
 	}
+	if (!num) {
+		puts("*** Disk is empty ***");
+	}
+	puts("============ ======== ========== ======== ====");
 	printf ("\n%u bytes free\n\n",bytes_free ());
 }
 
@@ -348,7 +414,7 @@ void list_advhdsk (void) {
 	for (i=0; i<190; i++) {
 		file = getfileinfoadvh(i);
 		if (file->name[0]==0xFF) break;
-		printf ("%-8s.%-3s   [DiskOffset:%7d]  %7u bytes\n", file->name, file->ext, file->first, file->size);
+		printf ("%-8s.%-3s   [Diskfile Offset:%7d]  %7u bytes\n", file->name, file->ext, file->first, file->size);
 	}
 	puts("");
 }
@@ -356,7 +422,7 @@ void list_advhdsk (void) {
 // Find the directory entry matching the supplied filename
 int match (fileinfo_t *file, char *name) {
 	char *p=file->name;
-	byte status=0;
+	uint8_t  status=0;
 	uint16_t i;
 
 	//name (8 chars)
@@ -377,7 +443,7 @@ int match (fileinfo_t *file, char *name) {
 		return 0;
 
 	//ext (3 chars)
-	p=file->ext;
+	p = file->ext;
 	if (!*name && !*p) return 1;
 	if (*name++!='.') return 0;
 	for (i=0; i<3; i++) {
@@ -412,10 +478,10 @@ void parse_tree (char *name, void (*action)(fileinfo_t *)) {
 
 // Search the directory for a specified file or a default wildcard search
 void parse_dsk (int argc, char **argv, void (*action)(fileinfo_t *)) {
-	uint32_t i;
+	int i;
 
 	if (argc==3) {
-		parse_tree((char*)"*.*", action);
+		parse_tree((char *)"*.*", action);
 	} else {
 		for (i=3; i<argc; i++) {
 			parse_tree(argv[i], action);
@@ -425,24 +491,24 @@ void parse_dsk (int argc, char **argv, void (*action)(fileinfo_t *)) {
 
 // Extract a file from the DSK
 void extract (fileinfo_t *file) {
-	byte *buffer,*p;
+	uint8_t  *buffer,*p;
 	FILE *fileid;
 	char name[20];
 	uint16_t current;
 
 	printf ("extracting %s.%s\n",file->name,file->ext);
-	buffer = (byte*) malloc ((file->size+1023)&(~1023));
+	buffer = (uint8_t *) malloc ((file->size+bytespercluster-1)&(~(bytespercluster-1)));
 	memset (buffer,0x1a,file->size);
 	if (file->ext[0]) 
 		sprintf (name,"%s.%s",file->name,file->ext);
 	else
-		strcpy (name,file->name);
+		strcpy (name, file->name);
 	fileid = fopen (name, "w+b");
 	current=file->first;
 	p=buffer;
 	do {
-		memcpy (p,cluster+(current-2)*1024,1024);
-		p+=1024;
+		memcpy (p,cluster+(current-2)*bytespercluster, bytespercluster);
+		p += bytespercluster;
 		current=next_link (current);
 	} while (current!=0xFFF);
 	fwrite (buffer, file->size, 1, fileid);
@@ -459,7 +525,7 @@ void extract_advh (fileinfo_t *file) {
 	if (file->ext[0]) 
 		sprintf (name,"%s.%s",file->name,file->ext);
 	else
-		strcpy (name,file->name);
+		strcpy (name, file->name);
 	fileid = fopen (name, "w+b");
 	fwrite (&dskimage[file->first], file->size, 1, fileid);
 	fclose (fileid);
@@ -467,19 +533,13 @@ void extract_advh (fileinfo_t *file) {
 
 // Show file clusters info from the DSK
 void file_clusters_info (fileinfo_t *file) {
-	byte *buffer,*p;
-	FILE *fileid;
-	char name[20];
-	uint16_t current;
+	uint16_t current = file->first;
+	long offset;
 
 	printf ("File info for %s.%s (%d bytes)\n", file->name, file->ext, file->size);
-	current=file->first;
-	p=buffer;
-	long bytespercluster = bootsec->bytesPerSector*bootsec->sectorsPerCluster;
-	long offset;
 	do {
-		offset = cluster-dskimage+current*bytespercluster;
-		printf("  Cluster: %04Xh (%dd) DiskOffset: %ld-%ld\n", current, current, offset, offset+bytespercluster-1);
+		offset = cluster-dskimage+(current-2)*bytespercluster;
+		printf("  Cluster: %04Xh (%d) | Diskfile Offset: %04lXh-%04lXh (%ld-%ld)\n", current, current, offset, offset+bytespercluster-1, offset, offset+bytespercluster-1);
 		current=next_link (current);
 	} while (current!=0xFFF);
 	printf("\n");
@@ -526,7 +586,7 @@ int get_free (void) {
 // Get the next free sector
 int get_next_free (void) {
 	uint32_t i;
-	byte status=0;
+	uint8_t  status=0;
 
 	for (i=2; i<2+fatelements; i++) {
 		if (!next_link (i)) {
@@ -543,20 +603,21 @@ int get_next_free (void) {
 // Add a single file to the DSK
 void add_single_file(char *name, char *pathname) {
 	FILE       *fileid;
-	uint32_t   i;
-	uint32_t   total;
-	byte       found=0;
+	uint32_t    i;
+	uint32_t    total;
+	uint8_t     found=0;
 	fileinfo_t *file;
 	direntry_t *dir;
-	byte       *buffer, *buffaux;
-	uint32_t   size;
+	uint8_t    *buffer, *buffaux;
+	uint32_t    size;
 	struct stat attr;
-	struct tm  ti;
-	uint32_t   first;
-	uint32_t   current;
-	uint32_t   next;
-	char *p;
-	char fullname[250];
+	struct tm   ti;
+	uint32_t    first;
+	uint32_t    current;
+	uint32_t    next;
+	size_t      read;
+	char       *p;
+	char        fullname[250];
 
 	sprintf(fullname, "%s/%s", pathname, name);
 
@@ -604,17 +665,23 @@ void add_single_file(char *name, char *pathname) {
 	}
 
 	//Reading data file
-	buffer = buffaux = (byte*) malloc((size+1023)&(~1023));
-	fread (buffer, 1, size, fileid);
+	uint32_t bufsize = (size+bytespercluster-1)&(~(bytespercluster-1));
+	buffer = buffaux = (uint8_t *) malloc(bufsize);
+	memset(buffer, 0, bufsize);
+	read = fread (buffer, 1, size, fileid);
+	if (read != size) {
+		printf("ERROR reading file '%s'\n", name);
+		exit(0);
+	}
 	fclose (fileid);
 
-	total=(size+1023)>>10;
+	total=(size+bytespercluster-1)/bytespercluster;
 	current=first=get_free ();
 
 	//Saving data to DSK clusters
 	for (i=0; i<total;) {
-		memcpy(cluster+(current-2)*1024, buffaux, 1024);
-		buffaux+=1024;
+		memcpy(cluster+(current-2)*bytespercluster, buffaux, bytespercluster);
+		buffaux+=bytespercluster;
 		if (++i==total)
 			next=0xFFF;
 		else
@@ -664,7 +731,7 @@ void add_files(char *name) {
 
 // Add files from an argument list to the DSK
 void add_to_dsk (int argc, char **argv) {
-	uint32_t i;
+	int i;
   
 	for (i=3; i<argc; i++) {
 		add_files(argv[i]);
@@ -674,34 +741,40 @@ void add_to_dsk (int argc, char **argv) {
 // Show floppy disk info
 void show_info() {
 	printf("BOOT SECTOR INFO:\n");
-	printf("  OEM Name............... %8s\n", bootsec->oemname);
-	printf("  Bytes x Sector......... % 5d bytes\n", bootsec->bytesPerSector);
-	printf("  Sectors x Cluster...... % 5d sectors\n", bootsec->sectorsPerCluster);
-	printf("  Reserved Sectors....... % 5d sectors\n", bootsec->reservedSectors);
-	printf("  Number of FATs......... % 5d\n", bootsec->numberOfFATs);
-	printf("  Max root entries....... % 5d files\n", bootsec->maxDirectoryEntries);
-	printf("  Total Sectors.......... % 5d sectors\n", bootsec->totalSectors);
-	printf("  Media descriptor.......   %02Xh\n", bootsec->mediaDescriptor);
-	printf("  Sectors x FAT.......... % 5d sectors\n", bootsec->sectorsPerFAT);
-	printf("  Sectors x Track........ % 5d sectors\n", bootsec->sectorsPerTrack);
-	printf("  Number of Heads........ % 5d heads\n", bootsec->numberOfHeads);
-	printf("  Hidden Sectors......... % 5d sectors\n", bootsec->hiddenSectors);
-	printf("  Entry Point MSX-DOS1...   %02Xh %02Xh\n", bootsec->entryMSXDOS1[0], bootsec->entryMSXDOS1[1]);
+	printf("    OEM Name...............   \"%8s\"\n", bootsec->oemname);
+	printf("  BIOS PARAMETER BLOCK:\n");
+	printf("    Bytes x Sector......... % 5d bytes\n", bootsec->bytesPerSector);
+	printf("    Sectors x Cluster...... % 5d sectors\n", bootsec->sectorsPerCluster);
+	printf("    Reserved Sectors....... % 5d sectors\n", bootsec->reservedSectors);
+	printf("    Number of FATs......... % 5d\n", bootsec->numberOfFATs);
+	printf("    Max root entries....... % 5d files\n", bootsec->maxDirectoryEntries);
+	printf("    Total Sectors.......... % 5d sectors\n", bootsec->totalSectors);
+	printf("    Media descriptor.......   %02Xh\n", bootsec->mediaDescriptor);
+	printf("    Sectors x FAT.......... % 5d sectors\n", bootsec->sectorsPerFAT);
+	printf("    Sectors x Track........ % 5d sectors\n", bootsec->sectorsPerTrack);
+	printf("    Number of Heads........ % 5d heads\n", bootsec->numberOfHeads);
+	printf("    Hidden Sectors......... % 5d sectors\n", bootsec->hiddenSectors);
 	printf("\n");
 
 	long fatini = fat - dskimage;
 	long fatsize = bootsec->sectorsPerFAT * bootsec->bytesPerSector;
-	long rootini = (byte*)rootdir-dskimage;
+
+	long rootini = (uint8_t *)rootdir-dskimage;
 	long clusterini = cluster - dskimage;
 
 	printf("Boot sector offset.........       0 (size: 512 bytes)\n");
 	printf("FAT#1 offset............... %7ld-%ld (size: %ld bytes)\n", fatini, fatini+fatsize-1, fatsize);
+
 	if (bootsec->numberOfFATs > 1) {
 		printf("FAT#2 offset............... %7ld-%ld (size: %ld bytes) ", fatini+fatsize, fatini+fatsize*2-1, fatsize);
-		if (!memcpy(dskimage+fatini, dskimage+fatini+fatsize, fatsize))
-			printf("[OK same as FAT#1]\n");
-		else
+		char fatfail = 0;
+		for (int i=0; i<fatsize; i++) {
+			if (dskimage[fatini+i] != dskimage[fatini+fatsize+i]) fatfail++;
+		}
+		if (fatfail)
 			printf("[ERROR not equal FATs]\n");
+		else
+			printf("[OK identical FAT copy]\n");
 	}
 	printf("Root dir offset............ %7ld-%ld (size: %ld bytes)\n", rootini, clusterini-1, clusterini-rootini);
 	printf("Clusters offset............ %7ld-%ld (size: %ld bytes)\n", clusterini, (long)disksize-1, disksize-clusterini);
@@ -711,41 +784,53 @@ void show_info() {
 
 // Application entry point
 int main (int argc, char **argv) {
-	printf("DskTool v1.30 (C) 1998 by Ricardo Bittencourt\n"
-	       "Utility to manage MSX DOS 1.0 diskette images (3.5\"360/720Kb).\n"
-	       "(2010) Updated by Tony Cruise\n"
-	       "(2017) Updated by NataliaPC\n"
-	       "This file is under GNU GPL, read COPYING for details\n\n");
+	puts("DskTool v1.40 (C) 1998 by Ricardo Bittencourt\n"
+	     "Utility to manage MSX DOS 1.0 diskette images (3.5\"360/720Kb).\n"
+	     "(2010) Updated by Tony Cruise\n"
+	     "(2017-2019) Updated by NataliaPC\n"
+	     "This file is under GNU GPL, read COPYING for details\n");
 
 	if (argc<3) {
-		printf("Usage: dsktool <command> <DSK_file> [files]\n"
-			   "\n"
-		       "Commands:\n"
-		       "\ti      Show floppy info\n"
-		       "\tl[h]   List contents of .DSK\n"
-		       "\te[h]   Extract files from .DSK\n"
-		       "\ta[h]   Add files to .DSK\n"
-		       "\td      Delete files from .DSK\n"
-		       "\tf      File clusters info\n"
-		       "\to[h]   Get file info for a raw disk offset\n"
-		       "\n"
-		       "    Note: optional [H] suffix change to ADVH filesystem mode.\n"
-		       "\n"
-		       "Examples:\n"
-		       "\tdsktool i TALKING.DSK\n"
-		       "\tdsktool l TALKING.DSK\n"
-		       "\tdsktool lh DRAGON.DSK\n"
-		       "\tdsktool e TALKING.DSK FUZZ*.*\n"
-		       "\tdsktool a TALKING.DSK MSXDOS.SYS COMMAND.COM\n"
-		       "\tdsktool ah DRAGON.DSK M*.COM\n"
-		       "\tdsktool d TALKING.DSK *.BAS *.BIN\n"
-		       "\tdsktool f TALKING.DSK FILE.EXT\n"
-		       "\tdsktool o TALKING.DSK 307712\n"
-		       "\n");
+		puts("Usage: dsktool <command> [option] <DSK_file> [files]\n"
+			 "\n"
+		     "Commands:\n"
+		     "\tc N   Create a floppy image [where N:360,720,1440,2880]\n"
+		     "\ti     Show floppy info\n"
+		     "\tl[h]  List contents of .DSK\n"
+		     "\te[h]  Extract files from .DSK\n"
+		     "\ta[h]  Add files to .DSK\n"
+		     "\td     Delete files from .DSK\n"
+		     "\tf     File clusters info\n"
+		     "\to[h]  Get file info for a raw disk offset\n"
+		     "\n"
+		     "    Note: optional [H] suffix change to ADVH filesystem mode.\n"
+		     "\n"
+		     "Examples:\n"
+		     "\tdsktool c 360 TALKING.DSK\n"
+		     "\tdsktool i TALKING.DSK\n"
+		     "\tdsktool l TALKING.DSK\n"
+		     "\tdsktool lh DRAGON.DSK\n"
+		     "\tdsktool e TALKING.DSK FUZZ*.*\n"
+		     "\tdsktool a TALKING.DSK MSXDOS.SYS COMMAND.COM\n"
+		     "\tdsktool ah DRAGON.DSK M*.COM\n"
+		     "\tdsktool d TALKING.DSK *.BAS *.BIN\n"
+		     "\tdsktool f TALKING.DSK FILE.EXT\n"
+		     "\tdsktool o TALKING.DSK 307712\n"
+		     "\n");
 		exit (1);
 	}
 	isADVH = (toupper(argv[1][1])=='H');
 	switch (toupper(argv[1][0])) {
+		case 'C':
+			if (isADVH) {
+				puts("CH Not supported");
+			} else {
+				dskFormat = atoi(argv[2]);
+				load_dsk(NULL, READ_ALL, NO_ERROR);
+				flush_dsk(argv[3]);
+			}
+			puts("*** New Disk image created ***\n");
+			break;
 		case 'L':
 			load_dsk(argv[2], READ_BOOTFAT, ERROR);
 			if (isADVH) {
