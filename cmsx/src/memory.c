@@ -10,11 +10,11 @@ u16 g_StackAddress;
 
 //-----------------------------------------------------------------------------
 /// Get the current address of the stack top (lower address)
-u16 Mem_GetStackAddress() __sdcccall(0)
+u16 Mem_GetStackAddress()
 {
 	__asm
 		ld		(_g_StackAddress), sp
-		ld		hl, (_g_StackAddress)
+		ld		de, (_g_StackAddress)
 	__endasm;
 }
 
@@ -34,7 +34,7 @@ u16 Mem_GetHeapSize()
 
 //-----------------------------------------------------------------------------
 /// Allocate a part of the heap
-void* Mem_HeapAlloc(u16 size) __FASTCALL
+void* Mem_HeapAlloc(u16 size)
 { 
 	u16 addr = g_HeapStartAddress;
 	g_HeapStartAddress += size;
@@ -43,7 +43,7 @@ void* Mem_HeapAlloc(u16 size) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Free the last allocated area of the heap
-void Mem_HeapFree(u16 size) __FASTCALL
+void Mem_HeapFree(u16 size)
 {
 	g_HeapStartAddress -= size;	
 }

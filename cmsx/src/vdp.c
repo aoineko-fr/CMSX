@@ -827,7 +827,7 @@ u8 VDP_ReadStatus(u8 stat) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Enable/disable grayscale [MSX2/2+/TR]
 /// @param		enable		True to enable, false do disable
-void VDP_SetGrayScale(bool enable) __FASTCALL
+void VDP_SetGrayScale(bool enable)
 {
 	u8 reg = g_VDP_REGSAV[8];
 	reg &= ~R08_BW;
@@ -839,7 +839,7 @@ void VDP_SetGrayScale(bool enable) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Change VDP frequency (50/60 Hz) [MSX2/2+/TR]
 /// @param		freq		Can be VDP_FREQ_50HZ or VDP_FREQ_60HZ
-void VDP_SetFrequency(u8 freq) __FASTCALL
+void VDP_SetFrequency(u8 freq)
 {
 	u8 reg = g_VDP_REGSAV[9];
 	reg &= ~R09_NT;
@@ -850,7 +850,7 @@ void VDP_SetFrequency(u8 freq) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Enable/disable horizontal-blank interruption [MSX2/2+/TR]
 /// @param		enable		True to enable, false do disable
-void VDP_EnableHBlank(bool enable) __FASTCALL
+void VDP_EnableHBlank(bool enable)
 {
 	u8 reg = g_VDP_REGSAV[0];
 	reg &= ~R00_IE1;
@@ -862,7 +862,7 @@ void VDP_EnableHBlank(bool enable) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Set the horizontal-blank interruption line (in pixel) [MSX2/2+/TR]
 /// @param		line		Line number where the interruption will occure
-void VDP_SetHBlankLine(u8 line) __FASTCALL
+void VDP_SetHBlankLine(u8 line)
 {
 	VDP_RegWrite(19, line);
 }
@@ -870,14 +870,14 @@ void VDP_SetHBlankLine(u8 line) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Set the vertical rendeing offset (in pixel) [MSX2/2+/TR]
 /// @param		offset		Number of lines of offset from the "normal" top of the screen
-void VDP_SetVerticalOffset(u8 offset) __FASTCALL
+void VDP_SetVerticalOffset(u8 offset)
 {
 	VDP_RegWrite(23, offset);
 }
 
 //-----------------------------------------------------------------------------
 /// Adjustment of the display location on the screen [MSX2/2+/TR]
-void VDP_SetAdjustOffset(u8 offset) __FASTCALL
+void VDP_SetAdjustOffset(u8 offset)
 {
 	VDP_CommandWait(); // @todo Check if it's really needed. Cf. https://www.msx.org/wiki/VDP_Display_Registers#Control_Register_18
 	VDP_RegWrite(18, offset);
@@ -970,7 +970,7 @@ void VDP_SetPaletteEntry(u8 index, u16 color)
 //-----------------------------------------------------------------------------
 /// Set line count for the current screen mode [MSX2/2+/TR]
 /// @param		lines		Can be VDP_LINE_192 or VDP_LINE_212
-void VDP_SetLineCount(u8 lines) __FASTCALL
+void VDP_SetLineCount(u8 lines)
 {
 	u8 reg = g_VDP_REGSAV[9];
 	reg &= ~R09_LN;
@@ -981,7 +981,7 @@ void VDP_SetLineCount(u8 lines) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Enable or disable interlace mode [MSX2/2+/TR]
 /// @param		enable		True to enable, false do disable
-void VDP_SetInterlace(bool enable) __FASTCALL
+void VDP_SetInterlace(bool enable)
 {
 	u8 reg = g_VDP_REGSAV[9];
 	reg &= ~R09_IL;
@@ -993,7 +993,7 @@ void VDP_SetInterlace(bool enable) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Enable automatic page switch on even/odd frames [MSX2/2+/TR]
 /// @param		enable		True to enable, false do disable
-void VDP_SetPageAlternance(bool enable) __FASTCALL
+void VDP_SetPageAlternance(bool enable)
 {
 	u8 reg = g_VDP_REGSAV[9];
 	reg &= ~R09_EO;
@@ -1305,7 +1305,7 @@ void VPD_CommandWriteLoop(const u8* addr) __FASTCALL
 //-----------------------------------------------------------------------------
 /// Set the current screen mode
 /// @param 		mode		The new screen mode to set (@see VDP_MODE enum)
-void VDP_SetMode(const u8 mode) __FASTCALL
+void VDP_SetMode(const u8 mode)
 {
 	g_VDP_Data.Mode = mode;
 	switch(mode)
@@ -1425,7 +1425,7 @@ void VDP_SetMode(const u8 mode) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Tell if the given screen mode is a bitmap mode (text mode otherwise)
-bool VDP_IsBitmapMode(const u8 mode) __FASTCALL
+bool VDP_IsBitmapMode(const u8 mode)
 {
 #if (MSX_VERSION == MSX_1)
 	return false;
@@ -1583,7 +1583,7 @@ u8 VDP_ReadDefaultStatus()
 
 //-----------------------------------------------------------------------------
 // Enable/disable vertical interruption
-void VDP_EnableVBlank(bool enable) __FASTCALL
+void VDP_EnableVBlank(bool enable)
 {
 	u8 reg = g_VDP_REGSAV[1];
 	reg &= ~R01_IE0;
@@ -1594,7 +1594,7 @@ void VDP_EnableVBlank(bool enable) __FASTCALL
 
 //-----------------------------------------------------------------------------
 // Enable/disable screen display
-void VDP_EnableDisplay(bool enable) __FASTCALL
+void VDP_EnableDisplay(bool enable)
 {
 	u8 reg = g_VDP_REGSAV[1];
 	reg &= ~R01_BL;
@@ -1604,25 +1604,15 @@ void VDP_EnableDisplay(bool enable) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-// Set current VRAM page
-void VDP_SetPage(u8 page) __FASTCALL
-{
-	u8 reg = g_VDP_REGSAV[2];
-	reg &= 0x9F;
-	reg |= page << 5;
-	VDP_RegWriteBak(2, reg);
-}
-
-//-----------------------------------------------------------------------------
 // Set text and border default color
-void VDP_SetColor(u8 color) __FASTCALL
+void VDP_SetColor(u8 color)
 {
 	VDP_RegWrite(7, color);
 }
 
 //-----------------------------------------------------------------------------
 /// Set layout table VRAM address
-void VDP_SetLayoutTable(VADDR addr) __FASTCALL
+void VDP_SetLayoutTable(VADDR addr)
 {
 	g_ScreenLayoutLow = (u16)addr;
 
@@ -1652,7 +1642,7 @@ void VDP_SetLayoutTable(VADDR addr) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Set color table VRAM address
-void VDP_SetColorTable(VADDR addr) __FASTCALL
+void VDP_SetColorTable(VADDR addr)
 {
 	g_ScreenColorLow = (u16)addr;
 	
@@ -1682,7 +1672,7 @@ void VDP_SetColorTable(VADDR addr) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Set pattern table VRAM address
-void VDP_SetPatternTable(VADDR addr) __FASTCALL
+void VDP_SetPatternTable(VADDR addr)
 {
 	g_ScreenPatternLow = (u16)addr;
 
@@ -1713,7 +1703,7 @@ void VDP_SetPatternTable(VADDR addr) __FASTCALL
 #if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Enable/disable sprite rendering
-void VDP_EnableSprite(u8 enable) __FASTCALL
+void VDP_EnableSprite(u8 enable)
 {
 	u8 reg = g_VDP_REGSAV[8];
 	reg &= ~R08_SPD;
@@ -1725,7 +1715,7 @@ void VDP_EnableSprite(u8 enable) __FASTCALL
 
 //-----------------------------------------------------------------------------
 /// Set sprite parameters
-void VDP_SetSpriteFlag(u8 flag) __FASTCALL
+void VDP_SetSpriteFlag(u8 flag)
 {
 	u8 reg = g_VDP_REGSAV[1];
 	reg &= ~(R01_ST | R01_MAG);
@@ -1740,7 +1730,7 @@ void VDP_SetSpriteFlag(u8 flag) __FASTCALL
 /// Set sprite attribute table address
 /// @param		addr		VRAM address where to place the table (16 or 17-bits long depending on VDP_VRAM_ADDR definition)
 ///							Address must be a multiple of 80h for MSX1 screen modes and  multiple of 200h for MSX2 ones.
-void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL
+void VDP_SetSpriteAttributeTable(VADDR addr)
 {
 	g_SpriteAtributeLow = (u16)addr;
 	
@@ -1778,7 +1768,7 @@ void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL
 /// Set sprite pattern table address
 /// @param		addr		VRAM address where to place the table (16 or 17-bits long depending on VDP_VRAM_ADDR definition)
 ///							Address must be a multiple of 800h.
-void VDP_SetSpritePatternTable(VADDR addr) __FASTCALL
+void VDP_SetSpritePatternTable(VADDR addr)
 {
 	g_SpritePatternLow  = (u16)addr;
 	#if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_17)
@@ -1836,6 +1826,7 @@ void VDP_SetSprite(u8 index, u8 x, u8 y, u8 shape)
 	VDP_WriteVRAM((u8*)&g_VDP_Sprite, low, g_SpriteAtributeHigh, 3);
 }
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Set sprite attribute for Sprite Mode 2 and fill color table with color data
 void VDP_SetSpriteExMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram)
@@ -1867,6 +1858,7 @@ void VDP_SetSpriteExUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color)
 	attr += (index * 4);
 	VDP_WriteVRAM((u8*)&g_VDP_Sprite, attr, g_SpriteAtributeHigh, 3);
 }
+#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 /// Update sprite position
@@ -1913,6 +1905,7 @@ void VDP_SetSpriteColorSM1(u8 index, u8 color)
 	VDP_WriteVRAM((u8*)&g_VDP_Sprite.Pattern, low, g_SpriteAtributeHigh, 1);
 }
 
+#if (MSX_VERSION >= MSX_2)
 //-----------------------------------------------------------------------------
 /// Update sprite color (Uni-color)
 void VDP_SetSpriteUniColor(u8 index, u8 color)
@@ -1939,10 +1932,11 @@ void VDP_SetSpriteData(u8 index, const u8* data)
 	low += (index * 4);
 	VDP_WriteVRAM(data, low, g_SpriteAtributeHigh, 3);
 }
+#endif // (MSX_VERSION >= MSX_2)
 
 //-----------------------------------------------------------------------------
 ///
-void VDP_HideSpriteFrom(u8 index) __FASTCALL
+void VDP_HideSpriteFrom(u8 index)
 {
 	u8 y = VDP_SPRITE_DISABLE_SM1;
 	#if (MSX_VERSION >= MSX_2)
@@ -1994,7 +1988,7 @@ void VDP_SendSpriteAttribute(u8 index) __FASTCALL
 
 //-----------------------------------------------------------------------------
 ///
-void VDP_FillScreen_GM2(u8 value) __FASTCALL
+void VDP_FillScreen_GM2(u8 value)
 {
 	VDP_FillVRAM(value, g_ScreenLayoutLow, g_ScreenLayoutHigh, 32*24);
 }

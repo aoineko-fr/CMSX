@@ -68,7 +68,7 @@ extern u16 g_HeapStartAddress;
 struct Print_Data g_PrintData;
 
 /// Table use to quick decimal-to-hexadecimal conversion
-static const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+static const c8 g_HexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 #if (USE_PRINT_VALIDATOR)
 /// Character use by character validator to show invalid character
@@ -92,6 +92,9 @@ u8 g_PrintInvalid[] =
 //
 //-----------------------------------------------------------------------------
 
+#if ((USE_PRINT_BITMAP) || (USE_PRINT_SPRITE))
+
+#if (USE_PRINT_VALIDATOR)
 /// Slit color from merged colors
 u8 Print_SplitColor(u8 color) __FASTCALL
 {
@@ -117,6 +120,7 @@ u8 Print_SplitColor(u8 color) __FASTCALL
 	}
 	return color;
 }
+#endif // (USE_PRINT_VALIDATOR)
 
 u8 Print_MergeColor(u8 color) __FASTCALL
 {
@@ -137,6 +141,7 @@ u8 Print_MergeColor(u8 color) __FASTCALL
 	}
 	return color;
 }
+#endif // ((USE_PRINT_BITMAP) || (USE_PRINT_SPRITE))
 
 //-----------------------------------------------------------------------------
 //
@@ -318,6 +323,7 @@ void Print_SetFont(const u8* font) __FASTCALL
 		Print_SetFontEx(font[0] >> 4, font[0] & 0x0F, font[1] >> 4, font[1] & 0x0F, font[2], font[3], font+4);
 }
 
+#if ((USE_PRINT_BITMAP) || (USE_PRINT_SPRITE))
 //-----------------------------------------------------------------------------
 /// Initialize color buffer
 void Print_InitColorBuffer(u8 t, u8 b)
@@ -372,6 +378,7 @@ void Print_InitColorBuffer(u8 t, u8 b)
 	#endif
 	}	
 }
+#endif // ((USE_PRINT_BITMAP) || (USE_PRINT_SPRITE))
 
 //-----------------------------------------------------------------------------
 /// Set the draw color
@@ -1139,16 +1146,6 @@ void Print_DrawText(const c8* str) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-/// Print a character string many times
-/// @param		chr			String to draw (must be null-terminated)
-/// @param		num			Number of drawing
-void Print_DrawTextX(const c8* str, u8 num)
-{
-	for(u8 i = 0; i < num; ++i)
-		Print_DrawText(str);	
-}
-
-//-----------------------------------------------------------------------------
 /// Print a 8-bits binary value
 /// @param		value		Value to print
 void Print_DrawBin8(u8 value) __FASTCALL
@@ -1170,8 +1167,8 @@ void Print_DrawBin8(u8 value) __FASTCALL
 /// @param		value		Value to print
 void Print_DrawHex8(u8 value) __FASTCALL
 {
-	Print_DrawChar(hexChar[(value >> 4) & 0x000F]);
-	Print_DrawChar(hexChar[value & 0x000F]);
+	Print_DrawChar(g_HexChar[(value >> 4) & 0x000F]);
+	Print_DrawChar(g_HexChar[value & 0x000F]);
 	#if (USE_PRINT_UNIT)
 		Print_DrawChar('h');
 	#endif
@@ -1182,8 +1179,8 @@ void Print_DrawHex8(u8 value) __FASTCALL
 /// @param		value		Value to print
 void Print_DrawHex16(u16 value) __FASTCALL
 {
-	Print_DrawChar(hexChar[(value >> 12) & 0x000F]);
-	Print_DrawChar(hexChar[(value >> 8) & 0x000F]);
+	Print_DrawChar(g_HexChar[(value >> 12) & 0x000F]);
+	Print_DrawChar(g_HexChar[(value >> 8) & 0x000F]);
 	Print_DrawHex8((u8)value);
 }
 

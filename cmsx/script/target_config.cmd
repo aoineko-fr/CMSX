@@ -1,5 +1,6 @@
 set MapperSize=0
 set DOS=0
+if not defined ROMSize set ROMSize=128
 
 if /I %Target%==DOS			set Target=DOS2
 if /I %Target%==DOS_ARG		set Target=DOS2_ARG
@@ -152,77 +153,85 @@ rem ***************************************************************************
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_ASCII8 (
 
+	set Mapper=ROM_ASCII8
+	set Target=ROM_ASCII8_%ROMSize%K
 	set Ext=rom
 	set Crt0=crt0_rom_mapper
 	set StartAddr=4000
 	set CodeAddr=4010
 	set RamAddr=C000
 	set /A FillSize=32*1024
-	set /A MapperSize=128*1024
+	set /A MapperSize=%ROMSize%*1024
 	set /A SegSize=8*1024
 	set Bank0Addr=4000
 	set Bank1Addr=6000
 	set Bank2Addr=8000
 	set Bank3Addr=A000
 
-	echo » Target: 128KB ROM using ASCII-8 mapper ^(starting at 4000h^)
+	echo » Target: %ROMSize%KB ROM using ASCII-8 mapper ^(starting at 4000h^)
 	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_ASCII16 (
 
+	set Mapper=ROM_ASCII16
+	set Target=ROM_ASCII16_%ROMSize%K
 	set Ext=rom
 	set Crt0=crt0_rom_mapper
 	set StartAddr=4000
 	set CodeAddr=4010
 	set RamAddr=C000
 	set /A FillSize=32*1024
-	set /A MapperSize=128*1024
+	set /A MapperSize=%ROMSize%*1024
 	set /A SegSize=16*1024
 	set Bank0Addr=6000
 	set Bank1Addr=77FF
 	set Bank2Addr=0
 	set Bank3Addr=0
 
-	echo » Target: 128KB ROM using ASCII-16 mapper ^(starting at 4000h^)
+	echo » Target: %ROMSize%KB ROM using ASCII-16 mapper ^(starting at 4000h^)
 	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_KONAMI (
 
+	set Mapper=ROM_KONAMI
+	set Target=ROM_KONAMI_%ROMSize%K
 	set Ext=rom
 	set Crt0=crt0_rom_mapper
 	set StartAddr=4000
 	set CodeAddr=4010
 	set RamAddr=C000
 	set /A FillSize=32*1024
-	set /A MapperSize=128*1024
+	set /A MapperSize=%ROMSize%*1024
 	set /A SegSize=8*1024
 	set Bank0Addr=0
 	set Bank1Addr=6000
 	set Bank2Addr=8000
 	set Bank3Addr=A000
 
-	echo » Target: 128KB ROM using KONAMI mapper ^(starting at 4000h^)
+	echo » Target: %ROMSize%KB ROM using KONAMI mapper ^(starting at 4000h^)
 	exit /B 0
 )
 rem ---------------------------------------------------------------------------
 if /I %Target%==ROM_KONAMI_SCC (
 
+	set Mapper=ROM_KONAMI_SCC
+	set Target=ROM_KONAMI_SCC_%ROMSize%K
 	set Ext=rom
 	set Crt0=crt0_rom_mapper
 	set StartAddr=4000
 	set CodeAddr=4010
 	set RamAddr=C000
 	set /A FillSize=32*1024
-	set /A MapperSize=128*1024
+	set /A MapperSize=%ROMSize%*1024
 	set /A SegSize=8*1024
 	set Bank0Addr=5000
 	set Bank1Addr=7000
 	set Bank2Addr=9000
 	set Bank3Addr=B000
 
-	echo » Target: 128KB ROM using KONAMI SCC mapper ^(starting at 4000h^)
+	echo » Target: %ROMSize%KB ROM using KONAMI SCC mapper ^(starting at 4000h^)
 	exit /B 0
 )
 
@@ -273,6 +282,5 @@ if /I %Target%==DOS2_ARG (
 	exit /B 0
 )
 
-
 echo %RED% Error^! Unknow target %Target%%RESET%
-exit /b 66
+exit /b 1

@@ -14,7 +14,12 @@ rem ***************************************************************************
 set SDCC=%ToolsDir%\SDCC\bin
 set Hex2Bin=%ToolsDir%\Hex2bin\hex2bin.exe
 set FillFile=%ToolsDir%\MakeROM\fillfile.exe
-set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
+REM set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
+REM set Emulator=D:\Jeux\MSX\Emulator\BlueMSX\blueMSX.exe
+set Emulator=%ToolsDir%\Emulicious\Emulicious.exe
+REM set Emulator=D:\Jeux\MSX\Emulator\MESEI\MESEI.exe
+REM set Emulator=%ToolsDir%\fMSX\fMSX.exe
+REM set Emulator=%ToolsDir%\RuMSX\MSX.exe
 set Debugger=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
 set MSXDOS=%ToolsDir%\MSXDOS
 set DskTool=%ToolsDir%\DskTool\dsktool.exe
@@ -76,12 +81,12 @@ rem  Verbose mode: 0 or 1
 set Verbose=0
 
 rem  Emulator options: 0 or 1
-set EmulMachine=0
-set Emul60Hz=0
-set EmulFullScreen=0
-set EmulMute=0
+set EmulMachine=1
+set Emul60Hz=1
+set EmulFullScreen=1
+set EmulMute=1
 set EmulSubSlot=1
-set EmulDebug=0
+set EmulDebug=1
 rem  Emulator extra parameters to be add to command-line
 set EmulExtraParam=
 
@@ -98,7 +103,7 @@ set DoCompile=1
 set DoMake=1
 set DoPackage=1
 set DoDeploy=1
-set DoRun=0
+set DoRun=1
 
 rem ***************************************************************************
 rem * START BUILD                                                             *

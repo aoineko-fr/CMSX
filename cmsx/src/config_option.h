@@ -34,6 +34,11 @@
 //-----------------------------------------------------------------------------
 // TARGET options
 
+// DOS options
+#define DOS_1				0 // MSX-DOS 1
+#define DOS_2				2 // MSX-DOS 2
+#define DOS_2_ARGS			3 // MSX-DOS 2 with command-line arguments
+
 // ROM_MAPPER options
 #define ROM_PLAIN			0
 #define ROM_ASCII8			1
@@ -50,36 +55,40 @@
 #define ROM_128K			5	
 #define ROM_256K			6	
 #define ROM_512K			7	
-#define ROM_1M				8	
-#define ROM_2M				9	
-#define ROM_4M				10	
+#define ROM_1024K			8	
+#define ROM_2048K			9	
+#define ROM_4096K			10	
 
 #define ROM_ISR				(1<<12)	
+#define ROM_MIRROR			(1<<13)	
 
-// ROM type define
+// ROM target type define
 //	15	14	13	12	11	10	9	8	7	6	5	4	3	2	1	0
-//	0	1	x	ISR	M3	M2	M1	M0	S3	S2	S1	S0	P1	P0	B1	B0	
-//  			│	│	│	│	│	│	│	│	│	│	│	└───┴── ROM boot page (address of 'AB' header)
-//  			│	│	│	│	│	│	│	│	│	└───┴────────── ROM starting page (first address of the ROM ; can be different from booting page)
-//  			│	│	│	│	│	└───┴───┴───┴────────────────── ROM size
-//				│	└───┴───┴───┴────────────────────────────────── ROM Mapper Type
-//				└────────────────────────────────────────────────── Use custom Interrupt Service Routine (place custom code in page 0)
-#define MAKE_ROM(m, s, p, b)	((TYPE_ROM << 14) | ((m) << 8) | ((s) << 4) | ((p) << 2) | (b))
-#define MAKE_BASIC(x)			((TYPE_BIN << 14) | (x))
-#define MAKE_DOS(x)				((TYPE_DOS << 14) | (x))
-
+//	0	1	MIR	ISR	M3	M2	M1	M0	S3	S2	S1	S0	P1	P0	B1	B0	
+//  		│	│	│	│	│	│	│	│	│	│	│	│	└───┴── ROM boot page (address of 'AB' header)
+//  		│	│	│	│	│	│	│	│	│	│	└───┴────────── ROM starting page (first address of the ROM ; can be different from booting page)
+//  		│	│	│	│	│	│	└───┴───┴───┴────────────────── ROM size
+//			│	│	└───┴───┴───┴────────────────────────────────── ROM Mapper Type
+//			│	└────────────────────────────────────────────────── Use custom Interrupt Service Routine (place custom code in page 0)
+//			└────────────────────────────────────────────────────── Mirrored ROM
+#define MAKE_ROM(m, s, p, b)		((TYPE_ROM << 14) | ((m) << 8) | ((s) << 4) | ((p) << 2) | (b))
+#define MAKE_BASIC(x)				((TYPE_BIN << 14) | (x))
+#define MAKE_DOS(x)					((TYPE_DOS << 14) | (x))
+	
 // -- BASIC program
 #define TARGET_BIN			  		MAKE_BASIC(0) // BASIC binary program (8000h~)
 // -- DOS program
-#define TARGET_DOS1					MAKE_DOS(0) // MSX-DOS 1 program (0100h~). No direct acces to Main-ROM
-#define TARGET_DOS2					MAKE_DOS(2) // MSX-DOS 2 program (0100h~). No direct acces to Main-ROM
-#define TARGET_DOS2_ARG				MAKE_DOS(3) // MSX-DOS 2 program (using command line arguments ; 0100h~). No direct acces to Main-ROM
+#define TARGET_DOS1					MAKE_DOS(DOS_1) // MSX-DOS 1 program (0100h~). No direct acces to Main-ROM
+#define TARGET_DOS2					MAKE_DOS(DOS_2) // MSX-DOS 2 program (0100h~). No direct acces to Main-ROM
+#define TARGET_DOS2_ARG				MAKE_DOS(DOS_2_ARGS) // MSX-DOS 2 program (using command line arguments ; 0100h~). No direct acces to Main-ROM
 #define TARGET_DOS					TARGET_DOS1
 // -- Plain ROM 8KB
+#define TARGET_ROM_8K_P0			MAKE_ROM(ROM_PLAIN, ROM_8K, 0, 0) + ROM_ISR + ROM_MIRROR // 8KB ROM in page 0 boot at 0000h (detected at 4000h by mirroring). With ISR replacement
 #define TARGET_ROM_8K_P1			MAKE_ROM(ROM_PLAIN, ROM_8K, 1, 1) // 8KB ROM in page 1 boot at 4000h
 #define TARGET_ROM_8K_P2			MAKE_ROM(ROM_PLAIN, ROM_8K, 2, 2) // 8KB ROM in page 2 boot at 8000h
 #define TARGET_ROM_8K				TARGET_ROM_8K_P1
 // -- Plain ROM 16KB
+#define TARGET_ROM_16K_P0			MAKE_ROM(ROM_PLAIN, ROM_16K, 0, 0) + ROM_ISR + ROM_MIRROR // 16KB ROM in page 0 boot at 0000h (detected at 4000h by mirroring). With ISR replacement
 #define TARGET_ROM_16K_P1			MAKE_ROM(ROM_PLAIN, ROM_16K, 1, 1) // 16KB ROM in page 1 boot at 4000h
 #define TARGET_ROM_16K_P2			MAKE_ROM(ROM_PLAIN, ROM_16K, 2, 2) // 16KB ROM in page 2 boot at 8000h
 #define TARGET_ROM_16K				TARGET_ROM_16K_P1
@@ -108,26 +117,30 @@
 #define TARGET_ROM_ASCII8_128K		MAKE_ROM(ROM_ASCII8, ROM_128K, 1, 1) // ASCII 8KB ROM Mapper (16 segments)
 #define TARGET_ROM_ASCII8_256K		MAKE_ROM(ROM_ASCII8, ROM_256K, 1, 1) // ASCII 8KB ROM Mapper (32 segments)
 #define TARGET_ROM_ASCII8_512K		MAKE_ROM(ROM_ASCII8, ROM_512K, 1, 1) // ASCII 8KB ROM Mapper (64 segments)
-#define TARGET_ROM_ASCII8_1M		MAKE_ROM(ROM_ASCII8, ROM_1M, 1, 1)   // ASCII 8KB ROM Mapper (128 segments)
-#define TARGET_ROM_ASCII8_2M		MAKE_ROM(ROM_ASCII8, ROM_2M, 1, 1)   // ASCII 8KB ROM Mapper (256 segments)
+#define TARGET_ROM_ASCII8_1024K		MAKE_ROM(ROM_ASCII8, ROM_1024K, 1, 1) // ASCII 8KB ROM Mapper (128 segments)
+#define TARGET_ROM_ASCII8_2048K		MAKE_ROM(ROM_ASCII8, ROM_2048K, 1, 1) // ASCII 8KB ROM Mapper (256 segments)
 #define TARGET_ROM_ASCII8			TARGET_ROM_ASCII8_128K		
 // -- ASCII 16 ROM
 #define TARGET_ROM_ASCII16_128K		MAKE_ROM(ROM_ASCII16, ROM_128K, 1, 1) // ASCII 16KB ROM Mapper (8 segments)
 #define TARGET_ROM_ASCII16_256K		MAKE_ROM(ROM_ASCII16, ROM_256K, 1, 1) // ASCII 16KB ROM Mapper (16 segments)
 #define TARGET_ROM_ASCII16_512K		MAKE_ROM(ROM_ASCII16, ROM_512K, 1, 1) // ASCII 16KB ROM Mapper (32 segments)
-#define TARGET_ROM_ASCII16_1M		MAKE_ROM(ROM_ASCII16, ROM_1M, 1, 1)   // ASCII 16KB ROM Mapper (64 segments)
-#define TARGET_ROM_ASCII16_2M		MAKE_ROM(ROM_ASCII16, ROM_2M, 1, 1)   // ASCII 16KB ROM Mapper (128 segments)
-#define TARGET_ROM_ASCII16_4M		MAKE_ROM(ROM_ASCII16, ROM_4M, 1, 1)	  // ASCII 16KB ROM Mapper (256 segments)
+#define TARGET_ROM_ASCII16_1024K	MAKE_ROM(ROM_ASCII16, ROM_1024K, 1, 1) // ASCII 16KB ROM Mapper (64 segments)
+#define TARGET_ROM_ASCII16_2048K	MAKE_ROM(ROM_ASCII16, ROM_2048K, 1, 1) // ASCII 16KB ROM Mapper (128 segments)
+#define TARGET_ROM_ASCII16_4096K	MAKE_ROM(ROM_ASCII16, ROM_4096K, 1, 1) // ASCII 16KB ROM Mapper (256 segments)
 #define TARGET_ROM_ASCII16			TARGET_ROM_ASCII16_128K
 // -- Konami ROM
 #define TARGET_ROM_KONAMI_128K		MAKE_ROM(ROM_KONAMI, ROM_128K, 1, 1) // Konami 8KB ROM Mapper (16 segments)
 #define TARGET_ROM_KONAMI_256K		MAKE_ROM(ROM_KONAMI, ROM_256K, 1, 1) // Konami 8KB ROM Mapper (32 segments)
 #define TARGET_ROM_KONAMI_512K		MAKE_ROM(ROM_KONAMI, ROM_512K, 1, 1) // Konami 8KB ROM Mapper (64 segments)
+#define TARGET_ROM_KONAMI_1024K		MAKE_ROM(ROM_KONAMI, ROM_1024K, 1, 1) // Konami 8KB ROM Mapper (128 segments)
+#define TARGET_ROM_KONAMI_2048K		MAKE_ROM(ROM_KONAMI, ROM_2048K, 1, 1) // Konami 8KB ROM Mapper (256 segments)
 #define TARGET_ROM_KONAMI			TARGET_ROM_KONAMI_128K
 // -- Konami ROM with SCC
 #define TARGET_ROM_KONAMI_SCC_128K	MAKE_ROM(ROM_KONAMI_SCC, ROM_128K, 1, 1) // Konami 8KB ROM Mapper (16 segments) + SCC sound chip
 #define TARGET_ROM_KONAMI_SCC_256K	MAKE_ROM(ROM_KONAMI_SCC, ROM_256K, 1, 1) // Konami 8KB ROM Mapper (32 segments) + SCC sound chip
 #define TARGET_ROM_KONAMI_SCC_512K	MAKE_ROM(ROM_KONAMI_SCC, ROM_512K, 1, 1) // Konami 8KB ROM Mapper (64 segments) + SCC sound chip
+#define TARGET_ROM_KONAMI_SCC_1024K	MAKE_ROM(ROM_KONAMI_SCC, ROM_1024K, 1, 1) // Konami 8KB ROM Mapper (128 segments) + SCC sound chip
+#define TARGET_ROM_KONAMI_SCC_2048K	MAKE_ROM(ROM_KONAMI_SCC, ROM_2048K, 1, 1) // Konami 8KB ROM Mapper (256 segments) + SCC sound chip
 #define TARGET_ROM_KONAMI_SCC		TARGET_ROM_KONAMI_SCC_128K
 
 #include "target.h"

@@ -178,8 +178,12 @@ if /I %EmulatorName%==emulicious (
 
 	rem ---- Add launch options ----
 	if %EmulMachine%==1    ( echo %YELLOW%Warning: EmulMachine can't be use with Emulicious%RESET% )
-	if %Emul60Hz%==1       ( echo %YELLOW%Warning: Emul60Hz can't be use with Emulicious%RESET% )
-	if %EmulFullScreen%==1 ( echo %YELLOW%Warning: EmulFullScreen can't be use with Emulicious%RESET% )
+	if %Emul60Hz%==1       ( 
+		set EmulatorArgs=!EmulatorArgs! -set MSXPAL=false 
+	) else (
+		set EmulatorArgs=!EmulatorArgs! -set MSXPAL=true 
+	)
+	if %EmulFullScreen%==1 ( set EmulatorArgs=!EmulatorArgs! -fullscreen )
 	if %EmulMute%==1       ( set EmulatorArgs=!EmulatorArgs! -muted )
 	if %EmulSubSlot%==1    ( echo %YELLOW%Warning: EmulSubSlot can't be use with Emulicious%RESET% )
 

@@ -6,7 +6,7 @@
 // Author: Guillaume "Aoineko" Blanchard, for CMSX (MSX Game library)
 // License: CC-BY-SA
 // _____________________________________________________________________________
-// Data generated using CMSXimg 1.12.0 on Tue Dec 21 22:11:43 2021
+// Data generated using CMSXimg 1.12.0 on Wed Jan  5 00:19:05 2022
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     font\font_cmsx_sample6.png
@@ -282,19 +282,19 @@ const unsigned char g_Font_CMSX_Sample6[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
-	0x00, /* ........ */ 
+	0xAA, /* #.#.#.#. */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 // Sprite[29] (offset:236)
+	0x10, /* ...#.... */ 
 	0x00, /* ........ */ 
+	0x10, /* ...#.... */ 
 	0x00, /* ........ */ 
+	0x10, /* ...#.... */ 
 	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
+	0x10, /* ...#.... */ 
 	0x00, /* ........ */ 
 // Sprite[30] (offset:244)
 	0x00, /* ........ */ 

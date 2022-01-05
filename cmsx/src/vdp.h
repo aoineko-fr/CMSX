@@ -222,10 +222,10 @@ enum VRAM_SIZE
 //-----------------------------------------------------------------------------
 
 /// Set screen mode. @see VDP_MODE
-void VDP_SetMode(const u8 mode) __FASTCALL;
+void VDP_SetMode(const u8 mode);
 
 /// Tell if the given screen mode is a bitmap mode (pattern/text mode otherwise)
-bool VDP_IsBitmapMode(const u8 mode) __FASTCALL;
+bool VDP_IsBitmapMode(const u8 mode);
 
 /// Tell if the given screen mode is a pattern/text mode (bitmap mode otherwise)
 inline bool VDP_IsPatternMode(const u8 mode) { return !VDP_IsBitmapMode(mode); }
@@ -272,45 +272,42 @@ void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0);
 #endif
 
 /// Enable/disable horizontal interruption [MSX2/2+/TR]
-void VDP_EnableHBlank(bool enable) __FASTCALL;
+void VDP_EnableHBlank(bool enable);
 
 /// Set the horizontal-blank interruption line [MSX2/2+/TR]
-void VDP_SetHBlankLine(u8 line) __FASTCALL;
+void VDP_SetHBlankLine(u8 line);
 
 /// Set the vertical rendeing offset (in pixel) [MSX2/2+/TR]
-void VDP_SetVerticalOffset(u8 offset) __FASTCALL;
+void VDP_SetVerticalOffset(u8 offset);
 
 /// Adjustment of the display location on the screen [MSX2/2+/TR]
-void VDP_SetAdjustOffset(u8 offset) __FASTCALL;
+void VDP_SetAdjustOffset(u8 offset);
 
 /// Enable/disable vertical interruption
-void VDP_EnableVBlank(bool enable) __FASTCALL;
+void VDP_EnableVBlank(bool enable);
 
 /// Enable/disable screen display
-void VDP_EnableDisplay(bool enable) __FASTCALL;
+void VDP_EnableDisplay(bool enable);
 
 /// Enable/disable grayscale
-void VDP_SetGrayScale(bool enable) __FASTCALL;
+void VDP_SetGrayScale(bool enable);
 
 #define VDP_FREQ_50HZ			R09_NT		///< Frequency at 50 Hz
 #define VDP_FREQ_60HZ			0			///< Frequency at 60 Hz
 /// Change VDP frequency
-void VDP_SetFrequency(u8 freq) __FASTCALL;
-
-/// Set current VRAM page
-void VDP_SetPage(u8 page) __FASTCALL;
+void VDP_SetFrequency(u8 freq);
 
 /// Set layout table VRAM address
-void VDP_SetLayoutTable(VADDR addr) __FASTCALL;
+void VDP_SetLayoutTable(VADDR addr);
 
 /// Set color table VRAM address
-void VDP_SetColorTable(VADDR addr) __FASTCALL;
+void VDP_SetColorTable(VADDR addr);
 
 /// Set pattern table VRAM address
-void VDP_SetPatternTable(VADDR addr) __FASTCALL;
+void VDP_SetPatternTable(VADDR addr);
 
 /// Set text and border default color (format: [TXT:4|BG:4])
-void VDP_SetColor(u8 color) __FASTCALL;
+void VDP_SetColor(u8 color);
 
 /// Set a new palette [red|blue][0|green]
 void VDP_SetPalette(const u8* pal) __FASTCALL;
@@ -321,32 +318,32 @@ void VDP_SetPaletteEntry(u8 index, u16 color);
 #define VDP_LINE_192			0			///< 192 lines mode
 #define VDP_LINE_212			R09_LN		///< 212 lines mode
 /// Set line count for the current screen mode
-void VDP_SetLineCount(u8 lines) __FASTCALL;
+void VDP_SetLineCount(u8 lines);
 
 /// Enable or disable interlace mode
-void VDP_SetInterlace(bool enable) __FASTCALL;
+void VDP_SetInterlace(bool enable);
 
 /// Enable automatic page switch on even/odd frames
-void VDP_SetPageAlternance(bool enable) __FASTCALL;
+void VDP_SetPageAlternance(bool enable);
 
 //-----------------------------------------------------------------------------
 // SPRITES
 //-----------------------------------------------------------------------------
 /// Enable/disable sprite rendering
-void VDP_EnableSprite(u8 enable) __FASTCALL;
+void VDP_EnableSprite(u8 enable);
 
 #define VDP_SPRITE_SIZE_8		0			///< Use 8x8 sprite size
 #define VDP_SPRITE_SIZE_16		R01_ST		///< Use 16x16 sprite size
 #define VDP_SPRITE_SCALE_1		0			///> Normal size of the sprite (1 dot = 1 px)
 #define VDP_SPRITE_SCALE_2		R01_MAG		///> Double the size of the sprite (1 dot = 2 px)
 /// Set sprite parameters
-void VDP_SetSpriteFlag(u8 flag) __FASTCALL;
+void VDP_SetSpriteFlag(u8 flag);
 
 /// Set sprite attribute table address
-void VDP_SetSpriteAttributeTable(VADDR addr) __FASTCALL;
+void VDP_SetSpriteAttributeTable(VADDR addr);
 
 /// Set sprite pattern table address
-void VDP_SetSpritePatternTable(VADDR addr) __FASTCALL;
+void VDP_SetSpritePatternTable(VADDR addr);
 
 /// Set sprite table address (bit#16 to bit#1)
 void VDP_SetSpriteTables(VADDR patternAddr, VADDR attribAddr);
@@ -360,6 +357,7 @@ void VDP_LoadSpritePattern(const u8* addr, u8 index, u8 count);
 /// Set sprite attribute for Sprite Mode 1 (MSX1)
 void VDP_SetSpriteSM1(u8 index, u8 x, u8 y, u8 shape, u8 color);
 
+#if (MSX_VERSION >= MSX_2)
 /// Set sprite attribute for Sprite Mode 2
 void VDP_SetSprite(u8 index, u8 x, u8 y, u8 shape);
 
@@ -368,6 +366,7 @@ void VDP_SetSpriteExMultiColor(u8 index, u8 x, u8 y, u8 shape, const u8* ram);
 
 /// Set sprite attribute for Sprite Mode 2 and fill color table with unique color
 void VDP_SetSpriteExUniColor(u8 index, u8 x, u8 y, u8 shape, u8 color);
+#endif // (MSX_VERSION >= MSX_2)
 
 /// Update sprite position
 void VDP_SetSpritePosition(u8 index, u8 x, u8 y);
@@ -378,9 +377,10 @@ void VDP_SetSpritePositionY(u8 index, u8 y);
 /// Update sprite pattern
 void VDP_SetSpritePattern(u8 index, u8 shape);
 
-/// Update sprite pattern (Shader mode 1)
+/// Update sprite pattern (Sprite Mode 1)
 void VDP_SetSpriteColorSM1(u8 index, u8 color);
 
+#if (MSX_VERSION >= MSX_2)
 /// Update sprite color (Uni-color)
 void VDP_SetSpriteUniColor(u8 index, u8 color);
 
@@ -389,19 +389,20 @@ void VDP_SetSpriteMultiColor(u8 index, const u8* ram);
 
 /// Set sprite data for Sprite Mode 2
 void VDP_SetSpriteData(u8 index, const u8* data);
+#endif // (MSX_VERSION >= MSX_2)
 
 ///
 #define VDP_SPRITE_DISABLE_SM1	208			///> This sprite and all lower priority sprites will be disabled (Sprite Mode 1)
 #define VDP_SPRITE_DISABLE_SM2	216			///> This sprite and all lower priority sprites will be disabled (Sprite Mode 1)
 #define VDP_SPRITE_HIDE			213			///> 
-void VDP_HideSpriteFrom(u8 index) __FASTCALL;
+void VDP_HideSpriteFrom(u8 index);
 
 //-----------------------------------------------------------------------------
 // GRAPH MODE 2
 //-----------------------------------------------------------------------------
 #if (USE_VDP_MODE_G2 || USE_VDP_MODE_G3)
 ///
-void VDP_FillScreen_GM2(u8 value) __FASTCALL;
+void VDP_FillScreen_GM2(u8 value);
 ///
 void VDP_LoadPattern_GM2(const u8* src, u8 count, u8 offset);
 ///

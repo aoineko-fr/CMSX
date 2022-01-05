@@ -207,9 +207,6 @@ void Print_DrawCharX(c8 chr, u8 num);
 /// Print a character string
 void Print_DrawText(const c8* string) __FASTCALL;
 
-/// Print a character string many times
-void Print_DrawTextX(const c8* str, u8 num);
-
 /// Print a 8-bits binary value 
 void Print_DrawHex8(u8 value) __FASTCALL;
 

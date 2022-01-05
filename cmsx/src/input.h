@@ -180,7 +180,7 @@ u8 Keyboard_IsKeyPressed(u8 key) __FASTCALL;
 //-----------------------------------------------------------------------------
 // Advanced input manager
 //-----------------------------------------------------------------------------
-#if USE_INPUT_KEYBOARD
+#if USE_INPUT_MANAGER
 
 // Device ID
 enum IPM_DEVICE
@@ -324,7 +324,7 @@ inline u8 IPM_GetInputTimer(u8 joy, u8 in);
 // 
 const c8* IPM_GetEventName(u8 ev);
 
-#endif // USE_INPUT_KEYBOARD
+#endif // USE_INPUT_MANAGER
 
 
 
