@@ -47,10 +47,10 @@
 
 // MAIN-Bios module setting
 #define USE_BIOS_MAINROM			1	// Allow use of Main-ROM routines
-#define USE_BIOS_VDP				1	// Give access to Main-ROM routines related to VDP
-#define USE_BIOS_PSG				1	// Give access to Main-ROM routines related to PSG
-#define USE_BIOS_SUBROM				1	// Allow use of Sub-ROM routines (MSX 2/2+/turbo R)
-#define USE_BIOS_DISKROM			1	// Allow use of Disk-ROM routines
+#define USE_BIOS_VDP				0	// Give access to Main-ROM routines related to VDP
+#define USE_BIOS_PSG				0	// Give access to Main-ROM routines related to PSG
+#define USE_BIOS_SUBROM				0	// Allow use of Sub-ROM routines (MSX 2/2+/turbo R)
+#define USE_BIOS_DISKROM			0	// Allow use of Disk-ROM routines
 
 //-----------------------------------------------------------------------------
 // VDP MODULE
@@ -85,7 +85,7 @@
 //-----------------------------------------------------------------------------
 
 // Input module setting
-#define USE_INPUT_JOYSTICK			1
+#define USE_INPUT_JOYSTICK			0
 #define USE_INPUT_KEYBOARD			1
 #define USE_INPUT_MANAGER			0
 
@@ -105,8 +105,8 @@
 #define USE_PRINT_FX_SHADOW			0	// [Bitmap] Allow use of text shadow
 #define USE_PRINT_FX_OUTLINE		0	// [Bitmap] Allow use of text outline
 #define USE_PRINT_GRAPH				1	// Allow use of character lines and boxes
-#define USE_PRINT_VALIDATOR			1	// Add validator character code
-#define USE_PRINT_UNIT				1	// Display integer type (h: hexadecimal, b: binary)
+#define USE_PRINT_VALIDATOR			0	// Add validator character code
+#define USE_PRINT_UNIT				0	// Display integer type (h: hexadecimal, b: binary)
 #define PRINT_SKIP_SPACE			1	// Skill space character
 #define PRINT_COLOR_NUM				1	// 1 color per line
 // - PRINT_WIDTH_1

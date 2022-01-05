@@ -2,18 +2,49 @@
 
 setlocal EnableDelayedExpansion
 	
-set Mappers=BIN,DOS1,DOS2,ROM_8K,ROM_8K_P2,ROM_16K,ROM_16K_P2,ROM_32K,ROM_48K,ROM_48K_ISR,ROM_64K,ROM_64K_ISR,ROM_ASCII8,ROM_ASCII16,ROM_KONAMI,ROM_KONAMI_SCC
+set Formats=BIN,DOS1,DOS2,ROM_8K,ROM_8K_P2,ROM_16K,ROM_16K_P2,ROM_32K,ROM_48K,ROM_48K_ISR,ROM_64K,ROM_64K_ISR
+set Mappers=ROM_ASCII8,ROM_ASCII16,ROM_KONAMI,ROM_KONAMI_SCC
 set Unsupported=ROM_32K_P0,DOS2_ARG
 
-for %%G in (%Mappers%) do (
+for %%G in (%Formats%) do (
 
 	rem ---- Build target ----
 	call build %%G
 
 	rem ---- Rename output file to prevent overwriting ----
 	call :RenameOutput %%G
-	
-	REM pause
+)
+
+for %%G in (128,256,512,1024,2048) do (
+	rem ---- Build target ----
+	call build ROM_ASCII8 %%G
+
+	rem ---- Rename output file to prevent overwriting ----
+	call :RenameOutput ROM_ASCII8_%%GK
+)
+
+for %%G in (128,256,512,1024,2048,4096) do (
+	rem ---- Build target ----
+	call build ROM_ASCII16 %%G
+
+	rem ---- Rename output file to prevent overwriting ----
+	call :RenameOutput ROM_ASCII16_%%GK
+)
+
+for %%G in (128,256,512,1024,2048) do (
+	rem ---- Build target ----
+	call build ROM_KONAMI %%G
+
+	rem ---- Rename output file to prevent overwriting ----
+	call :RenameOutput ROM_KONAMI_%%GK
+)
+
+for %%G in (128,256,512,1024,2048) do (
+	rem ---- Build target ----
+	call build ROM_KONAMI_SCC %%G
+
+	rem ---- Rename output file to prevent overwriting ----
+	call :RenameOutput ROM_KONAMI_SCC_%%GK
 )
 
 goto :EOF

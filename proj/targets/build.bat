@@ -15,6 +15,11 @@ set SDCC=%ToolsDir%\SDCC\bin
 set Hex2Bin=%ToolsDir%\Hex2bin\hex2bin.exe
 set FillFile=%ToolsDir%\MakeROM\fillfile.exe
 set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
+REM set Emulator=D:\Jeux\MSX\Emulator\BlueMSX\blueMSX.exe
+REM set Emulator=%ToolsDir%\Emulicious\Emulicious.exe
+REM set Emulator=D:\Jeux\MSX\Emulator\MESEI\MESEI.exe
+REM set Emulator=%ToolsDir%\fMSX\fMSX.exe
+REM set Emulator=%ToolsDir%\RuMSX\MSX.exe
 set Debugger=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
 set MSXDOS=%ToolsDir%\MSXDOS
 set DskTool=%ToolsDir%\DskTool\dsktool.exe
@@ -60,6 +65,8 @@ rem  - DOS1				.com	MSX-DOS 1 program (0100h~) No direct acces to Main-ROM
 rem  - DOS2				.com	MSX-DOS 2 program (0100h~) No direct acces to Main-ROM
 rem  - DOS2_ARG			.com	MSX-DOS 2 program (using command line arguments ; 0100h~) No direct acces to Main-ROM
 set Target=%1
+rem  Mapper size
+set ROMSize=%2
 
 rem  Optim:
 rem  - Default
@@ -81,7 +88,7 @@ rem * EMULATOR SETING                                                         *
 rem ***************************************************************************
 
 rem  Emulator options: 0 or 1
-set EmulMachine=0
+set EmulMachine=1
 set Emul60Hz=0
 set EmulFullScreen=0
 set EmulMute=0

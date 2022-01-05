@@ -17,9 +17,13 @@
 // Library's logo
 #define MSX_GL		"\x01\x02\x03\x04\x05\x06"
 
+// Mapper page
 #define BANK_ADDR	0x8000
-#define MAPPER_Y	9
+#define MAPPER_Y	8
 #define MAPPER_NUM	6
+
+// Slots page
+#define SLOT_Y		3
 
 //=============================================================================
 // READ-ONLY DATA
@@ -40,18 +44,36 @@ __at(0xA000) const c8 g_DataBank3[] = "Segment #3 (default in Bank #3)";
 
 // Character animation data
 const c8 g_ChrAnim[] = { '|', '\\', '-', '/' };
-// Hexadecimal characters
-const c8 hexChar[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+// Slot box
+const c8* g_SlotTop			= "\x18\x17\x17\x17\x17\x17\x17\x17\x19"; 
+const c8* g_SlotMid			= "\x16\x20\x20\x20\x20\x20\x20\x20\x16"; 
+const c8* g_SlotBot			= "\x1A\x17\x17\x17\x17\x17\x17\x17\x1B"; 
+// Selected slot	
+const c8* g_SlotTopSel		= "\x98\x97\x97\x97\x97\x97\x97\x97\x99"; 
+const c8* g_SlotMidSel		= "\x96\x20\x20\x20\x20\x20\x20\x20\x96"; 
+const c8* g_SlotBotSel		= "\x9A\x97\x97\x97\x97\x97\x97\x97\x9B"; 
+// Expended slot box
+const c8* g_SlotExTop		= "\x18\x17\x12\x17\x12\x17\x12\x17\x19"; 
+const c8* g_SlotExMid		= "\x16\x20\x16\x20\x16\x20\x16\x20\x16"; 
+const c8* g_SlotExBot		= "\x1A\x17\x11\x17\x11\x17\x11\x17\x1B"; 
+// Selected slot
+const c8* g_SlotExTopSel	= "\x98\x97\x99"; 
+const c8* g_SlotExMidSel	= "\x96\x20\x96"; 
+const c8* g_SlotExBotSel	= "\x9A\x97\x9B"; 
+
+
 //=============================================================================
 // MEMORY DATA
 //=============================================================================
 u8  g_Buffer[128];
 u8  g_PageSlot[4];
 #if (ROM_MAPPER != ROM_PLAIN)
-u8  g_DisplayASCII = false;
+u8  g_DisplayASCII = 0;
 u8  g_Segment = 0;
 u16 g_Address = BANK_ADDR;
 #endif
+u8  g_Page = 1;
 
 //=============================================================================
 // HELPER FUNCTIONS
@@ -250,17 +272,6 @@ const c8* GetSlotName(u8 slotId, u8 page)
 				return "ROM";
 	}
 		
-	u8 prim = slotId & 0x03;
-	u8 sec = (slotId >> 2) & 0x03;
-	u16 addr = M_SLTATR + 16 * prim + 4 * sec + page;
-	u8 app = *((u8*)addr);
-	if(app & 0x80)
-		return " B ";
-	if(app & 0x40)
-		return " D ";
-	if(app & 0x20)
-		return " S ";
-	
 	return " ? ";
 }
 
@@ -306,19 +317,142 @@ const c8* GetROMSize(u8 size)
 	case ROM_128K:	return "128K";
 	case ROM_256K:	return "256K";
 	case ROM_512K:	return "512K";
-	case ROM_1M:	return "1M";
-	case ROM_2M:	return "2M";
-	case ROM_4M:	return "4M";
+	case ROM_1024K:	return "1M";
+	case ROM_2048K:	return "2M";
+	case ROM_4096K:	return "4M";
 	};
 	return "Unknow";
 }
 
 //-----------------------------------------------------------------------------
 //
-#if (ROM_MAPPER != ROM_PLAIN)
-void DiplayMapper()
+void DisplayHeader()
 {
-	Print_SetPosition(30, MAPPER_Y);
+	Print_Clear();
+	Print_SetPosition(0, 0);
+	Print_DrawText(MSX_GL "   Target Sample");
+	Print_DrawLineH(0, 1, 40);
+}
+
+//-----------------------------------------------------------------------------
+//
+void DisplayFooter()
+{
+	Print_DrawLineH(0, 22, 40);
+	Print_SetPosition(0, 23);
+	if(g_Page == 0) // Info
+	{
+		Print_DrawText("F1:Slot ");
+		#if (ROM_MAPPER != ROM_PLAIN)
+			if(g_DisplayASCII)
+				Print_DrawText("F2:Hexa ");
+			else
+				Print_DrawText("F2:ASCII ");
+			Print_DrawText("\x81\x80:Addr \x82:Seg");
+		#endif
+	}
+	else // Slot
+	{
+		Print_DrawText("F1:Info ");
+	}
+	
+	
+}
+
+//-----------------------------------------------------------------------------
+//
+void DisplaySlots()
+{
+	DisplayHeader();
+
+	// Draw frames
+	Print_DrawTextAt(0, SLOT_Y + 2, "FFFF\n\n\nC000\nBFFF\n\n\n8000\n7FFF\n\n\n4000\n3FFF\n\n\n0000");
+	for(u8 slot = 0; slot < 4; ++slot)
+	{
+		Print_DrawTextAt((slot * 9) + 6, SLOT_Y, "Slot");
+		Print_DrawInt(slot);
+		if(Sys_IsSlotExpanded(slot))
+		{
+			for(u8 sub = 0; sub < 4; ++sub)
+			{
+				Print_SetPosition((slot * 9) + 5 + (sub * 2), SLOT_Y + 1);
+				Print_DrawInt(sub);
+			}
+			for(u8 page = 0; page < 4; ++page)
+			{
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 2, g_SlotExTop);
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 3, g_SlotExMid);
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 4, g_SlotExMid);
+				Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 5, g_SlotExBot);
+			}
+		}
+		else
+		{
+			for(u8 page = 0; page < 4; ++page)
+			{
+				u8 pageSlot = Sys_GetPageSlot(3 - page);
+				if(pageSlot == SLOT(slot))
+				{
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 2, g_SlotTopSel);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 3, g_SlotMidSel);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 4, g_SlotMidSel);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 5, g_SlotBotSel);
+				}
+				else
+				{
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 2, g_SlotTop);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 3, g_SlotMid);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 4, g_SlotMid);
+					Print_DrawTextAt((slot * 9) + 4, (page * 4) + SLOT_Y + 5, g_SlotBot);
+				}
+			}
+		}
+	}
+
+	// Find slot type
+	for(u8 page = 0; page < 4; ++page)
+	{
+		u8 pageSlot = Sys_GetPageSlot(3 - page);
+		for(u8 slot = 0; slot < 4; ++slot)
+		{
+			if(Sys_IsSlotExpanded(slot))
+			{
+				for(u8 sub = 0; sub < 4; ++sub)
+				{
+					if(pageSlot == SLOTEX(slot, sub))
+					{
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 2);
+						Print_DrawText(g_SlotExTopSel);
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 3);
+						Print_DrawText(g_SlotExMidSel);
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 4);
+						Print_DrawText(g_SlotExMidSel);
+						Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 5);
+						Print_DrawText(g_SlotExBotSel);
+					}
+					Print_SetPosition((slot * 9) + 4 + (sub * 2), (page * 4) + SLOT_Y + 3 + (sub & 0x1));
+					Print_DrawText(GetSlotName(SLOTEX(slot, sub), 3 - page));
+				}
+			}
+			else
+			{
+				Print_SetPosition((slot * 9) + 7, (page * 4) + SLOT_Y + 3);
+				Print_DrawText(GetSlotName(SLOT(slot), 3 - page));
+			}
+		}
+	}
+	
+	DisplayFooter();
+}
+
+
+#if (ROM_MAPPER != ROM_PLAIN)
+
+//-----------------------------------------------------------------------------
+//
+void UpdateMapper()
+{
+	Print_SetPosition(32, MAPPER_Y);
 	Print_DrawText("\x81 ");
 	Print_DrawHex16(g_Address);
 	Print_DrawText(" \x80\n");
@@ -350,8 +484,7 @@ void DiplayMapper()
 				Print_DrawChar(chr);
 			else
 			{
-				Print_DrawChar(hexChar[(chr >> 4) & 0x000F]);
-				Print_DrawChar(hexChar[chr & 0x000F]);
+				Print_DrawHex8(chr);
 				Print_DrawChar(' ');
 			}
 		}
@@ -360,49 +493,33 @@ void DiplayMapper()
 }
 #endif // (ROM_MAPPER != ROM_PLAIN)
 
-//=============================================================================
-// MAIN LOOP
-//=============================================================================
-//-----------------------------------------------------------------------------
-// Program entry point
-void main()
-{
-	VDP_SetMode(VDP_MODE_SCREEN0);
-	VDP_EnableVBlank(true);
 
-	Print_Clear();
-	Print_SetTextFont(g_Font_CMSX_Sample6, 1);
-	Print_DrawText(MSX_GL "   Target Sample\n");
-	Print_DrawLineH(0, 1, 40);
+//-----------------------------------------------------------------------------
+//
+void DiplayInfo()
+{
+	DisplayHeader();
 
 	Print_SetPosition(0, 2);
 	Print_DrawText(TARGET_NAME);
-	Print_Return();
 
-	Print_DrawText("Target: ");
-	Print_DrawHex16(TARGET);
-	Print_Return();
-	
-	Print_DrawText("Type:   ");
+	Print_DrawText("\nType:   ");
 	Print_DrawText(GetTargetType(TARGET_TYPE));
-	Print_Return();
 	
 	#if (TARGET_TYPE == TYPE_ROM)
-		Print_DrawText("Mapper: ");
+		Print_DrawText("\nMapper: ");
 		Print_DrawText(GetROMMapper(ROM_MAPPER));
-		Print_Return();
 		
-		Print_DrawText("Size:   ");
+		Print_DrawText("\nSize:   ");
 		Print_DrawText(GetROMSize(ROM_SIZE));
 		#if (ROM_MAPPER != ROM_PLAIN)
-			Print_DrawChar('(');
+			Print_DrawText(" (");
 			Print_DrawInt(ROM_SEGMENTS);
 			Print_DrawChar(')');
 		#endif
-		Print_Return();
 	#endif
 
-	Print_DrawText("Addr:   ");
+	Print_DrawText("\nAddr:   ");
 	Print_DrawHex16(Sys_GetFirstAddr());
 	Print_DrawChar('~');
 	Print_DrawHex16(Sys_GetLastAddr());
@@ -411,9 +528,9 @@ void main()
 	{
 		g_PageSlot[i] = Sys_GetPageSlot(i);
 		Print_SetPosition(20, 3+i);
-		Print_DrawText("Page #");
+		Print_DrawText("Page[");
 		Print_DrawInt(i);
-		Print_DrawText(": ");
+		Print_DrawText("]: ");
 		Print_Slot(g_PageSlot[i]);
 		Print_SetPosition(33, 3+i);
 		Print_DrawChar('(');
@@ -450,13 +567,37 @@ void main()
 		Print_DrawCharX('\x17', 33);
 		Print_DrawChar('\x1B');
 
-		Print_DrawLineH(0, 22, 40);
-		Print_SetPosition(0, 23);
-		Print_DrawText("F1:Hexa F2:ASCII \x81\x80:Addr \x82:Seg");
-
-		DiplayMapper();
+		UpdateMapper();
 
 	#endif
+
+	DisplayFooter();
+}
+
+//-----------------------------------------------------------------------------
+// Program entry point
+void SwitchPage()
+{
+	g_Page = 1 - g_Page;
+	if(g_Page == 0)
+		DiplayInfo();
+	else
+		DisplaySlots();
+}
+
+//=============================================================================
+// MAIN LOOP
+//=============================================================================
+//-----------------------------------------------------------------------------
+// Program entry point
+void main()
+{
+	// Initialize
+	VDP_SetMode(VDP_MODE_SCREEN0);
+	VDP_EnableVBlank(true);
+	Print_SetTextFont(g_Font_CMSX_Sample6, 1);
+
+	SwitchPage();
 	
 	u8 count = 0;
 	while(!Keyboard_IsKeyPressed(KEY_ESC))
@@ -468,40 +609,41 @@ void main()
 		u8 row6 = Keyboard_Read(6);
 		u8 row8 = Keyboard_Read(8);
 
+		if(IS_KEY_PRESSED(row6, KEY_F1))
+			SwitchPage();
+		
 		#if (ROM_MAPPER != ROM_PLAIN)
-			if(IS_KEY_PRESSED(row6, KEY_F1))
-			{
-				g_DisplayASCII = false;
-				DiplayMapper();
-			}
+		if(g_Page == 0)
+		{
 			if(IS_KEY_PRESSED(row6, KEY_F2))
 			{
-				g_DisplayASCII = true;
-				DiplayMapper();
+				g_DisplayASCII = 1 - g_DisplayASCII;
+				UpdateMapper();
 			}
 			if(IS_KEY_PRESSED(row8, KEY_RIGHT))
 			{
 				g_Address++;
-				DiplayMapper();
+				UpdateMapper();
 			}
 			if(IS_KEY_PRESSED(row8, KEY_LEFT))
 			{
 				if(g_Address > BANK_ADDR)
 					g_Address--;
-				DiplayMapper();
+				UpdateMapper();
 			}
 			if(IS_KEY_PRESSED(row8, KEY_DOWN))
 			{
 				if(g_Segment < ROM_SEGMENTS-MAPPER_NUM)
 					g_Segment++;
-				DiplayMapper();
+				UpdateMapper();
 			}
 			if(IS_KEY_PRESSED(row8, KEY_UP))
 			{
 				if(g_Segment > 0)
 					g_Segment--;
-				DiplayMapper();
+				UpdateMapper();
 			}
+		}
 		#endif // (ROM_MAPPER != ROM_PLAIN)
 
 		Halt();
