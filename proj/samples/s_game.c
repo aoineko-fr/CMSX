@@ -19,6 +19,9 @@
 #define GRAVITY		1
 #define GROUND		112
 
+// Library's logo
+#define MSX_GL "\x02\x03\x04\x05\x06"
+
 // Prototype
 bool State_Initialize();
 bool State_Game();
@@ -29,7 +32,7 @@ bool State_Pause();
 //=============================================================================
 
 // Fonts
-#include "font\font_cmsx_symbol1.h"
+#include "font\font_cmsx_sample8.h"
 // Sprites by GrafxKid (https://opengameart.org/content/super-random-sprites)
 #include "data\data_sprt_16il.h"
 // Sinus & cosinus table
@@ -61,8 +64,12 @@ bool State_Initialize()
 	VDP_EnableDisplay(false);
 	VDP_SetColor(1);
 	
-	// Initialize background
+	// Initialize pattern
 	VDP_FillVRAM(0xFF, g_ScreenPatternLow, 0, 256*8); // pattern
+	Print_SetTextFont(g_Font_CMSX_Sample8, 16);
+	Print_SetColor(0xF, 0x1);
+
+	// Initialize color
 	VDP_FillVRAM(0x51, g_ScreenColorLow + 0, 0, 1); // color
 	VDP_FillVRAM(0x41, g_ScreenColorLow + 1, 0, 1); // color
 	for(u8 i = 0; i < 24; ++i)
@@ -85,6 +92,13 @@ bool State_Initialize()
 	VDP_SetSpriteSM1(1, 16, 16, 24, COLOR_WHITE);
 	VDP_SetSpriteSM1(2, 16, 16, 48, COLOR_LIGHT_RED);
 	VDP_SetSpriteSM1(3, 0, 208, 0, 0); // hide
+
+	// Initialize text
+	Print_SetPosition(0, 0);
+	Print_DrawCharX(' ', 32);
+	Print_SetPosition(0, 0);
+	Print_DrawText(MSX_GL "  GAME SAMPLE");
+	Print_DrawLineH(0, 1, 32);
 
 	VDP_EnableDisplay(true);
 

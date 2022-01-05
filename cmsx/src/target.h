@@ -53,7 +53,13 @@
 //-----------------------------------------------------------------------------
 // Segment counts
 
-#if (ROM_SIZE == ROM_128K)
+#if (ROM_SIZE == ROM_64K)
+	#if (ROM_MAPPER == ROM_ASCII16)
+		#define ROM_SEGMENTS	(64/16)
+	#else 
+		#define ROM_SEGMENTS	(64/8)
+	#endif
+#elif (ROM_SIZE == ROM_128K)
 	#if (ROM_MAPPER == ROM_ASCII16)
 		#define ROM_SEGMENTS	(128/16)
 	#else 
@@ -79,7 +85,7 @@
 	#endif
 #elif (ROM_SIZE == ROM_2048K)
 	#if (ROM_MAPPER == ROM_ASCII16)
-		#define ROM_SEGMENTS	(2048/8)
+		#define ROM_SEGMENTS	(2048/16)
 	#else 
 		#define ROM_SEGMENTS	(2048/8)
 	#endif
@@ -151,6 +157,9 @@
 #elif (TARGET == TARGET_ROM_64K_B2_ISR)
 	#define TARGET_NAME "ROM_64K_B2_ISR"
 
+#elif (TARGET == TARGET_ROM_ASCII8_64K)
+	#define TARGET_NAME "64K ASCII-8 ROM"
+
 #elif (TARGET == TARGET_ROM_ASCII8_128K)
 	#define TARGET_NAME "128K ASCII-8 ROM"
 
@@ -165,6 +174,9 @@
 
 #elif (TARGET == TARGET_ROM_ASCII8_2048K)
 	#define TARGET_NAME "2M ASCII-8 ROM"
+
+#elif (TARGET == TARGET_ROM_ASCII16_64K)
+	#define TARGET_NAME "64K ASCII-16 ROM"
 
 #elif (TARGET == TARGET_ROM_ASCII16_128K)
 	#define TARGET_NAME "128K ASCII-16 ROM"
@@ -184,6 +196,9 @@
 #elif (TARGET == TARGET_ROM_ASCII16_4096K)
 	#define TARGET_NAME "4M ASCII-16 ROM"
 
+#elif (TARGET == TARGET_ROM_KONAMI_64K)
+	#define TARGET_NAME "64K Konami ROM"
+
 #elif (TARGET == TARGET_ROM_KONAMI_128K)
 	#define TARGET_NAME "128K Konami ROM"
 
@@ -198,6 +213,9 @@
 
 #elif (TARGET == TARGET_ROM_KONAMI_2048K)
 	#define TARGET_NAME "2048K Konami ROM"
+
+#elif (TARGET == TARGET_ROM_KONAMI_SCC_64K)
+	#define TARGET_NAME "64K Konami ROM with SCC"
 
 #elif (TARGET == TARGET_ROM_KONAMI_SCC_128K)
 	#define TARGET_NAME "128K Konami ROM with SCC"

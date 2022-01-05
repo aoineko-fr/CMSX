@@ -220,7 +220,13 @@ void Print_DrawBin8(u8 value) __FASTCALL;
 void Print_DrawInt(i16 value) __FASTCALL;
 
 //-----------------------------------------------------------------------------
-// GRAPH FUNCTION
+#if (USE_PRINT_FORMAT)
+/// Print a formated string with a variable number of parameters
+void Print_DrawFormat(const c8* format, ...);
+#endif
+
+//-----------------------------------------------------------------------------
+// GRAPH FUNCTIONS
 //-----------------------------------------------------------------------------
 #if (USE_PRINT_GRAPH)
 

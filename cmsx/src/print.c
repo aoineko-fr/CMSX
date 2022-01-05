@@ -1209,7 +1209,92 @@ void Print_DrawInt(i16 value) __FASTCALL
 }
 
 //-----------------------------------------------------------------------------
-// GRAPH FUNCTION
+// FORMAT FUNCTION
+//-----------------------------------------------------------------------------
+#if (USE_PRINT_FORMAT)
+
+//-----------------------------------------------------------------------------
+// stdarg.h macros
+typedef u8* va_list;
+#define va_start(marker, last)  { marker = (va_list)&last + sizeof(last); }
+#define va_arg(marker, type)    *((type *)((marker += sizeof(type)) - sizeof(type)))
+#define va_copy(dest, src)      { dest = src; }
+#define va_end(marker)          { marker = (va_list) 0; };
+
+//-----------------------------------------------------------------------------
+/// Print a formated string with a variable number of parameters
+void Print_DrawFormat(const c8* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+
+	const c8* ptr = format;
+	while(*ptr != 0)
+	{
+		if(*ptr == '%')
+		{
+			ptr++;
+			
+			// Parse length
+			u8 len = 4;
+			while((*ptr >= '0') && (*ptr <= '9'))
+			{
+				len = *ptr - '0';
+				ptr++;
+			}
+
+			// Parse variable types
+			if((*ptr == 'i') || (*ptr == 'd'))
+			{
+				i16 val = (i16)va_arg(args, i16);
+				Print_DrawInt(val);
+			}
+			else if(*ptr == 'u')
+			{
+				u16 val = (u16)va_arg(args, u16);
+				Print_DrawInt(val);
+			}
+			else if(*ptr == 'x')
+			{
+				u16 val = (u16)va_arg(args, u16);
+				if(len > 3)
+					Print_DrawChar(g_HexChar[(val >> 12) & 0x000F]);
+				if(len > 2)
+					Print_DrawChar(g_HexChar[(val >> 8) & 0x000F]);
+				if(len > 1)
+					Print_DrawChar(g_HexChar[(val >> 4) & 0x000F]);
+				Print_DrawChar(g_HexChar[val & 0x000F]);
+			}
+			else if(*ptr == 'c')
+			{
+				c8 val = (c8)va_arg(args, c8);
+				Print_DrawChar(val);
+			}
+			else if(*ptr == 's')
+			{
+				const c8* val = (const c8*)va_arg(args, const c8*);
+				Print_DrawText(val);
+			}
+		}
+		// Parse special character
+		else if(*ptr == '\t')
+			Print_Tab();
+		else if(*ptr == '\n')
+			Print_Return();
+		else if(*ptr == ' ')
+			Print_Space();
+		else
+			Print_DrawChar(*ptr);
+		
+		ptr++;
+	}
+
+	va_end(args);
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// GRAPH FUNCTIONS
 //-----------------------------------------------------------------------------
 #if (USE_PRINT_GRAPH)
 

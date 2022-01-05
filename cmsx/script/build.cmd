@@ -45,7 +45,7 @@ if /I %Version%==1			( echo » Version: MSX 1
 )
 
 rem -- Target specific initializations
-call %LibDir%\script\target_config.cmd
+call %LibDir%\script\setup_target.cmd
 
 rem -- Create ctr0 config file
 if defined Mapper (
@@ -188,7 +188,7 @@ echo └────────────────────────
 %SDCC%\sdcc.exe --version
 
 call %LibDir%\script\compile_all.cmd
-if not errorlevel 0 goto :Error
+if errorlevel 1 goto :Error
 
 :NoCompile
 
@@ -210,7 +210,7 @@ if %Optim%==Size (set LinkOpt=%LinkOpt% --opt-code-size)
 set SDCCParam=-mz80 --no-std-crt0 --code-loc 0x%CodeAddr% --data-loc 0x%RamAddr% --constseg RODATA --vc %LinkOpt% %LibList% -o %OutDir%\
 echo SDCC %SDCCParam%
 %SDCC%\sdcc.exe %SDCCParam%
-if not errorlevel 0 goto :Error
+if errorlevel 1 goto :Error
 echo %GREEN%Succeed%RESET%
 
 :NoMake
@@ -231,7 +231,7 @@ echo %BLUE%Converting to binary...%RESET%
 
 echo HEX2BIN %H2BParam%
 %Hex2Bin% %H2BParam% 
-if not errorlevel 0 goto :Error
+if errorlevel 1 goto :Error
 echo %GREEN%Succeed%RESET%
 
 rem ***************************************************************************
@@ -241,7 +241,7 @@ if %FillSize%==0 goto :NoFill
 
 echo %BLUE%Filling binary up to %FillSize% bytes...%RESET%
 %FillFile% %OutDir%\%Crt0%.%Ext% %FillSize%
-if not errorlevel 0 goto :Error
+if errorlevel 1 goto :Error
 echo %GREEN%Succeed%RESET%
 
 :NoFill
@@ -287,7 +287,7 @@ goto :NoMapper
 	%Hex2Bin% -e %Ext% -s 0x%2 %OutDir%\%~n1.ihx
 	%FillFile% %OutDir%\%~n1.%Ext% %SegSize%
 	copy /Y /B %OutDir%\%Crt0%.%Ext%+%OutDir%\%~n1.%Ext% %OutDir%\%Crt0%.%Ext%
-	exit /B 0
+	exit /B 200
 
 :NoMapper
 
@@ -310,7 +310,7 @@ rem ***************************************************************************
 if /I %Ext%==bin (
 	echo -- Copy %OutDir%\%Crt0%.%Ext% to emul\bin\%ProjName%.%Ext%
 	copy /Y %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\bin\%ProjName%.%Ext%
-	if not errorlevel 0 goto :Error
+	if errorlevel 1 goto :Error
 	echo -- Create emul\bin\autoexec.bas
 	echo 10 print"Loading..." > %ProjDir%\emul\bin\autoexec.bas
 	echo 20 bload"%ProjName:~0,8%.%Ext%",r >> %ProjDir%\emul\bin\autoexec.bas
@@ -343,14 +343,14 @@ rem ***************************************************************************
 if /I %Ext%==rom (
 	echo Copy %OutDir%\%Crt0%.%Ext% to emul\rom\%ProjName%.%Ext%
 	copy /Y %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\rom\%ProjName%.%Ext%
-	if not errorlevel 0 goto :Error
+	if errorlevel 1 goto :Error
 )
 
 rem ***************************************************************************
 if /I %Ext%==com (
 	echo Copy %OutDir%\%Crt0%.%Ext% to emul\dos%DOS%\%ProjName%.%Ext%
 	copy /Y %OutDir%\%Crt0%.%Ext% %ProjDir%\emul\dos%DOS%\%ProjName%.%Ext%
-	if not errorlevel 0 goto :Error
+	if errorlevel 1 goto :Error
 	echo Create emul\dos%DOS%\autoexec.bat
 	if /I %DOS%==1 (
 		echo %ProjName% > %ProjDir%\emul\dos%DOS%\autoexec.bat
@@ -361,7 +361,7 @@ if /I %Ext%==com (
 		echo %ProjName% >> %ProjDir%\emul\dos%DOS%\autoexec.bat
 	)
 	
-	if not errorlevel 0 goto :Error
+	if errorlevel 1 goto :Error
 	rem ---- Generate DSK file ----
 	if exist %DskTool% (
 
@@ -409,16 +409,16 @@ echo └────────────────────────
 rem ***************************************************************************
 rem * EMULATOR                                                                *
 rem ***************************************************************************
-call %LibDir%\script\emulator_config.cmd
+call %LibDir%\script\setup_emulator.cmd
 
 :NoRun
 
 REM ////////////////////////////////////////
 
 echo %GREEN%Build Succeed%RESET%
-exit /B %errorlevel%
+exit /B 0
 
 :Error
 
 echo %RED%Error: Build Failed with error number %errorlevel%%RESET%
-exit /B %errorlevel%
+exit /B 666

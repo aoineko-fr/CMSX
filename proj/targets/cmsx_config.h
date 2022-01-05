@@ -107,6 +107,7 @@
 #define USE_PRINT_GRAPH				1	// Allow use of character lines and boxes
 #define USE_PRINT_VALIDATOR			0	// Add validator character code
 #define USE_PRINT_UNIT				0	// Display integer type (h: hexadecimal, b: binary)
+#define USE_PRINT_FORMAT			1
 #define PRINT_SKIP_SPACE			1	// Skill space character
 #define PRINT_COLOR_NUM				1	// 1 color per line
 // - PRINT_WIDTH_1

@@ -53,11 +53,9 @@ if /I %FileExt%==.asm (
 )
 
 echo %GREEN%Succeed%RESET%
-
 exit /B 0
 
 :Error
 
-echo %RED%Error: Compile failed with error number%errorlevel%%RESET%
-
-exit /B %errorlevel%
+echo %RED%Error: Compile failed with error number %errorlevel%%RESET%
+exit /B 1

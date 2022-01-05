@@ -16,6 +16,9 @@
 // DEFINES
 //=============================================================================
 
+// Library's logo
+#define MSX_GL "\x01\x02\x03\x04\x05\x06"
+
 // Screen setting
 struct ScreenSetting
 {
@@ -50,16 +53,16 @@ struct DrawData
 //=============================================================================
 
 // Fonts
-#include "font\font_cmsx_std0.h"
-#include "font\font_ibm.h"
+#include "font\font_cmsx_sample6.h"
+#include "font\font_cmsx_sample8.h"
 
 // Screen mode settings
 const struct ScreenSetting g_Settings[] =
 { //  Name              Mode              Width BPC Txt   BG    Red   White Gray  Black Font              Data  DataLMMC Palette 
-	{ "Screen 5 (G4)",	VDP_MODE_SCREEN5, 256,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_CMSX_Std0, null, null, null }, // 0
-	{ "Screen 6 (G5)",	VDP_MODE_SCREEN6, 512,	2,	0xFF, 0xAA, 0x55, 0xFF, 0xAA, 0x55, g_Font_IBM,       null, null, null }, // 1
-	{ "Screen 7 (G6)",	VDP_MODE_SCREEN7, 512,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_IBM,       null, null, null }, // 2
-	{ "Screen 8 (G7)",	VDP_MODE_SCREEN8, 256,	8,	0xFF, 0x47, 0x1C, 0xFF, 0x6D, 0x00, g_Font_CMSX_Std0, null, null, null }, // 3
+	{ "Screen 5 (G4)",	VDP_MODE_SCREEN5, 256,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_CMSX_Sample6, null, null, null }, // 0
+	{ "Screen 6 (G5)",	VDP_MODE_SCREEN6, 512,	2,	0xFF, 0xAA, 0x55, 0xFF, 0xAA, 0x55, g_Font_CMSX_Sample8, null, null, null }, // 1
+	{ "Screen 7 (G6)",	VDP_MODE_SCREEN7, 512,	4,	0xFF, 0x44, 0x88, 0xFF, 0x11, 0x11, g_Font_CMSX_Sample8, null, null, null }, // 2
+	{ "Screen 8 (G7)",	VDP_MODE_SCREEN8, 256,	8,	0xFF, 0x47, 0x1C, 0xFF, 0x6D, 0x00, g_Font_CMSX_Sample6, null, null, null }, // 3
 };
 
 // Character animation
@@ -142,8 +145,10 @@ void DisplayPage()
 	Print_SetColor(src->Text, src->Background);
 	
 	Print_SetPosition(4, 2);
-	Print_DrawText("MGL - DRAW SAMPLE - ");
+	Print_DrawText(MSX_GL "  DRAW SAMPLE  ");
+	Print_DrawChar('\x81');
 	Print_DrawText(src->Name);
+	Print_DrawChar('\x80');
 	Draw_HLine(0, src->Width - 1, 12, src->White, 0);
 	Draw_HLine(0, src->Width - 1, 114, src->White, 0);
 	Draw_VLine(src->Width / 2, 16, 212, src->White, 0);

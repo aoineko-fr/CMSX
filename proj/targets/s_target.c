@@ -21,6 +21,10 @@
 #define BANK_ADDR	0x8000
 #define MAPPER_Y	8
 #define MAPPER_NUM	6
+#if (MAPPER_NUM > ROM_SEGMENTS)
+	#undef  MAPPER_NUM
+	#define MAPPER_NUM	ROM_SEGMENTS
+#endif
 
 // Slots page
 #define SLOT_Y		3
@@ -503,39 +507,27 @@ void DiplayInfo()
 	Print_SetPosition(0, 2);
 	Print_DrawText(TARGET_NAME);
 
-	Print_DrawText("\nType:   ");
-	Print_DrawText(GetTargetType(TARGET_TYPE));
+	Print_DrawFormat("\nType:   %s", GetTargetType(TARGET_TYPE));
 	
 	#if (TARGET_TYPE == TYPE_ROM)
-		Print_DrawText("\nMapper: ");
-		Print_DrawText(GetROMMapper(ROM_MAPPER));
+		Print_DrawFormat("\nMapper: %s", GetROMMapper(ROM_MAPPER));
 		
-		Print_DrawText("\nSize:   ");
-		Print_DrawText(GetROMSize(ROM_SIZE));
+		Print_DrawFormat("\nSize:   %s", GetROMSize(ROM_SIZE));
 		#if (ROM_MAPPER != ROM_PLAIN)
-			Print_DrawText(" (");
-			Print_DrawInt(ROM_SEGMENTS);
-			Print_DrawChar(')');
+			Print_DrawFormat(" (%i)", ROM_SEGMENTS);
 		#endif
 	#endif
 
-	Print_DrawText("\nAddr:   ");
-	Print_DrawHex16(Sys_GetFirstAddr());
-	Print_DrawChar('~');
-	Print_DrawHex16(Sys_GetLastAddr());
+	Print_DrawFormat("\nAddr:   %4x~%4x", Sys_GetFirstAddr(), Sys_GetLastAddr());
 
 	for(u8 i = 0; i < 4; i++)
 	{
 		g_PageSlot[i] = Sys_GetPageSlot(i);
 		Print_SetPosition(20, 3+i);
-		Print_DrawText("Page[");
-		Print_DrawInt(i);
-		Print_DrawText("]: ");
+		Print_DrawFormat("Page[%i]: ", i);
 		Print_Slot(g_PageSlot[i]);
 		Print_SetPosition(33, 3+i);
-		Print_DrawChar('(');
-		Print_DrawText(GetSlotName(g_PageSlot[i], i));
-		Print_DrawChar(')');
+		Print_DrawFormat("(%s)", GetSlotName(g_PageSlot[i], i));
 	}
 
 	#if (ROM_MAPPER != ROM_PLAIN)

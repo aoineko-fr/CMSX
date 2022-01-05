@@ -24,6 +24,9 @@
 #define ANALOG_Y	120
 #define ANALOG_R	70
 
+// Library's logo
+#define MSX_GL "\x01\x02\x03\x04\x05\x06"
+
 //=============================================================================
 // READ-ONLY DATA
 //=============================================================================
@@ -32,7 +35,7 @@
 #include "mathtable\mt_trigo_360.inc"
 
 // Fonts
-#include "font\font_cmsx_std0.h"
+#include "font\font_cmsx_sample6.h"
 #include "font\font_cmsx_digit2.h"
 
 // Animation characters
@@ -190,11 +193,11 @@ void main()
 	VDP_SetPaletteEntry(9, RGB16(7, 0, 0));
 
 	// Initialize print system
-	Print_SetBitmapFont(g_Font_CMSX_Std0);
+	Print_SetBitmapFont(g_Font_CMSX_Sample6);
 	Print_SetColor(0xFF, 0x11);
 	Print_Clear();
 	Print_SetPosition(4, 4);
-	Print_DrawText("MGL - RTC SAMPLE");
+	Print_DrawText(MSX_GL "  RTC SAMPLE");
 	Draw_Box(0, 0, 255, 14, 0xF, 0);
 	
 	// Initialize the RTC module

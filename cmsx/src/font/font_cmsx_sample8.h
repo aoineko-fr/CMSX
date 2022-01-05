@@ -6,7 +6,7 @@
 // Author: Guillaume "Aoineko" Blanchard, for CMSX (MSX Game library)
 // License: CC-BY-SA
 // _____________________________________________________________________________
-// Data generated using CMSXimg 1.12.0 on Wed Jan  5 00:19:05 2022
+// Data generated using CMSXimg 1.12.0 on Wed Jan  5 21:53:03 2022
 // by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
 // Generation parameters:
 //  - Input file:     font\font_cmsx_sample8.png
@@ -36,6 +36,15 @@ const unsigned char g_Font_CMSX_Sample8[] =
 	0x00, /* ........ */ 
 	0x00, /* ........ */ 
 // Sprite[1] (offset:12)
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+	0x00, /* ........ */ 
+// Sprite[2] (offset:20)
 	0x7F, /* .####### */ 
 	0x4E, /* .#..###. */ 
 	0x44, /* .#...#.. */ 
@@ -44,7 +53,7 @@ const unsigned char g_Font_CMSX_Sample8[] =
 	0x4A, /* .#..#.#. */ 
 	0x4E, /* .#..###. */ 
 	0x7F, /* .####### */ 
-// Sprite[2] (offset:20)
+// Sprite[3] (offset:28)
 	0xFF, /* ######## */ 
 	0x60, /* .##..... */ 
 	0x40, /* .#...... */ 
@@ -53,24 +62,15 @@ const unsigned char g_Font_CMSX_Sample8[] =
 	0x01, /* .......# */ 
 	0x03, /* ......## */ 
 	0xFF, /* ######## */ 
-// Sprite[3] (offset:28)
-	0xFF, /* ######## */ 
-	0x39, /* ..###..# */ 
-	0x11, /* ...#...# */ 
-	0x83, /* #.....## */ 
-	0x83, /* #.....## */ 
-	0x11, /* ...#...# */ 
-	0x39, /* ..###..# */ 
-	0xFF, /* ######## */ 
 // Sprite[4] (offset:36)
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
-	0x00, /* ........ */ 
+	0xFF, /* ######## */ 
+	0x39, /* ..###..# */ 
+	0x11, /* ...#...# */ 
+	0x83, /* #.....## */ 
+	0x83, /* #.....## */ 
+	0x11, /* ...#...# */ 
+	0x39, /* ..###..# */ 
+	0xFF, /* ######## */ 
 // Sprite[5] (offset:44)
 	0x00, /* ........ */ 
 	0x39, /* ..###..# */ 

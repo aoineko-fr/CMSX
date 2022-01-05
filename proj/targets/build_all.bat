@@ -15,7 +15,9 @@ for %%G in (%Formats%) do (
 	call :RenameOutput %%G
 )
 
-for %%G in (128,256,512,1024,2048) do (
+rem ---------------------------------------------------------------------------
+rem  ASCII-8 mapped ROM
+for %%G in (64,128,256,512,1024,2048) do (
 	rem ---- Build target ----
 	call build ROM_ASCII8 %%G
 
@@ -23,7 +25,9 @@ for %%G in (128,256,512,1024,2048) do (
 	call :RenameOutput ROM_ASCII8_%%GK
 )
 
-for %%G in (128,256,512,1024,2048,4096) do (
+rem ---------------------------------------------------------------------------
+rem  ASCII-16 mapped ROM
+for %%G in (64,128,256,512,1024,2048,4096) do (
 	rem ---- Build target ----
 	call build ROM_ASCII16 %%G
 
@@ -31,7 +35,9 @@ for %%G in (128,256,512,1024,2048,4096) do (
 	call :RenameOutput ROM_ASCII16_%%GK
 )
 
-for %%G in (128,256,512,1024,2048) do (
+rem ---------------------------------------------------------------------------
+rem  Konami mapped ROM
+for %%G in (64,128,256,512,1024,2048) do (
 	rem ---- Build target ----
 	call build ROM_KONAMI %%G
 
@@ -39,7 +45,9 @@ for %%G in (128,256,512,1024,2048) do (
 	call :RenameOutput ROM_KONAMI_%%GK
 )
 
-for %%G in (128,256,512,1024,2048) do (
+rem ---------------------------------------------------------------------------
+rem  Konami-SCC mapped ROM
+for %%G in (64,128,256,512,1024,2048) do (
 	rem ---- Build target ----
 	call build ROM_KONAMI_SCC %%G
 
