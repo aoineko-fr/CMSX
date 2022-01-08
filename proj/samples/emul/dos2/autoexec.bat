@@ -1,2 +1,3 @@
 echo Loading... 
 s_zip.com 
+s_zip 

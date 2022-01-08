@@ -251,6 +251,12 @@ void VDP_FillVRAM_16K(u8 value, u16 dest, u16 count) __sdcccall(0);
 /// Read data from VRAM to RAM
 void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0);
 
+/// Read a value from VRAM
+u8 VDP_Peek_16K(u16 dest);
+
+/// Write a value to VRAM
+void VDP_Poke_16K(u8 val, u16 dest);
+
 //-----------------------------------------------------------------------------
 #if (VDP_VRAM_ADDR == VDP_VRAM_ADDR_14)
 
@@ -268,7 +274,6 @@ void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0);
 
 	/// Read data from VRAM to RAM
 	void VDP_ReadVRAM(u16 srcLow, u8 srcHigh, u8* dest, u16 count) __sdcccall(0);
-
 #endif
 
 /// Enable/disable horizontal interruption [MSX2/2+/TR]

@@ -79,12 +79,21 @@ __sfr __at(P_VDP_IREG)	g_VDP_IRegPort;	///< Indirect register access port (write
 // PSG
 //-----------------------------------------------------------------------------
 
+// Internal PSG I/O ports
 #define P_PSG_REGS 0xA0   // PSG register write port
 __sfr __at(P_PSG_REGS) g_PSG_RegPort;
 #define P_PSG_DATA 0xA1   // PSG value write port
 __sfr __at(P_PSG_DATA) g_PSG_DataPort;
 #define P_PSG_STAT 0xA2   // PSG value read port
 __sfr __at(P_PSG_STAT) g_PSG_StatPort;
+
+// External PSG I/O ports
+#define P_PSG_EXT_REGS 0x10   // PSG register write port
+__sfr __at(P_PSG_EXT_REGS) g_PSG_Ext_RegPort;
+#define P_PSG_EXT_DATA 0x11   // PSG value write port
+__sfr __at(P_PSG_EXT_DATA) g_PSG_Ext_DataPort;
+#define P_PSG_EXT_STAT 0x12   // PSG value read port
+__sfr __at(P_PSG_EXT_STAT) g_PSG_Ext_StatPort;
 
 //-----------------------------------------------------------------------------
 // RTC

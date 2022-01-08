@@ -15,6 +15,11 @@ set SDCC=%ToolsDir%\SDCC\bin
 set Hex2Bin=%ToolsDir%\Hex2bin\hex2bin.exe
 set FillFile=%ToolsDir%\MakeROM\fillfile.exe
 set Emulator=%ToolsDir%\OpenMSX\openmsx.exe
+REM set Emulator=%ToolsDir%\\BlueMSX\blueMSX.exe
+REM set Emulator=%ToolsDir%\Emulicious\Emulicious.exe
+REM set Emulator=%ToolsDir%\MEISEI\meisei.exe
+REM set Emulator=%ToolsDir%\fMSX\fMSX.exe
+REM set Emulator=%ToolsDir%\RuMSX\MSX.exe
 set Debugger=%ToolsDir%\OpenMSX\Debugger\openmsx-debugger.exe
 set MSXDOS=%ToolsDir%\MSXDOS
 set DskTool=%ToolsDir%\DskTool\dsktool.exe
@@ -56,9 +61,9 @@ rem  - ROM_ASCII8		.rom	128KB ROM using ASCII-8 mapper
 rem  - ROM_ASCII16		.rom	128KB ROM using ASCII-16 mapper
 rem  - ROM_KONAMI		.rom	128KB ROM using Konami mapper (8KB segments)
 rem  - ROM_KONAMI_SCC	.rom	128KB ROM using Konami SCC mapper (8KB segments)
-rem  - DOS				.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
+rem  - DOS1|2			.com	MSX-DOS program (0100h~) No direct acces to Main-ROM
 rem  - DOS_ARG			.com	MSX-DOS program (using command line arguments ; 0100h~) No direct acces to Main-ROM
-set Target=ROM_32K
+set Target=DOS2
 
 rem  Optim:
 rem  - Default
@@ -98,7 +103,7 @@ set DoCompile=1
 set DoMake=1
 set DoPackage=1
 set DoDeploy=1
-set DoRun=1
+set DoRun=0
 
 rem ***************************************************************************
 rem * START BUILD                                                             *

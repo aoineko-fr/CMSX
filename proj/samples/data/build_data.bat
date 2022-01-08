@@ -2,6 +2,9 @@
 ..\..\..\tools\CMSXbin\CMSXbin.exe datasrc\ayfx_fx017.afx -ad -ascii
 ..\..\..\tools\CMSXbin\CMSXbin.exe datasrc\ayfx_fx019.afx -ad -ascii
 
+..\..\..\tools\CMSXbin\CMSXbin.exe datasrc\vgm\ds4_03.vgm   -ad
+..\..\..\tools\CMSXbin\CMSXbin.exe datasrc\vgm\goemon07.vgm -ad
+
 ..\..\..\tools\CMSXimg\CMSXimg.exe datasrc\data.png -copy datasrc\license.txt -out data_bmp_8b.h    -pos 16 32  -size 16 16 -num 1 1  -name g_DataBmp8b    -trans 0x8468a1 -bpc 8
 ..\..\..\tools\CMSXimg\CMSXimg.exe datasrc\data.png -copy datasrc\license.txt -out data_bmp_4b.h    -pos 16 32  -size 16 16 -num 1 1  -name g_DataBmp4b    -trans 0x8468a1 -bpc 4 -pal msx1
 ..\..\..\tools\CMSXimg\CMSXimg.exe datasrc\data.png -copy datasrc\license.txt -out data_bmp_2b.h    -pos 16 32  -size 16 16 -num 1 1  -name g_DataBmp2b    -trans 0x8468a1 -bpc 2 -pal custom

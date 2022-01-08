@@ -106,7 +106,7 @@
 #define USE_PRINT_FX_OUTLINE		0	// [Bitmap] Allow use of text outline
 #define USE_PRINT_GRAPH				1	// Allow use of character lines and boxes
 #define USE_PRINT_VALIDATOR			1	// Add validator character code
-#define USE_PRINT_UNIT				1	// Display integer type (h: hexadecimal, b: binary)
+#define USE_PRINT_UNIT				0	// Display integer type (h: hexadecimal, b: binary)
 #define USE_PRINT_FORMAT			1
 #define PRINT_SKIP_SPACE			1	// Skill space character
 #define PRINT_COLOR_NUM				12	// 1 color per line
@@ -119,6 +119,15 @@
 // - PRINT_HEIGHT_8
 // - PRINT_HEIGHT_X
 #define PRINT_HEIGHT				PRINT_HEIGHT_1
+
+//-----------------------------------------------------------------------------
+// PSG MODULE
+//-----------------------------------------------------------------------------
+
+// PSG options
+#define PSG_CHIP					PSG_INTERNAL
+#define PSG_ACCESS					PSG_INDIRECT
+#define PSG_USE_NOTES				1
 
 //-----------------------------------------------------------------------------
 // GAME MODULE

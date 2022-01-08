@@ -6,184 +6,169 @@
 // PSG module header file
 //
 // References:
-//  - AY-3-8910 / 8912 Programmable Sound Generator Data Manual
-//  - https://www.angelfire.com/art2/unicorndreams/msx/RR-PSG.html
+//  - AY-3-8910 Programmable Sound Generator Data Manual
+//     http://map.grauw.nl/resources/sound/generalinstrument_ay-3-8910.pdf
+//  - YM2149 Programmable Software-Controlled Sound Generator Manual
+//     http://map.grauw.nl/resources/sound/yamaha_ym2149.pdf
+//  - The Revised MSX Red Book - PSG
+//     https://www.angelfire.com/art2/unicorndreams/msx/RR-PSG.html
 //-----------------------------------------------------------------------------
 #pragma once
 
-#include "core.h"
+//=============================================================================
+// INCLUDES
+//=============================================================================
 
-extern u8 g_PSG_Regs[16];
+#include "core.h"
+#include "bios_port.h"
+#include "psg_reg.h"
+
+//=============================================================================
+// DEFINES
+//=============================================================================
+
+#define PSG_REG(a)				((a) & 0x0F)
+#define PSG_CHAN(a)				((a) & 0x03)
 
 // Ports
-#define PSG_PORT_REG		0xA0   ///< Used to select a specific register by writing its number (0 to 15)
-#define PSG_PORT_WRITE		0xA1   ///< Used to write to any register once it has been selected by the Address Port.	
-#define PSG_PORT_READ		0xA2   ///< Used to read any register once it has been selected by the Address Port.
+#if (PSG_CHIP == PSG_INTERNAL)
+	#define PSG_PORT_REG		P_PSG_REGS     ///< Used to select a specific register by writing its number (0 to 15)
+	#define PSG_PORT_WRITE		P_PSG_DATA     ///< Used to write to any register once it has been selected by the Address Port.	
+	#define PSG_PORT_READ		P_PSG_STAT     ///< Used to read any register once it has been selected by the Address Port.
+#elif (PSG_CHIP == PSG_EXTERNAL)
+	#define PSG_PORT_REG		P_PSG_EXT_REGS ///< Used to select a specific register by writing its number (0 to 15)
+	#define PSG_PORT_WRITE		P_PSG_EXT_DATA ///< Used to write to any register once it has been selected by the Address Port.	
+	#define PSG_PORT_READ		P_PSG_EXT_STAT ///< Used to read any register once it has been selected by the Address Port.
+#elif (PSG_CHIP == PSG_BOTH)
+	// PRimary PSG
+	#define PSG_PORT_REG		P_PSG_REGS
+	#define PSG_PORT_WRITE		P_PSG_DATA
+	#define PSG_PORT_READ		P_PSG_STAT
+	// Secondary PSG
+	#define PSG2_PORT_REG		P_PSG_EXT_REGS
+	#define PSG2_PORT_WRITE		P_PSG_EXT_DATA
+	#define PSG2_PORT_READ		P_PSG_EXT_STAT
+	#define PSG2_REG(a)			(PSG_REG(a) | 0x80)
+	#define PSG2_CHAN(a)		(PSG_CHAN(a) | 0x80)
+#endif
 
 // Channels
-#define PSG_CHANNEL_A		0
-#define PSG_CHANNEL_B		1
-#define PSG_CHANNEL_C		2
+#define PSG_CHANNEL_A			0
+#define PSG_CHANNEL_B			1
+#define PSG_CHANNEL_C			2
+
+// Mixer
+#define PSG_TONE_A_ON			0b00000001
+#define PSG_TONE_B_ON			0b00000010
+#define PSG_TONE_C_ON			0b00000100
+#define PSG_NOISE_A_ON			0b00001000
+#define PSG_NOISE_B_ON			0b00010000
+#define PSG_NOISE_C_ON			0b00100000
+#define PSG_TONE_A_OFF			0
+#define PSG_TONE_B_OFF			0
+#define PSG_TONE_C_OFF			0
+#define PSG_NOISE_A_OFF			0
+#define PSG_NOISE_B_OFF			0
+#define PSG_NOISE_C_OFF			0
+
+#define PSG_USE_ENVELOPE		PSG_F_ENV
+
+#if (PSG_USE_NOTES)
+
+enum NOTE
+{
+	// Latin notation
+	NOTE_DO = 0, // Do
+	NOTE_DOd,    // Do#
+	NOTE_RE,     // Re
+	NOTE_REd,    // Re#
+	NOTE_MI,     // Mi
+	NOTE_FA,     // Fa
+	NOTE_FAd,    // Fa#
+	NOTE_SOL,    // Sol
+	NOTE_SOLd,   // Sol#
+	NOTE_LA,     // La
+	NOTE_LAd,    // La#
+	NOTE_SI,     // Si
+	// Anglo-Germanic notation
+	NOTE_C = 0,  // C 
+	NOTE_Cd,     // C#
+	NOTE_D,      // D
+	NOTE_Dd,     // D#
+	NOTE_E,      // E
+	NOTE_F,      // F
+	NOTE_Fd,     // F#
+	NOTE_G,      // G
+	NOTE_Gd,     // G#
+	NOTE_A,      // A
+	NOTE_Ad,     // A#
+	NOTE_B       // B
+};
+
+#endif // (PSG_USE_NOTES)
 
 //-----------------------------------------------------------------------------
-//   P S G   R E G I S T E R S
-//-----------------------------------------------------------------------------
+struct PSG_Data
+{
+	u16		Tone[3];	// 6
+	u8		Noise;		// 1
+	u8		Mixer;		// 1
+	u8		Volume[3];	// 3
+	u16		Envelope;	// 2
+	u8		Shape;		// 1
+	u8		IOPortA;	// 1
+	u8		IOPortB;	// 1
+};
 
-//-----------------------------------------------------------------------------
-// R#0    Tone Generator Control - Fine Tune Register - Channel A
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	TP7 TP6 TP5 TP4 TP3 TP2 TP1 TP0 	
-//	└───┴───┴───┴───┴───┴───┴───┴── Channel A Frequency, LSB (fine tune)
-#define PSG_REG_TONE_A		0
-#define PSG_REG_TONEF_A		0
+#if (PSG_ACCESS == PSG_INDIRECT)
+extern struct PSG_Data g_PSG_Regs;
+#if (PSG_CHIP == PSG_BOTH)
+extern struct PSG_Data g_PSG2_Regs;
+#endif
+#endif
 
-//-----------------------------------------------------------------------------
-// R#1    Tone Generator Control - Coarse Tune Register - Channel A
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	x   x   x   x   TPB TPA TP9 TP8 	
-//	                └───┴───┴───┴── Channel A Frequency, MSB (coarse tune)
-#define PSG_REG_TONEC_A		1
+//=============================================================================
+// PROTOTYPE
+//=============================================================================
 
-//-----------------------------------------------------------------------------
-// R#2    Tone Generator Control - Fine Tune Register - Channel B
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	TP7 TP6 TP5 TP4 TP3 TP2 TP1 TP0 	
-//	└───┴───┴───┴───┴───┴───┴───┴── Channel B Frequency, LSB (fine tune)
-#define PSG_REG_TONE_B		2
-#define PSG_REG_TONEF_B		2
+/// Set the value of a given register
+void PSG_SetRegister(u8 reg, u8 value);
 
-//-----------------------------------------------------------------------------
-// R#3    Tone Generator Control - Coarse Tune Register - Channel B
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	x   x   x   x   TPB TPA TP9 TP8 	
-//	                └───┴───┴───┴── Channel B Frequency, MSB (coarse tune)
-#define PSG_REG_TONEC_B		3
+/// Get the value of a given register
+u8 PSG_GetRegister(u8 reg);
 
-//-----------------------------------------------------------------------------
-// R#4    Tone Generator Control - Fine Tune Register - Channel C
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	TP7 TP6 TP5 TP4 TP3 TP2 TP1 TP0 	
-//	└───┴───┴───┴───┴───┴───┴───┴── Channel C Frequency, LSB (fine tune)
-#define PSG_REG_TONE_C		4
-#define PSG_REG_TONEF_C		4
+/// Set the tone period of a given channel (tone generator control register)
+void PSG_SetTone(u8 chan, u16 period);
 
-//-----------------------------------------------------------------------------
-// R#5    Tone Generator Control - Coarse Tune Register - Channel C
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	x   x   x   x   TPB TPA TP9 TP8 	
-//	                └───┴───┴───┴── Channel C Frequency, MSB (coarse tune)
-#define PSG_REG_TONEC_C		5
+/// Set the noise period (noise generator control register)
+void PSG_SetNoise(u8 period);
 
-//-----------------------------------------------------------------------------
-// R#6    Noise Generator Control
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	x   x   x   NP4 NP3 NP2 NP1 NP0 	
-//	            └───┴───┴───┴───┴── Noise Frequency
-#define PSG_REG_NOISE		6
+/// Setup mixer by enabling tune and noise generators for each channel (mixer control enable register)
+void PSG_SetMixer(u8 mix);
 
-//-----------------------------------------------------------------------------
-// R#7    Mixer Control-I/O Enable
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	IB	IA	NC	NB	NA	TC	TB	TA 	
-//  │	│	│	│	│	│	│	└── Tone Genrator A enable/disable
-//	│	│	│	│	│   │   └────── Tone Genrator B enable/disable
-//	│	│	│	│	│   └────────── Tone Genrator C enable/disable
-//	│	│	│	│	└────────────── Noise Generator A enable/disable
-//	│	│	│	└────────────────── Noise Generator B enable/disable
-//	│	│	└────────────────────── Noise Generator C enable/disable
-//	│	└────────────────────────── Port A input/output control
-//	└────────────────────────────── Port B input/output control
-#define PSG_REG_MIXER		7
-#define PSG_F_TA			(0x01)	///< Tone Genrator A enable/disable
-#define PSG_F_TB			(0x02)	///< Tone Genrator B enable/disable
-#define PSG_F_TC			(0x04)	///< Tone Genrator C enable/disable
-#define PSG_F_NA			(0x08)	///< Noise Generator A enable/disable
-#define PSG_F_NB			(0x10)	///< Noise Generator B enable/disable
-#define PSG_F_NC			(0x20)	///< Noise Generator C enable/disable
-#define PSG_F_IA			(0x40)	///< Port A input/output control
-#define PSG_F_IB			(0x80)	///< Port B input/output control
+/// Set the volume of a given channel (Amplitude control register)
+void PSG_SetVolume(u8 chan, u8 vol);
 
-//-----------------------------------------------------------------------------
-// R#8    Amplitude Control - Channel A
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	x	x	x	M	L3	L2	L1	L0 	
-//  			│	└───┴───┴───┴── Channel A Amplitude (volume)
-//				└────────────────── Volume controlled by Envelope enable/disable
-#define PSG_REG_AMP_A		8
-#define PSG_F_ENV			(0x10)	///< Volume controlled by Envelope enable/disable
+/// Set the envelope period (Envelope priod control register)
+void PSG_SetEnvelope(u16 period);
 
-//-----------------------------------------------------------------------------
-// R#9    Amplitude Control - Channel B
-//-----------------------------------------------------------------------------
-#define PSG_REG_AMP_B		9
+/// Set the envelope shape (Envelope shape control register)
+void PSG_SetShape(u8 shape);
 
-//-----------------------------------------------------------------------------
-// R#10   Amplitude Control - Channel C
-//-----------------------------------------------------------------------------
-#define PSG_REG_AMP_C		10
+///
+void PSG_EnableTone(u8 chan, u8 val);
 
-//-----------------------------------------------------------------------------
-// R#11   Envelope Generator Control - Fine Tune Register
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	EP7 EP6 EP5 EP4 EP3 EP2 EP1 EP0 	
-//	└───┴───┴───┴───┴───┴───┴───┴── Envelope Frequency, LSB (period fine tune)
-#define PSG_REG_ENV			11
-#define PSG_REG_ENVF		11
+///
+void PSG_EnableNoise(u8 chan, u8 val);
 
-//-----------------------------------------------------------------------------
-// R#12   Envelope Generator Control - Coarse Tune Register
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	EPF EPE EPD EPC EPB EPA EP9 EP8 	
-//	└───┴───┴───┴───┴───┴───┴───┴── Envelope Frequency, MSB (period coarse tune)
-#define PSG_REG_ENVC		12
+///
+void PSG_EnableEnvelope(u8 chan, u8 val);
 
-//-----------------------------------------------------------------------------
-// R#13   Envelope Shape/Cycle Control
-//-----------------------------------------------------------------------------
-//	7	6	5	4	3	2	1	0	
-//	x	x	x	x	E3	E2	E1	E0 	
-//  				│	│	│	└── Envelope shape, Hold
-//					│   │   └────── Envelope shape, Alternate
-//					│   └────────── Envelope shape, Attack
-//					└────────────── Envelope shape, Continue
-#define PSG_REG_SHAPE		13
-#define PSG_F_HLD			(0x01)	///< Envelope shape, Hold
-#define PSG_F_ALT			(0x02)	///< Envelope shape, Alternate
-#define PSG_F_ATT			(0x04)	///< Envelope shape, Attack
-#define PSG_F_CNT			(0x08)	///< Envelope shape, Continue
+#if (PSG_ACCESS == PSG_INDIRECT)
 
-// E3 E2 E1 E0	 Modulation Envelope
-//----------------------------------------------------
-//             _                     _
-// 0  0  x  x  _ \__________________ _
-//             _                     _
-// 0  1  x  x  _ /|_________________ _
-//             _                     _
-// 1  0  0  0  _ \|\|\|\|\|\|\|\|\|\ _
-//             _                     _
-// 1  0  0  1  _ \__________________ _
-//             _                     _
-// 1  0  1  0  _ \/\/\/\/\/\/\/\/\/\ _
-//             _   _________________ _
-// 1  0  1  1  _ \|                  _
-//             _                     _
-// 1  1  0  0  _ /|/|/|/|/|/|/|/|/|/ _
-//             _  __________________ _
-// 1  1  0  1  _ /                   _
-//             _                     _
-// 1  1  1  0  _ /\/\/\/\/\/\/\/\/\/ _
-//             _                     _
-// 1  1  1  1  _ /|_________________ _
+/// Send data to PSG registers #0 to #13
+void PSG_Apply();
+
+#endif
 
 

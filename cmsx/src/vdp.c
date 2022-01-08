@@ -488,6 +488,50 @@ void VDP_ReadVRAM_16K(u16 src, u8* dest, u16 count) __sdcccall(0)
 	__endasm;
 }
 
+//-----------------------------------------------------------------------------
+/// Read a value from VRAM
+u8 VDP_Peek_16K(u16 dest)
+{
+	dest; // HL
+	__asm
+		ld		b, a
+		// Setup address register 	
+		ld		a, l
+		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// AddrPort = (srcLow & 0x00FF)
+		ld		a, h
+		and		a, #0x3F
+		add		a, #F_VDP_READ
+		out		(P_VDP_ADDR), a			// AddrPort = ((srcLow >> 8) & 0x3F) + F_VDP_READ
+		// Write data 	
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		in		a, (P_VDP_DATA)			// value = DataPort
+	__endasm;
+}
+
+//-----------------------------------------------------------------------------
+/// Write a value to VRAM
+void VDP_Poke_16K(u8 val, u16 dest)
+{
+	val;  // A
+	dest; // DE
+	__asm
+		ld		b, a
+		// Setup address register 	
+		ld		a, e
+		di //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_ADDR), a			// AddrPort = (srcLow & 0x00FF)
+		ld		a, d
+		and		a, #0x3F
+		add		a, #F_VDP_WRIT
+		out		(P_VDP_ADDR), a			// AddrPort = ((srcLow >> 8) & 0x3F) + F_VDP_WRIT
+		// Write data 	
+		ld		a, b
+		ei //~~~~~~~~~~~~~~~~~~~~~~~~~~
+		out		(P_VDP_DATA), a			// DataPort = value
+	__endasm;
+}
+
 
 //=============================================================================
 //
@@ -1902,7 +1946,7 @@ void VDP_SetSpriteColorSM1(u8 index, u8 color)
 
 	u16 low = g_SpriteAtributeLow + 3;
 	low += (index * 4);
-	VDP_WriteVRAM((u8*)&g_VDP_Sprite.Pattern, low, g_SpriteAtributeHigh, 1);
+	VDP_WriteVRAM((u8*)&g_VDP_Sprite.Color, low, g_SpriteAtributeHigh, 1);
 }
 
 #if (MSX_VERSION >= MSX_2)

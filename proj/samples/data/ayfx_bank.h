@@ -3,10 +3,9 @@
 //   ██ ▀ ██▀█ ▀█▄  ▀█▄▀ ██▄  ▄  ██▀▄
 //   ▀█▄▀ ██ █ ▄▄█▀ ██ █ ██▄▀ ██ ██ █
 // _____________________________________________________________________________
-// CMSXbin 1.1.0 by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
-// File generated on Thu Feb 11 16:48:19 2021
-// Soure file: ayfx_bank.afb
-
+// CMSXbin 1.2.0 by Guillaume "Aoineko" Blanchard (2021) under CC BY-SA free license
+// File generated on Sat Jan  8 00:10:00 2022
+// Soure file: datasrc\ayfx_bank.afb
 const unsigned char g_ayfx_bank[] = {
 	0x13, 0x25, 0x00, 0x56, 0x00, 0x8D, 0x00, 0xB6, 0x00, 0xCA, 0x00, 0xDC, 0x00, 0x64, 0x01, 0x99, //      0 |  % V � � � � d � 
 	0x01, 0xC3, 0x01, 0xD4, 0x01, 0x28, 0x02, 0x59, 0x02, 0x89, 0x02, 0xBA, 0x02, 0x02, 0x03, 0x2F, //     16 |  � � ( Y � �   / 

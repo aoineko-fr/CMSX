@@ -3,324 +3,320 @@
 // █  ▄ █  ███  ███  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███ 
 // █  █ █▄ ▀ █  ▀▀█  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄ 
 // ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀─────────────────▀▀─────────────────────────────────────────
-//  PSG music & SFX sample
+//  Real-time clock module sample
 
 //=============================================================================
 // INCLUDES
 //=============================================================================
+
 #include "cmsx.h"
-#include "pt3/pt3_player.h"
-#include "ayfx/ayfx_player.h"
+#include "psg.h"
 
 //=============================================================================
 // DEFINES
 //=============================================================================
 
-// Song data structure
-struct SFXData
+// Library's logo
+#define MSX_GL "\x02\x03\x04\x05\x06"
+
+// 
+typedef void (*UICall)(u8 chan, u8 action);
+
+//
+struct UIEntry
 {
-	u8*			Raw;
-	const c8*	Name;
+	u8     PosX;
+	u8     PosY;
+	u8     Chan;
+	UICall Func;	
 };
 
-// Player font character
-#define CHR_PLAY		112
-#define CHR_PAUSE		113
-#define CHR_STOP		114
-#define CHR_REC			115
-#define CHR_NEXT		116
-#define CHR_PREV		117
-#define CHR_FORW		118
-#define CHR_BACK		119
-#define CHR_EJECT		120
-#define CHR_LOOP		121
-#define CHR_SHUFF		122
-#define CHR_PLUS		123
-#define CHR_MINUS		124
-#define CHR_SOUND		126
-#define CHR_MUTE		127
+// Move directions
+#define MOVE_UP				-3
+#define MOVE_RIGHT			1
+#define MOVE_DOWN			3
+#define MOVE_LEFT			-1
 
-#define PT3_Y			(24)
-#define PT3_PLY_X		(0)
-#define PT3_PLY_Y		(PT3_Y + 36)
-#define AYFX_Y			(88)
-#define PSG_Y			(150)
-#define VU_X			(64+10)
-#define VU_MAX			7
-#define VU_H			4
+// Action
+#define ACTION_NONE			0
+#define ACTION_PRESS_UP		1
+#define ACTION_HOLD_UP		2
+#define ACTION_PRESS_DOWN	3
+#define ACTION_HOLD_DOWN	4
+
+//
+#define CURSOR_ID			25
+
+#define TONE_FREQ_OFFSET	0x20
+#define TONE_FREQ_MAX		0x0FFF
+#define TONE_VOL_OFFSET		0x01
+#define TONE_VOL_MAX		0x0F
+#define ENV_FREQ_OFFSET		0x0200
+#define ENV_FREQ_MAX		0xFFFF
+#define ENV_SHAPE_OFFSET	0x01
+#define ENV_SHAPE_MAX		0x0F
+#define NOISE_FREQ_OFFSET	0x02
+#define NOISE_FREQ_MAX		0x1F
+
+//
+void SetToneEnable(u8 chan, u8 action);
+void SetTonePeriod(u8 chan, u8 action);
+void SetToneVolume(u8 chan, u8 action);
+void SetEnvEnable(u8 chan, u8 action);
+void SetEnvPeriod(u8 chan, u8 action);
+void SetEnvShape(u8 chan, u8 action);
+void SetNoiseEnable(u8 chan, u8 action);
+void SetNoisePeriod(u8 chan, u8 action);
 
 //=============================================================================
 // READ-ONLY DATA
 //=============================================================================
 
 // Fonts
-#include "font\font_cmsx_std0.h"
-#include "font\font_cmsx_symbol1.h"
+#include "font\font_cmsx_sample8.h"
 
-// Note table
-#include "pt3\pt3_notetable2.h"
+//
+const u8 g_ShapesId[16] = { 0, 0, 0, 0,	1, 1, 1, 1,	2, 0, 3, 4,	5, 6, 7, 1 };
 
-// Music
-#include "data\pt3\Beg!nsum.h"
-
-// SFX bank
-#include "data\ayfx_bank.h"
-
-// SFX file
-#include "data\ayfx_fx017.h"
-#include "data\ayfx_fx019.h"
-
-// ayFX files
-const struct SFXData g_SFXFiles[] =
-{
-	{ g_ayfx_fx017, "ayfx_fx017.afx" },
-	{ g_ayfx_fx019, "ayfx_fx019.afx" },
+//
+const c8* g_ShapesName[8] =
+{                                       //         _                     _
+	"\x1F\xAC\xAC\xAC\xAC\xAC\xAC\xAC",	// 0-3, 9  _ \__________________ _   
+										//         _                     _
+	"\xAA\xAC\xAC\xAC\xAC\xAC\xAC\xAC",	// 4-7, 15 _ /|_________________ _
+										//         _                     _
+	"\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB", // 8       _ \|\|\|\|\|\|\|\|\|\ _
+										//         _                     _
+	"\x1F\x1E\x1F\x1E\x1F\x1E\x1F\x1E", // 10      _ \/\/\/\/\/\/\/\/\/\ _
+										//         _   _________________ _
+	"\xAB\xAD\xAD\xAD\xAD\xAD\xAD\xAD", // 11      _ \|                  _
+										//         _                     _
+	"\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA", // 12      _ /|/|/|/|/|/|/|/|/|/ _
+										//         _  __________________ _
+	"\x1E\xAD\xAD\xAD\xAD\xAD\xAD\xAD",	// 13      _ /                   _
+										//         _                     _
+	"\x1E\x1F\x1E\x1F\x1E\x1F\x1E\x1F", // 14      _ /\/\/\/\/\/\/\/\/\/ _
 };
 
-// Character animation
-const u8 g_ChrAnim[] = { '|', '\\', '-', '/' };
+// Color shade
+const u8 g_ColorBlink[4] = { COLOR_LIGHT_RED, COLOR_MEDIUM_RED, COLOR_DARK_RED, COLOR_MEDIUM_RED };
+
+//
+const struct UIEntry g_UIEntries[24] =
+{
+	{ 64,  56, 0, SetToneEnable },  { 128,  56, 1, SetToneEnable },  { 192,  56, 2, SetToneEnable },
+	{ 64,  64, 0, SetTonePeriod },  { 128,  64, 1, SetTonePeriod },  { 192,  64, 2, SetTonePeriod },
+	{ 64,  72, 0, SetToneVolume },  { 128,  72, 1, SetToneVolume },  { 192,  72, 2, SetToneVolume },
+	{ 64,  88, 0, SetEnvEnable },   { 128,  88, 1, SetEnvEnable },   { 192,  88, 2, SetEnvEnable },
+	{ 64,  96, 0, SetEnvPeriod },   { 128,  96, 1, null },           { 192,  96, 2, null },
+	{ 64, 104, 0, SetEnvShape  },   { 128, 104, 1, null },           { 192, 104, 2, null },
+	{ 64, 120, 0, SetNoiseEnable }, { 128, 120, 1, SetNoiseEnable }, { 192, 120, 2, SetNoiseEnable },
+	{ 64, 128, 0, SetNoisePeriod }, { 128, 128, 1, null },           { 192, 128, 2, null },
+};
 
 //=============================================================================
 // MEMORY DATA
 //=============================================================================
 
-u8   g_VBlank = 0;
-u8   g_Frame = 0;
-bool g_Loop = false;
-bool g_Mute[3] = { false, false, false };
-u8   g_BankFXNum = 0;
-u8   g_FileFXNum = 0;
+u8 g_CursorPos = 0;
 
 //=============================================================================
 // HELPER FUNCTIONS
 //=============================================================================
 
 //-----------------------------------------------------------------------------
-// H_TIMI interrupt hook
-void VBlankHook()
+//
+void SetToneEnable(u8 chan, u8 action)
 {
-	g_VBlank = 1;
-	g_Frame++;
+	u8 enable = (g_PSG_Regs.Mixer & (1 << chan)) ? 0 : 1;
+	if(action == ACTION_HOLD_UP)
+		enable = 1;
+	else if(action == ACTION_HOLD_DOWN)
+		enable = 0;
+	PSG_EnableTone(chan, enable);
 
-	PT3_Decode();
-	ayFX_Update();
-	PT3_UpdatePSG();
-}
-
-//-----------------------------------------------------------------------------
-// Wait for V-Blank period
-void WaitVBlank()
-{
-	while(g_VBlank == 0) {}
-	g_VBlank = 0;
-}
-
-//-----------------------------------------------------------------------------
-// Draw the VU meter
-void DrawVUMeter()
-{
-	g_VDP_Command.NY = VU_H;
-	g_VDP_Command.ARG = 0; 
-	g_VDP_Command.CMD = VDP_CMD_HMMV;
-
-	// Channel A
-	g_VDP_Command.DY = PSG_Y + (8*2) + ((8-VU_H)/2); 
-	u8 volA = PT3_GetVolume(PSG_CHANNEL_A) >> 1;
-	if(volA > VU_MAX)
-		volA = VU_MAX;
-	if(volA > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volA * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volA < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volA * 8;
-		g_VDP_Command.NX = (VU_MAX - volA) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-
-	// Channel B
-	g_VDP_Command.DY = PSG_Y + (8*3) + ((8-VU_H)/2); 
-	u8 volB = PT3_GetVolume(PSG_CHANNEL_B) >> 1;
-	if(volB > VU_MAX)
-		volB = VU_MAX;
-	if(volB > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volB * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volB < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volB * 8;
-		g_VDP_Command.NX = (VU_MAX - volB) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-
-	// Channel C
-	g_VDP_Command.DY = PSG_Y + (8*4) + ((8-VU_H)/2); 
-	u8 volC = PT3_GetVolume(PSG_CHANNEL_C)>> 1;
-	if(volC > VU_MAX)
-		volC = VU_MAX;
-	if(volC > 0)
-	{
-		g_VDP_Command.DX = VU_X;
-		g_VDP_Command.NX = volC * 8;
-		g_VDP_Command.CLR = 0x22;
-		VPD_CommandSetupR36();
-	}
-	if(volC < VU_MAX)
-	{
-		g_VDP_Command.DX = VU_X + volC * 8;
-		g_VDP_Command.NX = (VU_MAX - volC) * 8;
-		g_VDP_Command.CLR = 0x11;
-		VPD_CommandSetupR36();
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Play/resume the current music
-void PlayMusic()
-{
-	PT3_Resume();
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	
-	Print_SetColor(0x9, 0);
-	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PLAY);
-
-	Print_SetColor(0xF, 0);
-	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PAUSE);
-	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_STOP);
-}
-
-//-----------------------------------------------------------------------------
-// Pause the current music
-void PauseMusic()
-{
-	PT3_Pause();
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-
-	Print_SetColor(0x9, 0);
-	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PAUSE);
-
-	Print_SetColor(0xF, 0);
-	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PLAY);
-	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_STOP);
-}
-
-//-----------------------------------------------------------------------------
-// Stop the current music
-void StopMusic()
-{
-	PT3_Pause();
-	PT3_InitSong(g_Beg_nsum);
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-
-	Print_SetColor(0x9, 0);
-	Print_SetPosition(PT3_PLY_X+11, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PAUSE);
-
-	Print_SetColor(0xF, 0);
-	Print_SetPosition(PT3_PLY_X+1, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PLAY);
-	Print_SetPosition(PT3_PLY_X+21, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_STOP);
-}
-
-//-----------------------------------------------------------------------------
-// Set the current music loop flag
-void LoopMusic(bool enable) __FASTCALL
-{
-	PT3_SetLoop(enable);
-	g_Loop = enable;
-
-	Print_SetFont(g_Font_CMSX_Symbol1);
-
-	Print_SetColor(enable ? 0x9 : 0xF, 0);
-	Print_SetPosition(PT3_PLY_X+51, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_LOOP);
-	Print_SetColor(0xF, 0);
-}
-
-//-----------------------------------------------------------------------------
-// Mute one of the channels
-void MuteMusic(u8 chan, bool bMute)
-{
-	PT3_Mute(chan, bMute);
-
-	g_Mute[chan] = bMute;
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetColor(bMute ? 0x9 : 0xF, 0);
-	Print_SetPosition(64, PSG_Y + 8*2 + 8*chan);
-	Print_DrawChar(bMute ? CHR_MUTE : CHR_SOUND);
-	Print_SetColor(0xF, 0);
+	VDP_SetSpritePattern(chan, enable ? 0x0C : 0x0B);
 }
 
 //-----------------------------------------------------------------------------
 //
-void PlayFileSFX(u8 id) __FASTCALL
+void SetTonePeriod(u8 chan, u8 action)
 {
-	ayFX_Play(g_SFXFiles[id].Raw);
+	u16 val = g_PSG_Regs.Tone[chan];
+	if(action == ACTION_HOLD_UP)
+	{
+		if(val < TONE_FREQ_MAX - TONE_FREQ_OFFSET)
+			val += TONE_FREQ_OFFSET;
+		else
+			val = TONE_FREQ_MAX;
+	}
+	else if(action == ACTION_HOLD_DOWN)
+	{
+		if(val > TONE_FREQ_OFFSET)
+			val -= TONE_FREQ_OFFSET;
+		else
+			val = 0;
+	}
+	PSG_SetTone(chan, val);
 
-	Print_SetFont(g_Font_CMSX_Std0);
-	VDP_CommandHMMV(64, AYFX_Y+8*4, 16*6, 8, 0x44);
-	Print_SetPosition(64, AYFX_Y+8*4);
-	Print_DrawText(g_SFXFiles[id].Name);
-}
-
-//-----------------------------------------------------------------------------
-// 
-void PlayBankSFX(u8 id) __FASTCALL
-{
-	ayFX_PlayBank(id, 0);
-
-	Print_SetFont(g_Font_CMSX_Std0);
-	VDP_CommandHMMV(64, AYFX_Y+8*3, 7*6, 8, 0x44);
-	Print_SetPosition(64, AYFX_Y+8*3);
-	Print_DrawInt(id+1);
-	Print_DrawChar('/');
-	Print_DrawInt(ayFX_GetBankNumber());
-}
-
-//-----------------------------------------------------------------------------
-// 
-void ChannelSFX(u8 chan) __FASTCALL
-{
-	ayFX_Mute();
-	ayFX_SetChannel(chan);
-
-	Print_SetFont(g_Font_CMSX_Std0);
-	VDP_CommandHMMV(64, AYFX_Y+8*2, 6, 8, 0x44);
-	Print_SetPosition(64, AYFX_Y+8*2);
-	Print_DrawChar('A' + chan);
+	Print_SetPosition(10 + chan * 8, 8);
+	Print_DrawFormat("%3x", val);
+	VDP_SetSpritePattern(3 + chan, (u8)(0xB0 + (val >> 9)));
 }
 
 //-----------------------------------------------------------------------------
 //
-void PrintHelp(u8 y, const c8* str)
+void SetToneVolume(u8 chan, u8 action)
 {
-	u8 len = String_Length(str);
-	Print_SetFont(g_Font_CMSX_Std0);
-	Print_SetColor(0x5, 0);
-	Print_SetPosition(255 - 6 * len, y);
-	Print_DrawText(str);
-	Print_SetColor(0xF, 0);
+	u8 val = g_PSG_Regs.Volume[chan];
+	u8 env = val & PSG_F_ENV;
+	val &= 0x0F;
+	if(action == ACTION_HOLD_UP)
+	{
+		if(val < TONE_VOL_MAX - TONE_VOL_OFFSET)
+			val += TONE_VOL_OFFSET;
+		else
+			val = TONE_VOL_MAX;
+	}
+	else if(action == ACTION_HOLD_DOWN)
+	{
+		if(val > TONE_VOL_OFFSET)
+			val -= TONE_VOL_OFFSET;
+		else
+			val = 0;
+	}
+	PSG_SetVolume(chan, val | env);
+
+	Print_SetPosition(10 + chan * 8, 9);
+	Print_DrawFormat("%1x", val);
+	VDP_SetSpritePattern(6 + chan, (u8)(0xB0 + (val >> 1)));
 }
+
+//-----------------------------------------------------------------------------
+//
+void SetEnvEnable(u8 chan, u8 action)
+{
+	u8 enable = (g_PSG_Regs.Volume[chan] & PSG_F_ENV) ? 1 : 0;
+	if(action == ACTION_HOLD_UP)
+		enable = 1;
+	else if(action == ACTION_HOLD_DOWN)
+		enable = 0;
+	PSG_EnableEnvelope(chan, enable);
+
+	VDP_SetSpritePattern(9 + chan, enable ? 0x0C : 0x0B);
+}
+
+//-----------------------------------------------------------------------------
+//
+void SetEnvPeriod(u8 chan, u8 action)
+{
+	u16 val = g_PSG_Regs.Envelope;
+	if(action == ACTION_HOLD_UP)
+	{
+		if(val < ENV_FREQ_MAX - ENV_FREQ_OFFSET)
+			val += ENV_FREQ_OFFSET;
+		else
+			val = ENV_FREQ_MAX;
+	}
+	else if(action == ACTION_HOLD_DOWN)
+	{
+		if(val > ENV_FREQ_OFFSET)
+			val -= ENV_FREQ_OFFSET;
+		else
+			val = 0;
+	}
+	PSG_SetEnvelope(val);
+
+	Print_SetPosition(10 + chan * 8, 12);
+	Print_DrawFormat("%4x", val);
+	VDP_SetSpritePattern(12 + chan, (u8)(0xB0 + (val >> 13)));
+}
+
+//-----------------------------------------------------------------------------
+//
+void SetEnvShape(u8 chan, u8 action)
+{
+	u8 val = g_PSG_Regs.Shape;
+	val &= 0x0F;
+	if(action == ACTION_PRESS_UP)
+	{
+		if(val < ENV_SHAPE_MAX - ENV_SHAPE_OFFSET)
+			val += ENV_SHAPE_OFFSET;
+		else
+			val = ENV_SHAPE_MAX;
+	}
+	else if(action == ACTION_PRESS_DOWN)
+	{
+		if(val > ENV_SHAPE_OFFSET)
+			val -= ENV_SHAPE_OFFSET;
+		else
+			val = 0;
+	}
+	PSG_SetShape(val);
+
+	Print_SetPosition(10 + chan * 8, 13);
+	Print_DrawFormat("%1x %s", g_PSG_Regs.Shape & 0x0F, g_ShapesName[g_ShapesId[g_PSG_Regs.Shape & 0x0F]]);
+
+	VDP_SetSpritePattern(15 + chan, 0x82);
+}
+
+//-----------------------------------------------------------------------------
+//
+void SetNoiseEnable(u8 chan, u8 action)
+{
+	u8 enable = (g_PSG_Regs.Mixer & (8 << chan)) ? 0 : 1;
+	if(action == ACTION_HOLD_UP)
+		enable = 1;
+	else if(action == ACTION_HOLD_DOWN)
+		enable = 0;
+	PSG_EnableNoise(chan, enable);
+
+	VDP_SetSpritePattern(18 + chan, enable ? 0x0C : 0x0B);
+}
+
+//-----------------------------------------------------------------------------
+//
+void SetNoisePeriod(u8 chan, u8 action)
+{
+	u8 val = g_PSG_Regs.Noise;
+	if(action == ACTION_HOLD_UP)
+	{
+		if(val < NOISE_FREQ_MAX - NOISE_FREQ_OFFSET)
+			val += NOISE_FREQ_OFFSET;
+		else
+			val = NOISE_FREQ_MAX;
+	}
+	else if(action == ACTION_HOLD_DOWN)
+	{
+		if(val > NOISE_FREQ_OFFSET)
+			val -= NOISE_FREQ_OFFSET;
+		else
+			val = 0;
+	}
+	PSG_SetNoise(val);
+
+	Print_SetPosition(10 + chan * 8, 16);
+	Print_DrawFormat("%2x", val);
+	VDP_SetSpritePattern(21 + chan, (u8)(0xB0 + (val >> 2)));
+}
+
+//-----------------------------------------------------------------------------
+// Set cursor to new position
+void MoveCursor(i8 offset)
+{
+	u8 newPos = g_CursorPos;
+	while(1)
+	{
+		newPos = (24 + newPos + offset) % 24;
+		if(g_UIEntries[newPos].Func != 0)
+			break;
+	}
+	VDP_SetSpriteColorSM1(g_CursorPos, COLOR_WHITE);
+	VDP_SetSpritePosition(CURSOR_ID, g_UIEntries[newPos].PosX - 8, g_UIEntries[newPos].PosY - 1);
+	VDP_SetSpriteColorSM1(newPos, COLOR_LIGHT_RED);
+	g_CursorPos = newPos;
+}
+
 
 //=============================================================================
 // MAIN LOOP
@@ -330,214 +326,163 @@ void PrintHelp(u8 y, const c8* str)
 // Program entry point
 void main()
 {
-	// INIT SCREEN
+	VDP_SetMode(VDP_MODE_SCREEN1); // Initialize screen mode 1 (G1)
+	VDP_ClearVRAM();
+	VDP_EnableVBlank(true);
 
-	VDP_SetMode(VDP_MODE_SCREEN5);
-	VDP_EnableSprite(false);
-	VDP_SetColor(0x4);
-	VDP_CommandHMMV(0, 0, 256, 212, 0x44);
+	Print_SetTextFont(g_Font_CMSX_Sample8, 0); // Initialize font (use BIOS font)
+	VDP_FillVRAM_16K(0, g_ScreenPatternLow, 8);
 
-	Print_SetBitmapFont(null);
-	Print_SetFont(g_Font_CMSX_Std0);
-	Print_SetMode(PRINT_MODE_BITMAP_TRANS);
-	Print_SetColor(0xF, 0);
-	Print_SetPosition(4, 4);
-	Print_DrawText("MGL - PSG SAMPLE");
-	Draw_Box(0, 0, 255, 14, 0x0F, 0);
-
-	// INIT PT3
-
-	PT3_Init();
-	PT3_SetNoteTable(PT3_NT2);
-	PT3_SetLoop(true);
-	PT3_InitSong(g_Beg_nsum);
-
-	// INIT ayFX
-
-	ayFX_InitBank(g_ayfx_bank);
-	ayFX_SetChannel(PSG_CHANNEL_A);
-	ayFX_SetMode(AYFX_MODE_FIXED);
+	Print_DrawText(MSX_GL "  PSG SAMPLE");
+	Print_DrawLineH(0, 1, 32);
 	
-	//-----------------------------------------------------------------------------
-	// PT3
-
-	Print_SetPosition(0, PT3_Y);
-	Print_DrawText(" PT3\n\n");
-	Draw_HLine(0, 255, PT3_Y+10, 0x5, 0);
-	Print_DrawText("Music\n");
-	Print_DrawText("Pattern\n");		
-
-	Print_SetPosition(64, PT3_Y+8*2);
-	Print_DrawText("Beg!nsum");
-
-	// PT3 Player
-	VDP_CommandHMMV(PT3_PLY_X, PT3_PLY_Y, 10*6+1, 8+3, 0x55);
-	Print_SetFont(g_Font_CMSX_Symbol1);
-	Print_SetPosition(PT3_PLY_X+31, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_PREV);	// Previous
-	Print_SetPosition(PT3_PLY_X+41, PT3_PLY_Y+1);
-	Print_DrawChar(CHR_NEXT);	// Next
+	#if (PSG_CHIP == PSG_INTERNAL)
+		Print_DrawFormat("Chip:  Intern (%2x)\n", PSG_PORT_REG);
+	#elif (PSG_CHIP == PSG_EXTERNAL)
+		Print_DrawFormat("Chip:  Extern (%2x)\n", PSG_PORT_REG);
+	#elif (PSG_CHIP == PSG_BOTH)
+		Print_DrawFormat("Chip:  Both (%2x+%2x)\n", PSG_PORT_REG, PSG2_PORT_REG);
+	#endif
+	#if (PSG_ACCESS == PSG_DIRECT)
+		Print_DrawText("Access:Direct\n");
+	#else
+		Print_DrawText("Access:Indirect\n");
+	#endif
 	
-	LoopMusic(true);
-	PauseMusic();
+	//-------------------------------------------------------------------------
+	// Sprite
+	
+	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_8 + VDP_SPRITE_SCALE_1);
+	VDP_LoadSpritePattern(g_Font_CMSX_Sample8 + 4, 0, g_Font_CMSX_Sample8[3] - g_Font_CMSX_Sample8[2]);
 
-	// Help
-	PrintHelp(PT3_Y+8*2, "Space:Play/Pause");
-	PrintHelp(PT3_Y+8*3, "Del:Loop");
-
-	//-----------------------------------------------------------------------------
-	// ayFX
-
-
-	Print_SetFont(g_Font_CMSX_Std0);
-
-	Print_SetPosition(0, AYFX_Y);
-	Print_DrawText(" ayFX\n\n");
-	Draw_HLine(0, 255, AYFX_Y+10, 0x5, 0);
-	Print_DrawText("Channel\n");
-	Print_DrawText("FX Bank\n");
-	Print_DrawText("FX File\n");
-
-	// Help
-	PrintHelp(AYFX_Y+8*2, "^v:Channel");
-	PrintHelp(AYFX_Y+8*3, "<>:Bank SFX");
-	PrintHelp(AYFX_Y+8*4, "Home:File SFX");
-
-	ChannelSFX(PSG_CHANNEL_A);
-	PlayBankSFX(0);
+	VDP_SetSpriteSM1(CURSOR_ID, 100, 100, 0x8A, COLOR_LIGHT_RED);
+	MoveCursor(0);
 
 
-	//-----------------------------------------------------------------------------
-	// PSG
+	//-------------------------------------------------------------------------
+	// Setup PSG
+	PSG_SetTone(0, 0x400);
+	PSG_SetTone(1, 0x800);
+	PSG_SetTone(2, 0xA00);
+	PSG_SetNoise(0x10);
+	PSG_SetMixer(0);
+	PSG_SetVolume(0, 0xF);
+	PSG_SetVolume(1, 0xF);
+	PSG_SetVolume(2, 0xF);
+	PSG_SetEnvelope(0x8000);
+	PSG_SetShape(8);
 
+	//-------------------------------------------------------------------------
+	// Draw page
+	Print_SetPosition(8, 5);
+	Print_DrawText("Chan A  Chan B  Chan C\n");
+	Print_DrawCharX(0x1C, 32);
+	Print_DrawText("Tone\n");
+	Print_DrawText("Freq\n");
+	Print_DrawText("Vol\n");
+	Print_DrawCharX(0x1C, 32);
+	Print_DrawText("Env\n");
+	Print_DrawText("Freq\n");
+	Print_DrawText("Shape\n");
+	Print_DrawCharX(0x1C, 32);
+	Print_DrawText("Noise\n");
+	Print_DrawText("Freq\n");
+	Print_DrawCharX(0x1C, 32);
+	
+	Print_SetPosition(4, 19);
+	for(u8 i = 0; i < 14; ++i)
+		Print_DrawFormat("%1x ", i);
+	Print_DrawText("\nRAW:");
 
-	Print_SetPosition(0, PSG_Y);
-	Print_DrawText(" PSG\n\n");		
-	Draw_HLine(0, 255, PSG_Y+10, 0x5, 0);
-	Print_DrawText("Chan. A\n");		
-	Print_DrawText("Chan. B\n");
-	Print_DrawText("Chan. C\n");
+	// Footer
+	Print_DrawLineH(0, 22, 32);
+	Print_SetPosition(0, 23);
+	Print_DrawText("\x81\x82\x80:Move H:Up N:Down");
+	
+	// Sprite
+	for(u8 i = 0; i < 24; ++i)
+	{
+		const struct UIEntry* entry = &g_UIEntries[i];
+		if(entry->Func)
+			VDP_SetSpriteSM1(i, entry->PosX, entry->PosY - 1, 0, COLOR_WHITE);
+		else
+			VDP_SetSpriteSM1(i, 0, 213, 0, 0);
+	}
+	
+	SetToneEnable(0, ACTION_NONE);
+	SetToneEnable(1, ACTION_NONE);
+	SetToneEnable(2, ACTION_NONE);
+	SetTonePeriod(0, ACTION_NONE);
+	SetTonePeriod(1, ACTION_NONE);
+	SetTonePeriod(2, ACTION_NONE);
+	SetToneVolume(0, ACTION_NONE);
+	SetToneVolume(1, ACTION_NONE);
+	SetToneVolume(2, ACTION_NONE);
+	SetEnvEnable(0, ACTION_NONE);
+	SetEnvEnable(1, ACTION_NONE);
+	SetEnvEnable(2, ACTION_NONE);
+	SetEnvPeriod(0, ACTION_NONE);
+	SetEnvShape(0, ACTION_NONE);
+	SetNoiseEnable(0, ACTION_NONE);
+	SetNoiseEnable(1, ACTION_NONE);
+	SetNoiseEnable(2, ACTION_NONE);
+	SetNoisePeriod(0, ACTION_NONE);
 
-	// Output
-	MuteMusic(PSG_CHANNEL_A, false);
-	MuteMusic(PSG_CHANNEL_B, false);
-	MuteMusic(PSG_CHANNEL_C, false);
-
-	// Help
-	PrintHelp((u8)(PSG_Y+8*2), "123:Mute");
-
-	//-----------------------------------------------------------------------------
-
-	Bios_SetHookCallback(H_TIMI, VBlankHook);
-
-	u8 fxChan = ayFX_GetChannel();
+	u8 count = 0;
 	u8 prevRow8 = 0xFF;
-	u8 prevRow0 = 0xFF;
-	u8 prevPattern = 0xFF;
+	u8 prevUp = 0;
+	u8 prevDown = 0;
 	while(1)
 	{
-		WaitVBlank();
-
-		// Display Vumeter
-		DrawVUMeter();
-
-		// DEFAULT FONT ----------------------------------------------------------
-
-		Print_SetFont(g_Font_CMSX_Std0);
-
-		VDP_CommandHMMV(255-8, 4, 6, 8, 0x44);
-		VDP_CommandWait();
-		Print_SetPosition(255-8, 4);
-		u8 chr = g_Frame & 0x03;
-		Print_DrawChar(g_ChrAnim[chr]);
+		VDP_SetSpriteColorSM1(CURSOR_ID, g_ColorBlink[(count >> 2) & 0x03]);
+		VDP_SetSpriteColorSM1(g_CursorPos, g_ColorBlink[(count >> 2) & 0x03]);
 		
-		// Display Current Pattern
-		u8 pattern = PT3_GetPattern();
-		if(pattern != prevPattern)
-		{
-			VDP_CommandHMMV(64, PT3_Y+8*3, 3*6, 8, 0x44);
-			Print_SetPosition(64, PT3_Y+8*3);
-			Print_DrawInt(pattern);
-		}
-		prevPattern = pattern;
+		Print_SetPosition(31, 0);
+		Print_DrawChar(0xB0 + ((count) & 0x07));
 
-
-		// Read keyboard matrix row #8
-		u8 row8 = g_NEWKEY[KEY_ROW(KEY_SPACE)];
-		if((IS_KEY_PRESSED(row8, KEY_RIGHT)) && (IS_KEY_RELEASED(prevRow8, KEY_RIGHT))) // Next SFX
-		{
-			g_BankFXNum++;
-			if(g_BankFXNum >= ayFX_GetBankNumber())
-				g_BankFXNum = 0;
-			PlayBankSFX(g_BankFXNum);
-		}
-		else if((IS_KEY_PRESSED(row8, KEY_LEFT)) && (IS_KEY_RELEASED(prevRow8, KEY_LEFT))) // Previous SFX
-		{
-			if(g_BankFXNum > 0)
-				g_BankFXNum--;
-			else
-				g_BankFXNum = ayFX_GetBankNumber() - 1;
-			PlayBankSFX(g_BankFXNum);
-		}
-
-		if((IS_KEY_PRESSED(row8, KEY_UP)) && (IS_KEY_RELEASED(prevRow8, KEY_UP))) // Next Channel
-		{
-			fxChan++;
-			if(fxChan > 2)
-				fxChan = 0;
-			ChannelSFX(fxChan);
-		}
-		else if((IS_KEY_PRESSED(row8, KEY_DOWN)) && (IS_KEY_RELEASED(prevRow8, KEY_DOWN))) // Previous Channel
-		{
-			if(fxChan > 0)
-				fxChan--;
-			else
-				fxChan = 2;
-			ChannelSFX(fxChan);
-		}
-
-		// PLAYER FONT -----------------------------------------------------------
-		
-		if((IS_KEY_PRESSED(row8, KEY_SPACE)) && (IS_KEY_RELEASED(prevRow8, KEY_SPACE))) // Pause / Resume
-		{
-			if(PT3_IsPlaying())
-				PauseMusic();
-			else
-				PlayMusic();
-		}
-		else if((IS_KEY_PRESSED(row8, KEY_DEL)) && (IS_KEY_RELEASED(prevRow8, KEY_DEL))) // Loop
-		{
-			LoopMusic(1 - g_Loop);
-		}
-		else if((IS_KEY_PRESSED(row8, KEY_HOME)) && (IS_KEY_RELEASED(prevRow8, KEY_HOME))) // 
-		{
-			g_FileFXNum++;
-			g_FileFXNum %= numberof(g_SFXFiles);
-			PlayFileSFX(g_FileFXNum);
-		}
-		// else if((IS_KEY_PRESSED(row8, KEY_INS)) && (IS_KEY_RELEASED(prevRow8, KEY_INS))) // 
-		// {
-		// }
-		
+		// Move cursor
+		u8 row8 = Keyboard_Read(8);
+		if(IS_KEY_PRESSED(row8, KEY_UP) && !IS_KEY_PRESSED(prevRow8, KEY_UP))
+			MoveCursor(MOVE_UP);
+		else if(IS_KEY_PRESSED(row8, KEY_RIGHT) && !IS_KEY_PRESSED(prevRow8, KEY_RIGHT))
+			MoveCursor(MOVE_RIGHT);
+		else if(IS_KEY_PRESSED(row8, KEY_DOWN) && !IS_KEY_PRESSED(prevRow8, KEY_DOWN))
+			MoveCursor(MOVE_DOWN);
+		else if(IS_KEY_PRESSED(row8, KEY_LEFT) && !IS_KEY_PRESSED(prevRow8, KEY_LEFT))
+			MoveCursor(MOVE_LEFT);
 		prevRow8 = row8;
 
-		// Read keyboard matrix row #0		
-		u8 row0 = g_NEWKEY[KEY_ROW(KEY_0)];
-		if((IS_KEY_PRESSED(row0, KEY_1)) && (IS_KEY_RELEASED(prevRow0, KEY_1))) // Mute channel A
+		// Increase value
+		u8 newUp = Keyboard_IsKeyPressed(KEY_H);
+		if(newUp)
 		{
-			MuteMusic(0, 1 - g_Mute[0]);
+			const struct UIEntry* entry = &g_UIEntries[g_CursorPos];
+			if(!prevUp)
+				entry->Func(entry->Chan, ACTION_PRESS_UP);
+			else
+				entry->Func(entry->Chan, ACTION_HOLD_UP);
 		}
-		else if((IS_KEY_PRESSED(row0, KEY_2)) && (IS_KEY_RELEASED(prevRow0, KEY_2))) // Mute channel B
+		prevUp = newUp;
+		
+		u8 newDown = Keyboard_IsKeyPressed(KEY_N);
+		if(newDown)
 		{
-			MuteMusic(1, 1 - g_Mute[1]);
+			const struct UIEntry* entry = &g_UIEntries[g_CursorPos];
+			if(!prevDown)
+				entry->Func(entry->Chan, ACTION_PRESS_DOWN);
+			else
+				entry->Func(entry->Chan, ACTION_HOLD_DOWN);
 		}
-		else if((IS_KEY_PRESSED(row0, KEY_3)) && (IS_KEY_RELEASED(prevRow0, KEY_3))) // Mute channel C
-		{
-			MuteMusic(2, 1 - g_Mute[2]);
-		}
-		prevRow0 = row0;
+		prevDown = newDown;
 
+		Halt();
+		count++;
+		
+		Print_SetPosition(4, 20);
+		i8* ptr = (u8*)g_PSG_Regs;
+		for(u8 i = 0; i < 14; ++i)
+			Print_DrawHex8(*ptr++);
 
-		// PT3_Decode(); 
+		PSG_Apply();
 	}
 }
