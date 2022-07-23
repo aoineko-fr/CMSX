@@ -1,3 +1,3 @@
 OBSOLETE!
 
-See https://github.com/aoineko-fr/MSXgl for new version.
+See https://github.com/aoineko-fr/MSXgl for my new C library.
